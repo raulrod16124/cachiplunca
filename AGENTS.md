@@ -1,0 +1,11 @@
+- Use TypeScript strict mode.
+- Use Oxlint. Do not use ESLint.
+- Use Prettier for formatting.
+- Use @raulrod/ui as the base UI component library.
+- UI dependencies belong to the presentation layer.
+- Domain must not depend on React, Firebase, styled-components or @raulrod/ui.
+- Application must not depend on React or UI libraries.
+- Infrastructure contains Firebase adapters.
+- Respect Clean Architecture and Hexagonal Architecture.
+- Prefer explicit types over any.
+- Add tests for domain logic and pure functions.
