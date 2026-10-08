@@ -24,6 +24,7 @@ function renderApp(authPort: AuthPort, initialPath: string): ReturnType<typeof r
           registerUser={createRegisterUser(authPort)}
           loginUser={createLoginUser(authPort)}
           logoutUser={createLogoutUser(authPort)}
+          listWorkspaces={jest.fn().mockResolvedValue({ status: 'ok' as const, workspaces: [] })}
         />
       </SessionProvider>
       <LocationProbe />
