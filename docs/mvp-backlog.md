@@ -579,7 +579,7 @@ Conservar como completado el trabajo de **Configurar Firebase** y evitar que fut
 
 ### TASK-010 — Auth port y adapter
 
-**Priority:** P0 · **Depends:** TASK-005, TASK-009 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-005, TASK-009 · **Status:** DONE
 
 #### Objetivo
 
@@ -592,10 +592,10 @@ Definir el port de autenticación y su adapter Firebase, aislando el SDK de Fire
 
 #### Criterios de aceptación
 
-- [ ] Application puede probarse con un fake del port.
-- [ ] Firebase solo aparece en Infrastructure/composición.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Application puede probarse con un fake del port.
+- [x] Firebase solo aparece en Infrastructure/composición.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
