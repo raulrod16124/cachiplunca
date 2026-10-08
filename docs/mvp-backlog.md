@@ -1019,7 +1019,7 @@ Completar **DeleteWorkspace use case** dejando un resultado verificable y apto p
 
 ### TASK-023 — Workspace list UI
 
-**Priority:** P0 · **Depends:** TASK-020 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-020 · **Status:** DONE
 
 #### Objetivo
 
@@ -1033,12 +1033,12 @@ Completar **Workspace list UI** dejando un resultado verificable y apto para las
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Los estados loading/error/empty relevantes son explícitos.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Los estados loading/error/empty relevantes son explícitos.
 
 #### Fuera de alcance
 
@@ -1054,7 +1054,7 @@ Completar **Workspace list UI** dejando un resultado verificable y apto para las
 
 ### TASK-024 — Create workspace flow
 
-**Priority:** P0 · **Depends:** TASK-019 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-019 · **Status:** DONE
 
 #### Objetivo
 
@@ -1068,11 +1068,11 @@ Completar **Create workspace flow** dejando un resultado verificable y apto para
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -4764,6 +4764,22 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) el test de "instancias independientes" sale del contrato compartido porque era semántica del fake —dos adapters sobre el mismo `db` deben compartir datos— y se mantiene como test específico del fake; (2) las fechas se persisten como `Date` (el SDK las convierte a `Timestamp`) para mantener el mapper puro y testeable sin mock del SDK; (3) los fallos de mapping de un documento guardado se traducen a `validation`+`VALIDATION_INVALID_INPUT` con `cause`, igual que el resto de invariantes de dominio. Ver ADR-0006.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-019 (CreateWorkspace use case).
+
+## 2026-10-08 — TASK-023
+
+- Resultado: Cierre de **Workspace list UI** (implementada en el commit `a18a74a` sin actualizar el backlog). `WorkspacesListContainer` con máquina de estados `idle/loading/success/error`, `try/catch` en la carga para que un rechazo de `listWorkspaces()` pase a estado error con retry (antes quedaba colgado en `loading` con un rejection sin manejar) y prop `refreshToken` para refrescar la lista desde fuera (la usará TASK-024 tras crear un workspace). `WorkspacesList` con estados explícitos: skeleton con `role="status"` + `aria-busy` + `VisuallyHidden`, error con `role="alert"` y retry, empty con CTA de creación y grid de tarjetas.
+- Tests/quality gates: 310 tests pasan (31 suites, +2: rechazo → error+retry y refetch por `refreshToken`); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit` y `npm run build` en verde (se corrigió el formato de `workspaces-list.tsx`, único archivo que hacía fallar `format:check`). Smoke manual con `npm run dev` pendiente.
+- Decisiones: se descartó el guard de desmonte planeado — con React 18+ `setState` tras unmount es no-op silencioso y el guard no aportaba comportamiento verificable (tests tautológicos); el `try/catch` era el fix real. Un guard de carreras request-id se evita como abstracción especulativa.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-024 (Create workspace flow).
+
+## 2026-10-08 — TASK-024
+
+- Resultado: Create workspace flow de punta a punta. `workspace-services.ts` expone `createWorkspace` (reutiliza `createCreateWorkspace` de TASK-019 sobre el mismo repositorio; único punto de composición con Infrastructure). `CreateWorkspaceDialog` en `src/presentation/features/workspaces/components/` usa `Dialog` de `@raulrod/ui` en modo controlado con el patrón de `LoginForm`: `noValidate`, `fieldErrors` del `invalid-input` del caso de uso, `formError` traducido por `describeCreateWorkspaceError` (red/persistencia/sesión/permisos, nunca código crudo), `submitting` con botón `loading` y reset de campos al reabrir. Triggers propios (botones de la cabecera y del estado vacío) en lugar de `Dialog.Trigger`: el `useFocusReturn` del diálogo captura `document.activeElement` al abrir y devuelve el foco al botón que lo abrió, con foco atrapado y Escape/backdrop para cerrar. Refresco de la lista vía `refreshToken` en `WorkspacesListContainer` (prop añadida en TASK-023) incrementado tras `onCreated`.
+- Tests/quality gates: 323 tests pasan (34 suites, +13: 7 del diálogo con `FakeWorkspaceRepository` real en validación/éxito, 4 del mapeo de errores, 2 de integración del flujo completo —crear desde el estado vacío con validación intermedia y cancelar sin tocar la lista—); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit` y `npm run build` en verde (el aviso de chunk >500 kB es preexistente: bundle de Firebase). Smoke manual con `npm run dev` pendiente.
+- Decisiones: diálogo controlado por `WorkspacesPage` (los dos triggers deben compartir un único diálogo) sin `Dialog.Trigger` porque este renderiza un `<button>` sin estilos de `@raulrod/ui` y no admite `asChild`; el reset de campos se hace al abrir (no al cerrar) para que un cierre accidental no filtre datos a la siguiente apertura.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-025 (Workspace shell).
 
 ---
 

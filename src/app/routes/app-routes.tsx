@@ -1,6 +1,11 @@
 import type { ReactNode } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import type { LoginUser, LogoutUser, RegisterUser } from '../../application/commands';
+import type {
+  CreateWorkspace,
+  LoginUser,
+  LogoutUser,
+  RegisterUser,
+} from '../../application/commands';
 import type { ListWorkspaces } from '../../application/queries/list-workspaces';
 import { LoginPage } from '../../presentation/features/auth/login-page';
 import { RegisterPage } from '../../presentation/features/auth/register-page';
@@ -13,6 +18,7 @@ export interface AppRoutesProps {
   readonly loginUser: LoginUser;
   readonly logoutUser: LogoutUser;
   readonly listWorkspaces: ListWorkspaces;
+  readonly createWorkspace: CreateWorkspace;
 }
 
 export function AppRoutes({
@@ -20,6 +26,7 @@ export function AppRoutes({
   loginUser,
   logoutUser,
   listWorkspaces,
+  createWorkspace,
 }: AppRoutesProps): ReactNode {
   return (
     <Routes>
@@ -31,7 +38,13 @@ export function AppRoutes({
       <Route element={<RequireAuth />}>
         <Route
           path="/workspaces"
-          element={<WorkspacesPage logoutUser={logoutUser} listWorkspaces={listWorkspaces} />}
+          element={
+            <WorkspacesPage
+              logoutUser={logoutUser}
+              listWorkspaces={listWorkspaces}
+              createWorkspace={createWorkspace}
+            />
+          }
         />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

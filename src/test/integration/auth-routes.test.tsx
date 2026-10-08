@@ -3,7 +3,12 @@ import type { ReactNode } from 'react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { SessionProvider } from '../../app/providers/session-provider';
 import { AppRoutes } from '../../app/routes/app-routes';
-import { createLoginUser, createLogoutUser, createRegisterUser } from '../../application/commands';
+import {
+  createLoginUser,
+  createLogoutUser,
+  createRegisterUser,
+  type CreateWorkspace,
+} from '../../application/commands';
 import type { AuthPort } from '../../application/ports';
 import { createSessionStore } from '../../application/services';
 import { FakeAuthPort } from '../fixtures/fake-auth-port';
@@ -16,7 +21,11 @@ function LocationProbe(): ReactNode {
   return <div data-testid="location">{location.pathname}</div>;
 }
 
-function renderApp(authPort: AuthPort, initialPath: string): ReturnType<typeof render> {
+function renderApp(
+  authPort: AuthPort,
+  initialPath: string,
+  createWorkspace: CreateWorkspace = jest.fn(),
+): ReturnType<typeof render> {
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
       <SessionProvider store={createSessionStore(authPort)}>
@@ -25,6 +34,7 @@ function renderApp(authPort: AuthPort, initialPath: string): ReturnType<typeof r
           loginUser={createLoginUser(authPort)}
           logoutUser={createLogoutUser(authPort)}
           listWorkspaces={jest.fn().mockResolvedValue({ status: 'ok' as const, workspaces: [] })}
+          createWorkspace={createWorkspace}
         />
       </SessionProvider>
       <LocationProbe />

@@ -1,10 +1,11 @@
 import { Button, Heading, Inline, Stack, Text } from '@raulrod/ui';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import styled from 'styled-components';
 import { useSession } from '../../../app/providers/session-provider';
-import type { LogoutUser } from '../../../application/commands';
+import type { CreateWorkspace, LogoutUser } from '../../../application/commands';
 import type { ListWorkspaces } from '../../../application/queries/list-workspaces';
 import { SignOutButton } from '../auth/sign-out-button';
+import { CreateWorkspaceDialog } from './components/create-workspace-dialog';
 import { WorkspacesListContainer } from './components/workspaces-list-container';
 
 const Page = styled.main`
@@ -15,13 +16,24 @@ const Page = styled.main`
 export interface WorkspacesPageProps {
   readonly logoutUser: LogoutUser;
   readonly listWorkspaces: ListWorkspaces;
+  readonly createWorkspace: CreateWorkspace;
 }
 
-export function WorkspacesPage({ logoutUser, listWorkspaces }: WorkspacesPageProps): ReactNode {
+export function WorkspacesPage({
+  logoutUser,
+  listWorkspaces,
+  createWorkspace,
+}: WorkspacesPageProps): ReactNode {
   const session = useSession();
+  const [createOpen, setCreateOpen] = useState(false);
+  const [refreshToken, setRefreshToken] = useState(0);
 
   const handleCreateWorkspace = () => {
-    // Placeholder: will be implemented in TASK-024
+    setCreateOpen(true);
+  };
+
+  const handleCreated = () => {
+    setRefreshToken((token) => token + 1);
   };
 
   return (
@@ -48,8 +60,15 @@ export function WorkspacesPage({ logoutUser, listWorkspaces }: WorkspacesPagePro
         <WorkspacesListContainer
           listWorkspaces={listWorkspaces}
           onCreateWorkspace={handleCreateWorkspace}
+          refreshToken={refreshToken}
         />
       </Stack>
+      <CreateWorkspaceDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        createWorkspace={createWorkspace}
+        onCreated={handleCreated}
+      />
     </Page>
   );
 }

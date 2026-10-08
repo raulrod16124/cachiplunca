@@ -1,3 +1,4 @@
+import { createCreateWorkspace, type CreateWorkspace } from '../../application/commands';
 import {
   createListWorkspaces,
   type ListWorkspaces,
@@ -8,6 +9,7 @@ import { getFirebaseFirestore } from '../../infrastructure/firebase/firebase-app
 
 export interface WorkspaceServices {
   readonly listWorkspaces: ListWorkspaces;
+  readonly createWorkspace: CreateWorkspace;
 }
 
 export function createWorkspaceServices(): WorkspaceServices {
@@ -15,5 +17,6 @@ export function createWorkspaceServices(): WorkspaceServices {
     createFirebaseWorkspaceRepository(getFirebaseFirestore());
   return {
     listWorkspaces: createListWorkspaces(workspaceRepository),
+    createWorkspace: createCreateWorkspace(workspaceRepository),
   };
 }

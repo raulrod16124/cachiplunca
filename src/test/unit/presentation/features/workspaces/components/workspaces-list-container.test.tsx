@@ -72,4 +72,52 @@ describe('WorkspacesListContainer', () => {
       expect(screen.getByRole('heading', { name: /no workspaces yet/i })).toBeInTheDocument();
     });
   });
+
+  it('transitions from loading to error when the query rejects', async () => {
+    const listWorkspaces: ListWorkspaces = jest
+      .fn()
+      .mockRejectedValue(new Error('backend exploded'));
+    const user = userEvent.setup();
+
+    render(
+      <WorkspacesListContainer listWorkspaces={listWorkspaces} onCreateWorkspace={onCreate} />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+    expect(screen.getByText(/backend exploded/i)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /retry/i }));
+    expect(listWorkspaces).toHaveBeenCalledTimes(2);
+  });
+
+  it('refetches when refreshToken changes', async () => {
+    const result: ListWorkspacesResult = { status: 'ok', workspaces: [] };
+    const listWorkspaces: ListWorkspaces = jest.fn().mockResolvedValue(result);
+
+    const { rerender } = render(
+      <WorkspacesListContainer
+        listWorkspaces={listWorkspaces}
+        onCreateWorkspace={onCreate}
+        refreshToken={0}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(listWorkspaces).toHaveBeenCalledTimes(1);
+    });
+
+    rerender(
+      <WorkspacesListContainer
+        listWorkspaces={listWorkspaces}
+        onCreateWorkspace={onCreate}
+        refreshToken={1}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(listWorkspaces).toHaveBeenCalledTimes(2);
+    });
+  });
 });

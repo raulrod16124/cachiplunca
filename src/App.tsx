@@ -17,6 +17,7 @@ function App() {
           loginUser={authServices.loginUser}
           logoutUser={authServices.logoutUser}
           listWorkspaces={workspaceServices.listWorkspaces}
+          createWorkspace={workspaceServices.createWorkspace}
         />
       </SessionProvider>
     </BrowserRouter>

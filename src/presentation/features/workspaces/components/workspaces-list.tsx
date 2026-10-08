@@ -1,4 +1,4 @@
-import { Button, Heading, Inline, Skeleton, Stack, Text } from '@raulrod/ui';
+import { Button, Heading, Inline, Skeleton, Stack, Text, VisuallyHidden } from '@raulrod/ui';
 import type { ReactNode } from 'react';
 import styled from 'styled-components';
 import type { Workspace } from '../../../../domain/workspace';
@@ -49,13 +49,14 @@ export function WorkspacesList({
 }: WorkspacesListProps): ReactNode {
   if (status === 'loading' || status === 'idle') {
     return (
-      <ListGrid>
+      <ListGrid role="status" aria-busy="true">
+        <VisuallyHidden>Loading workspaces</VisuallyHidden>
         {Array.from({ length: 6 }).map((_, index) => (
-          <CardShell key={`workspace-skeleton-${index}`} aria-label="workspace-skeleton">
+          <CardShell key={`workspace-skeleton-${index}`}>
             <Stack gap="space-3">
-              <Skeleton data-testid="skeleton" style={{ height: "20px", width: "70%" }} />
-              <Skeleton data-testid="skeleton" style={{ height: "16px", width: "50%" }} />
-              <Skeleton data-testid="skeleton" style={{ height: "16px", width: "40%" }} />
+              <Skeleton data-testid="skeleton" style={{ height: '20px', width: '70%' }} />
+              <Skeleton data-testid="skeleton" style={{ height: '16px', width: '50%' }} />
+              <Skeleton data-testid="skeleton" style={{ height: '16px', width: '40%' }} />
             </Stack>
           </CardShell>
         ))}
