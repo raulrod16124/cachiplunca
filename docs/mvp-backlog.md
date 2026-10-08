@@ -1120,7 +1120,7 @@ Completar **Workspace shell** dejando un resultado verificable y apto para las t
 
 ### TASK-026 — Position, Size, Bounds
 
-**Priority:** P0 · **Depends:** TASK-005 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-005 · **Status:** DONE
 
 #### Objetivo
 
@@ -1133,10 +1133,10 @@ Definir los value objects geométricos base del canvas.
 
 #### Criterios de aceptación
 
-- [ ] No dependen del DOM.
-- [ ] Casos límite cubiertos por tests.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] No dependen del DOM.
+- [x] Casos límite cubiertos por tests.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
