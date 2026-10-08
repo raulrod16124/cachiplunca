@@ -4737,6 +4737,7 @@ Añadir una entrada breve por sesión.
 - Resultado: Registro implementado de punta a punta: validadores puros (`src/shared/utils/validation.ts`), caso de uso `createRegisterUser` con resultado discriminado (`ok`/`invalid-input`/`error`) en `src/application/commands/register-user.ts`, `RegisterForm` con `@raulrod/ui` en `src/presentation/features/auth/` y composición en `src/app/config/auth-services.ts` (único punto que instancia el adapter Firebase). Plantilla demo de Vite sustituida.
 - Tests/quality gates: 98 tests pasan (9 suites); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit` y `npm run build` en verde. Smoke manual contra Firebase real pendiente de verificación con `npm run dev` (no ejecutado para no crear usuarios reales).
 - Decisiones: Jest migra a entorno jsdom con Testing Library (`@testing-library/react`, `@testing-library/dom`, `@testing-library/jest-dom`) y soporte para paquetes ESM-only de `@raulrod/*` — ver ADR-0003.
+- Nota: se corrigió el import de `@raulrod/tokens/styles.css` en `main.tsx` (sin él no se definían las variables `--rr-*` y la UI renderizaba sin formato); `@raulrod/tokens` pasa a ser dependencia directa.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-012 (Login/logout).
 
