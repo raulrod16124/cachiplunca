@@ -1087,7 +1087,7 @@ Completar **Create workspace flow** dejando un resultado verificable y apto para
 
 ### TASK-025 — Workspace shell
 
-**Priority:** P0 · **Depends:** TASK-023 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-023 · **Status:** DONE
 
 #### Objetivo
 
@@ -1101,11 +1101,11 @@ Completar **Workspace shell** dejando un resultado verificable y apto para las t
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 

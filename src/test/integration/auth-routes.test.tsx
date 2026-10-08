@@ -9,6 +9,7 @@ import {
   createRegisterUser,
   type CreateWorkspace,
 } from '../../application/commands';
+import { createGetWorkspace } from '../../application/queries';
 import type { AuthPort } from '../../application/ports';
 import { createSessionStore } from '../../application/services';
 import { FakeAuthPort } from '../fixtures/fake-auth-port';
@@ -35,6 +36,23 @@ function renderApp(
           logoutUser={createLogoutUser(authPort)}
           listWorkspaces={jest.fn().mockResolvedValue({ status: 'ok' as const, workspaces: [] })}
           createWorkspace={createWorkspace}
+          getWorkspace={createGetWorkspace({
+            async list() {
+              return [];
+            },
+            async findById() {
+              return null;
+            },
+            async create() {
+              throw new Error('Not implemented');
+            },
+            async update() {
+              throw new Error('Not implemented');
+            },
+            async delete() {
+              throw new Error('Not implemented');
+            },
+          })}
         />
       </SessionProvider>
       <LocationProbe />

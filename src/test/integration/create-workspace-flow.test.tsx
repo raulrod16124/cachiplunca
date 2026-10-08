@@ -8,6 +8,7 @@ import {
   createLogoutUser,
   createRegisterUser,
 } from '../../application/commands';
+import { createGetWorkspace } from '../../application/queries';
 import type {
   ListWorkspaces,
   ListWorkspacesResult,
@@ -38,6 +39,7 @@ async function renderAuthenticatedApp() {
           logoutUser={createLogoutUser(authPort)}
           listWorkspaces={listWorkspacesQuery}
           createWorkspace={createCreateWorkspace(repository)}
+          getWorkspace={createGetWorkspace(repository)}
         />
       </SessionProvider>
     </MemoryRouter>,

@@ -29,6 +29,7 @@ export interface WorkspacesListProps {
   readonly errorMessage?: string;
   readonly onRetry: () => void;
   readonly onCreate: () => void;
+  readonly onSelect?: (workspace: Workspace) => void;
 }
 
 function formatUpdatedAt(workspace: Workspace): string {
@@ -46,6 +47,7 @@ export function WorkspacesList({
   errorMessage,
   onRetry,
   onCreate,
+  onSelect,
 }: WorkspacesListProps): ReactNode {
   if (status === 'loading' || status === 'idle') {
     return (
@@ -109,6 +111,11 @@ export function WorkspacesList({
               <Heading as="h3">{workspace.name}</Heading>
               <Text color="color.text.muted">{formatUpdatedAt(workspace)}</Text>
             </Stack>
+            {onSelect !== undefined && (
+              <Button type="button" variant="outline" size="sm" onClick={() => onSelect(workspace)}>
+                Open
+              </Button>
+            )}
           </CardContent>
         </CardShell>
       ))}

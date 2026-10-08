@@ -1,5 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { WorkspacesListContainer } from '../../../../../../presentation/features/workspaces/components/workspaces-list-container';
 import type {
   ListWorkspaces,
@@ -16,6 +18,10 @@ function createWorkspace(name: string): Workspace {
   });
 }
 
+function renderWithRouter(children: ReactNode): ReturnType<typeof render> {
+  return render(<MemoryRouter>{children}</MemoryRouter>);
+}
+
 describe('WorkspacesListContainer', () => {
   const onCreate = jest.fn();
 
@@ -28,7 +34,7 @@ describe('WorkspacesListContainer', () => {
     const result: ListWorkspacesResult = { status: 'ok', workspaces };
     const listWorkspaces: ListWorkspaces = jest.fn().mockResolvedValue(result);
 
-    render(
+    renderWithRouter(
       <WorkspacesListContainer listWorkspaces={listWorkspaces} onCreateWorkspace={onCreate} />,
     );
 
@@ -47,7 +53,7 @@ describe('WorkspacesListContainer', () => {
     const listWorkspaces: ListWorkspaces = jest.fn().mockResolvedValue(result);
     const user = userEvent.setup();
 
-    render(
+    renderWithRouter(
       <WorkspacesListContainer listWorkspaces={listWorkspaces} onCreateWorkspace={onCreate} />,
     );
 
@@ -64,7 +70,7 @@ describe('WorkspacesListContainer', () => {
     const result: ListWorkspacesResult = { status: 'ok', workspaces: [] };
     const listWorkspaces: ListWorkspaces = jest.fn().mockResolvedValue(result);
 
-    render(
+    renderWithRouter(
       <WorkspacesListContainer listWorkspaces={listWorkspaces} onCreateWorkspace={onCreate} />,
     );
 
@@ -79,7 +85,7 @@ describe('WorkspacesListContainer', () => {
       .mockRejectedValue(new Error('backend exploded'));
     const user = userEvent.setup();
 
-    render(
+    renderWithRouter(
       <WorkspacesListContainer listWorkspaces={listWorkspaces} onCreateWorkspace={onCreate} />,
     );
 
@@ -96,7 +102,7 @@ describe('WorkspacesListContainer', () => {
     const result: ListWorkspacesResult = { status: 'ok', workspaces: [] };
     const listWorkspaces: ListWorkspaces = jest.fn().mockResolvedValue(result);
 
-    const { rerender } = render(
+    const { rerender } = renderWithRouter(
       <WorkspacesListContainer
         listWorkspaces={listWorkspaces}
         onCreateWorkspace={onCreate}
@@ -109,11 +115,13 @@ describe('WorkspacesListContainer', () => {
     });
 
     rerender(
-      <WorkspacesListContainer
-        listWorkspaces={listWorkspaces}
-        onCreateWorkspace={onCreate}
-        refreshToken={1}
-      />,
+      <MemoryRouter>
+        <WorkspacesListContainer
+          listWorkspaces={listWorkspaces}
+          onCreateWorkspace={onCreate}
+          refreshToken={1}
+        />
+      </MemoryRouter>,
     );
 
     await waitFor(() => {

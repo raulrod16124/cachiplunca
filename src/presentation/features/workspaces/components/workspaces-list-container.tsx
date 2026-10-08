@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react';
 import { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type {
   ListWorkspaces,
   ListWorkspacesResult,
 } from '../../../../application/queries/list-workspaces';
+import type { Workspace } from '../../../../domain/workspace';
 import { toAppError } from '../../../../shared/errors';
 import { WorkspacesList } from './workspaces-list';
 
@@ -18,6 +20,7 @@ export function WorkspacesListContainer({
   onCreateWorkspace,
   refreshToken = 0,
 }: WorkspacesListContainerProps): ReactNode {
+  const navigate = useNavigate();
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [result, setResult] = useState<ListWorkspacesResult | null>(null);
 
@@ -40,6 +43,13 @@ export function WorkspacesListContainer({
   const errorMessage = result?.status === 'error' ? result.error.message : undefined;
   const workspaces = result?.status === 'ok' ? result.workspaces : [];
 
+  const handleSelectWorkspace = useCallback(
+    (workspace: Workspace): void => {
+      navigate(`/workspaces/${workspace.id.value}`);
+    },
+    [navigate],
+  );
+
   return (
     <WorkspacesList
       status={status}
@@ -47,6 +57,7 @@ export function WorkspacesListContainer({
       errorMessage={errorMessage}
       onRetry={fetchWorkspaces}
       onCreate={onCreateWorkspace}
+      onSelect={handleSelectWorkspace}
     />
   );
 }

@@ -6,9 +6,10 @@ import type {
   LogoutUser,
   RegisterUser,
 } from '../../application/commands';
-import type { ListWorkspaces } from '../../application/queries/list-workspaces';
+import type { GetWorkspace, ListWorkspaces } from '../../application/queries';
 import { LoginPage } from '../../presentation/features/auth/login-page';
 import { RegisterPage } from '../../presentation/features/auth/register-page';
+import { WorkspaceShellPage } from '../../presentation/features/workspace-shell';
 import { WorkspacesPage } from '../../presentation/features/workspaces/workspaces-page';
 import { RequireAnonymous } from './require-anonymous';
 import { RequireAuth } from './require-auth';
@@ -19,6 +20,7 @@ export interface AppRoutesProps {
   readonly logoutUser: LogoutUser;
   readonly listWorkspaces: ListWorkspaces;
   readonly createWorkspace: CreateWorkspace;
+  readonly getWorkspace: GetWorkspace;
 }
 
 export function AppRoutes({
@@ -27,6 +29,7 @@ export function AppRoutes({
   logoutUser,
   listWorkspaces,
   createWorkspace,
+  getWorkspace,
 }: AppRoutesProps): ReactNode {
   return (
     <Routes>
@@ -45,6 +48,10 @@ export function AppRoutes({
               createWorkspace={createWorkspace}
             />
           }
+        />
+        <Route
+          path="/workspaces/:workspaceId"
+          element={<WorkspaceShellPage getWorkspace={getWorkspace} logoutUser={logoutUser} />}
         />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
