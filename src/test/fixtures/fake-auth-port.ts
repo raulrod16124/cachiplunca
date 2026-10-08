@@ -1,5 +1,11 @@
-import type { AuthCredentials, AuthPort, AuthUser, SessionListener } from '../../application/ports';
-import { createAppError, ERROR_CODES } from '../../shared/errors';
+import type {
+  AuthCredentials,
+  AuthPort,
+  AuthUser,
+  SessionErrorListener,
+  SessionListener,
+} from '../../application/ports';
+import { createAppError, ERROR_CODES, type AppError } from '../../shared/errors';
 import type { Unsubscribe } from '../../shared/types';
 
 interface StoredUser {
@@ -11,6 +17,7 @@ export class FakeAuthPort implements AuthPort {
   #users = new Map<string, StoredUser>();
   #session: AuthUser | null = null;
   #listeners = new Set<SessionListener>();
+  #errorListeners = new Set<SessionErrorListener>();
   #sequence = 0;
 
   async signUp(credentials: AuthCredentials): Promise<AuthUser> {
@@ -55,12 +62,28 @@ export class FakeAuthPort implements AuthPort {
     this.#setSession(null);
   }
 
-  observeSession(listener: SessionListener): Unsubscribe {
+  observeSession(listener: SessionListener, onError?: SessionErrorListener): Unsubscribe {
     this.#listeners.add(listener);
+    if (onError !== undefined) {
+      this.#errorListeners.add(onError);
+    }
     listener(this.#session);
     return () => {
       this.#listeners.delete(listener);
+      if (onError !== undefined) {
+        this.#errorListeners.delete(onError);
+      }
     };
+  }
+
+  activeSessionListenerCount(): number {
+    return this.#listeners.size;
+  }
+
+  emitSessionError(error: AppError): void {
+    for (const errorListener of this.#errorListeners) {
+      errorListener(error);
+    }
   }
 
   #setSession(next: AuthUser | null): void {

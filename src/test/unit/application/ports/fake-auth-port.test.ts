@@ -1,5 +1,5 @@
 import { FakeAuthPort } from '../../../fixtures/fake-auth-port';
-import { ERROR_CODES } from '../../../../shared/errors';
+import { createAppError, ERROR_CODES } from '../../../../shared/errors';
 
 describe('FakeAuthPort', () => {
   it('emits the current anonymous session once on subscribe', () => {
@@ -137,5 +137,48 @@ describe('FakeAuthPort', () => {
 
     expect(first).toHaveBeenCalledTimes(1);
     expect(second).toHaveBeenCalledTimes(2);
+  });
+
+  it('reports the number of active session listeners', () => {
+    const fake = new FakeAuthPort();
+    expect(fake.activeSessionListenerCount()).toBe(0);
+
+    const unsubscribe = fake.observeSession(jest.fn());
+    expect(fake.activeSessionListenerCount()).toBe(1);
+
+    fake.observeSession(jest.fn());
+    expect(fake.activeSessionListenerCount()).toBe(2);
+
+    unsubscribe();
+    expect(fake.activeSessionListenerCount()).toBe(1);
+  });
+
+  it('notifies session error listeners and stops after unsubscribing', () => {
+    const fake = new FakeAuthPort();
+    const onError = jest.fn();
+    const unsubscribe = fake.observeSession(jest.fn(), onError);
+    const error = createAppError(
+      'network',
+      ERROR_CODES.NETWORK_REQUEST_FAILED,
+      'The network connection was lost.',
+    );
+
+    fake.emitSessionError(error);
+    expect(onError).toHaveBeenCalledWith(error);
+
+    unsubscribe();
+    fake.emitSessionError(error);
+    expect(onError).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores session error emissions when no error listener is registered', () => {
+    const fake = new FakeAuthPort();
+    fake.observeSession(jest.fn());
+
+    expect(() =>
+      fake.emitSessionError(
+        createAppError('unknown', ERROR_CODES.UNKNOWN_UNEXPECTED, 'Unexpected failure.'),
+      ),
+    ).not.toThrow();
   });
 });

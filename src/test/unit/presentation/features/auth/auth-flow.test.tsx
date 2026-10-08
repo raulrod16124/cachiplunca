@@ -1,10 +1,12 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import {
   createLoginUser,
   createLogoutUser,
   createRegisterUser,
 } from '../../../../../application/commands';
-import type { AuthUser } from '../../../../../application/ports';
+import type { AuthPort, AuthUser, SessionListener } from '../../../../../application/ports';
+import { createSessionStore } from '../../../../../application/services';
+import { SessionProvider } from '../../../../../app/providers/session-provider';
 import type { AuthFlowProps } from '../../../../../presentation/features/auth/auth-flow';
 import { AuthFlow } from '../../../../../presentation/features/auth/auth-flow';
 import { createAppError, ERROR_CODES } from '../../../../../shared/errors';
@@ -17,14 +19,19 @@ async function registeredUser(authPort: FakeAuthPort): Promise<void> {
   await authPort.signOut();
 }
 
-function renderAuthFlow(authPort: FakeAuthPort, overrides: Partial<AuthFlowProps> = {}): void {
-  render(
-    <AuthFlow
-      registerUser={createRegisterUser(authPort)}
-      loginUser={createLoginUser(authPort)}
-      logoutUser={createLogoutUser(authPort)}
-      {...overrides}
-    />,
+function renderAuthFlow(
+  authPort: FakeAuthPort,
+  overrides: Partial<AuthFlowProps> = {},
+): ReturnType<typeof render> {
+  return render(
+    <SessionProvider store={createSessionStore(authPort)}>
+      <AuthFlow
+        registerUser={createRegisterUser(authPort)}
+        loginUser={createLoginUser(authPort)}
+        logoutUser={createLogoutUser(authPort)}
+        {...overrides}
+      />
+    </SessionProvider>,
   );
 }
 
@@ -54,6 +61,53 @@ describe('AuthFlow', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Create an account' }));
     expect(
       screen.getByRole('heading', { level: 1, name: 'Create your account' }),
+    ).toBeInTheDocument();
+  });
+
+  it('restores a persisted session on load without any interaction', async () => {
+    const authPort = new FakeAuthPort();
+    await authPort.signUp(CREDENTIALS);
+
+    renderAuthFlow(authPort);
+
+    expect(await screen.findByRole('heading', { name: 'You are signed in' })).toBeInTheDocument();
+    expect(screen.getByText(`${CREDENTIALS.email} is ready to plan.`)).toBeInTheDocument();
+  });
+
+  it('shows the restoring placeholder until the session resolves', async () => {
+    const listeners = new Set<SessionListener>();
+    const authPort: AuthPort = {
+      signUp: () => Promise.reject(new Error('unexpected signUp call')),
+      signIn: () => Promise.reject(new Error('unexpected signIn call')),
+      signOut: () => Promise.reject(new Error('unexpected signOut call')),
+      observeSession(listener) {
+        listeners.add(listener);
+        return () => {
+          listeners.delete(listener);
+        };
+      },
+    };
+
+    render(
+      <SessionProvider store={createSessionStore(authPort)}>
+        <AuthFlow
+          registerUser={createRegisterUser(authPort)}
+          loginUser={createLoginUser(authPort)}
+          logoutUser={createLogoutUser(authPort)}
+        />
+      </SessionProvider>,
+    );
+
+    expect(screen.getByRole('status')).toHaveTextContent('Restoring your session…');
+
+    await act(async () => {
+      for (const listener of listeners) {
+        listener(null);
+      }
+    });
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Create your account' }),
     ).toBeInTheDocument();
   });
 

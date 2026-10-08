@@ -39,21 +39,19 @@ describe('LoginForm', () => {
     expect(signIn).not.toHaveBeenCalled();
   });
 
-  it('signs in with valid credentials and reports the user', async () => {
+  it('signs in with valid credentials without showing errors', async () => {
     const authPort = new FakeAuthPort();
     await authPort.signUp(CREDENTIALS);
     await authPort.signOut();
-    const onLoggedIn = jest.fn();
-    render(<LoginForm loginUser={createLoginUser(authPort)} onLoggedIn={onLoggedIn} />);
+    const signIn = jest.spyOn(authPort, 'signIn');
+    render(<LoginForm loginUser={createLoginUser(authPort)} />);
 
     fillForm(CREDENTIALS.email, CREDENTIALS.password);
     submit();
 
-    await waitFor(() =>
-      expect(onLoggedIn).toHaveBeenCalledWith(
-        expect.objectContaining({ email: CREDENTIALS.email }),
-      ),
-    );
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Sign in' })).toBeEnabled());
+    expect(signIn).toHaveBeenCalledWith(expect.objectContaining({ email: CREDENTIALS.email }));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('shows a friendly message when the credentials are invalid', async () => {
@@ -94,8 +92,7 @@ describe('LoginForm', () => {
       resolveRequest = resolve;
     });
     const loginUser = jest.fn(() => pending);
-    const onLoggedIn = jest.fn();
-    render(<LoginForm loginUser={loginUser} onLoggedIn={onLoggedIn} />);
+    render(<LoginForm loginUser={loginUser} />);
 
     fillForm(CREDENTIALS.email, CREDENTIALS.password);
     submit();
@@ -113,6 +110,7 @@ describe('LoginForm', () => {
     resolveRequest({ status: 'ok', user });
 
     expect(loginUser).toHaveBeenCalledTimes(1);
-    await waitFor(() => expect(onLoggedIn).toHaveBeenCalledWith(user));
+    await waitFor(() => expect(button).toBeEnabled());
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });

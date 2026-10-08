@@ -18,10 +18,9 @@ import { describeRegisterError } from './auth-error-messages';
 
 export interface RegisterFormProps {
   readonly registerUser: RegisterUser;
-  readonly onRegistered?: (user: AuthUser) => void;
 }
 
-export function RegisterForm({ registerUser, onRegistered }: RegisterFormProps): ReactNode {
+export function RegisterForm({ registerUser }: RegisterFormProps): ReactNode {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fieldErrors, setFieldErrors] = useState<RegisterFieldErrors>({});
@@ -44,7 +43,6 @@ export function RegisterForm({ registerUser, onRegistered }: RegisterFormProps):
       switch (result.status) {
         case 'ok':
           setRegisteredUser(result.user);
-          onRegistered?.(result.user);
           break;
         case 'invalid-input':
           setFieldErrors(result.fieldErrors);

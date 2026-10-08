@@ -678,7 +678,7 @@ Implementar login y logout con estados explícitos de carga, éxito y error.
 
 ### TASK-013 — Restauración de sesión
 
-**Priority:** P0 · **Depends:** TASK-012 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-012 · **Status:** DONE
 
 #### Objetivo
 
@@ -692,11 +692,11 @@ Restaurar la sesión al recargar la aplicación sin listeners duplicados.
 
 #### Criterios de aceptación
 
-- [ ] Refresh conserva una sesión válida.
-- [ ] Una sesión inválida produce estado anónimo.
-- [ ] No quedan listeners duplicados.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Refresh conserva una sesión válida.
+- [x] Una sesión inválida produce estado anónimo.
+- [x] No quedan listeners duplicados.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -4748,6 +4748,14 @@ Añadir una entrada breve por sesión.
 - Decisiones: vista inicial en `sign-up` para conservar el landing de TASK-011 y retorno a `sign-in` tras logout; el login valida email y password no vacío sin longitud mínima (la valida el servidor); los errores de credenciales se muestran como mensaje amigable, nunca el código del provider.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-013 (Restauración de sesión).
+
+## 2026-10-08 — TASK-013
+
+- Resultado: Restauración de sesión de punta a punta. `createSessionStore` en `src/application/services/` envuelve `AuthPort.observeSession` con un estado tri-estado `loading/authenticated/anonymous`, snapshot con referencia estable (requisito de `useSyncExternalStore`) y suscripción perezosa al puerto: se conecta con el primer subscriber y se libera con el último. `SessionProvider`/`useSession` en `src/app/providers/` consumen el store; el store se compone en `createAuthServices()`. `AuthFlow` pasa a derivar el usuario de `useSession()` (fuente única de verdad): se eliminó el estado local de usuario y los callbacks `onLoggedIn`/`onRegistered` de `LoginForm`/`RegisterForm`. Placeholder `role="status"` durante `loading` para evitar el flash del formulario en refresh.
+- Tests/quality gates: 148 tests pasan (15 suites, +22); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit` y `npm run build` en verde. Cobertura clave: refresh con sesión persistida sin interacción, fallback a anónimo con sesión nula/error del puerto, 1 listener de puerto bajo `<StrictMode>` y 0 tras unmount. Smoke manual con `npm run dev` pendiente (no se crean usuarios reales desde el agente).
+- Decisiones: tri-estado modelado en Application (no en Presentation) para que TASK-014 (auth guards) pueda evaluarlo sin React; el store conserva el último snapshot resuelto al remontar para evitar flicker de `loading` bajo StrictMode; `FakeAuthPort` gana `activeSessionListenerCount()` y `emitSessionError()` como apoyo de tests.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-014 (Auth guards).
 
 ---
 

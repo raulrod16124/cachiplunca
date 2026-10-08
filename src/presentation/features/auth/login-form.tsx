@@ -12,16 +12,14 @@ import {
 } from '@raulrod/ui';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import type { LoginFieldErrors, LoginUser } from '../../../application/commands';
-import type { AuthUser } from '../../../application/ports';
 import { toAppError } from '../../../shared/errors';
 import { describeLoginError } from './auth-error-messages';
 
 export interface LoginFormProps {
   readonly loginUser: LoginUser;
-  readonly onLoggedIn?: (user: AuthUser) => void;
 }
 
-export function LoginForm({ loginUser, onLoggedIn }: LoginFormProps): ReactNode {
+export function LoginForm({ loginUser }: LoginFormProps): ReactNode {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fieldErrors, setFieldErrors] = useState<LoginFieldErrors>({});
@@ -42,7 +40,6 @@ export function LoginForm({ loginUser, onLoggedIn }: LoginFormProps): ReactNode 
       const result = await loginUser({ email, password });
       switch (result.status) {
         case 'ok':
-          onLoggedIn?.(result.user);
           break;
         case 'invalid-input':
           setFieldErrors(result.fieldErrors);

@@ -47,21 +47,13 @@ describe('RegisterForm', () => {
   });
 
   it('registers a valid user and reports success', async () => {
-    const onRegistered = jest.fn();
-    render(
-      <RegisterForm
-        registerUser={createRegisterUser(new FakeAuthPort())}
-        onRegistered={onRegistered}
-      />,
-    );
+    render(<RegisterForm registerUser={createRegisterUser(new FakeAuthPort())} />);
 
     fillForm('new@example.com', 'secret123');
     submit();
 
     expect(await screen.findByRole('heading', { name: 'Account created' })).toBeInTheDocument();
-    expect(onRegistered).toHaveBeenCalledWith(
-      expect.objectContaining({ email: 'new@example.com' }),
-    );
+    expect(screen.getByText(/Your account \(new@example\.com\) is ready\./)).toBeInTheDocument();
   });
 
   it('shows a friendly message when the email is already registered', async () => {

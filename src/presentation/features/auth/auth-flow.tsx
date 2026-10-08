@@ -1,7 +1,7 @@
 import { Button, Heading, Inline, Stack, Text } from '@raulrod/ui';
 import { useState, type ReactNode } from 'react';
+import { useSession } from '../../../app/providers/session-provider';
 import type { LoginUser, LogoutUser, RegisterUser } from '../../../application/commands';
-import type { AuthUser } from '../../../application/ports';
 import { toAppError } from '../../../shared/errors';
 import { describeLoginError } from './auth-error-messages';
 import { LoginForm } from './login-form';
@@ -16,8 +16,8 @@ export interface AuthFlowProps {
 }
 
 export function AuthFlow({ registerUser, loginUser, logoutUser }: AuthFlowProps): ReactNode {
+  const session = useSession();
   const [view, setView] = useState<AuthView>('sign-up');
-  const [user, setUser] = useState<AuthUser | null>(null);
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
 
@@ -33,7 +33,6 @@ export function AuthFlow({ registerUser, loginUser, logoutUser }: AuthFlowProps)
       const result = await logoutUser();
       switch (result.status) {
         case 'ok':
-          setUser(null);
           setView('sign-in');
           break;
         case 'error':
@@ -47,7 +46,19 @@ export function AuthFlow({ registerUser, loginUser, logoutUser }: AuthFlowProps)
     }
   }
 
-  if (user !== null) {
+  if (session.status === 'loading') {
+    return (
+      <Inline gap="space-2" align="center" justify="center">
+        <Text role="status" color="color.text.muted">
+          Restoring your session…
+        </Text>
+      </Inline>
+    );
+  }
+
+  if (session.status === 'authenticated') {
+    const user = session.user;
+
     return (
       <Stack gap="space-5">
         <Stack gap="space-2">
@@ -71,7 +82,7 @@ export function AuthFlow({ registerUser, loginUser, logoutUser }: AuthFlowProps)
   if (view === 'sign-in') {
     return (
       <Stack gap="space-4">
-        <LoginForm loginUser={loginUser} onLoggedIn={setUser} />
+        <LoginForm loginUser={loginUser} />
         <Inline gap="space-2" align="center" justify="center">
           <Text color="color.text.muted">New here?</Text>
           <Button type="button" variant="link" onClick={() => setView('sign-up')}>
@@ -84,7 +95,7 @@ export function AuthFlow({ registerUser, loginUser, logoutUser }: AuthFlowProps)
 
   return (
     <Stack gap="space-4">
-      <RegisterForm registerUser={registerUser} onRegistered={setUser} />
+      <RegisterForm registerUser={registerUser} />
       <Inline gap="space-2" align="center" justify="center">
         <Text color="color.text.muted">Already have an account?</Text>
         <Button type="button" variant="link" onClick={() => setView('sign-in')}>

@@ -30,3 +30,11 @@ El MVP necesita registro, login, logout y observación de sesión sin que Applic
 - Presentation seguirá sin acceder a Firebase: la composición (`app/providers`/`app/config`) será la única que llame a `getFirebaseAuth()` y `createFirebaseAuthAdapter`.
 - Si más adelante se necesita otro proveedor de auth, basta un adapter nuevo que implemente `AuthPort`.
 - `firebase-app.ts` queda sin consumidor hasta que TASK-011/TASK-012 conecten la UI; es la pieza mínima de composición necesaria para que el adapter sea utilizable.
+
+## Actualización (TASK-013)
+
+El tri-anticipado en el punto 3 se implementó como `createSessionStore(authPort)` en `src/application/services/`:
+
+- `SessionState` es una unión discriminada `loading | authenticated | anonymous` vive en Application, de modo que TASK-014 (auth guards) pueda evaluarla sin React.
+- El store se suscribe al puerto de forma perezosa (con el primer subscriber) y libera la suscripción con el último; conserva el último snapshot resuelto al remontar para evitar flicker de `loading` bajo `<StrictMode>`.
+- `getSnapshot()` devuelve siempre la misma referencia mientras el estado no cambie (requisito de `useSyncExternalStore`); Presentation lo consume mediante `SessionProvider`/`useSession` en `src/app/providers/`.

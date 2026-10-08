@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import styled from 'styled-components';
 import { createAuthServices } from './app/config/auth-services';
+import { SessionProvider } from './app/providers/session-provider';
 import { AuthFlow } from './presentation/features/auth/auth-flow';
 
 const Screen = styled.main`
@@ -22,11 +23,13 @@ function App() {
   return (
     <Screen>
       <Panel>
-        <AuthFlow
-          registerUser={authServices.registerUser}
-          loginUser={authServices.loginUser}
-          logoutUser={authServices.logoutUser}
-        />
+        <SessionProvider store={authServices.sessionStore}>
+          <AuthFlow
+            registerUser={authServices.registerUser}
+            loginUser={authServices.loginUser}
+            logoutUser={authServices.logoutUser}
+          />
+        </SessionProvider>
       </Panel>
     </Screen>
   );
