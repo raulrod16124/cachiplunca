@@ -1,6 +1,7 @@
-import { WORKSPACE_NAME_MAX_LENGTH, type Workspace } from '../../domain/workspace';
+import type { Workspace } from '../../domain/workspace';
 import { toAppError, type AppError } from '../../shared/errors';
 import type { WorkspaceRepository } from '../ports';
+import { validateWorkspaceName } from './validate-workspace-name';
 
 export interface CreateWorkspaceInput {
   readonly name: string;
@@ -23,11 +24,9 @@ export function validateCreateWorkspaceInput(
 ): CreateWorkspaceFieldErrors {
   const fieldErrors: CreateWorkspaceFieldErrors = {};
 
-  const name = input.name.trim();
-  if (name.length === 0) {
-    fieldErrors.name = 'Enter a workspace name.';
-  } else if (name.length > WORKSPACE_NAME_MAX_LENGTH) {
-    fieldErrors.name = `Workspace name must be at most ${WORKSPACE_NAME_MAX_LENGTH} characters.`;
+  const nameError = validateWorkspaceName(input.name);
+  if (nameError !== undefined) {
+    fieldErrors.name = nameError;
   }
 
   return fieldErrors;
