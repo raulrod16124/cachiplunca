@@ -711,7 +711,7 @@ Restaurar la sesión al recargar la aplicación sin listeners duplicados.
 
 ### TASK-014 — Auth guards
 
-**Priority:** P0 · **Depends:** TASK-013 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-013 · **Status:** DONE
 
 #### Objetivo
 
@@ -725,10 +725,10 @@ Proteger rutas y flujos que requieren autenticación.
 
 #### Criterios de aceptación
 
-- [ ] Un usuario anónimo no puede acceder a workspaces.
-- [ ] No hay redirecciones prematuras durante la restauración de sesión.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Un usuario anónimo no puede acceder a workspaces.
+- [x] No hay redirecciones prematuras durante la restauración de sesión.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 

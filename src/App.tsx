@@ -1,37 +1,22 @@
 import { useState } from 'react';
-import styled from 'styled-components';
+import { BrowserRouter } from 'react-router-dom';
 import { createAuthServices } from './app/config/auth-services';
+import { AppRoutes } from './app/routes/app-routes';
 import { SessionProvider } from './app/providers/session-provider';
-import { AuthFlow } from './presentation/features/auth/auth-flow';
-
-const Screen = styled.main`
-  min-height: 100dvh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-`;
-
-const Panel = styled.section`
-  width: 100%;
-  max-width: 420px;
-`;
 
 function App() {
   const [authServices] = useState(createAuthServices);
 
   return (
-    <Screen>
-      <Panel>
-        <SessionProvider store={authServices.sessionStore}>
-          <AuthFlow
-            registerUser={authServices.registerUser}
-            loginUser={authServices.loginUser}
-            logoutUser={authServices.logoutUser}
-          />
-        </SessionProvider>
-      </Panel>
-    </Screen>
+    <BrowserRouter>
+      <SessionProvider store={authServices.sessionStore}>
+        <AppRoutes
+          registerUser={authServices.registerUser}
+          loginUser={authServices.loginUser}
+          logoutUser={authServices.logoutUser}
+        />
+      </SessionProvider>
+    </BrowserRouter>
   );
 }
 

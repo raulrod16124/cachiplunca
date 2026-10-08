@@ -3,7 +3,11 @@ module.exports = {
   testEnvironment: 'jsdom',
   roots: ['<rootDir>/src'],
   testMatch: ['**/src/test/**/*.test.ts', '**/src/test/**/*.test.tsx'],
-  setupFilesAfterEnv: ['<rootDir>/src/test/setup/jest-dom.ts'],
+  setupFilesAfterEnv: [
+    // Must run before test modules import react-router (needs TextEncoder).
+    '<rootDir>/jest.setup.cjs',
+    '<rootDir>/src/test/setup/jest-dom.ts',
+  ],
   // @raulrod/* is ESM-only (exports with an "import" condition only), which the
   // CJS Jest resolver cannot see; map to the files and transpile them instead.
   moduleNameMapper: {
