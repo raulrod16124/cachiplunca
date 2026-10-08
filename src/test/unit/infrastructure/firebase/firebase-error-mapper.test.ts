@@ -28,6 +28,12 @@ describe('mapFirebaseError', () => {
     ['not-found', 'notFound', ERROR_CODES.NOT_FOUND_RESOURCE],
     ['unavailable', 'network', ERROR_CODES.NETWORK_REQUEST_FAILED],
     ['deadline-exceeded', 'network', ERROR_CODES.NETWORK_REQUEST_FAILED],
+    ['unauthenticated', 'authorization', ERROR_CODES.AUTH_UNAUTHENTICATED],
+    ['invalid-argument', 'validation', ERROR_CODES.VALIDATION_INVALID_INPUT],
+    ['resource-exhausted', 'persistence', ERROR_CODES.PERSISTENCE_UNAVAILABLE],
+    ['failed-precondition', 'persistence', ERROR_CODES.PERSISTENCE_WRITE_FAILED],
+    ['aborted', 'persistence', ERROR_CODES.PERSISTENCE_WRITE_FAILED],
+    ['cancelled', 'network', ERROR_CODES.NETWORK_REQUEST_FAILED],
   ])('maps %s to kind %s and code %s', (providerCode, kind, code) => {
     const cause = firebaseError(providerCode);
 

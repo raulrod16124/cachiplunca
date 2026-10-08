@@ -1,4 +1,5 @@
 import { getAuth, type Auth } from 'firebase/auth';
+import { getFirestore, type Firestore } from 'firebase/firestore';
 import { getApps, initializeApp, type FirebaseApp } from 'firebase/app';
 
 interface FirebaseWebConfig {
@@ -12,13 +13,24 @@ interface FirebaseWebConfig {
 }
 
 let cachedAuth: Auth | null = null;
+let cachedFirestore: Firestore | null = null;
 
 export function getFirebaseAuth(): Auth {
   if (cachedAuth === null) {
-    const app: FirebaseApp = getApps()[0] ?? initializeApp(readFirebaseConfig());
-    cachedAuth = getAuth(app);
+    cachedAuth = getAuth(getFirebaseApp());
   }
   return cachedAuth;
+}
+
+export function getFirebaseFirestore(): Firestore {
+  if (cachedFirestore === null) {
+    cachedFirestore = getFirestore(getFirebaseApp());
+  }
+  return cachedFirestore;
+}
+
+function getFirebaseApp(): FirebaseApp {
+  return getApps()[0] ?? initializeApp(readFirebaseConfig());
 }
 
 function readFirebaseConfig(): FirebaseWebConfig {

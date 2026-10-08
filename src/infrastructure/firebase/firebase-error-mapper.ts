@@ -68,6 +68,36 @@ const FIREBASE_ERROR_MAP: Readonly<Record<string, MappedError>> = {
     code: ERROR_CODES.NETWORK_REQUEST_FAILED,
     message: 'The request timed out.',
   },
+  unauthenticated: {
+    kind: 'authorization',
+    code: ERROR_CODES.AUTH_UNAUTHENTICATED,
+    message: 'You must be signed in to perform this action.',
+  },
+  'invalid-argument': {
+    kind: 'validation',
+    code: ERROR_CODES.VALIDATION_INVALID_INPUT,
+    message: 'The request data is not valid.',
+  },
+  'resource-exhausted': {
+    kind: 'persistence',
+    code: ERROR_CODES.PERSISTENCE_UNAVAILABLE,
+    message: 'The service is temporarily out of capacity.',
+  },
+  'failed-precondition': {
+    kind: 'persistence',
+    code: ERROR_CODES.PERSISTENCE_WRITE_FAILED,
+    message: 'The operation is not valid in the current state.',
+  },
+  aborted: {
+    kind: 'persistence',
+    code: ERROR_CODES.PERSISTENCE_WRITE_FAILED,
+    message: 'The operation was aborted and can be retried.',
+  },
+  cancelled: {
+    kind: 'network',
+    code: ERROR_CODES.NETWORK_REQUEST_FAILED,
+    message: 'The request was cancelled.',
+  },
 };
 
 export function mapFirebaseError(value: unknown): AppError {

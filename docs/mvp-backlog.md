@@ -840,7 +840,7 @@ Definir el port de persistencia de Workspace.
 
 ### TASK-018 — Firestore workspace repository
 
-**Priority:** P0 · **Depends:** TASK-017, TASK-009 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-017, TASK-009 · **Status:** DONE
 
 #### Objetivo
 
@@ -854,10 +854,10 @@ Implementar el repository de Workspace sobre Firestore.
 
 #### Criterios de aceptación
 
-- [ ] Lectura y escritura funcionan con Firebase.
-- [ ] El mapping está aislado y testeado.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Lectura y escritura funcionan con Firebase.
+- [x] El mapping está aislado y testeado.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -4756,6 +4756,14 @@ Añadir una entrada breve por sesión.
 - Decisiones: tri-estado modelado en Application (no en Presentation) para que TASK-014 (auth guards) pueda evaluarlo sin React; el store conserva el último snapshot resuelto al remontar para evitar flicker de `loading` bajo StrictMode; `FakeAuthPort` gana `activeSessionListenerCount()` y `emitSessionError()` como apoyo de tests.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-014 (Auth guards).
+
+## 2026-10-08 — TASK-018
+
+- Resultado: Repository de Workspace sobre Firestore. `createFirebaseWorkspaceRepository(db)` en `src/infrastructure/firebase/firebase-workspace-repository.ts` (factory + DI, patrón de ADR-0002) cumple el contrato de ADR-0005: id auto-generado con `doc(collection)`, `setDoc` en creación, `updateDoc` parcial (last-write-wins por propiedad), prechequeo de existencia en `update`/`delete` (el `deleteDoc` de Firestore es silencioso con ids inexistentes) y traducción de errores con `mapFirebaseError` ampliado con códigos Firestore (`unauthenticated`, `invalid-argument`, `resource-exhausted`, `failed-precondition`, `aborted`, `cancelled`). Mapper puro `firebase-workspace-mapper.ts` (sin import del SDK; acepta `Date` y `Timestamp`-like vía `toDate()`, id solo en la ruta del documento). `getFirebaseFirestore()` añadido en `firebase-app.ts`. Nada se compone todavía: el wiring llega con TASK-019+.
+- Tests/quality gates: 257 tests pasan (25 suites, +29); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit` y `npm run build` en verde. La suite de contrato se extrajo a `src/test/contract/workspace-repository-contract.ts` y se ejecuta contra el fake y contra el adapter con `firebase/firestore` mockeado por un Firestore en memoria fiel (`src/test/fixtures/in-memory-firestore.ts`: `deleteDoc` idempotente, `updateDoc` → `not-found`). Smoke manual contra Firebase real pendiente de verificación con `npm run dev` (no se ejecuta para no tocar el proyecto real).
+- Decisiones: (1) el test de "instancias independientes" sale del contrato compartido porque era semántica del fake —dos adapters sobre el mismo `db` deben compartir datos— y se mantiene como test específico del fake; (2) las fechas se persisten como `Date` (el SDK las convierte a `Timestamp`) para mantener el mapper puro y testeable sin mock del SDK; (3) los fallos de mapping de un documento guardado se traducen a `validation`+`VALIDATION_INVALID_INPUT` con `cause`, igual que el resto de invariantes de dominio. Ver ADR-0006.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-019 (CreateWorkspace use case).
 
 ---
 
