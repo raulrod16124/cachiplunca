@@ -743,7 +743,7 @@ Proteger rutas y flujos que requieren autenticación.
 
 ### TASK-015 — Workspace entity
 
-**Priority:** P0 · **Depends:** TASK-005 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-005 · **Status:** DONE
 
 #### Objetivo
 
@@ -774,7 +774,7 @@ Definir la entidad Workspace y sus invariantes de dominio.
 
 ### TASK-016 — Membership entity
 
-**Priority:** P0 · **Depends:** TASK-005 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-005 · **Status:** DONE
 
 #### Objetivo
 
