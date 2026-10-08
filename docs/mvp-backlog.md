@@ -644,7 +644,7 @@ Implementar el registro mediante email/password sobre el port de autenticación.
 
 ### TASK-012 — Login/logout
 
-**Priority:** P0 · **Depends:** TASK-010 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-010 · **Status:** DONE
 
 #### Objetivo
 
@@ -659,11 +659,11 @@ Implementar login y logout con estados explícitos de carga, éxito y error.
 
 #### Criterios de aceptación
 
-- [ ] Credenciales válidas abren el estado autenticado.
-- [ ] Credenciales inválidas no autentican.
-- [ ] Logout limpia la sesión.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Credenciales válidas abren el estado autenticado.
+- [x] Credenciales inválidas no autentican.
+- [x] Logout limpia la sesión.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -4740,6 +4740,14 @@ Añadir una entrada breve por sesión.
 - Nota: se corrigió el import de `@raulrod/tokens/styles.css` en `main.tsx` (sin él no se definían las variables `--rr-*` y la UI renderizaba sin formato); `@raulrod/tokens` pasa a ser dependencia directa.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-012 (Login/logout).
+
+## 2026-10-08 — TASK-012
+
+- Resultado: Login/logout de punta a punta sin tocar Infrastructure (el adapter ya exponía `signIn`/`signOut` y el mapper ya traducía `auth/invalid-credential`). Casos de uso `createLoginUser` y `createLogoutUser` en `src/application/commands/` con resultado discriminado; `describeLoginError` comparte con `describeRegisterError` el mapeo de fallos de red/persistencia; `LoginForm` con `@raulrod/ui`; `AuthFlow` en `src/presentation/features/auth/` compone sign-up, sign-in y estado autenticado con DI de casos de uso (testeable con `FakeAuthPort`); `App.tsx` solo compone servicios.
+- Tests/quality gates: 126 tests pasan (13 suites); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit` y `npm run build` en verde. Smoke manual con `npm run dev` pendiente (no se crean usuarios reales desde el agente).
+- Decisiones: vista inicial en `sign-up` para conservar el landing de TASK-011 y retorno a `sign-in` tras logout; el login valida email y password no vacío sin longitud mínima (la valida el servidor); los errores de credenciales se muestran como mensaje amigable, nunca el código del provider.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-013 (Restauración de sesión).
 
 ---
 

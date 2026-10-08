@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import styled from 'styled-components';
 import { createAuthServices } from './app/config/auth-services';
-import { RegisterForm } from './presentation/features/auth/register-form';
+import { AuthFlow } from './presentation/features/auth/auth-flow';
 
 const Screen = styled.main`
   min-height: 100dvh;
@@ -22,7 +22,11 @@ function App() {
   return (
     <Screen>
       <Panel>
-        <RegisterForm registerUser={authServices.registerUser} />
+        <AuthFlow
+          registerUser={authServices.registerUser}
+          loginUser={authServices.loginUser}
+          logoutUser={authServices.logoutUser}
+        />
       </Panel>
     </Screen>
   );
