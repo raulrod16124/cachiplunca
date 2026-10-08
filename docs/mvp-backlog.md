@@ -983,7 +983,7 @@ Completar **UpdateWorkspace use case** dejando un resultado verificable y apto p
 
 ### TASK-022 — DeleteWorkspace use case
 
-**Priority:** P0 · **Depends:** TASK-017 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-017 · **Status:** DONE
 
 #### Objetivo
 
@@ -999,12 +999,12 @@ Completar **DeleteWorkspace use case** dejando un resultado verificable y apto p
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Puede probarse con ports fake sin Firebase.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Puede probarse con ports fake sin Firebase.
 
 #### Fuera de alcance
 
