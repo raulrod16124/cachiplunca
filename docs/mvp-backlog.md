@@ -807,7 +807,7 @@ Definir Membership y el modelo de roles del MVP.
 
 ### TASK-017 — Workspace repository port
 
-**Priority:** P0 · **Depends:** TASK-015 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-015 · **Status:** DONE
 
 #### Objetivo
 
@@ -820,10 +820,10 @@ Definir el port de persistencia de Workspace.
 
 #### Criterios de aceptación
 
-- [ ] Los casos de uso no conocen Firestore.
-- [ ] El port puede probarse con un fake.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Los casos de uso no conocen Firestore.
+- [x] El port puede probarse con un fake.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
