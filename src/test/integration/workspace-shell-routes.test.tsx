@@ -48,6 +48,23 @@ async function renderAuthenticatedApp(initialPath = '/workspaces') {
 }
 
 describe('workspace shell routes', () => {
+  beforeAll(() => {
+    if (!('setPointerCapture' in Element.prototype)) {
+      Object.defineProperty(Element.prototype, 'setPointerCapture', {
+        value: jest.fn(),
+        configurable: true,
+      });
+      Object.defineProperty(Element.prototype, 'hasPointerCapture', {
+        value: jest.fn().mockReturnValue(true),
+        configurable: true,
+      });
+      Object.defineProperty(Element.prototype, 'releasePointerCapture', {
+        value: jest.fn(),
+        configurable: true,
+      });
+    }
+  });
+
   it('navigates to the workspace shell when clicking Open on a workspace card', async () => {
     const { workspace } = await renderAuthenticatedApp();
 
@@ -58,7 +75,7 @@ describe('workspace shell routes', () => {
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Roadmap Q4' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('Canvas ready')).toBeInTheDocument();
+    expect(screen.getByRole('application', { name: 'Canvas' })).toBeInTheDocument();
     expect(screen.getByTestId('location')).toHaveTextContent(`/workspaces/${workspace.id.value}`);
   });
 

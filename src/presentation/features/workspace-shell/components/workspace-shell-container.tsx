@@ -1,9 +1,12 @@
 import { Button, Heading, Inline, Skeleton, Stack, Text, VisuallyHidden } from '@raulrod/ui';
 import type { ReactNode } from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import type { LogoutUser } from '../../../../application/commands';
 import type { GetWorkspace, GetWorkspaceResult } from '../../../../application/queries';
+import { createCanvasViewportStore } from '../../../../application/services';
+import type { CanvasViewportStore } from '../../../../application/services';
+import { Size } from '../../../../domain/shared';
 import { toAppError } from '../../../../shared/errors';
 import { WorkspaceShellLayout } from './workspace-shell-layout';
 import { describeGetWorkspaceError } from '../workspace-error-messages';
@@ -27,6 +30,9 @@ export function WorkspaceShellContainer({
 }: WorkspaceShellContainerProps): ReactNode {
   const [status, setStatus] = useState<'loading' | 'notFound' | 'error' | 'success'>('loading');
   const [result, setResult] = useState<GetWorkspaceResult | null>(null);
+  const canvasViewportStoreRef = useRef<CanvasViewportStore>(
+    createCanvasViewportStore(Size.create(800, 600)),
+  );
 
   const fetchWorkspace = useCallback(async (): Promise<void> => {
     setStatus('loading');
@@ -100,7 +106,12 @@ export function WorkspaceShellContainer({
 
   if (result?.status === 'ok') {
     return (
-      <WorkspaceShellLayout workspace={result.workspace} logoutUser={logoutUser} onBack={onBack} />
+      <WorkspaceShellLayout
+        workspace={result.workspace}
+        logoutUser={logoutUser}
+        onBack={onBack}
+        canvasViewportStore={canvasViewportStoreRef.current}
+      />
     );
   }
 

@@ -49,6 +49,14 @@ export class Viewport {
     return Position.create(x, y);
   }
 
+  pan(screenDelta: Position): Viewport {
+    const inverseScale = 1 / this._transform.scale;
+    const worldDelta = screenDelta.scale(inverseScale);
+    const newTranslation = this._transform.translation.subtract(worldDelta);
+
+    return Viewport.create(this._transform.withTranslation(newTranslation), this._size);
+  }
+
   equals(other: Viewport): boolean {
     return this._transform.equals(other._transform) && this._size.equals(other._size);
   }

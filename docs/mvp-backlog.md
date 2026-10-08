@@ -1182,7 +1182,7 @@ Definir Transform y Viewport para representar la cámara del canvas.
 
 ### TASK-028 — Coordinate transformations
 
-**Priority:** P0 · **Depends:** TASK-027 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-027 · **Status:** DONE
 
 #### Objetivo
 
@@ -1196,10 +1196,10 @@ Implementar transformaciones puras entre coordenadas de mundo y pantalla.
 
 #### Criterios de aceptación
 
-- [ ] Las conversiones son inversas dentro de la precisión esperada.
-- [ ] No dependen del DOM.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Las conversiones son inversas dentro de la precisión esperada.
+- [x] No dependen del DOM.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -1214,7 +1214,7 @@ Implementar transformaciones puras entre coordenadas de mundo y pantalla.
 
 ### TASK-029 — Pan
 
-**Priority:** P0 · **Depends:** TASK-028 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-028 · **Status:** DONE
 
 #### Objetivo
 
@@ -1229,12 +1229,12 @@ Completar **Pan** dejando un resultado verificable y apto para las tareas depend
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 

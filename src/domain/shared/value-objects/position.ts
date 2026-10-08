@@ -39,6 +39,11 @@ export class Position {
     return new Position(this._x - other._x, this._y - other._y);
   }
 
+  scale(factor: number): Position {
+    Position.validateCoordinate(factor, 'factor');
+    return new Position(this._x * factor, this._y * factor);
+  }
+
   equals(other: Position): boolean {
     return this._x === other._x && this._y === other._y;
   }

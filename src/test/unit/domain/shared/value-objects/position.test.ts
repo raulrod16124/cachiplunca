@@ -46,10 +46,31 @@ describe('Position', () => {
   });
 
   it('subtracts two positions', () => {
-    const a = Position.create(5, 5);
+    const a = Position.create(5, 8);
     const b = Position.create(2, 3);
 
-    expect(a.subtract(b)).toEqual(Position.create(3, 2));
+    expect(a.subtract(b)).toEqual(Position.create(3, 5));
+  });
+
+  it('scales both coordinates', () => {
+    const position = Position.create(4, 6);
+
+    expect(position.scale(2)).toEqual(Position.create(8, 12));
+  });
+
+  it('scales by fractional factors', () => {
+    const position = Position.create(10, 20);
+
+    expect(position.scale(0.5)).toEqual(Position.create(5, 10));
+  });
+
+  it('throws when scale factor is not finite', () => {
+    expect(() => Position.create(1, 2).scale(NaN)).toThrow(
+      'Position factor must be a finite number',
+    );
+    expect(() => Position.create(1, 2).scale(Infinity)).toThrow(
+      'Position factor must be a finite number',
+    );
   });
 
   it('compares equality correctly', () => {

@@ -1,10 +1,12 @@
-import { Button, Heading, Inline, Stack, Text } from '@raulrod/ui';
+import { Button, Heading, Inline, Text } from '@raulrod/ui';
 import { ArrowLeft } from '@raulrod/icons';
 import type { ReactNode } from 'react';
 import styled from 'styled-components';
 import type { Workspace } from '../../../../domain/workspace';
 import { SignOutButton } from '../../auth/sign-out-button';
 import type { LogoutUser } from '../../../../application/commands';
+import type { CanvasViewportStore } from '../../../../application/services';
+import { Canvas } from '../../../canvas';
 
 const Shell = styled.div`
   display: flex;
@@ -20,30 +22,22 @@ const Header = styled.header`
 const CanvasArea = styled.main`
   flex: 1 1 auto;
   background: var(--rr-color-background-default, #f8fafc);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const PlaceholderCard = styled.div`
-  background: var(--rr-color-background-surface, #fff);
-  border: 1px dashed var(--rr-color-border-default, #e2e8f0);
-  border-radius: var(--rr-radius-md, 8px);
-  padding: 48px;
-  text-align: center;
-  max-width: 480px;
+  position: relative;
+  overflow: hidden;
 `;
 
 export interface WorkspaceShellLayoutProps {
   readonly workspace: Workspace;
   readonly logoutUser: LogoutUser;
   readonly onBack: () => void;
+  readonly canvasViewportStore: CanvasViewportStore;
 }
 
 export function WorkspaceShellLayout({
   workspace,
   logoutUser,
   onBack,
+  canvasViewportStore,
 }: WorkspaceShellLayoutProps): ReactNode {
   return (
     <Shell>
@@ -68,14 +62,7 @@ export function WorkspaceShellLayout({
         </Inline>
       </Header>
       <CanvasArea>
-        <PlaceholderCard>
-          <Stack gap="space-3">
-            <Heading as="h2">Canvas ready</Heading>
-            <Text color="color.text.muted">
-              This is where your shared visual plan will take shape.
-            </Text>
-          </Stack>
-        </PlaceholderCard>
+        <Canvas store={canvasViewportStore} />
       </CanvasArea>
     </Shell>
   );

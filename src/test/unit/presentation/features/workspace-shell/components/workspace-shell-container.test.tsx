@@ -37,6 +37,23 @@ describe('WorkspaceShellContainer', () => {
     jest.clearAllMocks();
   });
 
+  beforeAll(() => {
+    if (!('setPointerCapture' in Element.prototype)) {
+      Object.defineProperty(Element.prototype, 'setPointerCapture', {
+        value: jest.fn(),
+        configurable: true,
+      });
+      Object.defineProperty(Element.prototype, 'hasPointerCapture', {
+        value: jest.fn().mockReturnValue(true),
+        configurable: true,
+      });
+      Object.defineProperty(Element.prototype, 'releasePointerCapture', {
+        value: jest.fn(),
+        configurable: true,
+      });
+    }
+  });
+
   it('renders a loading state while fetching the workspace', () => {
     const getWorkspace = jest.fn().mockImplementation(
       () =>
@@ -58,7 +75,7 @@ describe('WorkspaceShellContainer', () => {
     expect(await screen.findByRole('heading', { name: 'Roadmap Q4' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Back to workspaces' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
-    expect(screen.getByText('Canvas ready')).toBeInTheDocument();
+    expect(screen.getByRole('application', { name: 'Canvas' })).toBeInTheDocument();
     expect(getWorkspace).toHaveBeenCalledWith('ws-test');
   });
 
