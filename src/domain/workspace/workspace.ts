@@ -1,5 +1,7 @@
 import { WorkspaceId } from '../shared/value-objects/workspace-id';
 
+export const WORKSPACE_NAME_MAX_LENGTH = 100;
+
 export interface WorkspaceProps {
   readonly id: WorkspaceId;
   readonly name: string;
@@ -71,7 +73,7 @@ export class Workspace {
     if (trimmed.length === 0) {
       throw new Error('Workspace name cannot be empty');
     }
-    if (trimmed.length > 100) {
+    if (trimmed.length > WORKSPACE_NAME_MAX_LENGTH) {
       throw new Error('Workspace name cannot exceed 100 characters');
     }
     return trimmed;
