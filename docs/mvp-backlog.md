@@ -1151,7 +1151,7 @@ Definir los value objects geométricos base del canvas.
 
 ### TASK-027 — Transform y Viewport
 
-**Priority:** P0 · **Depends:** TASK-026 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-026 · **Status:** DONE
 
 #### Objetivo
 
@@ -1164,10 +1164,10 @@ Definir Transform y Viewport para representar la cámara del canvas.
 
 #### Criterios de aceptación
 
-- [ ] Permiten convertir entre espacio mundo y pantalla.
-- [ ] No dependen de React.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Permiten convertir entre espacio mundo y pantalla.
+- [x] No dependen de React.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
