@@ -1249,7 +1249,7 @@ Completar **Pan** dejando un resultado verificable y apto para las tareas depend
 
 ### TASK-030 — Zoom
 
-**Priority:** P0 · **Depends:** TASK-028 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-028 · **Status:** DONE
 
 #### Objetivo
 
@@ -1264,11 +1264,11 @@ Implementar zoom centrado en el punto de interacción.
 
 #### Criterios de aceptación
 
-- [ ] No genera escalas inválidas.
-- [ ] La experiencia mantiene estable el punto de referencia.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] No genera escalas inválidas.
+- [x] La experiencia mantiene estable el punto de referencia.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -4780,6 +4780,14 @@ Añadir una entrada breve por sesión.
 - Decisiones: diálogo controlado por `WorkspacesPage` (los dos triggers deben compartir un único diálogo) sin `Dialog.Trigger` porque este renderiza un `<button>` sin estilos de `@raulrod/ui` y no admite `asChild`; el reset de campos se hace al abrir (no al cerrar) para que un cierre accidental no filtre datos a la siguiente apertura.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-025 (Workspace shell).
+
+## 2026-10-09 — TASK-030
+
+- Resultado: Zoom centrado en el cursor de punta a punta. `Viewport.zoom(factor, anchorScreen)` en `src/domain/shared/value-objects/viewport.ts`: conserva el punto de anclaje mediante `worldAnchor - anchorScreen / newScale` y valida que el factor sea finito y mayor que cero. `CanvasViewportStore` gana `zoom(factor, anchorScreen)` con clamp de escala en `[0.1, 5]` (`MIN_CANVAS_SCALE`/`MAX_CANVAS_SCALE`) y no-op silencioso al alcanzar un límite (el `publish` compara con `equals`). Hook `useZoom` en `src/presentation/canvas/hooks/use-zoom.ts`: `Ctrl/Cmd + wheel`, `preventDefault` para no robar el scroll de página, `factor = exp(±sensitivity)` (por defecto 0.15) y anclaje en coordenadas locales del contenedor vía `getBoundingClientRect`. `Canvas` combina los refs de `usePan` y `useZoom` con un callback ref y expone `data-scale` como estado de zoom; el hint pasa a "Drag to pan · Ctrl/Cmd + scroll to zoom".
+- Tests/quality gates: 455 tests pasan (46 suites, +27: 10 de `Viewport.zoom`, 6 del store, 8 de `useZoom`, 2 de integración del canvas por rueda y 1 del hint actualizado); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente). Smoke manual con `npm run dev` pendiente.
+- Decisiones: (1) `Ctrl/Cmd + wheel` en lugar de wheel directo para no interceptar el scroll de página y dejar `wheel` libre para un pan vertical futuro; (2) límites `0.1x–5x` aplicados en Application (fuente de verdad del viewport) y no en el value object, que solo valida la positividad/finitud del factor; (3) sin pinch-to-zoom táctil ni indicador de porcentaje de zoom en esta tarea (fuera de alcance; el porcentaje corresponde a TASK-031/TASK-106); (4) sin ADR por ser una decisión local de interacción, no arquitectónica.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-031 (Reset/fit view).
 
 ---
 

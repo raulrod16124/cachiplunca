@@ -1,11 +1,19 @@
 import { Position, Size, Viewport } from '../../domain/shared';
 import type { Unsubscribe } from '../../shared/types';
 
+export const MIN_CANVAS_SCALE = 0.1;
+export const MAX_CANVAS_SCALE = 5;
+
 export interface CanvasViewportStore {
   readonly getSnapshot: () => Viewport;
   readonly subscribe: (onChange: () => void) => Unsubscribe;
   readonly pan: (screenDelta: Position) => void;
+  readonly zoom: (factor: number, anchorScreen: Position) => void;
   readonly reset: (size?: Size) => void;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
 }
 
 export function createCanvasViewportStore(
@@ -34,6 +42,11 @@ export function createCanvasViewportStore(
     },
     pan(screenDelta) {
       publish(viewport.pan(screenDelta));
+    },
+    zoom(factor, anchorScreen) {
+      const currentScale = viewport.scale;
+      const targetScale = clamp(currentScale * factor, MIN_CANVAS_SCALE, MAX_CANVAS_SCALE);
+      publish(viewport.zoom(targetScale / currentScale, anchorScreen));
     },
     reset(size) {
       publish(Viewport.default(size ?? viewport.size));

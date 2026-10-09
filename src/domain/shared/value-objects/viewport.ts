@@ -57,6 +57,31 @@ export class Viewport {
     return Viewport.create(this._transform.withTranslation(newTranslation), this._size);
   }
 
+  zoom(factor: number, anchorScreen: Position): Viewport {
+    Viewport.validateZoomFactor(factor);
+
+    const newScale = this._transform.scale * factor;
+    const worldAnchor = this.screenToWorld(anchorScreen);
+    const newTranslation = Position.create(
+      worldAnchor.x - anchorScreen.x / newScale,
+      worldAnchor.y - anchorScreen.y / newScale,
+    );
+
+    return Viewport.create(
+      this._transform.withScale(newScale).withTranslation(newTranslation),
+      this._size,
+    );
+  }
+
+  private static validateZoomFactor(factor: number): void {
+    if (!Number.isFinite(factor)) {
+      throw new Error('Zoom factor must be a finite number');
+    }
+    if (factor <= 0) {
+      throw new Error('Zoom factor must be greater than zero');
+    }
+  }
+
   equals(other: Viewport): boolean {
     return this._transform.equals(other._transform) && this._size.equals(other._size);
   }

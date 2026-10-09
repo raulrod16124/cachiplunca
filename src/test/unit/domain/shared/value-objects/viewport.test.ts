@@ -215,4 +215,85 @@ describe('Viewport', () => {
       height: 600,
     });
   });
+
+  describe('zoom', () => {
+    it('increases scale when factor is greater than 1', () => {
+      const viewport = Viewport.default(Size.create(800, 600));
+      const zoomed = viewport.zoom(2, Position.create(0, 0));
+
+      expect(zoomed.scale).toBe(2);
+    });
+
+    it('decreases scale when factor is between 0 and 1', () => {
+      const viewport = Viewport.create(
+        Transform.create(Position.create(0, 0), 2),
+        Size.create(800, 600),
+      );
+      const zoomed = viewport.zoom(0.5, Position.create(0, 0));
+
+      expect(zoomed.scale).toBe(1);
+    });
+
+    it('keeps the anchor point stable on screen after zooming in', () => {
+      const viewport = Viewport.default(Size.create(800, 600));
+      const anchor = Position.create(200, 150);
+      const zoomed = viewport.zoom(2, anchor);
+
+      const screenAnchorAfterZoom = zoomed.worldToScreen(viewport.screenToWorld(anchor));
+      expect(screenAnchorAfterZoom.x).toBeCloseTo(anchor.x);
+      expect(screenAnchorAfterZoom.y).toBeCloseTo(anchor.y);
+    });
+
+    it('keeps the anchor point stable on screen after zooming out', () => {
+      const viewport = Viewport.create(
+        Transform.create(Position.create(0, 0), 2),
+        Size.create(800, 600),
+      );
+      const anchor = Position.create(400, 300);
+      const zoomed = viewport.zoom(0.5, anchor);
+
+      const screenAnchorAfterZoom = zoomed.worldToScreen(viewport.screenToWorld(anchor));
+      expect(screenAnchorAfterZoom.x).toBeCloseTo(anchor.x);
+      expect(screenAnchorAfterZoom.y).toBeCloseTo(anchor.y);
+    });
+
+    it('preserves viewport size', () => {
+      const viewport = Viewport.default(Size.create(1024, 768));
+      const zoomed = viewport.zoom(2, Position.create(100, 100));
+
+      expect(zoomed.size).toEqual(Size.create(1024, 768));
+    });
+
+    it('does not mutate the original viewport', () => {
+      const viewport = Viewport.default(Size.create(800, 600));
+      viewport.zoom(2, Position.create(100, 100));
+
+      expect(viewport.scale).toBe(1);
+      expect(viewport.transform.translation).toEqual(Position.create(0, 0));
+    });
+
+    it('throws when zoom factor is zero', () => {
+      const viewport = Viewport.default(Size.create(800, 600));
+
+      expect(() => viewport.zoom(0, Position.create(100, 100))).toThrow(
+        'Zoom factor must be greater than zero',
+      );
+    });
+
+    it('throws when zoom factor is negative', () => {
+      const viewport = Viewport.default(Size.create(800, 600));
+
+      expect(() => viewport.zoom(-1, Position.create(100, 100))).toThrow(
+        'Zoom factor must be greater than zero',
+      );
+    });
+
+    it('throws when zoom factor is not finite', () => {
+      const viewport = Viewport.default(Size.create(800, 600));
+
+      expect(() => viewport.zoom(NaN, Position.create(100, 100))).toThrow(
+        'Zoom factor must be a finite number',
+      );
+    });
+  });
 });

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Size } from '../../../../../domain/shared';
 import { createCanvasViewportStore } from '../../../../../application/services';
@@ -27,7 +27,7 @@ describe('Canvas', () => {
     render(<Canvas store={store} />);
 
     expect(screen.getByRole('application', { name: 'Canvas' })).toBeInTheDocument();
-    expect(screen.getByText('Drag to pan around the workspace')).toBeInTheDocument();
+    expect(screen.getByText('Drag to pan · Ctrl/Cmd + scroll to zoom')).toBeInTheDocument();
   });
 
   it('pans the viewport when dragging', async () => {
@@ -59,5 +59,27 @@ describe('Canvas', () => {
     ]);
 
     expect(canvas).toHaveAttribute('data-panning', 'false');
+  });
+
+  it('zooms the viewport on ctrl + wheel', () => {
+    const store = createCanvasViewportStore(Size.create(800, 600));
+    render(<Canvas store={store} />);
+    const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+    fireEvent.wheel(canvas, { ctrlKey: true, deltaY: -100, clientX: 200, clientY: 150 });
+
+    const world = canvas.firstChild as HTMLElement;
+    expect(world.style.transform).not.toContain('scale(1)');
+    expect(Number(canvas.getAttribute('data-scale'))).toBeGreaterThan(1);
+  });
+
+  it('does not zoom on a plain wheel', () => {
+    const store = createCanvasViewportStore(Size.create(800, 600));
+    render(<Canvas store={store} />);
+    const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+    fireEvent.wheel(canvas, { deltaY: -100 });
+
+    expect(Number(canvas.getAttribute('data-scale'))).toBe(1);
   });
 });

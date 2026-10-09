@@ -1,8 +1,9 @@
-import type { ReactElement, RefObject } from 'react';
-import { useSyncExternalStore } from 'react';
+import type { ReactElement } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 import styled from 'styled-components';
 import type { CanvasViewportStore } from '../../../application/services';
 import { usePan } from '../hooks/use-pan';
+import { useZoom } from '../hooks/use-zoom';
 
 const CanvasContainer = styled.div`
   position: relative;
@@ -54,7 +55,16 @@ export interface CanvasProps {
 
 export function Canvas({ store }: CanvasProps): ReactElement {
   const viewport = useSyncExternalStore(store.subscribe, store.getSnapshot);
-  const { isPanning, ref } = usePan({ onPan: store.pan });
+  const { isPanning, ref: panRef } = usePan({ onPan: store.pan });
+  const { ref: zoomRef } = useZoom({ onZoom: store.zoom });
+
+  const setContainerRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      panRef.current = node;
+      zoomRef.current = node;
+    },
+    [panRef, zoomRef],
+  );
 
   const transform = viewport.transform;
   const translateX = -transform.x * transform.scale;
@@ -62,11 +72,12 @@ export function Canvas({ store }: CanvasProps): ReactElement {
 
   return (
     <CanvasContainer
-      ref={ref as RefObject<HTMLDivElement>}
+      ref={setContainerRef}
       role="application"
       aria-label="Canvas"
       aria-grabbed={isPanning}
       data-panning={isPanning}
+      data-scale={transform.scale}
     >
       <World
         style={{
@@ -74,7 +85,7 @@ export function Canvas({ store }: CanvasProps): ReactElement {
         }}
       >
         <Grid />
-        <Hint>Drag to pan around the workspace</Hint>
+        <Hint>Drag to pan · Ctrl/Cmd + scroll to zoom</Hint>
       </World>
     </CanvasContainer>
   );
