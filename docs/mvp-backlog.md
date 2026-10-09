@@ -1454,7 +1454,7 @@ Completar **Drag selection** dejando un resultado verificable y apto para las ta
 
 ### TASK-036 — Selection keyboard interactions
 
-**Priority:** P0 · **Depends:** TASK-034 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-034 · **Status:** DONE
 
 #### Objetivo
 
@@ -1469,13 +1469,13 @@ Completar **Selection keyboard interactions** dejando un resultado verificable y
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
-- [ ] La interacción principal es navegable con teclado y mantiene foco predecible.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] La interacción principal es navegable con teclado y mantiene foco predecible.
 
 #### Fuera de alcance
 
@@ -4820,6 +4820,14 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) **drag plano = marquee** y el pan pasa a **Space+drag**, **botón central** y **rueda plana** (antes el wheel plano era no-op); `Ctrl/Cmd+wheel` sigue siendo zoom — cambio de binding sin ADR por precedente local (TASK-029/030/031/033/034); (2) el módulo de marquee es aditivo con `Shift`/`Ctrl`/`Cmd` y usa **unión** (`addMany`), mientras el rect no aditivo **reemplaza** (`selectMany`); (3) un click (con o sin modificador) en vacío siempre limpia, de modo que `useSelection` delega el manejo del vacío al marquee; (4) la selección es estado efímero de interacción en Application (mismo patrón que el viewport), no dominio ni persistencia; (5) la semántica de conjuntos vive en el store y el modificador se resuelve en Presentation; (6) sin ADR por ser una decisión local de interacción.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-036 (Selection keyboard interactions).
+
+## 2026-10-09 — TASK-036
+
+- Resultado: Selection keyboard interactions de punta a punta y desacopladas de la persistencia. En Application (React-free): `resolveSelectionKeyCommand({ key, ctrlKey, metaKey, altKey })` en `src/application/services/selection-keyboard.ts` con `SelectionKeyCommand = 'clear' | 'select-all' | null` (Escape → clear; Ctrl/Cmd+A case-insensitive → select-all; Alt desactiva el atajo). En Presentation: hook `useSelectionKeyboard` en `src/presentation/canvas/hooks/use-selection-keyboard.ts` (listener `keydown` en el contenedor, no en `window`, con `latestRef` para no re-registrar; ignora `event.repeat` y targets editables; `preventDefault()` al resolver comando; cleanup al desmontar) que emite `onClear`/`onSelectAll(allIds)`. `Canvas` pasa a ser focusable (`tabIndex={0}`, ya tenía `role="application"`), añade `aria-keyshortcuts="Escape Control+A Meta+A"`, outline de `:focus-visible`, cablea el hook (`allIds`, `clear`, `selectMany`) y amplía el hint con "Esc to clear · Ctrl/Cmd + A to select all".
+- Tests/quality gates: 586 tests pasan (54 suites, +22: 7 de `resolveSelectionKeyCommand`, 10 de `useSelectionKeyboard` y 5 de integración en `canvas` —focusable/aria, Escape limpia con foco en el canvas, Ctrl+A y Cmd+A seleccionan todo, e ignora comandos sin foco—); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente). Smoke manual con `npm run dev` pendiente.
+- Decisiones: (1) alcance de teclado limitado a comandos de selección a nivel de canvas (Escape/select-all); la navegación con flechas y el foco por ítem se difieren a TASK-109 (Keyboard navigation) y TASK-110 (Focus management) para no duplicar alcance; (2) la semántica tecla→comando vive en Application (testeable sin React/DOM) y la detección de target editable/DOM en Presentation, coherente con TASK-029→035; (3) listener en el contenedor en vez de `window` para no interferir con formularios y exigir foco en el canvas (a diferencia de `useSpacePressed`, que sí es global); (4) `preventDefault` de Ctrl/Cmd+A evita el "seleccionar todo" del navegador; (5) sin ADR por ser una decisión local de interacción.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-037 (BaseElement).
 
 ---
 

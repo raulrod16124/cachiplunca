@@ -11,3 +11,8 @@ export type {
   UseDragSelectionResult,
 } from './use-drag-selection';
 export { useSpacePressed } from './use-space-pressed';
+export { useSelectionKeyboard } from './use-selection-keyboard';
+export type {
+  UseSelectionKeyboardOptions,
+  UseSelectionKeyboardResult,
+} from './use-selection-keyboard';

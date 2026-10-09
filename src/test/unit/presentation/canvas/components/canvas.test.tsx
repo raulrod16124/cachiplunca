@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Bounds, Position, Size } from '../../../../../domain/shared';
 import type { SelectableItem } from '../../../../../application/services';
@@ -50,8 +50,18 @@ describe('Canvas', () => {
 
     expect(screen.getByRole('application', { name: 'Canvas' })).toBeInTheDocument();
     expect(
-      screen.getByText('Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom'),
+      screen.getByText(
+        'Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all',
+      ),
     ).toBeInTheDocument();
+  });
+
+  it('exposes the canvas as a focusable region with keyboard shortcuts', () => {
+    renderCanvas();
+
+    const canvas = screen.getByRole('application', { name: 'Canvas' });
+    expect(canvas).toHaveAttribute('tabindex', '0');
+    expect(canvas).toHaveAttribute('aria-keyshortcuts', 'Escape Control+A Meta+A');
   });
 
   it('renders an infinite grid aligned to the world origin', () => {
@@ -385,6 +395,58 @@ describe('Canvas', () => {
       await user.keyboard('{/Shift}');
 
       expect(selectionStore.getSnapshot().selectedIds).toEqual(['first', 'second']);
+    });
+
+    it('clears the selection with Escape when the canvas is focused', async () => {
+      const { selectionStore } = renderCanvas([FIRST_ITEM, SECOND_ITEM]);
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const user = userEvent.setup();
+
+      await user.pointer({ keys: '[MouseLeft>]', target: canvas, coords: { x: 150, y: 130 } });
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['first']);
+
+      canvas.focus();
+      await user.keyboard('{Escape}');
+
+      expect(selectionStore.getSnapshot().selectedIds).toEqual([]);
+      expect(screen.queryByTestId('selection-overlay')).not.toBeInTheDocument();
+      expect(canvas).toHaveFocus();
+    });
+
+    it('selects all items with Ctrl+A when focused', async () => {
+      const { selectionStore } = renderCanvas([FIRST_ITEM, SECOND_ITEM]);
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const user = userEvent.setup();
+
+      canvas.focus();
+      await user.keyboard('{Control>}a{/Control}');
+
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['first', 'second']);
+      expect(screen.getByTestId('selection-overlay')).toHaveAttribute('data-selection-count', '2');
+      expect(canvas).toHaveFocus();
+    });
+
+    it('selects all items with Cmd+A when focused', async () => {
+      const { selectionStore } = renderCanvas([FIRST_ITEM, SECOND_ITEM]);
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const user = userEvent.setup();
+
+      canvas.focus();
+      await user.keyboard('{Meta>}a{/Meta}');
+
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['first', 'second']);
+    });
+
+    it('does not handle selection keyboard commands when not focused', async () => {
+      const { selectionStore } = renderCanvas([FIRST_ITEM, SECOND_ITEM]);
+      const user = userEvent.setup();
+
+      act(() => {
+        selectionStore.select('first');
+      });
+      await user.keyboard('{Escape}');
+
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['first']);
     });
   });
 });

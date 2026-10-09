@@ -10,6 +10,7 @@ import type {
 import { useDragSelection } from '../hooks/use-drag-selection';
 import { usePan } from '../hooks/use-pan';
 import { useSelection } from '../hooks/use-selection';
+import { useSelectionKeyboard } from '../hooks/use-selection-keyboard';
 import { useSpacePressed } from '../hooks/use-space-pressed';
 import { useZoom } from '../hooks/use-zoom';
 import { SelectionOverlay } from './selection-overlay';
@@ -23,6 +24,12 @@ const CanvasContainer = styled.div`
   touch-action: none;
   cursor: default;
   user-select: none;
+  outline: none;
+
+  &:focus-visible {
+    outline: 2px solid var(--rr-color-accent-default, #2563eb);
+    outline-offset: -2px;
+  }
 
   &[data-pan-key='true'] {
     cursor: grab;
@@ -125,6 +132,13 @@ export function Canvas({ store, selectionStore, items = [] }: CanvasProps): Reac
     [selectionStore],
   );
 
+  const handleSelectAll = useCallback(
+    (ids: readonly string[]) => {
+      selectionStore.selectMany(ids);
+    },
+    [selectionStore],
+  );
+
   const handleClear = useCallback(() => {
     selectionStore.clear();
   }, [selectionStore]);
@@ -143,14 +157,23 @@ export function Canvas({ store, selectionStore, items = [] }: CanvasProps): Reac
     spacePressed,
   });
 
+  const allIds = useMemo(() => items.map((item) => item.id), [items]);
+
+  const { ref: selectionKeyboardRef } = useSelectionKeyboard({
+    allIds,
+    onClear: handleClear,
+    onSelectAll: handleSelectAll,
+  });
+
   const setContainerRef = useCallback(
     (node: HTMLDivElement | null) => {
       panRef.current = node;
       zoomRef.current = node;
       selectionRef.current = node;
       dragSelectionRef.current = node;
+      selectionKeyboardRef.current = node;
     },
-    [panRef, zoomRef, selectionRef, dragSelectionRef],
+    [panRef, zoomRef, selectionRef, dragSelectionRef, selectionKeyboardRef],
   );
 
   const transform = viewport.transform;
@@ -171,7 +194,9 @@ export function Canvas({ store, selectionStore, items = [] }: CanvasProps): Reac
       ref={setContainerRef}
       role="application"
       aria-label="Canvas"
+      aria-keyshortcuts="Escape Control+A Meta+A"
       aria-grabbed={isPanning}
+      tabIndex={0}
       data-panning={isPanning}
       data-pan-key={spacePressed}
       data-selecting={marqueeRect !== null}
@@ -206,7 +231,10 @@ export function Canvas({ store, selectionStore, items = [] }: CanvasProps): Reac
         ))}
         <SelectionOverlay items={selectedItems} />
         {items.length === 0 ? (
-          <Hint>Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom</Hint>
+          <Hint>
+            Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear ·
+            Ctrl/Cmd + A to select all
+          </Hint>
         ) : null}
       </World>
       {marqueeRect !== null ? (
