@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import type { CanvasViewportStore } from '../../../application/services';
 import { usePan } from '../hooks/use-pan';
 import { useZoom } from '../hooks/use-zoom';
+import { ViewportControls } from './viewport-controls';
 
 const CanvasContainer = styled.div`
   position: relative;
@@ -87,6 +88,7 @@ export function Canvas({ store }: CanvasProps): ReactElement {
         <Grid />
         <Hint>Drag to pan · Ctrl/Cmd + scroll to zoom</Hint>
       </World>
+      <ViewportControls store={store} />
     </CanvasContainer>
   );
 }

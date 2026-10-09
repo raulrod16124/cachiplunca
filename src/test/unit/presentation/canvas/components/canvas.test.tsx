@@ -82,4 +82,33 @@ describe('Canvas', () => {
 
     expect(Number(canvas.getAttribute('data-scale'))).toBe(1);
   });
+
+  it('shows the current zoom percentage', () => {
+    const store = createCanvasViewportStore(Size.create(800, 600));
+    render(<Canvas store={store} />);
+    const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+    expect(screen.getByLabelText('Zoom level')).toHaveTextContent('100%');
+
+    fireEvent.wheel(canvas, { ctrlKey: true, deltaY: -100, clientX: 200, clientY: 150 });
+
+    expect(screen.getByLabelText('Zoom level')).not.toHaveTextContent('100%');
+  });
+
+  it('resets the viewport when clicking reset view', async () => {
+    const store = createCanvasViewportStore(Size.create(800, 600));
+    render(<Canvas store={store} />);
+    const canvas = screen.getByRole('application', { name: 'Canvas' });
+    const user = userEvent.setup();
+
+    fireEvent.wheel(canvas, { ctrlKey: true, deltaY: -100, clientX: 200, clientY: 150 });
+    expect(Number(canvas.getAttribute('data-scale'))).toBeGreaterThan(1);
+
+    await user.click(screen.getByRole('button', { name: 'Reset view' }));
+
+    const world = canvas.firstChild as HTMLElement;
+    expect(Number(canvas.getAttribute('data-scale'))).toBe(1);
+    expect(world.style.transform).toContain('translate(0px, 0px)');
+    expect(screen.getByLabelText('Zoom level')).toHaveTextContent('100%');
+  });
 });

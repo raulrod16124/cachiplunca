@@ -1283,7 +1283,7 @@ Implementar zoom centrado en el punto de interacción.
 
 ### TASK-031 — Reset/fit view
 
-**Priority:** P1 · **Depends:** TASK-030 · **Status:** TODO
+**Priority:** P1 · **Depends:** TASK-030 · **Status:** DONE
 
 #### Objetivo
 
@@ -1297,11 +1297,11 @@ Completar **Reset/fit view** dejando un resultado verificable y apto para las ta
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -4788,6 +4788,14 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) `Ctrl/Cmd + wheel` en lugar de wheel directo para no interceptar el scroll de página y dejar `wheel` libre para un pan vertical futuro; (2) límites `0.1x–5x` aplicados en Application (fuente de verdad del viewport) y no en el value object, que solo valida la positividad/finitud del factor; (3) sin pinch-to-zoom táctil ni indicador de porcentaje de zoom en esta tarea (fuera de alcance; el porcentaje corresponde a TASK-031/TASK-106); (4) sin ADR por ser una decisión local de interacción, no arquitectónica.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-031 (Reset/fit view).
+
+## 2026-10-09 — TASK-031
+
+- Resultado: Reset/fit view de punta a punta. `Viewport.fit(bounds, padding, minScale?, maxScale?)` en `src/domain/shared/value-objects/viewport.ts`: calcula `scale = min(availableW/bounds.width, availableH/bounds.height)` con clamp opcional y centra el contenido con `tx = centerX - width/(2*scale)`; bounds vacío, `available <= 0` o escala no finita devuelven `Viewport.default`. `CanvasViewportStore` gana `fit(contentBounds, padding = DEFAULT_FIT_PADDING /* 48 */)`: `null`/bounds vacío delega en `reset()` y en caso contrario aplica `Viewport.fit` con el clamp `[MIN_CANVAS_SCALE, MAX_CANVAS_SCALE]`; `reset(size?)` (ya existente y antes huérfano) queda conectado. Nuevo `ViewportControls` en `src/presentation/canvas/components/viewport-controls.tsx`: overlay inferior-derecha con el porcentaje de zoom (`Math.round(scale*100)`, `aria-label="Zoom level"`, `aria-live="polite"`) suscrito vía `useSyncExternalStore` y un `Button` "Reset view" de `@raulrod/ui` con icono `Maximize`; `Canvas` lo renderiza dentro del contenedor. El control queda excluido del pan por el `isInteractiveTarget` de `usePan`.
+- Tests/quality gates: 471 tests pasan (46 suites, +16: 8 de `Viewport.fit`, 6 del store `fit`, 2 de integración del canvas para zoom % y reset); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) la matemática de encuadre vive en Domain (`Viewport.fit`) y los límites de escala en Application, coherente con TASK-030; (2) `fit` recibe `Bounds | null` y trata el contenido vacío como reset, de modo que la UI actual (sin elementos, TASK-037+) ya usa un camino definido y testeable; (3) indicador de % de zoom incluido aquí al haber sido diferido expresamente desde TASK-030 (TASK-106 conserva la toolbar); (4) sin atajos de teclado ni `ResizeObserver`/sincronización del tamaño real del contenedor (fuera de alcance); (5) sin ADR por ser una decisión local de interacción, no arquitectónica.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-032 (Grid).
 
 ---
 

@@ -1,4 +1,4 @@
-import { Position, Size, Viewport } from '../../../../domain/shared';
+import { Bounds, Position, Size, Viewport } from '../../../../domain/shared';
 import {
   createCanvasViewportStore,
   MAX_CANVAS_SCALE,
@@ -130,6 +130,62 @@ describe('createCanvasViewportStore', () => {
       store.zoom(2, Position.create(100, 100));
 
       expect(listener).not.toHaveBeenCalled();
+
+      unsubscribe();
+    });
+  });
+
+  describe('fit', () => {
+    it('resets the viewport when the content bounds are null', () => {
+      const store = createCanvasViewportStore(Size.create(800, 600));
+
+      store.pan(Position.create(100, 100));
+      store.fit(null);
+
+      expect(store.getSnapshot()).toEqual(Viewport.default(Size.create(800, 600)));
+    });
+
+    it('resets the viewport when the content bounds are empty', () => {
+      const store = createCanvasViewportStore(Size.create(800, 600));
+
+      store.zoom(2, Position.create(100, 100));
+      store.fit(Bounds.fromXYWH(0, 0, 0, 0));
+
+      expect(store.getSnapshot()).toEqual(Viewport.default(Size.create(800, 600)));
+    });
+
+    it('fits the content bounds into the viewport', () => {
+      const store = createCanvasViewportStore(Size.create(800, 600));
+
+      store.fit(Bounds.fromXYWH(0, 0, 400, 300), 0);
+
+      expect(store.getSnapshot().scale).toBe(2);
+    });
+
+    it('clamps the fitted scale to the allowed range', () => {
+      const store = createCanvasViewportStore(Size.create(800, 600));
+
+      store.fit(Bounds.fromXYWH(0, 0, 40, 30), 0);
+
+      expect(store.getSnapshot().scale).toBe(MAX_CANVAS_SCALE);
+    });
+
+    it('clamps a tiny fit to the minimum scale', () => {
+      const store = createCanvasViewportStore(Size.create(800, 600));
+
+      store.fit(Bounds.fromXYWH(0, 0, 100000, 100000), 0);
+
+      expect(store.getSnapshot().scale).toBe(MIN_CANVAS_SCALE);
+    });
+
+    it('notifies subscribers when the fit changes the viewport', () => {
+      const store = createCanvasViewportStore(Size.create(800, 600));
+      const listener = jest.fn();
+
+      const unsubscribe = store.subscribe(listener);
+      store.fit(Bounds.fromXYWH(0, 0, 400, 300), 0);
+
+      expect(listener).toHaveBeenCalledTimes(1);
 
       unsubscribe();
     });

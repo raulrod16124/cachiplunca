@@ -1,3 +1,4 @@
+import { Bounds } from './bounds';
 import { Position } from './position';
 import { Size } from './size';
 import { Transform } from './transform';
@@ -80,6 +81,43 @@ export class Viewport {
     if (factor <= 0) {
       throw new Error('Zoom factor must be greater than zero');
     }
+  }
+
+  fit(bounds: Bounds, padding = 0, minScale?: number, maxScale?: number): Viewport {
+    const availableWidth = this._size.width - padding * 2;
+    const availableHeight = this._size.height - padding * 2;
+
+    if (bounds.width <= 0 || bounds.height <= 0 || availableWidth <= 0 || availableHeight <= 0) {
+      return Viewport.default(this._size);
+    }
+
+    const rawScale = Math.min(availableWidth / bounds.width, availableHeight / bounds.height);
+    const scale = Viewport.clampScale(rawScale, minScale, maxScale);
+
+    if (!Number.isFinite(scale) || scale <= 0) {
+      return Viewport.default(this._size);
+    }
+
+    const translation = Position.create(
+      bounds.centerX - this._size.width / (2 * scale),
+      bounds.centerY - this._size.height / (2 * scale),
+    );
+
+    return Viewport.create(Transform.create(translation, scale), this._size);
+  }
+
+  private static clampScale(scale: number, minScale?: number, maxScale?: number): number {
+    let result = scale;
+
+    if (minScale !== undefined) {
+      result = Math.max(result, minScale);
+    }
+
+    if (maxScale !== undefined) {
+      result = Math.min(result, maxScale);
+    }
+
+    return result;
   }
 
   equals(other: Viewport): boolean {

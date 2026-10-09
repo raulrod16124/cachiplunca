@@ -1,4 +1,4 @@
-import { Position, Size, Transform, Viewport } from '../../../../../domain/shared';
+import { Bounds, Position, Size, Transform, Viewport } from '../../../../../domain/shared';
 
 describe('Viewport', () => {
   it('creates a viewport from transform and size', () => {
@@ -294,6 +294,88 @@ describe('Viewport', () => {
       expect(() => viewport.zoom(NaN, Position.create(100, 100))).toThrow(
         'Zoom factor must be a finite number',
       );
+    });
+  });
+
+  describe('fit', () => {
+    it('centers the content within the viewport', () => {
+      const viewport = Viewport.default(Size.create(800, 600));
+      const bounds = Bounds.fromXYWH(0, 0, 400, 300);
+
+      const fitted = viewport.fit(bounds);
+      const screenCenter = fitted.worldToScreen(Position.create(bounds.centerX, bounds.centerY));
+
+      expect(fitted.scale).toBe(2);
+      expect(fitted.transform.translation).toEqual(Position.create(0, 0));
+      expect(screenCenter.x).toBeCloseTo(400);
+      expect(screenCenter.y).toBeCloseTo(300);
+    });
+
+    it('accounts for padding when computing the scale', () => {
+      const viewport = Viewport.default(Size.create(800, 600));
+      const bounds = Bounds.fromXYWH(0, 0, 400, 100);
+
+      const fitted = viewport.fit(bounds, 50);
+      const screenCenter = fitted.worldToScreen(Position.create(bounds.centerX, bounds.centerY));
+
+      expect(fitted.scale).toBeCloseTo(1.75);
+      expect(screenCenter.x).toBeCloseTo(400);
+      expect(screenCenter.y).toBeCloseTo(300);
+    });
+
+    it('fits content that does not start at the origin', () => {
+      const viewport = Viewport.default(Size.create(800, 600));
+      const bounds = Bounds.fromXYWH(1000, 2000, 400, 300);
+
+      const fitted = viewport.fit(bounds);
+      const screenCenter = fitted.worldToScreen(Position.create(bounds.centerX, bounds.centerY));
+
+      expect(screenCenter.x).toBeCloseTo(400);
+      expect(screenCenter.y).toBeCloseTo(300);
+    });
+
+    it('clamps the scale to the provided bounds', () => {
+      const viewport = Viewport.default(Size.create(800, 600));
+      const bounds = Bounds.fromXYWH(0, 0, 40, 30);
+
+      const fitted = viewport.fit(bounds, 0, 0.5, 5);
+
+      expect(fitted.scale).toBe(5);
+    });
+
+    it('preserves the viewport size', () => {
+      const viewport = Viewport.default(Size.create(1024, 768));
+      const bounds = Bounds.fromXYWH(0, 0, 200, 100);
+
+      const fitted = viewport.fit(bounds);
+
+      expect(fitted.size).toEqual(Size.create(1024, 768));
+    });
+
+    it('does not mutate the original viewport', () => {
+      const viewport = Viewport.default(Size.create(800, 600));
+      viewport.fit(Bounds.fromXYWH(0, 0, 100, 100));
+
+      expect(viewport.transform).toEqual(Transform.identity());
+    });
+
+    it('returns the default viewport when the bounds are empty', () => {
+      const viewport = Viewport.create(
+        Transform.create(Position.create(50, 50), 3),
+        Size.create(800, 600),
+      );
+
+      const fitted = viewport.fit(Bounds.fromXYWH(0, 0, 0, 0));
+
+      expect(fitted).toEqual(Viewport.default(Size.create(800, 600)));
+    });
+
+    it('returns the default viewport when the padding consumes the viewport', () => {
+      const viewport = Viewport.default(Size.create(800, 600));
+
+      const fitted = viewport.fit(Bounds.fromXYWH(0, 0, 100, 100), 500);
+
+      expect(fitted).toEqual(Viewport.default(Size.create(800, 600)));
     });
   });
 });
