@@ -5,3 +5,4 @@ export * from './value-objects/size';
 export * from './value-objects/bounds';
 export * from './value-objects/transform';
 export * from './value-objects/viewport';
+export * from './value-objects/grid';

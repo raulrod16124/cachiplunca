@@ -30,6 +30,43 @@ describe('Canvas', () => {
     expect(screen.getByText('Drag to pan · Ctrl/Cmd + scroll to zoom')).toBeInTheDocument();
   });
 
+  it('renders an infinite grid aligned to the world origin', () => {
+    const store = createCanvasViewportStore(Size.create(800, 600));
+    render(<Canvas store={store} />);
+
+    const grid = screen.getByTestId('canvas-grid');
+    expect(grid.style.backgroundSize).toBe('40px 40px');
+    expect(grid.style.backgroundPosition).toBe('0px 0px');
+  });
+
+  it('moves the grid with the viewport when panning', async () => {
+    const store = createCanvasViewportStore(Size.create(800, 600));
+    render(<Canvas store={store} />);
+    const canvas = screen.getByRole('application', { name: 'Canvas' });
+    const user = userEvent.setup();
+
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: canvas, coords: { x: 0, y: 0 } },
+      { coords: { x: 50, y: 25 } },
+    ]);
+
+    const grid = screen.getByTestId('canvas-grid');
+    expect(grid.style.backgroundPosition).toBe('10px 25px');
+    expect(grid.style.backgroundSize).toBe('40px 40px');
+  });
+
+  it('scales the grid step with the zoom level', () => {
+    const store = createCanvasViewportStore(Size.create(800, 600));
+    render(<Canvas store={store} />);
+    const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+    fireEvent.wheel(canvas, { ctrlKey: true, deltaY: -100, clientX: 200, clientY: 150 });
+
+    const grid = screen.getByTestId('canvas-grid');
+    const scale = Number(canvas.getAttribute('data-scale'));
+    expect(grid.style.backgroundSize).toBe(`${40 * scale}px ${40 * scale}px`);
+  });
+
   it('pans the viewport when dragging', async () => {
     const store = createCanvasViewportStore(Size.create(800, 600));
     render(<Canvas store={store} />);
@@ -41,7 +78,7 @@ describe('Canvas', () => {
       { coords: { x: 50, y: 25 } },
     ]);
 
-    const world = canvas.firstChild as HTMLElement;
+    const world = screen.getByTestId('canvas-world');
     expect(world.style.transform).toContain('translate(50px, 25px)');
     expect(world.style.transform).toContain('scale(1)');
   });
@@ -106,7 +143,7 @@ describe('Canvas', () => {
 
     await user.click(screen.getByRole('button', { name: 'Reset view' }));
 
-    const world = canvas.firstChild as HTMLElement;
+    const world = screen.getByTestId('canvas-world');
     expect(Number(canvas.getAttribute('data-scale'))).toBe(1);
     expect(world.style.transform).toContain('translate(0px, 0px)');
     expect(screen.getByLabelText('Zoom level')).toHaveTextContent('100%');

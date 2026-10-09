@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react';
 import { useCallback, useSyncExternalStore } from 'react';
 import styled from 'styled-components';
+import { Grid } from '../../../domain/shared';
 import type { CanvasViewportStore } from '../../../application/services';
 import { usePan } from '../hooks/use-pan';
 import { useZoom } from '../hooks/use-zoom';
@@ -27,15 +28,13 @@ const World = styled.div`
   will-change: transform;
 `;
 
-const Grid = styled.div`
+const GridLayer = styled.div`
   position: absolute;
-  inset: -100%;
-  width: 300%;
-  height: 300%;
+  inset: 0;
+  pointer-events: none;
   background-image:
     linear-gradient(to right, var(--rr-color-border-subtle, #e2e8f0) 1px, transparent 1px),
     linear-gradient(to bottom, var(--rr-color-border-subtle, #e2e8f0) 1px, transparent 1px);
-  background-size: 40px 40px;
   opacity: 0.5;
 `;
 
@@ -49,6 +48,8 @@ const Hint = styled.div`
   color: var(--rr-color-text-muted, #64748b);
   font-size: 14px;
 `;
+
+const CANVAS_GRID = Grid.default();
 
 export interface CanvasProps {
   readonly store: CanvasViewportStore;
@@ -71,6 +72,9 @@ export function Canvas({ store }: CanvasProps): ReactElement {
   const translateX = -transform.x * transform.scale;
   const translateY = -transform.y * transform.scale;
 
+  const gridStep = CANVAS_GRID.scaledSpacing(transform.scale);
+  const gridOffset = CANVAS_GRID.offsetFor(transform);
+
   return (
     <CanvasContainer
       ref={setContainerRef}
@@ -80,12 +84,19 @@ export function Canvas({ store }: CanvasProps): ReactElement {
       data-panning={isPanning}
       data-scale={transform.scale}
     >
+      <GridLayer
+        data-testid="canvas-grid"
+        style={{
+          backgroundSize: `${gridStep}px ${gridStep}px`,
+          backgroundPosition: `${gridOffset.x}px ${gridOffset.y}px`,
+        }}
+      />
       <World
+        data-testid="canvas-world"
         style={{
           transform: `translate(${translateX}px, ${translateY}px) scale(${transform.scale})`,
         }}
       >
-        <Grid />
         <Hint>Drag to pan · Ctrl/Cmd + scroll to zoom</Hint>
       </World>
       <ViewportControls store={store} />
