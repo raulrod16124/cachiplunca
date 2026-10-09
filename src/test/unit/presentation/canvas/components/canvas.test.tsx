@@ -176,7 +176,7 @@ describe('Canvas', () => {
 
       await user.pointer({ keys: '[MouseLeft>]', target: canvas, coords: { x: 150, y: 130 } });
 
-      expect(selectionStore.getSnapshot().selectedId).toBe('first');
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['first']);
       expect(screen.getByTestId('selection-overlay')).toHaveAttribute('data-selected-id', 'first');
     });
 
@@ -188,7 +188,7 @@ describe('Canvas', () => {
       await user.pointer({ keys: '[MouseLeft>]', target: canvas, coords: { x: 150, y: 130 } });
       await user.pointer({ keys: '[MouseLeft>]', target: canvas, coords: { x: 350, y: 250 } });
 
-      expect(selectionStore.getSnapshot().selectedId).toBe('second');
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['second']);
       expect(screen.getByTestId('selection-overlay')).toHaveAttribute('data-selected-id', 'second');
     });
 
@@ -198,10 +198,10 @@ describe('Canvas', () => {
       const user = userEvent.setup();
 
       await user.pointer({ keys: '[MouseLeft>]', target: canvas, coords: { x: 150, y: 130 } });
-      expect(selectionStore.getSnapshot().selectedId).toBe('first');
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['first']);
 
       await user.pointer({ keys: '[MouseLeft>]', target: canvas, coords: { x: 700, y: 500 } });
-      expect(selectionStore.getSnapshot().selectedId).toBeNull();
+      expect(selectionStore.getSnapshot().selectedIds).toEqual([]);
       expect(screen.queryByTestId('selection-overlay')).not.toBeInTheDocument();
     });
 
@@ -217,6 +217,71 @@ describe('Canvas', () => {
       expect(overlay.style.top).toBe('100px');
       expect(overlay.style.width).toBe('120px');
       expect(overlay.style.height).toBe('80px');
+    });
+
+    it('adds an item to the selection with a modifier key', async () => {
+      const { selectionStore } = renderCanvas([FIRST_ITEM, SECOND_ITEM]);
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const user = userEvent.setup();
+
+      await user.pointer({ keys: '[MouseLeft>]', target: canvas, coords: { x: 150, y: 130 } });
+      await user.keyboard('{Shift>}');
+      await user.pointer({ keys: '[MouseLeft>]', target: canvas, coords: { x: 350, y: 250 } });
+      await user.keyboard('{/Shift}');
+
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['first', 'second']);
+      expect(screen.getByTestId('canvas-item-first')).toHaveAttribute('data-selected', 'true');
+      expect(screen.getByTestId('canvas-item-second')).toHaveAttribute('data-selected', 'true');
+      expect(screen.getByTestId('selection-overlay')).toHaveAttribute('data-selection-count', '2');
+    });
+
+    it('removes an already selected item with a modifier key', async () => {
+      const { selectionStore } = renderCanvas([FIRST_ITEM, SECOND_ITEM]);
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const user = userEvent.setup();
+
+      await user.pointer({ keys: '[MouseLeft>]', target: canvas, coords: { x: 150, y: 130 } });
+      await user.keyboard('{Meta>}');
+      await user.pointer({ keys: '[MouseLeft>]', target: canvas, coords: { x: 350, y: 250 } });
+      await user.pointer({ keys: '[MouseLeft>]', target: canvas, coords: { x: 150, y: 130 } });
+      await user.keyboard('{/Meta}');
+
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['second']);
+      expect(screen.getByTestId('canvas-item-first')).toHaveAttribute('data-selected', 'false');
+    });
+
+    it('clears the selection when modifier-clicking empty space', async () => {
+      const { selectionStore } = renderCanvas([FIRST_ITEM]);
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const user = userEvent.setup();
+
+      await user.pointer({ keys: '[MouseLeft>]', target: canvas, coords: { x: 150, y: 130 } });
+      await user.keyboard('{Shift>}');
+      await user.pointer({ keys: '[MouseLeft>]', target: canvas, coords: { x: 700, y: 500 } });
+      await user.keyboard('{/Shift}');
+
+      expect(selectionStore.getSnapshot().selectedIds).toEqual([]);
+      expect(screen.queryByTestId('selection-overlay')).not.toBeInTheDocument();
+    });
+
+    it('renders a group bounding box without resize handles for multiple items', async () => {
+      renderCanvas([FIRST_ITEM, SECOND_ITEM]);
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const user = userEvent.setup();
+
+      await user.pointer({ keys: '[MouseLeft>]', target: canvas, coords: { x: 150, y: 130 } });
+      await user.keyboard('{Shift>}');
+      await user.pointer({ keys: '[MouseLeft>]', target: canvas, coords: { x: 350, y: 250 } });
+      await user.keyboard('{/Shift}');
+
+      const overlay = screen.getByTestId('selection-overlay');
+      expect(overlay).toHaveAttribute('data-selection-count', '2');
+      expect(overlay).toHaveAttribute('data-selected-ids', 'first,second');
+      expect(overlay.style.left).toBe('100px');
+      expect(overlay.style.top).toBe('100px');
+      expect(overlay.style.width).toBe('300px');
+      expect(overlay.style.height).toBe('200px');
+      expect(overlay.querySelectorAll('span')).toHaveLength(0);
     });
 
     it('does not start panning when the press starts on a selectable item', () => {

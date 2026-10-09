@@ -1384,7 +1384,7 @@ Completar **Single selection** dejando un resultado verificable y apto para las 
 
 ### TASK-034 — Multi-selection
 
-**Priority:** P0 · **Depends:** TASK-033 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-033 · **Status:** DONE
 
 #### Objetivo
 
@@ -1399,12 +1399,12 @@ Completar **Multi-selection** dejando un resultado verificable y apto para las t
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -4804,6 +4804,14 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) la selección es estado efímero de interacción en Application (mismo patrón que el viewport), no dominio ni persistencia; (2) al no existir aún elementos (TASK-037+), `Canvas` acepta `items: readonly SelectableItem[]` con prompts `{ id, bounds }` y los pinta como nodos placeholder; el render real (TASK-050+) reutilizará el mismo store y hit-test; (3) el `pointerdown` de selección convive con el de pan vía el guard `[data-selectable]` en `usePan`, sin acoplar ambas lógicas; (4) el overlay es puramente visual pese a representar posición/tamaño/estado; teclado y foco son TASK-036; (5) sin ADR por ser una decisión local de interacción.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-034 (Multi-selection).
+
+## 2026-10-09 — TASK-034
+
+- Resultado: Multi-selection de punta a punta y desacoplada de la persistencia. En Application (React-free): `SelectionSnapshot` pasa a `{ selectedIds: readonly string[] }` y el store gana `select(id)` (reemplaza), `toggle(id)` (añade/quita) y conserva `clear()`/`getSnapshot`/`subscribe`, con igualdad por pertenencia (orden-insensible), referencia de snapshot estable para `useSyncExternalStore` y no-op silencioso ante cambio nulo. En Presentation: `useSelection` amplía su callback a `onSelect(id, additive)` y calcula `additive` desde `shiftKey || metaKey || ctrlKey`; `SelectionOverlay` acepta una lista de ítems y dibuja la caja envolvente (`Bounds.union`) con `data-selection-count`/`data-selected-ids`, mostrando los 8 handles solo cuando hay un único ítem; `Canvas` cablea el `onSelect` al store (`null` → `clear`, modificador → `toggle`, resto → `select`) y marca `data-selected` por nodo vía `Set`. El hit-test (`findSelectableAt`) y pan/zoom no se tocan.
+- Tests/quality gates: 525 tests pasan (50 suites, +11: reescritura de los 7 de `selection-store` a conjunto, 3 nuevos de modificador en `useSelection` y 4 de multiselección en `canvas` —añadir, quitar, limpiar con modificador en vacío y caja envolvente sin handles—); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente). Smoke manual con `npm run dev` pendiente.
+- Decisiones: (1) modificador `Shift` y `Ctrl/Cmd` (cualquiera) para toggle aditivo; (2) representación por caja envolvente con handles solo con 1 ítem, dejando el resize de grupo a TASK-058; (3) el clic (con o sin modificador) en espacio vacío siempre limpia la selección por previsibilidad; (4) la semántica de selección (`select`/`toggle`) vive en el store de Application y el modificador se resuelve en Presentation, sin acoplar el store al DOM; (5) sin ADR por ser una decisión local de interacción.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-035 (Drag selection).
 
 ---
 

@@ -56,7 +56,7 @@ describe('useSelection', () => {
     });
 
     expect(onSelect).toHaveBeenCalledTimes(1);
-    expect(onSelect).toHaveBeenCalledWith('item');
+    expect(onSelect).toHaveBeenCalledWith('item', false);
   });
 
   it('clears the selection when pressing empty space', async () => {
@@ -70,7 +70,7 @@ describe('useSelection', () => {
       coords: { x: 500, y: 500 },
     });
 
-    expect(onSelect).toHaveBeenCalledWith(null);
+    expect(onSelect).toHaveBeenCalledWith(null, false);
   });
 
   it('clears the selection when there are no items', async () => {
@@ -84,7 +84,7 @@ describe('useSelection', () => {
       coords: { x: 150, y: 150 },
     });
 
-    expect(onSelect).toHaveBeenCalledWith(null);
+    expect(onSelect).toHaveBeenCalledWith(null, false);
   });
 
   it('converts screen coordinates with the current viewport', async () => {
@@ -103,7 +103,55 @@ describe('useSelection', () => {
       coords: { x: screenPoint.x, y: screenPoint.y },
     });
 
-    expect(onSelect).toHaveBeenCalledWith('item');
+    expect(onSelect).toHaveBeenCalledWith('item', false);
+  });
+
+  it('flags additive selection with shift', async () => {
+    const onSelect = jest.fn();
+    render(<SelectionTestbench items={[ITEM]} viewport={VIEWPORT} onSelect={onSelect} />);
+    const user = userEvent.setup();
+
+    await user.keyboard('{Shift>}');
+    await user.pointer({
+      keys: '[MouseLeft>]',
+      target: screen.getByTestId('selection-surface'),
+      coords: { x: 150, y: 150 },
+    });
+    await user.keyboard('{/Shift}');
+
+    expect(onSelect).toHaveBeenCalledWith('item', true);
+  });
+
+  it('flags additive selection with meta', async () => {
+    const onSelect = jest.fn();
+    render(<SelectionTestbench items={[ITEM]} viewport={VIEWPORT} onSelect={onSelect} />);
+    const user = userEvent.setup();
+
+    await user.keyboard('{Meta>}');
+    await user.pointer({
+      keys: '[MouseLeft>]',
+      target: screen.getByTestId('selection-surface'),
+      coords: { x: 150, y: 150 },
+    });
+    await user.keyboard('{/Meta}');
+
+    expect(onSelect).toHaveBeenCalledWith('item', true);
+  });
+
+  it('flags additive selection with ctrl', async () => {
+    const onSelect = jest.fn();
+    render(<SelectionTestbench items={[ITEM]} viewport={VIEWPORT} onSelect={onSelect} />);
+    const user = userEvent.setup();
+
+    await user.keyboard('{Control>}');
+    await user.pointer({
+      keys: '[MouseLeft>]',
+      target: screen.getByTestId('selection-surface'),
+      coords: { x: 150, y: 150 },
+    });
+    await user.keyboard('{/Control}');
+
+    expect(onSelect).toHaveBeenCalledWith('item', true);
   });
 
   it('ignores non-primary mouse button', async () => {

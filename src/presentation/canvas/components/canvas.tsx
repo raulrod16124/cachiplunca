@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import { useCallback, useSyncExternalStore } from 'react';
+import { useCallback, useMemo, useSyncExternalStore } from 'react';
 import styled from 'styled-components';
 import { Grid } from '../../../domain/shared';
 import type {
@@ -82,10 +82,28 @@ export function Canvas({ store, selectionStore, items = [] }: CanvasProps): Reac
   const selection = useSyncExternalStore(selectionStore.subscribe, selectionStore.getSnapshot);
   const { isPanning, ref: panRef } = usePan({ onPan: store.pan });
   const { ref: zoomRef } = useZoom({ onZoom: store.zoom });
+
+  const handleSelect = useCallback(
+    (id: string | null, additive: boolean) => {
+      if (id === null) {
+        selectionStore.clear();
+        return;
+      }
+
+      if (additive) {
+        selectionStore.toggle(id);
+        return;
+      }
+
+      selectionStore.select(id);
+    },
+    [selectionStore],
+  );
+
   const { ref: selectionRef } = useSelection({
     items,
     viewport,
-    onSelect: selectionStore.select,
+    onSelect: handleSelect,
   });
 
   const setContainerRef = useCallback(
@@ -104,7 +122,11 @@ export function Canvas({ store, selectionStore, items = [] }: CanvasProps): Reac
   const gridStep = CANVAS_GRID.scaledSpacing(transform.scale);
   const gridOffset = CANVAS_GRID.offsetFor(transform);
 
-  const selectedItem = items.find((item) => item.id === selection.selectedId) ?? null;
+  const selectedIdSet = useMemo(() => new Set(selection.selectedIds), [selection.selectedIds]);
+  const selectedItems = useMemo(
+    () => items.filter((item) => selectedIdSet.has(item.id)),
+    [items, selectedIdSet],
+  );
 
   return (
     <CanvasContainer
@@ -132,7 +154,7 @@ export function Canvas({ store, selectionStore, items = [] }: CanvasProps): Reac
           <SelectableNode
             key={item.id}
             data-selectable="true"
-            data-selected={item.id === selection.selectedId}
+            data-selected={selectedIdSet.has(item.id)}
             data-testid={`canvas-item-${item.id}`}
             style={{
               left: item.bounds.x,
@@ -142,7 +164,7 @@ export function Canvas({ store, selectionStore, items = [] }: CanvasProps): Reac
             }}
           />
         ))}
-        <SelectionOverlay item={selectedItem} />
+        <SelectionOverlay items={selectedItems} />
         {items.length === 0 ? <Hint>Drag to pan · Ctrl/Cmd + scroll to zoom</Hint> : null}
       </World>
       <ViewportControls store={store} />
