@@ -8,7 +8,7 @@ export const ELEMENT_TYPES = ['text', 'note', 'task', 'frame', 'connector', 'lin
 
 export type ElementType = (typeof ELEMENT_TYPES)[number];
 
-export interface BaseElementProps {
+export interface BaseElement {
   readonly id: ElementId;
   readonly workspaceId: WorkspaceId;
   readonly type: ElementType;
@@ -20,42 +20,42 @@ export interface BaseElementProps {
   readonly updatedAt: Date;
 }
 
-export interface TextElement extends BaseElementProps {
+export interface TextElement extends BaseElement {
   readonly type: 'text';
   readonly content: string;
 }
 
-export interface NoteElement extends BaseElementProps {
+export interface NoteElement extends BaseElement {
   readonly type: 'note';
   readonly content: string;
   readonly color?: string;
 }
 
-export interface TaskStatus {
-  readonly value: string;
-}
+export const TASK_STATUSES = ['todo', 'in_progress', 'done'] as const;
 
-export interface TaskElement extends BaseElementProps {
+export type TaskStatus = (typeof TASK_STATUSES)[number];
+
+export interface TaskElement extends BaseElement {
   readonly type: 'task';
   readonly title: string;
-  readonly status: string;
+  readonly status: TaskStatus;
   readonly assigneeId?: UserId;
   readonly dueDate?: Date;
 }
 
-export interface FrameElement extends BaseElementProps {
+export interface FrameElement extends BaseElement {
   readonly type: 'frame';
   readonly title: string;
   readonly parentFrameId?: ElementId;
 }
 
-export interface ConnectorElement extends BaseElementProps {
+export interface ConnectorElement extends BaseElement {
   readonly type: 'connector';
   readonly sourceElementId: ElementId;
   readonly targetElementId: ElementId;
 }
 
-export interface LinkElement extends BaseElementProps {
+export interface LinkElement extends BaseElement {
   readonly type: 'link';
   readonly url: string;
   readonly title?: string;
@@ -88,7 +88,7 @@ export function isLinkElement(element: Element): element is LinkElement {
   return element.type === 'link';
 }
 
-export function validateBaseElementProps(props: BaseElementProps): void {
+export function validateBaseElementProps(props: BaseElement): void {
   if (props.rotation === null || props.rotation === undefined) {
     throw new Error('Element rotation must be defined');
   }
@@ -181,7 +181,8 @@ export function validateElement(element: Element): void {
       validateLinkElement(element);
       break;
     default: {
-      throw new Error(`Unknown element type`);
+      const unknownType: never = element;
+      throw new Error(`Unknown element type: ${JSON.stringify(unknownType)}`);
     }
   }
 }

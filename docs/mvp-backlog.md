@@ -1490,7 +1490,7 @@ Completar **Selection keyboard interactions** dejando un resultado verificable y
 
 ### TASK-037 — BaseElement
 
-**Priority:** P0 · **Depends:** TASK-026 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-026 · **Status:** DONE
 
 #### Objetivo
 
@@ -1504,11 +1504,11 @@ Definir el contrato común de elementos del canvas y sus invariantes.
 
 #### Criterios de aceptación
 
-- [ ] Los tipos se distinguen sin casts.
-- [ ] Invariantes cubiertos por tests.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] Los tipos se distinguen sin casts.
+- [x] Invariantes cubiertos por tests.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 

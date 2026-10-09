@@ -2,7 +2,11 @@
 module.exports = {
   testEnvironment: 'jsdom',
   roots: ['<rootDir>/src'],
-  testMatch: ['**/src/test/**/*.test.ts', '**/src/test/**/*.test.tsx', '**/src/domain/**/*.test.ts'],
+  testMatch: [
+    '**/src/test/**/*.test.ts',
+    '**/src/test/**/*.test.tsx',
+    '**/src/domain/**/*.test.ts',
+  ],
   setupFilesAfterEnv: [
     // Must run before test modules import react-router (needs TextEncoder).
     '<rootDir>/jest.setup.cjs',
