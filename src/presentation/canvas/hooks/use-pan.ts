@@ -3,6 +3,7 @@ import { Position } from '../../../domain/shared';
 
 export interface UsePanOptions {
   readonly onPan: (delta: Position) => void;
+  readonly spacePressed?: boolean;
   readonly disabled?: boolean;
 }
 
@@ -11,23 +12,18 @@ export interface UsePanResult {
   readonly ref: React.RefObject<HTMLElement | null>;
 }
 
-function isInteractiveTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof Element)) {
-    return false;
-  }
-
-  return (
-    target.closest('button, a, input, textarea, select, [role="button"], [data-selectable]') !==
-    null
-  );
-}
-
-export function usePan({ onPan, disabled = false }: UsePanOptions): UsePanResult {
+export function usePan({
+  onPan,
+  spacePressed = false,
+  disabled = false,
+}: UsePanOptions): UsePanResult {
   const [isPanning, setIsPanning] = useState(false);
   const isPanningRef = useRef(false);
   const lastPositionRef = useRef<{ readonly x: number; readonly y: number } | null>(null);
   const pointerIdRef = useRef<number | null>(null);
   const elementRef = useRef<HTMLElement | null>(null);
+  const latestRef = useRef({ onPan, spacePressed });
+  latestRef.current = { onPan, spacePressed };
 
   useEffect(() => {
     const element = elementRef.current;
@@ -36,12 +32,16 @@ export function usePan({ onPan, disabled = false }: UsePanOptions): UsePanResult
     }
 
     function createHandlers(canvas: HTMLElement) {
-      function handlePointerDown(event: PointerEvent): void {
-        if (event.button !== 0) {
-          return;
+      function shouldStartPan(event: PointerEvent): boolean {
+        if (event.button === 1) {
+          return true;
         }
 
-        if (isInteractiveTarget(event.target)) {
+        return event.button === 0 && latestRef.current.spacePressed;
+      }
+
+      function handlePointerDown(event: PointerEvent): void {
+        if (!shouldStartPan(event)) {
           return;
         }
 
@@ -64,7 +64,7 @@ export function usePan({ onPan, disabled = false }: UsePanOptions): UsePanResult
         const last = lastPositionRef.current;
         const delta = Position.create(event.clientX - last.x, event.clientY - last.y);
         lastPositionRef.current = { x: event.clientX, y: event.clientY };
-        onPan(delta);
+        latestRef.current.onPan(delta);
       }
 
       function handlePointerUp(event: PointerEvent): void {
@@ -81,16 +81,27 @@ export function usePan({ onPan, disabled = false }: UsePanOptions): UsePanResult
         setIsPanning(false);
       }
 
-      return { handlePointerDown, handlePointerMove, handlePointerUp };
+      function handleWheel(event: WheelEvent): void {
+        if (event.ctrlKey || event.metaKey) {
+          return;
+        }
+
+        event.preventDefault();
+        latestRef.current.onPan(Position.create(-event.deltaX, -event.deltaY));
+      }
+
+      return { handlePointerDown, handlePointerMove, handlePointerUp, handleWheel };
     }
 
-    const { handlePointerDown, handlePointerMove, handlePointerUp } = createHandlers(element);
+    const { handlePointerDown, handlePointerMove, handlePointerUp, handleWheel } =
+      createHandlers(element);
 
     element.addEventListener('pointerdown', handlePointerDown);
     element.addEventListener('pointermove', handlePointerMove);
     element.addEventListener('pointerup', handlePointerUp);
     element.addEventListener('pointercancel', handlePointerUp);
     element.addEventListener('pointerleave', handlePointerUp);
+    element.addEventListener('wheel', handleWheel, { passive: false });
 
     return () => {
       element.removeEventListener('pointerdown', handlePointerDown);
@@ -98,8 +109,9 @@ export function usePan({ onPan, disabled = false }: UsePanOptions): UsePanResult
       element.removeEventListener('pointerup', handlePointerUp);
       element.removeEventListener('pointercancel', handlePointerUp);
       element.removeEventListener('pointerleave', handlePointerUp);
+      element.removeEventListener('wheel', handleWheel);
     };
-  }, [disabled, onPan]);
+  }, [disabled]);
 
   return {
     isPanning,

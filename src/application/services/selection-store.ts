@@ -8,7 +8,9 @@ export interface SelectionStore {
   readonly getSnapshot: () => SelectionSnapshot;
   readonly subscribe: (onChange: () => void) => Unsubscribe;
   readonly select: (id: string) => void;
+  readonly selectMany: (ids: readonly string[]) => void;
   readonly toggle: (id: string) => void;
+  readonly addMany: (ids: readonly string[]) => void;
   readonly clear: () => void;
 }
 
@@ -52,6 +54,9 @@ export function createSelectionStore(initialIds: readonly string[] = []): Select
 
       publish([id]);
     },
+    selectMany(ids) {
+      publish([...new Set(ids)]);
+    },
     toggle(id) {
       const isSelected = snapshot.selectedIds.includes(id);
       publish(
@@ -59,6 +64,16 @@ export function createSelectionStore(initialIds: readonly string[] = []): Select
           ? snapshot.selectedIds.filter((entry) => entry !== id)
           : [...snapshot.selectedIds, id],
       );
+    },
+    addMany(ids) {
+      const next = [...snapshot.selectedIds];
+      for (const id of ids) {
+        if (!next.includes(id)) {
+          next.push(id);
+        }
+      }
+
+      publish(next);
     },
     clear() {
       if (snapshot.selectedIds.length === 0) {

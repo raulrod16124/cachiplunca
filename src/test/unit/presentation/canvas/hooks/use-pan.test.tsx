@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactElement, type ReactNode } from 'react';
 import { Position } from '../../../../../domain/shared';
@@ -52,9 +52,23 @@ describe('usePan', () => {
     expect(onPan).not.toHaveBeenCalled();
   });
 
-  it('calls onPan with the pointer movement delta', async () => {
+  it('does not pan with a plain left drag', async () => {
     const onPan = jest.fn();
     render(<PanTestbench onPan={onPan} />);
+    const surface = screen.getByTestId('pan-surface');
+    const user = userEvent.setup();
+
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: surface, coords: { x: 0, y: 0 } },
+      { coords: { x: 20, y: 10 } },
+    ]);
+
+    expect(onPan).not.toHaveBeenCalled();
+  });
+
+  it('calls onPan with the pointer movement delta while space is pressed', async () => {
+    const onPan = jest.fn();
+    render(<PanTestbench onPan={onPan} spacePressed />);
     const surface = screen.getByTestId('pan-surface');
     const user = userEvent.setup();
 
@@ -69,7 +83,7 @@ describe('usePan', () => {
 
   it('accumulates deltas across multiple moves', async () => {
     const onPan = jest.fn();
-    render(<PanTestbench onPan={onPan} />);
+    render(<PanTestbench onPan={onPan} spacePressed />);
     const surface = screen.getByTestId('pan-surface');
     const user = userEvent.setup();
 
@@ -86,7 +100,7 @@ describe('usePan', () => {
 
   it('stops panning after pointer up', async () => {
     const onPan = jest.fn();
-    render(<PanTestbench onPan={onPan} />);
+    render(<PanTestbench onPan={onPan} spacePressed />);
     const surface = screen.getByTestId('pan-surface');
     const user = userEvent.setup();
 
@@ -100,9 +114,23 @@ describe('usePan', () => {
     expect(onPan).toHaveBeenCalledTimes(1);
   });
 
-  it('ignores non-primary mouse button', async () => {
+  it('pans with the middle mouse button', async () => {
     const onPan = jest.fn();
     render(<PanTestbench onPan={onPan} />);
+    const surface = screen.getByTestId('pan-surface');
+    const user = userEvent.setup();
+
+    await user.pointer([
+      { keys: '[MouseMiddle>]', target: surface, coords: { x: 0, y: 0 } },
+      { coords: { x: 20, y: 10 } },
+    ]);
+
+    expect(onPan).toHaveBeenCalledWith(Position.create(20, 10));
+  });
+
+  it('ignores the secondary mouse button', async () => {
+    const onPan = jest.fn();
+    render(<PanTestbench onPan={onPan} spacePressed />);
     const surface = screen.getByTestId('pan-surface');
     const user = userEvent.setup();
 
@@ -114,26 +142,28 @@ describe('usePan', () => {
     expect(onPan).not.toHaveBeenCalled();
   });
 
-  it('ignores pan on interactive descendants', async () => {
+  it('pans on a plain wheel scroll', () => {
     const onPan = jest.fn();
-    render(
-      <PanTestbench onPan={onPan}>
-        <button data-testid="interactive-button">Click me</button>
-      </PanTestbench>,
-    );
-    const button = screen.getByTestId('interactive-button');
-    const user = userEvent.setup();
+    render(<PanTestbench onPan={onPan} />);
+    const surface = screen.getByTestId('pan-surface');
 
-    await user.pointer([
-      { keys: '[MouseLeft>]', target: button, coords: { x: 0, y: 0 } },
-      { coords: { x: 20, y: 0 } },
-    ]);
+    fireEvent.wheel(surface, { deltaX: 5, deltaY: 100 });
+
+    expect(onPan).toHaveBeenCalledWith(Position.create(-5, -100));
+  });
+
+  it('ignores the wheel when a zoom modifier is pressed', () => {
+    const onPan = jest.fn();
+    render(<PanTestbench onPan={onPan} />);
+    const surface = screen.getByTestId('pan-surface');
+
+    fireEvent.wheel(surface, { ctrlKey: true, deltaY: 100 });
 
     expect(onPan).not.toHaveBeenCalled();
   });
 
   it('reports panning state while dragging', async () => {
-    render(<PanTestbench onPan={jest.fn()} />);
+    render(<PanTestbench onPan={jest.fn()} spacePressed />);
     const surface = screen.getByTestId('pan-surface');
     const user = userEvent.setup();
 

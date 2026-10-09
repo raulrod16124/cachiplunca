@@ -7,8 +7,10 @@ import type {
   SelectableItem,
   SelectionStore,
 } from '../../../application/services';
+import { useDragSelection } from '../hooks/use-drag-selection';
 import { usePan } from '../hooks/use-pan';
 import { useSelection } from '../hooks/use-selection';
+import { useSpacePressed } from '../hooks/use-space-pressed';
 import { useZoom } from '../hooks/use-zoom';
 import { SelectionOverlay } from './selection-overlay';
 import { ViewportControls } from './viewport-controls';
@@ -19,12 +21,27 @@ const CanvasContainer = styled.div`
   height: 100%;
   overflow: hidden;
   touch-action: none;
-  cursor: grab;
+  cursor: default;
   user-select: none;
+
+  &[data-pan-key='true'] {
+    cursor: grab;
+  }
 
   &[data-panning='true'] {
     cursor: grabbing;
   }
+
+  &[data-selecting='true'] {
+    cursor: crosshair;
+  }
+`;
+
+const Marquee = styled.div`
+  position: absolute;
+  pointer-events: none;
+  border: 1px solid var(--rr-color-accent-default, #2563eb);
+  background-color: rgba(37, 99, 235, 0.08);
 `;
 
 const World = styled.div`
@@ -80,16 +97,12 @@ export interface CanvasProps {
 export function Canvas({ store, selectionStore, items = [] }: CanvasProps): ReactElement {
   const viewport = useSyncExternalStore(store.subscribe, store.getSnapshot);
   const selection = useSyncExternalStore(selectionStore.subscribe, selectionStore.getSnapshot);
-  const { isPanning, ref: panRef } = usePan({ onPan: store.pan });
+  const spacePressed = useSpacePressed();
+  const { isPanning, ref: panRef } = usePan({ onPan: store.pan, spacePressed });
   const { ref: zoomRef } = useZoom({ onZoom: store.zoom });
 
   const handleSelect = useCallback(
-    (id: string | null, additive: boolean) => {
-      if (id === null) {
-        selectionStore.clear();
-        return;
-      }
-
+    (id: string, additive: boolean) => {
       if (additive) {
         selectionStore.toggle(id);
         return;
@@ -100,10 +113,34 @@ export function Canvas({ store, selectionStore, items = [] }: CanvasProps): Reac
     [selectionStore],
   );
 
+  const handleSelectMany = useCallback(
+    (ids: readonly string[], additive: boolean) => {
+      if (additive) {
+        selectionStore.addMany(ids);
+        return;
+      }
+
+      selectionStore.selectMany(ids);
+    },
+    [selectionStore],
+  );
+
+  const handleClear = useCallback(() => {
+    selectionStore.clear();
+  }, [selectionStore]);
+
   const { ref: selectionRef } = useSelection({
     items,
     viewport,
     onSelect: handleSelect,
+  });
+
+  const { ref: dragSelectionRef, rect: marqueeRect } = useDragSelection({
+    items,
+    viewport,
+    onSelect: handleSelectMany,
+    onClear: handleClear,
+    spacePressed,
   });
 
   const setContainerRef = useCallback(
@@ -111,8 +148,9 @@ export function Canvas({ store, selectionStore, items = [] }: CanvasProps): Reac
       panRef.current = node;
       zoomRef.current = node;
       selectionRef.current = node;
+      dragSelectionRef.current = node;
     },
-    [panRef, zoomRef, selectionRef],
+    [panRef, zoomRef, selectionRef, dragSelectionRef],
   );
 
   const transform = viewport.transform;
@@ -135,6 +173,8 @@ export function Canvas({ store, selectionStore, items = [] }: CanvasProps): Reac
       aria-label="Canvas"
       aria-grabbed={isPanning}
       data-panning={isPanning}
+      data-pan-key={spacePressed}
+      data-selecting={marqueeRect !== null}
       data-scale={transform.scale}
     >
       <GridLayer
@@ -165,8 +205,22 @@ export function Canvas({ store, selectionStore, items = [] }: CanvasProps): Reac
           />
         ))}
         <SelectionOverlay items={selectedItems} />
-        {items.length === 0 ? <Hint>Drag to pan · Ctrl/Cmd + scroll to zoom</Hint> : null}
+        {items.length === 0 ? (
+          <Hint>Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom</Hint>
+        ) : null}
       </World>
+      {marqueeRect !== null ? (
+        <Marquee
+          data-testid="drag-selection-rect"
+          aria-hidden="true"
+          style={{
+            left: marqueeRect.x,
+            top: marqueeRect.y,
+            width: marqueeRect.width,
+            height: marqueeRect.height,
+          }}
+        />
+      ) : null}
       <ViewportControls store={store} />
     </CanvasContainer>
   );

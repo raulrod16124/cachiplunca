@@ -49,7 +49,9 @@ describe('Canvas', () => {
     renderCanvas();
 
     expect(screen.getByRole('application', { name: 'Canvas' })).toBeInTheDocument();
-    expect(screen.getByText('Drag to pan · Ctrl/Cmd + scroll to zoom')).toBeInTheDocument();
+    expect(
+      screen.getByText('Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom'),
+    ).toBeInTheDocument();
   });
 
   it('renders an infinite grid aligned to the world origin', () => {
@@ -65,10 +67,12 @@ describe('Canvas', () => {
     const canvas = screen.getByRole('application', { name: 'Canvas' });
     const user = userEvent.setup();
 
+    fireEvent.keyDown(window, { code: 'Space' });
     await user.pointer([
       { keys: '[MouseLeft>]', target: canvas, coords: { x: 0, y: 0 } },
       { coords: { x: 50, y: 25 } },
     ]);
+    fireEvent.keyUp(window, { code: 'Space' });
 
     const grid = screen.getByTestId('canvas-grid');
     expect(grid.style.backgroundPosition).toBe('10px 25px');
@@ -86,19 +90,32 @@ describe('Canvas', () => {
     expect(grid.style.backgroundSize).toBe(`${40 * scale}px ${40 * scale}px`);
   });
 
-  it('pans the viewport when dragging', async () => {
+  it('pans the viewport when dragging with space held', async () => {
     renderCanvas();
     const canvas = screen.getByRole('application', { name: 'Canvas' });
     const user = userEvent.setup();
 
+    fireEvent.keyDown(window, { code: 'Space' });
     await user.pointer([
       { keys: '[MouseLeft>]', target: canvas, coords: { x: 0, y: 0 } },
       { coords: { x: 50, y: 25 } },
     ]);
+    fireEvent.keyUp(window, { code: 'Space' });
 
     const world = screen.getByTestId('canvas-world');
     expect(world.style.transform).toContain('translate(50px, 25px)');
     expect(world.style.transform).toContain('scale(1)');
+  });
+
+  it('pans the viewport with a plain wheel scroll', () => {
+    renderCanvas();
+    const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+    fireEvent.wheel(canvas, { deltaX: 10, deltaY: 40 });
+
+    const world = screen.getByTestId('canvas-world');
+    expect(world.style.transform).toContain('translate(-10px, -40px)');
+    expect(Number(canvas.getAttribute('data-scale'))).toBe(1);
   });
 
   it('releases the panning state after dragging', async () => {
@@ -106,11 +123,13 @@ describe('Canvas', () => {
     const canvas = screen.getByRole('application', { name: 'Canvas' });
     const user = userEvent.setup();
 
+    fireEvent.keyDown(window, { code: 'Space' });
     await user.pointer([
       { keys: '[MouseLeft>]', target: canvas, coords: { x: 0, y: 0 } },
       { coords: { x: 10, y: 10 } },
       { keys: '[/MouseLeft]' },
     ]);
+    fireEvent.keyUp(window, { code: 'Space' });
 
     expect(canvas).toHaveAttribute('data-panning', 'false');
   });
@@ -200,7 +219,10 @@ describe('Canvas', () => {
       await user.pointer({ keys: '[MouseLeft>]', target: canvas, coords: { x: 150, y: 130 } });
       expect(selectionStore.getSnapshot().selectedIds).toEqual(['first']);
 
-      await user.pointer({ keys: '[MouseLeft>]', target: canvas, coords: { x: 700, y: 500 } });
+      await user.pointer([
+        { keys: '[MouseLeft>]', target: canvas, coords: { x: 700, y: 500 } },
+        { keys: '[/MouseLeft]' },
+      ]);
       expect(selectionStore.getSnapshot().selectedIds).toEqual([]);
       expect(screen.queryByTestId('selection-overlay')).not.toBeInTheDocument();
     });
@@ -257,7 +279,10 @@ describe('Canvas', () => {
 
       await user.pointer({ keys: '[MouseLeft>]', target: canvas, coords: { x: 150, y: 130 } });
       await user.keyboard('{Shift>}');
-      await user.pointer({ keys: '[MouseLeft>]', target: canvas, coords: { x: 700, y: 500 } });
+      await user.pointer([
+        { keys: '[MouseLeft>]', target: canvas, coords: { x: 700, y: 500 } },
+        { keys: '[/MouseLeft]' },
+      ]);
       await user.keyboard('{/Shift}');
 
       expect(selectionStore.getSnapshot().selectedIds).toEqual([]);
@@ -284,15 +309,82 @@ describe('Canvas', () => {
       expect(overlay.querySelectorAll('span')).toHaveLength(0);
     });
 
-    it('does not start panning when the press starts on a selectable item', () => {
+    it('does not pan or start a marquee when dragging from a selectable item', async () => {
       const { store } = renderCanvas([FIRST_ITEM]);
       const canvas = screen.getByRole('application', { name: 'Canvas' });
       const item = screen.getByTestId('canvas-item-first');
+      const user = userEvent.setup();
 
-      fireEvent.pointerDown(item, { button: 0, pointerId: 1, clientX: 150, clientY: 130 });
-      fireEvent.pointerMove(canvas, { pointerId: 1, clientX: 200, clientY: 180 });
+      await user.pointer([
+        { keys: '[MouseLeft>]', target: item, coords: { x: 150, y: 130 } },
+        { coords: { x: 250, y: 230 } },
+      ]);
 
       expect(store.getSnapshot().transform.translation).toEqual(Position.create(0, 0));
+      expect(screen.queryByTestId('drag-selection-rect')).not.toBeInTheDocument();
+      expect(canvas).toHaveAttribute('data-selecting', 'false');
+    });
+
+    it('selects every item intersecting the dragged rectangle', async () => {
+      const { selectionStore } = renderCanvas([FIRST_ITEM, SECOND_ITEM]);
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const user = userEvent.setup();
+
+      await user.pointer([
+        { keys: '[MouseLeft>]', target: canvas, coords: { x: 0, y: 0 } },
+        { coords: { x: 450, y: 350 } },
+        { keys: '[/MouseLeft]' },
+      ]);
+
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['first', 'second']);
+      expect(screen.getByTestId('canvas-item-first')).toHaveAttribute('data-selected', 'true');
+      expect(screen.getByTestId('canvas-item-second')).toHaveAttribute('data-selected', 'true');
+      expect(screen.getByTestId('selection-overlay')).toHaveAttribute('data-selection-count', '2');
+    });
+
+    it('renders the marquee rectangle while dragging and removes it after', async () => {
+      renderCanvas([FIRST_ITEM]);
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const user = userEvent.setup();
+
+      await user.pointer([
+        { keys: '[MouseLeft>]', target: canvas, coords: { x: 10, y: 20 } },
+        { coords: { x: 210, y: 170 } },
+      ]);
+
+      expect(canvas).toHaveAttribute('data-selecting', 'true');
+      const marquee = screen.getByTestId('drag-selection-rect');
+      expect(marquee.style.left).toBe('10px');
+      expect(marquee.style.top).toBe('20px');
+      expect(marquee.style.width).toBe('200px');
+      expect(marquee.style.height).toBe('150px');
+
+      await user.pointer({ keys: '[/MouseLeft]' });
+
+      expect(canvas).toHaveAttribute('data-selecting', 'false');
+      expect(screen.queryByTestId('drag-selection-rect')).not.toBeInTheDocument();
+    });
+
+    it('adds the items in the rectangle to the selection with a modifier', async () => {
+      const { selectionStore } = renderCanvas([FIRST_ITEM, SECOND_ITEM]);
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const user = userEvent.setup();
+
+      await user.pointer([
+        { keys: '[MouseLeft>]', target: canvas, coords: { x: 150, y: 130 } },
+        { keys: '[/MouseLeft]' },
+      ]);
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['first']);
+
+      await user.keyboard('{Shift>}');
+      await user.pointer([
+        { keys: '[MouseLeft>]', target: canvas, coords: { x: 350, y: 150 } },
+        { coords: { x: 450, y: 350 } },
+        { keys: '[/MouseLeft]' },
+      ]);
+      await user.keyboard('{/Shift}');
+
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['first', 'second']);
     });
   });
 });

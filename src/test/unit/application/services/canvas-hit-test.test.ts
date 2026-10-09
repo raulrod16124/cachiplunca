@@ -1,5 +1,8 @@
 import { Bounds, Position } from '../../../../domain/shared';
-import { findSelectableAt } from '../../../../application/services/canvas-hit-test';
+import {
+  findSelectableAt,
+  findSelectablesInBounds,
+} from '../../../../application/services/canvas-hit-test';
 import type { SelectableItem } from '../../../../application/services/canvas-hit-test';
 
 const FIRST: SelectableItem = { id: 'first', bounds: Bounds.fromXYWH(0, 0, 100, 100) };
@@ -26,5 +29,40 @@ describe('findSelectableAt', () => {
   it('returns the topmost item when bounds overlap', () => {
     expect(findSelectableAt([FIRST, SECOND], Position.create(75, 75))).toBe('second');
     expect(findSelectableAt([SECOND, FIRST], Position.create(75, 75))).toBe('first');
+  });
+});
+
+describe('findSelectablesInBounds', () => {
+  it('returns an empty list when there are no items', () => {
+    expect(findSelectablesInBounds([], Bounds.fromXYWH(0, 0, 10, 10))).toEqual([]);
+  });
+
+  it('returns an empty list when no item intersects the rectangle', () => {
+    expect(findSelectablesInBounds([FIRST], Bounds.fromXYWH(200, 200, 50, 50))).toEqual([]);
+  });
+
+  it('includes items fully contained in the rectangle', () => {
+    expect(findSelectablesInBounds([FIRST], Bounds.fromXYWH(-10, -10, 200, 200))).toEqual([
+      'first',
+    ]);
+  });
+
+  it('includes items that only partially intersect the rectangle', () => {
+    expect(findSelectablesInBounds([FIRST], Bounds.fromXYWH(50, 50, 20, 20))).toEqual(['first']);
+  });
+
+  it('ignores items that only share a border edge with the rectangle', () => {
+    expect(findSelectablesInBounds([FIRST], Bounds.fromXYWH(100, 0, 50, 50))).toEqual([]);
+  });
+
+  it('returns every intersecting id preserving the input order', () => {
+    expect(findSelectablesInBounds([FIRST, SECOND], Bounds.fromXYWH(0, 0, 200, 200))).toEqual([
+      'first',
+      'second',
+    ]);
+    expect(findSelectablesInBounds([SECOND, FIRST], Bounds.fromXYWH(0, 0, 200, 200))).toEqual([
+      'second',
+      'first',
+    ]);
   });
 });

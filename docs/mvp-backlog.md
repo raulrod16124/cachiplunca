@@ -1419,7 +1419,7 @@ Completar **Multi-selection** dejando un resultado verificable y apto para las t
 
 ### TASK-035 — Drag selection
 
-**Priority:** P1 · **Depends:** TASK-034 · **Status:** TODO
+**Priority:** P1 · **Depends:** TASK-034 · **Status:** DONE
 
 #### Objetivo
 
@@ -1434,12 +1434,12 @@ Completar **Drag selection** dejando un resultado verificable y apto para las ta
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -4812,6 +4812,14 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) modificador `Shift` y `Ctrl/Cmd` (cualquiera) para toggle aditivo; (2) representación por caja envolvente con handles solo con 1 ítem, dejando el resize de grupo a TASK-058; (3) el clic (con o sin modificador) en espacio vacío siempre limpia la selección por previsibilidad; (4) la semántica de selección (`select`/`toggle`) vive en el store de Application y el modificador se resuelve en Presentation, sin acoplar el store al DOM; (5) sin ADR por ser una decisión local de interacción.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-035 (Drag selection).
+
+## 2026-10-09 — TASK-035
+
+- Resultado: Drag selection (marquee) de punta a punta y desacoplada de la persistencia. En Application (React-free): `findSelectablesInBounds(items, worldBounds)` en `src/application/services/canvas-hit-test.ts` (preserva el orden de entrada y usa `Bounds.intersects`) y el `SelectionStore` gana `selectMany(ids)` (reemplaza, dedupe por `Set`, no-op ante conjunto igual) y `addMany(ids)` (unión sin duplicados). En Presentation: nuevo hook `useSpacePressed` (keydown/keyup/blur en `window`, ignora `event.repeat` y targets editables, `preventDefault`); nuevo hook `useDragSelection` (listener en el contenedor, umbral `DRAG_SELECTION_THRESHOLD = 4`, rect en coords pantalla normalizado a `Bounds.fromXYWH(via screenToWorld)`, `onSelect(ids, additive)`/`onClear`, ignora presses con Space o iniciados sobre `[data-selectable]`/interactivos o con hit de ítem, `pointercancel` cancela sin commit y devuelve `{ rect, ref }`); `useSelection` mantiene `onSelect(id, additive)` pero solo actúa cuando hay hit (el vacío pasa a `onDragSelection`); `usePan` se re-bindea a **Space+drag** y **botón central** y añade **pan con rueda plana** (ctrl/meta sigue siendo zoom), eliminando su antiguo guard `[data-selectable]`; `Canvas` cablea los cuatro hooks (pan, zoom, selection, drag-selection), pinta `<Marquee data-testid="drag-selection-rect">`, expone `data-pan-key`/`data-selecting` y actualiza el hint a `Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom`.
+- Tests/quality gates: 564 tests pasan (52 suites, +39: 6 de `findSelectablesInBounds`, 6 de `selectMany`/`addMany` en `selection-store`, 5 de `useSpacePressed`, ~14 de `useDragSelection`, reescritura de pan a space/middle/wheel y de selección a hit-only, y 4 nuevos de integración del marquee en `canvas`); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente). Smoke manual con `npm run dev` pendiente.
+- Decisiones: (1) **drag plano = marquee** y el pan pasa a **Space+drag**, **botón central** y **rueda plana** (antes el wheel plano era no-op); `Ctrl/Cmd+wheel` sigue siendo zoom — cambio de binding sin ADR por precedente local (TASK-029/030/031/033/034); (2) el módulo de marquee es aditivo con `Shift`/`Ctrl`/`Cmd` y usa **unión** (`addMany`), mientras el rect no aditivo **reemplaza** (`selectMany`); (3) un click (con o sin modificador) en vacío siempre limpia, de modo que `useSelection` delega el manejo del vacío al marquee; (4) la selección es estado efímero de interacción en Application (mismo patrón que el viewport), no dominio ni persistencia; (5) la semántica de conjuntos vive en el store y el modificador se resuelve en Presentation; (6) sin ADR por ser una decisión local de interacción.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-036 (Selection keyboard interactions).
 
 ---
 

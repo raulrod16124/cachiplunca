@@ -18,3 +18,18 @@ export function findSelectableAt(
 
   return null;
 }
+
+export function findSelectablesInBounds(
+  items: readonly SelectableItem[],
+  worldBounds: Bounds,
+): readonly string[] {
+  const matches: string[] = [];
+
+  for (const item of items) {
+    if (item.bounds.intersects(worldBounds)) {
+      matches.push(item.id);
+    }
+  }
+
+  return matches;
+}

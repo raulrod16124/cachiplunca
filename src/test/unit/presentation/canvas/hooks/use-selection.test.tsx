@@ -59,7 +59,7 @@ describe('useSelection', () => {
     expect(onSelect).toHaveBeenCalledWith('item', false);
   });
 
-  it('clears the selection when pressing empty space', async () => {
+  it('does not select when pressing empty space', async () => {
     const onSelect = jest.fn();
     render(<SelectionTestbench items={[ITEM]} viewport={VIEWPORT} onSelect={onSelect} />);
     const user = userEvent.setup();
@@ -70,10 +70,10 @@ describe('useSelection', () => {
       coords: { x: 500, y: 500 },
     });
 
-    expect(onSelect).toHaveBeenCalledWith(null, false);
+    expect(onSelect).not.toHaveBeenCalled();
   });
 
-  it('clears the selection when there are no items', async () => {
+  it('does not select when there are no items', async () => {
     const onSelect = jest.fn();
     render(<SelectionTestbench items={[]} viewport={VIEWPORT} onSelect={onSelect} />);
     const user = userEvent.setup();
@@ -84,7 +84,7 @@ describe('useSelection', () => {
       coords: { x: 150, y: 150 },
     });
 
-    expect(onSelect).toHaveBeenCalledWith(null, false);
+    expect(onSelect).not.toHaveBeenCalled();
   });
 
   it('converts screen coordinates with the current viewport', async () => {
