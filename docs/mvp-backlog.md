@@ -1349,7 +1349,7 @@ Completar **Grid** dejando un resultado verificable y apto para las tareas depen
 
 ### TASK-033 — Single selection
 
-**Priority:** P0 · **Depends:** TASK-029 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-029 · **Status:** DONE
 
 #### Objetivo
 
@@ -1364,12 +1364,12 @@ Completar **Single selection** dejando un resultado verificable y apto para las 
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -4796,6 +4796,14 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) la matemática de encuadre vive en Domain (`Viewport.fit`) y los límites de escala en Application, coherente con TASK-030; (2) `fit` recibe `Bounds | null` y trata el contenido vacío como reset, de modo que la UI actual (sin elementos, TASK-037+) ya usa un camino definido y testeable; (3) indicador de % de zoom incluido aquí al haber sido diferido expresamente desde TASK-030 (TASK-106 conserva la toolbar); (4) sin atajos de teclado ni `ResizeObserver`/sincronización del tamaño real del contenedor (fuera de alcance); (5) sin ADR por ser una decisión local de interacción, no arquitectónica.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-032 (Grid).
+
+## 2026-10-09 — TASK-033
+
+- Resultado: Single selection de punta a punta y desacoplada de la persistencia. En Application (React-free): `createSelectionStore()` en `src/application/services/selection-store.ts` (snapshot `{ selectedId: string | null }`, `getSnapshot`/`subscribe`/`select`/`clear`, guarda de igualdad en `publish`, calcado de `canvas-viewport-store`) y `findSelectableAt(items, worldPoint)` en `src/application/services/canvas-hit-test.ts` con `SelectableItem = { id, bounds }`, hit-test por `Bounds.contains` y orden z (último encima). En Presentation: hook `useSelection` (listener nativo `pointerdown` en el contenedor, `Viewport.screenToWorld` + hit-test, respeta `disabled` e `isInteractiveTarget` mediante refs para no re-registrar listeners en cada render), componente `SelectionOverlay` (contorno + 8 handles en coordenadas mundo, `aria-hidden` hasta TASK-036) y `Canvas` que recibe `selectionStore` e `items`, pinta nodos placeholder `[data-selectable]` y el overlay. El guard de `usePan` se amplía con `[data-selectable]` para que un press sobre un ítem no inicie pan. Store inyectado con `useRef` en `WorkspaceShellContainer` → `WorkspaceShellLayout` → `Canvas`.
+- Tests/quality gates: 514 tests pasan (50 suites, +43: 5 de `findSelectableAt`, 7 de `selection-store`, 8 de `useSelection`, 6 de selección en `canvas` y ajuste de los 10 preexistentes al nuevo prop); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente). Smoke manual con `npm run dev` pendiente.
+- Decisiones: (1) la selección es estado efímero de interacción en Application (mismo patrón que el viewport), no dominio ni persistencia; (2) al no existir aún elementos (TASK-037+), `Canvas` acepta `items: readonly SelectableItem[]` con prompts `{ id, bounds }` y los pinta como nodos placeholder; el render real (TASK-050+) reutilizará el mismo store y hit-test; (3) el `pointerdown` de selección convive con el de pan vía el guard `[data-selectable]` en `usePan`, sin acoplar ambas lógicas; (4) el overlay es puramente visual pese a representar posición/tamaño/estado; teclado y foco son TASK-036; (5) sin ADR por ser una decisión local de interacción.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-034 (Multi-selection).
 
 ---
 

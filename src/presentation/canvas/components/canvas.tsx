@@ -2,9 +2,15 @@ import type { ReactElement } from 'react';
 import { useCallback, useSyncExternalStore } from 'react';
 import styled from 'styled-components';
 import { Grid } from '../../../domain/shared';
-import type { CanvasViewportStore } from '../../../application/services';
+import type {
+  CanvasViewportStore,
+  SelectableItem,
+  SelectionStore,
+} from '../../../application/services';
 import { usePan } from '../hooks/use-pan';
+import { useSelection } from '../hooks/use-selection';
 import { useZoom } from '../hooks/use-zoom';
+import { SelectionOverlay } from './selection-overlay';
 import { ViewportControls } from './viewport-controls';
 
 const CanvasContainer = styled.div`
@@ -38,6 +44,20 @@ const GridLayer = styled.div`
   opacity: 0.5;
 `;
 
+const SelectableNode = styled.div`
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px solid var(--rr-color-border-default, #cbd5e1);
+  border-radius: 4px;
+  background: var(--rr-color-background-default, #ffffff);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  cursor: pointer;
+
+  &[data-selected='true'] {
+    border-color: var(--rr-color-accent-default, #2563eb);
+  }
+`;
+
 const Hint = styled.div`
   position: absolute;
   top: 50%;
@@ -53,19 +73,28 @@ const CANVAS_GRID = Grid.default();
 
 export interface CanvasProps {
   readonly store: CanvasViewportStore;
+  readonly selectionStore: SelectionStore;
+  readonly items?: readonly SelectableItem[];
 }
 
-export function Canvas({ store }: CanvasProps): ReactElement {
+export function Canvas({ store, selectionStore, items = [] }: CanvasProps): ReactElement {
   const viewport = useSyncExternalStore(store.subscribe, store.getSnapshot);
+  const selection = useSyncExternalStore(selectionStore.subscribe, selectionStore.getSnapshot);
   const { isPanning, ref: panRef } = usePan({ onPan: store.pan });
   const { ref: zoomRef } = useZoom({ onZoom: store.zoom });
+  const { ref: selectionRef } = useSelection({
+    items,
+    viewport,
+    onSelect: selectionStore.select,
+  });
 
   const setContainerRef = useCallback(
     (node: HTMLDivElement | null) => {
       panRef.current = node;
       zoomRef.current = node;
+      selectionRef.current = node;
     },
-    [panRef, zoomRef],
+    [panRef, zoomRef, selectionRef],
   );
 
   const transform = viewport.transform;
@@ -74,6 +103,8 @@ export function Canvas({ store }: CanvasProps): ReactElement {
 
   const gridStep = CANVAS_GRID.scaledSpacing(transform.scale);
   const gridOffset = CANVAS_GRID.offsetFor(transform);
+
+  const selectedItem = items.find((item) => item.id === selection.selectedId) ?? null;
 
   return (
     <CanvasContainer
@@ -97,7 +128,22 @@ export function Canvas({ store }: CanvasProps): ReactElement {
           transform: `translate(${translateX}px, ${translateY}px) scale(${transform.scale})`,
         }}
       >
-        <Hint>Drag to pan · Ctrl/Cmd + scroll to zoom</Hint>
+        {items.map((item) => (
+          <SelectableNode
+            key={item.id}
+            data-selectable="true"
+            data-selected={item.id === selection.selectedId}
+            data-testid={`canvas-item-${item.id}`}
+            style={{
+              left: item.bounds.x,
+              top: item.bounds.y,
+              width: item.bounds.width,
+              height: item.bounds.height,
+            }}
+          />
+        ))}
+        <SelectionOverlay item={selectedItem} />
+        {items.length === 0 ? <Hint>Drag to pan · Ctrl/Cmd + scroll to zoom</Hint> : null}
       </World>
       <ViewportControls store={store} />
     </CanvasContainer>

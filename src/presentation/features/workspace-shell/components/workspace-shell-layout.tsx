@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import type { Workspace } from '../../../../domain/workspace';
 import { SignOutButton } from '../../auth/sign-out-button';
 import type { LogoutUser } from '../../../../application/commands';
-import type { CanvasViewportStore } from '../../../../application/services';
+import type { CanvasViewportStore, SelectionStore } from '../../../../application/services';
 import { Canvas } from '../../../canvas';
 
 const Shell = styled.div`
@@ -31,6 +31,7 @@ export interface WorkspaceShellLayoutProps {
   readonly logoutUser: LogoutUser;
   readonly onBack: () => void;
   readonly canvasViewportStore: CanvasViewportStore;
+  readonly selectionStore: SelectionStore;
 }
 
 export function WorkspaceShellLayout({
@@ -38,6 +39,7 @@ export function WorkspaceShellLayout({
   logoutUser,
   onBack,
   canvasViewportStore,
+  selectionStore,
 }: WorkspaceShellLayoutProps): ReactNode {
   return (
     <Shell>
@@ -62,7 +64,7 @@ export function WorkspaceShellLayout({
         </Inline>
       </Header>
       <CanvasArea>
-        <Canvas store={canvasViewportStore} />
+        <Canvas store={canvasViewportStore} selectionStore={selectionStore} />
       </CanvasArea>
     </Shell>
   );
