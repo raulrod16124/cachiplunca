@@ -176,6 +176,22 @@ export function withRotation(
   return next;
 }
 
+export function withPosition(
+  element: Element,
+  position: Position,
+  updatedAt: Date = new Date(),
+): Element {
+  if (!Number.isFinite(position.x) || !Number.isFinite(position.y)) {
+    throw new Error('Element position must have finite coordinates');
+  }
+
+  const next: Element = { ...element, position, updatedAt };
+
+  validateElement(next);
+
+  return next;
+}
+
 export function validateElement(element: Element): void {
   switch (element.type) {
     case 'text':

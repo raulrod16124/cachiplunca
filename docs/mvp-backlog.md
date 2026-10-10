@@ -1806,7 +1806,7 @@ Implementar el comando de actualización de elementos.
 
 ### TASK-046 — MoveElement command
 
-**Priority:** P0 · **Depends:** TASK-044 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-044 · **Status:** DONE
 
 #### Objetivo
 
@@ -1821,13 +1821,13 @@ Completar **MoveElement command** dejando un resultado verificable y apto para l
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
-- [ ] Undo/redo no corrompe el estado ante secuencias válidas.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] Undo/redo no corrompe el estado ante secuencias válidas.
 
 #### Fuera de alcance
 
@@ -4844,6 +4844,14 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) el comando es puro y recibe el elemento actual, devolviendo el elemento actualizado, para que el historial (TASK-064+) capture el estado previo sin acoplarse a persistencia; (2) la actualización genérica incluye `rotation` (no hay tarea dedicada a rotar) mediante `withRotation`, que valida finitud y revalida el elemento; `position`/`size` se difieren a TASK-046 (Move) y TASK-047 (Resize); (3) el patch se tipa por discriminante y un desajuste `input.type !== element.type` así como un patch vacío son errores de validación explícitos, igual que los `Error` de dominio traducidos a `validation`/`VALIDATION_INVALID_INPUT`; (4) `null` se usa como "limpiar" y `undefined` como "sin cambio", explícito en la unión; (5) sin ADR por seguir el patrón local ya establecido en TASK-044.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-046 (MoveElement command).
+
+## 2026-10-10 — TASK-046
+
+- Resultado: MoveElement command en Application (React/Firebase-free). Nuevo helper puro `withPosition(element, position, updatedAt?)` en `src/domain/element/element-types.ts` (gemelo de `withRotation`: spread inmutable de `{ position, updatedAt }`, valida finitud de coordenadas y revalida el elemento con `validateElement`). `createMoveElement({ now? })` en `src/application/commands/move-element.ts` recibe `MoveElementInput { element, position }` (posición **absoluta** de destino) y devuelve `MoveElementResult = ok | error`; calcula `updatedAt` desde el reloj inyectado y delega la mutación en `withPosition`. Los `Error` de dominio se traducen a `AppError` de kind `validation` (`VALIDATION_INVALID_INPUT`) con `cause`, reutilizando `toValidationAppError`. Exportado en `src/application/commands/index.ts`. Sin wiring de UI (llega con TASK-057) ni persistencia (TASK-068+).
+- Tests/quality gates: 746 tests pasan (64 suites, +14: 4 de `withPosition` en `element-types.test.ts` y 10 de `move-element.test.ts` —movimiento de los 6 tipos preservando campos específicos, `updatedAt` determinista preservando `createdAt`, fallback a reloj real, posición inválida y fallo de dominio → error de validación sin excepción cruda, inmutabilidad del input/elemento, estatelessness, reversibilidad move↔move-back para undo/redo—); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) la posición se expresa como **destino absoluto** (no delta), alineada con la estrategia last-write-wins de TASK-081 y con la actualización parcial de la propiedad `position` en persistencia; la inversa para undo es la posición previa y no depende de un estado base posiblemente desactualizado; (2) `withPosition` vive en el dominio junto a `withRotation` (misma firma y revalidación) para no duplicar invariantes en Application; (3) el comando es puro, recibe el elemento actual y el reloj por DI, de modo que el historial (TASK-064+) capture el estado previo sin acoplarse a persistencia; (4) sin ADR por seguir el patrón local ya establecido en TASK-044/TASK-045.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-047 (ResizeElement command).
 
 ---
 

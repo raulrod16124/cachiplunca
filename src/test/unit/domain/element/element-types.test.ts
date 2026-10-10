@@ -14,6 +14,7 @@ import {
   validateNoteElement,
   validateTaskElement,
   validateTextElement,
+  withPosition,
   withRotation,
 } from '../../../../domain/element';
 import type {
@@ -299,5 +300,51 @@ describe('withRotation', () => {
     });
 
     expect(() => withRotation(element, 10, new Date('2024-04-01T00:00:00Z'))).toThrow(/createdAt/);
+  });
+});
+
+describe('withPosition', () => {
+  const updatedAt = new Date('2024-03-01T00:00:00Z');
+
+  it('returns a new element with the provided position and timestamp', () => {
+    const element = createTextElement({ position: Position.create(0, 0) });
+    const moved = withPosition(element, Position.create(12, 34), updatedAt);
+
+    expect(moved.position.equals(Position.create(12, 34))).toBe(true);
+    expect(moved.updatedAt).toBe(updatedAt);
+    expect(moved).not.toBe(element);
+  });
+
+  it('preserves the discriminant and type-specific fields for every element type', () => {
+    const position = Position.create(-5, 7.5);
+
+    for (const element of allElements()) {
+      const moved = withPosition(element, position, updatedAt);
+
+      expect(moved.type).toBe(element.type);
+      expect(moved.id.equals(element.id)).toBe(true);
+      expect(moved.position.equals(position)).toBe(true);
+    }
+  });
+
+  it('does not mutate the original element', () => {
+    const element = createTaskElement({ position: Position.create(1, 2) });
+    const snapshot = { ...element };
+
+    withPosition(element, Position.create(9, 9), updatedAt);
+
+    expect(element).toEqual(snapshot);
+    expect(element.position.equals(Position.create(1, 2))).toBe(true);
+  });
+
+  it('rejects a timestamp older than createdAt', () => {
+    const element = createTextElement({
+      createdAt: new Date('2024-05-01T00:00:00Z'),
+      updatedAt: new Date('2024-05-01T00:00:00Z'),
+    });
+
+    expect(() =>
+      withPosition(element, Position.create(1, 1), new Date('2024-04-01T00:00:00Z')),
+    ).toThrow(/createdAt/);
   });
 });
