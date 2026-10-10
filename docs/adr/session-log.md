@@ -1,5 +1,15 @@
 # Session Log
 
+## 2026-10-10 — TASK-040 TaskElement
+
+- Siguiente tarea del backlog: TASK-040 (dependencia TASK-037 DONE, sin IN PROGRESS).
+- `TaskElement` ya existía como tipo + `validateTaskElement` + `TASK_STATUSES` (TASK-037); el hueco era el comportamiento de creación/edición que necesitarán TASK-044 y TASK-053.
+- Nuevo módulo `src/domain/element/task-element.ts`: `createTaskElement(props)` (defaults de `rotation`/timestamps, valida `title` no vacío, `status ∈ TASK_STATUSES`, `assigneeId`/`dueDate` opcionales válidos) y actualizaciones puras `withTaskTitle`, `withTaskStatus`, `withTaskAssignee` y `withTaskDueDate` (devuelven copia, revalidan, no mutan). Los helpers de opcionales aceptan `undefined` para limpiar el campo y lo omiten del objeto (mismo patrón que `note-element.ts`).
+- Errores con `Error` descriptivo, consistente con los validadores de dominio; no se tocó `element-types.ts`.
+- Tests en `src/test/unit/domain/element/task-element.test.ts` (21 casos, sin `any` ni casts; datos no confiables con `Object.assign`).
+- Quality gates: `lint`, `format:check`, `tsc -b --noEmit`, `test` (647 tests) y `build` en verde. `task-element.ts` sin imports de React/Firebase/UI.
+- Sin ADR nuevo: no hay decisión arquitectónica significativa.
+
 ## 2026-10-10 — TASK-039 NoteElement
 
 - Siguiente tarea del backlog: TASK-039 (dependencia TASK-037 DONE, sin IN PROGRESS).
