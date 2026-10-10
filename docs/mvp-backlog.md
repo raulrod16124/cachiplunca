@@ -1769,28 +1769,28 @@ Implementar el comando de creación de elementos.
 
 ### TASK-045 — UpdateElement command
 
-**Priority:** P0 · **Depends:** TASK-044 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-044 · **Status:** DONE
 
 #### Objetivo
 
-Completar **UpdateElement command** dejando un resultado verificable y apto para las tareas dependientes.
+Implementar el comando de actualización de elementos.
 
 #### Alcance
 
-- Implementar el comportamiento necesario para **UpdateElement command**.
-- Integrarlo con las capas existentes sin romper sus límites.
-- Añadir o actualizar tests relevantes.
+- Comando puro de actualización de un elemento existente a partir de un patch tipado por tipo.
+- Generar metadatos (`updatedAt`) mediante dependencias inyectadas.
+- Validar payload y tipo del patch frente al elemento.
 - Mantener la interacción desacoplada de la persistencia.
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
-- [ ] Undo/redo no corrompe el estado ante secuencias válidas.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] Undo/redo no corrompe el estado ante secuencias válidas.
 
 #### Fuera de alcance
 
@@ -4836,6 +4836,14 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) el id se inyecta como dependencia (`generateId: () => ElementId`) en vez de usar `crypto.randomUUID()` en Application — mantiene el comando puro y testeable de forma determinista, coherente con el patrón factory+DI y con ADR-0005 ("el id lo genera el adapter", aquí diferido a la composición); (2) la validación vive en el dominio: el comando solo traduce sus `Error` a `validation`/`VALIDATION_INVALID_INPUT`, sin duplicar invariantes ni introducir `fieldErrors` (no hay flujo de formulario); (3) la reversibilidad (history/undo) se difiere a la interfaz `Command` de TASK-063 y al manager de TASK-064, dejando constancia en tests de que la inversa de un create es un delete por id; (4) sin ADR por ser una decisión local que sigue el patrón ya establecido.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-045 (UpdateElement command).
+
+## 2026-10-10 — TASK-045
+
+- Resultado: UpdateElement command en Application (React/Firebase-free). `createUpdateElement({ now? })` en `src/application/commands/update-element.ts` recibe un `UpdateElementInput` (unión discriminada por `type` con `element` + patch por tipo) y devuelve `UpdateElementResult = ok | error`; aplica los factories `withX` de dominio ya existentes (content, color, title, status, assignee, dueDate, parentFrameId, endpoints, url) y un nuevo helper puro `withRotation` en el dominio, con un único `updatedAt` derivado de `now`. `null` en campos opcionales limpia (task.assigneeId/dueDate, frame.parentFrameId, link.title). El helper `toValidationAppError` se extrajo a `src/application/commands/to-validation-app-error.ts` y `create-element.ts` pasa a reutilizarlo. Exportado en `src/application/commands/index.ts`.
+- Tests/quality gates: 732 tests pasan (63 suites, +21: 18 de `update-element.test.ts` y 5 de `withRotation` en `element-types.test.ts`); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) el comando es puro y recibe el elemento actual, devolviendo el elemento actualizado, para que el historial (TASK-064+) capture el estado previo sin acoplarse a persistencia; (2) la actualización genérica incluye `rotation` (no hay tarea dedicada a rotar) mediante `withRotation`, que valida finitud y revalida el elemento; `position`/`size` se difieren a TASK-046 (Move) y TASK-047 (Resize); (3) el patch se tipa por discriminante y un desajuste `input.type !== element.type` así como un patch vacío son errores de validación explícitos, igual que los `Error` de dominio traducidos a `validation`/`VALIDATION_INVALID_INPUT`; (4) `null` se usa como "limpiar" y `undefined` como "sin cambio", explícito en la unión; (5) sin ADR por seguir el patrón local ya establecido en TASK-044.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-046 (MoveElement command).
 
 ---
 

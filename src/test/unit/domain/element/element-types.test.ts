@@ -14,6 +14,7 @@ import {
   validateNoteElement,
   validateTaskElement,
   validateTextElement,
+  withRotation,
 } from '../../../../domain/element';
 import type {
   BaseElement,
@@ -251,5 +252,52 @@ describe('Element types', () => {
   it('rejects untrusted element data with an unknown type', () => {
     const corrupted = Object.assign(createLinkElement(), { type: 'unknown' });
     expect(() => validateElement(corrupted)).toThrow(/Unknown element type/);
+  });
+});
+
+describe('withRotation', () => {
+  const updatedAt = new Date('2024-03-01T00:00:00Z');
+
+  it('returns a new element with the provided rotation and timestamp', () => {
+    const element = createTextElement({ rotation: 0 });
+    const rotated = withRotation(element, 45, updatedAt);
+
+    expect(rotated.rotation).toBe(45);
+    expect(rotated.updatedAt).toBe(updatedAt);
+    expect(rotated).not.toBe(element);
+  });
+
+  it('preserves the discriminant and type-specific fields for every element type', () => {
+    for (const element of allElements()) {
+      const rotated = withRotation(element, 30, updatedAt);
+
+      expect(rotated.type).toBe(element.type);
+      expect(rotated.id.equals(element.id)).toBe(true);
+      expect(rotated.rotation).toBe(30);
+    }
+  });
+
+  it('does not mutate the original element', () => {
+    const element = createTaskElement({ rotation: 10 });
+    const snapshot = { ...element };
+
+    withRotation(element, 90, updatedAt);
+
+    expect(element).toEqual(snapshot);
+    expect(element.rotation).toBe(10);
+  });
+
+  it('rejects non-finite rotations', () => {
+    expect(() => withRotation(createTextElement(), NaN, updatedAt)).toThrow(/rotation/);
+    expect(() => withRotation(createTextElement(), Infinity, updatedAt)).toThrow(/rotation/);
+  });
+
+  it('rejects a timestamp older than createdAt', () => {
+    const element = createTextElement({
+      createdAt: new Date('2024-05-01T00:00:00Z'),
+      updatedAt: new Date('2024-05-01T00:00:00Z'),
+    });
+
+    expect(() => withRotation(element, 10, new Date('2024-04-01T00:00:00Z'))).toThrow(/createdAt/);
   });
 });

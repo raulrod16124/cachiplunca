@@ -160,6 +160,22 @@ export function validateLinkElement(element: LinkElement): void {
   }
 }
 
+export function withRotation(
+  element: Element,
+  rotation: number,
+  updatedAt: Date = new Date(),
+): Element {
+  if (!Number.isFinite(rotation)) {
+    throw new Error('Element rotation must be a finite number');
+  }
+
+  const next: Element = { ...element, rotation, updatedAt };
+
+  validateElement(next);
+
+  return next;
+}
+
 export function validateElement(element: Element): void {
   switch (element.type) {
     case 'text':

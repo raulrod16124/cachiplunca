@@ -9,7 +9,8 @@ import {
   type TaskStatus,
 } from '../../domain/element';
 import type { ElementId, Position, Size, UserId, WorkspaceId } from '../../domain/shared';
-import { createAppError, ERROR_CODES, isAppError, type AppError } from '../../shared/errors';
+import type { AppError } from '../../shared/errors';
+import { toValidationAppError } from './to-validation-app-error';
 
 export interface CreateElementBaseInput {
   readonly workspaceId: WorkspaceId;
@@ -120,16 +121,4 @@ function createTimestampOverrides(deps: CreateElementDeps): { readonly createdAt
     return {};
   }
   return { createdAt: deps.now() };
-}
-
-function toValidationAppError(error: unknown): AppError {
-  if (isAppError(error)) {
-    return error;
-  }
-
-  const message =
-    error instanceof Error && error.message.length > 0 ? error.message : 'Invalid element input.';
-  return createAppError('validation', ERROR_CODES.VALIDATION_INVALID_INPUT, message, {
-    cause: error,
-  });
 }
