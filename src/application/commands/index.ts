@@ -1,5 +1,6 @@
 export * from './create-element';
 export * from './create-workspace';
+export * from './delete-element';
 export * from './delete-workspace';
 export * from './login-user';
 export * from './logout-user';

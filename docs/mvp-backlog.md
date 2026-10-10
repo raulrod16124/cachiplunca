@@ -1880,7 +1880,7 @@ Completar **ResizeElement command** dejando un resultado verificable y apto para
 
 ### TASK-048 — DeleteElement command
 
-**Priority:** P0 · **Depends:** TASK-044 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-044 · **Status:** DONE
 
 #### Objetivo
 
@@ -1895,13 +1895,13 @@ Completar **DeleteElement command** dejando un resultado verificable y apto para
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
-- [ ] Undo/redo no corrompe el estado ante secuencias válidas.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] Undo/redo no corrompe el estado ante secuencias válidas.
 
 #### Fuera de alcance
 
@@ -4860,6 +4860,14 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) el tamaño se expresa como **absoluto** (no delta ni acoplamiento de posición), gemelo de `MoveElement`; el resize desde handles que desplazan el ancla se compone con `MoveElement` en la capa de interacción (TASK-058) para no introducir una combinación especulativa en Application; (2) `withSize` vive en el dominio junto a `withRotation`/`withPosition` (misma firma y revalidación) para no duplicar invariantes; (3) el comando es puro, recibe el elemento actual y el reloj por DI, de modo que el historial (TASK-064+) capture el estado previo sin acoplarse a persistencia; (4) sin ADR por seguir el patrón local ya establecido en TASK-044/TASK-045/TASK-046.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-048 (DeleteElement command).
+
+## 2026-10-10 — TASK-048
+
+- Resultado: DeleteElement command en Application (React/Firebase-free). `createDeleteElement()` en `src/application/commands/delete-element.ts` recibe `DeleteElementInput { element }` y devuelve `DeleteElementResult = ok | error`; valida el elemento con `validateElement` del dominio y lo devuelve como payload de undo (re-inserción), sin acoplarse a persistencia. Los `Error` de dominio se traducen a `AppError` de kind `validation` (`VALIDATION_INVALID_INPUT`) con `cause`, reutilizando `toValidationAppError`. Exportado en `src/application/commands/index.ts`. Sin wiring de UI (llega con TASK-059) ni persistencia (TASK-068+).
+- Tests/quality gates: 769 tests pasan (66 suites, +7 en `src/test/unit/application/commands/delete-element.test.ts`: aceptación de los 6 tipos devolviendo el elemento como payload, preservación de campos específicos, elemento inválido → error de validación sin excepción cruda, inmutabilidad del input/elemento, estatelessness, undo de un create por id y redo sobre el elemento restaurado); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) contrato **por elemento** (no por id sobre colección) para ser simétrico con Create/Move/Resize/Update y no introducir una abstracción de colección antes de que el dominio/persistencia la definan (TASK-068+); (2) el comando devuelve el elemento eliminado como payload, de modo que la inversa (restaurarlo) es exactamente el create existente y undo/redo no necesita estado extra; (3) sin dependencias inyectadas: una eliminación no genera timestamps, así que no hay reloj; (4) sin ADR por seguir el patrón local ya establecido en TASK-044→047.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-049 (DuplicateElement command).
 
 ---
 
