@@ -1,5 +1,16 @@
 # Session Log
 
+## 2026-10-10 — TASK-042 ConnectorElement
+
+- Siguiente tarea del backlog: TASK-042 (dependencia TASK-037 DONE, sin IN PROGRESS).
+- `ConnectorElement` ya existía como tipo + `validateConnectorElement` (TASK-037); el hueco era el comportamiento de creación/edición que necesitarán TASK-044 y TASK-057.
+- Nuevo módulo `src/domain/element/connector-element.ts`: `createConnectorElement(props)` (defaults de `rotation`/timestamps, valida `sourceElementId`/`targetElementId` como `ElementId` y distintos) y actualizaciones puras `withConnectorSource` y `withConnectorTarget` (devuelven copia, revalidan, no mutan).
+- La regla de auto-conexión (`source === target`) se reutiliza de `validateConnectorElement`; no se duplica la lógica de dominio, solo se anticipa en los helpers `assert*` para dar errores claros sobre datos no confiables.
+- Errores con `Error` descriptivo, consistente con los validadores de dominio; no se tocó `element-types.ts`.
+- Tests en `src/test/unit/domain/element/connector-element.test.ts` (13 casos, sin `any` ni casts; datos no confiables con `Object.assign`).
+- Quality gates: `lint`, `format:check`, `tsc -b --noEmit`, `test` (677 tests) y `build` en verde. `connector-element.ts` sin imports de React/Firebase/UI.
+- Sin ADR nuevo: no hay decisión arquitectónica significativa.
+
 ## 2026-10-10 — TASK-041 FrameElement
 
 - Siguiente tarea del backlog: TASK-041 (dependencia TASK-037 DONE, sin IN PROGRESS).
