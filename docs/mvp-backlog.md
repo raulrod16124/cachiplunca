@@ -1990,7 +1990,7 @@ Completar **Canvas rendering abstraction** dejando un resultado verificable y ap
 
 ### TASK-051 — Text renderer
 
-**Priority:** P0 · **Depends:** TASK-038, TASK-050 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-038, TASK-050 · **Status:** DONE
 
 #### Objetivo
 
@@ -2005,12 +2005,12 @@ Completar **Text renderer** dejando un resultado verificable y apto para las tar
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -4876,6 +4876,14 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) `position` **opcional** con default = posición del origen, de modo que la convención de offset visual quede en la UI (TASK-060) y el comando permanezca puro, coherente con `MoveElement` (posición absoluta); (2) duplicar es una operación **por elemento** y conserva los endpoints de un `Connector` (el remapeo multi-elemento es TASK-061 Copy/paste); (3) el helper de dominio **valida el origen antes** de sobrescribir `createdAt`/`updatedAt`, para no "sanar" un elemento corrupto al copiarlo; (4) el comando es puro, con `generateId`/`now` por DI, para que el historial (TASK-064+) capture la copia sin acoplarse a persistencia; (5) sin ADR por seguir el patrón local ya establecido en TASK-044→048.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-050 (Canvas rendering abstraction).
+
+## 2026-10-10 — TASK-051
+
+- Resultado: Text renderer implementado sobre la abstracción de TASK-050. Nuevo `TextRenderer` en `src/presentation/canvas/renderers/text-renderer.tsx` que cumple el contrato `ElementRenderer` (`{ element, selected }` → `ReactElement | null`), estrecha la unión con `isTextElement` y devuelve `null` ante elementos no-text (sin casts). El contenido se pinta en un `styled.div` con `position:absolute; inset:0`, `white-space:pre-wrap`, `word-break:break-word` y token `var(--rr-color-text-default)`, preservando saltos de línea y espacios; contenido vacío renderiza sin placeholder (la edición llega con una tarea futura). Exportado en el barrel `renderers/index.ts`. `ElementView` sigue aportando posición, tamaño, rotación y atributos de interacción, así que el renderer solo aporta contenido.
+- Tests/quality gates: 807 tests pasan (70 suites, +6 en `src/test/unit/presentation/canvas/renderers/text-renderer.test.tsx`: render del contenido, atributo `data-element-content`, preservación de espacios/saltos, contenido vacío sin romper, `null` ante un `NoteElement` y delegación real vía `ElementView` con `renderers={{ text: TextRenderer }}` sin fallback); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) el renderer es de presentación pura y defensivo ante el tipo ancho `Element` (`null` en vez de cast), coherente con `resolveElementRenderer`; (2) contenido vacío sin placeholder textual para no introducir UI de edición fuera de alcance; (3) sin registro central ni wiring en `Canvas` todavía — el `ElementRendererRegistry` es opcional y los elementos no se cargan hasta TASK-070, de modo que añadir un registro ahora sería una abstracción especulativa; (4) sin ADR por ser una decisión local de presentación.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-052 (Note renderer).
 
 ---
 
