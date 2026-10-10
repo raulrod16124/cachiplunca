@@ -1733,7 +1733,7 @@ Completar **LinkElement** dejando un resultado verificable y apto para las tarea
 
 ### TASK-044 — CreateElement command
 
-**Priority:** P0 · **Depends:** TASK-038 a TASK-043 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-038 a TASK-043 · **Status:** DONE
 
 #### Objetivo
 
@@ -1748,12 +1748,12 @@ Implementar el comando de creación de elementos.
 
 #### Criterios de aceptación
 
-- [ ] Cada tipo válido puede crearse.
-- [ ] La operación es apta para history/undo.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
-- [ ] Undo/redo no corrompe el estado ante secuencias válidas.
+- [x] Cada tipo válido puede crearse.
+- [x] La operación es apta para history/undo.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] Undo/redo no corrompe el estado ante secuencias válidas.
 
 #### Fuera de alcance
 
@@ -4828,6 +4828,14 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) alcance de teclado limitado a comandos de selección a nivel de canvas (Escape/select-all); la navegación con flechas y el foco por ítem se difieren a TASK-109 (Keyboard navigation) y TASK-110 (Focus management) para no duplicar alcance; (2) la semántica tecla→comando vive en Application (testeable sin React/DOM) y la detección de target editable/DOM en Presentation, coherente con TASK-029→035; (3) listener en el contenedor en vez de `window` para no interferir con formularios y exigir foco en el canvas (a diferencia de `useSpacePressed`, que sí es global); (4) `preventDefault` de Ctrl/Cmd+A evita el "seleccionar todo" del navegador; (5) sin ADR por ser una decisión local de interacción.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-037 (BaseElement).
+
+## 2026-10-10 — TASK-044
+
+- Resultado: CreateElement command en Application (React/Firebase-free). `createCreateElement({ generateId, now? })` en `src/application/commands/create-element.ts` recibe un `CreateElementInput` (unión discriminada por `type` con campos compartidos `workspaceId/createdBy/position/size/rotation?` y específicos por tipo) y devuelve `CreateElementResult = ok | error`; genera el `ElementId` y los timestamps vía deps inyectadas y delega la construcción/invariantes en las factories de dominio (`createTextElement`…`createLinkElement`), sin duplicar validación. Los `Error` de dominio se traducen a `AppError` de kind `validation` (`VALIDATION_INVALID_INPUT`) con `cause`. Exportado en `src/application/commands/index.ts`. Sin wiring de UI (llega con TASK-050+) ni persistencia (TASK-068+).
+- Tests/quality gates: 711 tests pasan (62 suites, +17 en `src/test/unit/application/commands/create-element.test.ts`: creación de los 6 tipos, id/metadatos deterministas, defaults de dominio, payloads inválidos → error de validación sin excepción cruda, inmutabilidad del input, estatelessness y reversibilidad create→delete por id); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) el id se inyecta como dependencia (`generateId: () => ElementId`) en vez de usar `crypto.randomUUID()` en Application — mantiene el comando puro y testeable de forma determinista, coherente con el patrón factory+DI y con ADR-0005 ("el id lo genera el adapter", aquí diferido a la composición); (2) la validación vive en el dominio: el comando solo traduce sus `Error` a `validation`/`VALIDATION_INVALID_INPUT`, sin duplicar invariantes ni introducir `fieldErrors` (no hay flujo de formulario); (3) la reversibilidad (history/undo) se difiere a la interfaz `Command` de TASK-063 y al manager de TASK-064, dejando constancia en tests de que la inversa de un create es un delete por id; (4) sin ADR por ser una decisión local que sigue el patrón ya establecido.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-045 (UpdateElement command).
 
 ---
 
