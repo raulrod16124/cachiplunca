@@ -1,5 +1,14 @@
 # Session Log
 
+## 2026-10-10 — TASK-052 Note renderer
+
+- Siguiente tarea del backlog: TASK-052 (dependencias TASK-039 y TASK-050 DONE, sin IN PROGRESS); confirmado por el cierre de TASK-051.
+- Nuevo `src/presentation/canvas/renderers/note-renderer.tsx`, espejo de `text-renderer.tsx`: narrowing con `isNoteElement`, `return null` para no-note, raíz styled-components con `data-element-content="true"`/`data-element-type="note"`, `content` y fondo con `element.color` (inline style) o token `--rr-color-background-default` cuando no hay color. Exportado en `renderers/index.ts`.
+- Sin cambios en `resolveElementRenderer`/`ElementRendererRegistry` (ya soportaban `'note'` vía `ElementType`) ni en Domain/Application.
+- Tests en `src/test/unit/presentation/canvas/renderers/note-renderer.test.tsx` (8 casos: contenido, data-attr, whitespace, vacío, color aplicado, ausencia de color, `null` para TextElement, delegación vía `ElementView` con `{ note: NoteRenderer }`).
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` (815 tests, 71 suites) y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) el renderer solo aporta contenido interno; posición/tamaño/rotación siguen en `ElementView`; (2) se mantiene styled-components en los renderers de canvas, sin `@raulrod/ui`, por consistencia con TASK-050/051; (3) sin ADR por ser una decisión local de render.
+
 ## 2026-10-10 — TASK-050 Canvas rendering abstraction
 
 - Siguiente tarea del backlog: TASK-050 (dependencia TASK-037 DONE, sin IN PROGRESS); confirmado por el cierre de TASK-049.
