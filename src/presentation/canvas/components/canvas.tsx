@@ -2,17 +2,17 @@ import type { ReactElement } from 'react';
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
 import styled from 'styled-components';
 import { Grid } from '../../../domain/shared';
-import type {
-  CanvasViewportStore,
-  SelectableItem,
-  SelectionStore,
-} from '../../../application/services';
+import type { Element } from '../../../domain/element';
+import type { CanvasViewportStore, SelectionStore } from '../../../application/services';
+import { toSelectableItems } from '../../../application/services';
 import { useDragSelection } from '../hooks/use-drag-selection';
 import { usePan } from '../hooks/use-pan';
 import { useSelection } from '../hooks/use-selection';
 import { useSelectionKeyboard } from '../hooks/use-selection-keyboard';
 import { useSpacePressed } from '../hooks/use-space-pressed';
 import { useZoom } from '../hooks/use-zoom';
+import { ElementView } from '../renderers';
+import type { ElementRendererRegistry } from '../renderers';
 import { SelectionOverlay } from './selection-overlay';
 import { ViewportControls } from './viewport-controls';
 
@@ -68,20 +68,6 @@ const GridLayer = styled.div`
   opacity: 0.5;
 `;
 
-const SelectableNode = styled.div`
-  position: absolute;
-  box-sizing: border-box;
-  border: 1px solid var(--rr-color-border-default, #cbd5e1);
-  border-radius: 4px;
-  background: var(--rr-color-background-default, #ffffff);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
-  cursor: pointer;
-
-  &[data-selected='true'] {
-    border-color: var(--rr-color-accent-default, #2563eb);
-  }
-`;
-
 const Hint = styled.div`
   position: absolute;
   top: 50%;
@@ -98,15 +84,23 @@ const CANVAS_GRID = Grid.default();
 export interface CanvasProps {
   readonly store: CanvasViewportStore;
   readonly selectionStore: SelectionStore;
-  readonly items?: readonly SelectableItem[];
+  readonly elements?: readonly Element[];
+  readonly renderers?: ElementRendererRegistry;
 }
 
-export function Canvas({ store, selectionStore, items = [] }: CanvasProps): ReactElement {
+export function Canvas({
+  store,
+  selectionStore,
+  elements = [],
+  renderers,
+}: CanvasProps): ReactElement {
   const viewport = useSyncExternalStore(store.subscribe, store.getSnapshot);
   const selection = useSyncExternalStore(selectionStore.subscribe, selectionStore.getSnapshot);
   const spacePressed = useSpacePressed();
   const { isPanning, ref: panRef } = usePan({ onPan: store.pan, spacePressed });
   const { ref: zoomRef } = useZoom({ onZoom: store.zoom });
+
+  const items = useMemo(() => toSelectableItems(elements), [elements]);
 
   const handleSelect = useCallback(
     (id: string, additive: boolean) => {
@@ -215,18 +209,12 @@ export function Canvas({ store, selectionStore, items = [] }: CanvasProps): Reac
           transform: `translate(${translateX}px, ${translateY}px) scale(${transform.scale})`,
         }}
       >
-        {items.map((item) => (
-          <SelectableNode
-            key={item.id}
-            data-selectable="true"
-            data-selected={selectedIdSet.has(item.id)}
-            data-testid={`canvas-item-${item.id}`}
-            style={{
-              left: item.bounds.x,
-              top: item.bounds.y,
-              width: item.bounds.width,
-              height: item.bounds.height,
-            }}
+        {elements.map((element) => (
+          <ElementView
+            key={element.id.value}
+            element={element}
+            selected={selectedIdSet.has(element.id.value)}
+            renderers={renderers}
           />
         ))}
         <SelectionOverlay items={selectedItems} />

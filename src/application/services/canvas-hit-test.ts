@@ -1,8 +1,26 @@
-import type { Bounds, Position } from '../../domain/shared';
+import type { Element } from '../../domain/element';
+import { Bounds } from '../../domain/shared';
+import type { Position } from '../../domain/shared';
 
 export interface SelectableItem {
   readonly id: string;
   readonly bounds: Bounds;
+}
+
+export function toSelectableItem(element: Element): SelectableItem {
+  return {
+    id: element.id.value,
+    bounds: Bounds.fromXYWH(
+      element.position.x,
+      element.position.y,
+      element.size.width,
+      element.size.height,
+    ),
+  };
+}
+
+export function toSelectableItems(elements: readonly Element[]): readonly SelectableItem[] {
+  return elements.map(toSelectableItem);
 }
 
 export function findSelectableAt(

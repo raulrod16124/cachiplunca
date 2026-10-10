@@ -1,5 +1,15 @@
 # Session Log
 
+## 2026-10-10 — TASK-050 Canvas rendering abstraction
+
+- Siguiente tarea del backlog: TASK-050 (dependencia TASK-037 DONE, sin IN PROGRESS); confirmado por el cierre de TASK-049.
+- Abstracción de render en Presentation (`src/presentation/canvas/renderers/`): `ElementRendererProps { element, selected }`, `ElementRenderer`, `ElementRendererRegistry = Partial<Record<ElementType, ElementRenderer>>`; `DefaultElementRenderer` (caja neutra, fallback); `resolveElementRenderer(registry, type)` puro que devuelve el renderer registrado o el default sin lanzar; `ElementView` posiciona el contenedor en coordenadas mundo (`left/top/width/height` desde `element.position`/`size`, `rotate(element.rotation)`) y expone `data-selectable`/`data-selected`/`data-element-type`/`data-element-id`/`data-testid="canvas-item-<id>"` para conservar los guards de pan/selección y los testids; el contenido se delega en el renderer resuelto.
+- Mapper puro Domain→Application en `src/application/services/canvas-hit-test.ts`: `toSelectableItem(element)` / `toSelectableItems(elements)` derivan `Bounds.fromXYWH(position.x, position.y, size.width, size.height)`; el hit-test/selección siguen desacoplados y React-free.
+- `Canvas` pasa de `items: SelectableItem[]` a `elements?: Element[]` + `renderers?: ElementRendererRegistry`; deriva `items` con `useMemo(toSelectableItems)` para `useSelection`/`useDragSelection`/`SelectionOverlay`/teclado y sustituye el loop `SelectableNode` por `ElementView`. Pan, zoom, marquee, overlay y atajos intactos. El caller productivo (`workspace-shell-layout`) no pasa elementos todavía.
+- Tests: +11 casos netos → `toSelectableItem(s)` (3) en `canvas-hit-test.test.ts`, `resolve-element-renderer` (3, fallback sin registry/tipo ausente/renderer registrado) y `ElementView` (5, posición/tamaño, rotación + data-attrs, estado seleccionado, fallback y renderer inyectado); `canvas.test.tsx` migrado de `SelectableItem` a `Element` sin cambios de comportamiento observable. 801 tests pasan (69 suites).
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) la abstracción es Presentation-only y no introduce renderers concretos (TASK-051–056) ni persistencia; (2) el fallback garantiza que cualquier tipo sin renderer siga siendo visible y seleccionable; (3) el mapper vive en Application por ser lógica pura de interacción (Application→Domain), no de UI; (4) sin ADR por ser una decisión local de composición de render.
+
 ## 2026-10-10 — TASK-043 LinkElement
 
 - Siguiente tarea del backlog: TASK-043 (dependencia TASK-037 DONE, sin IN PROGRESS).

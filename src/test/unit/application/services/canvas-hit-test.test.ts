@@ -1,12 +1,26 @@
-import { Bounds, Position } from '../../../../domain/shared';
+import { Bounds, ElementId, Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
+import { createTextElement } from '../../../../domain/element';
 import {
   findSelectableAt,
   findSelectablesInBounds,
+  toSelectableItem,
+  toSelectableItems,
 } from '../../../../application/services/canvas-hit-test';
 import type { SelectableItem } from '../../../../application/services/canvas-hit-test';
 
 const FIRST: SelectableItem = { id: 'first', bounds: Bounds.fromXYWH(0, 0, 100, 100) };
 const SECOND: SelectableItem = { id: 'second', bounds: Bounds.fromXYWH(50, 50, 100, 100) };
+
+function createElement(id: string, x: number, y: number, width: number, height: number) {
+  return createTextElement({
+    id: ElementId.create(id),
+    workspaceId: WorkspaceId.create('ws-1'),
+    createdBy: UserId.create('user-1'),
+    position: Position.create(x, y),
+    size: Size.create(width, height),
+    content: 'hello',
+  });
+}
 
 describe('findSelectableAt', () => {
   it('returns null when there are no items', () => {
@@ -64,5 +78,27 @@ describe('findSelectablesInBounds', () => {
       'second',
       'first',
     ]);
+  });
+});
+
+describe('toSelectableItem', () => {
+  it('derives the id and bounds from the element position and size', () => {
+    const item = toSelectableItem(createElement('elem-1', 10, 20, 120, 80));
+
+    expect(item.id).toBe('elem-1');
+    expect(item.bounds.equals(Bounds.fromXYWH(10, 20, 120, 80))).toBe(true);
+  });
+
+  it('maps a list preserving the input order', () => {
+    const items = toSelectableItems([
+      createElement('first', 0, 0, 100, 100),
+      createElement('second', 50, 50, 100, 100),
+    ]);
+
+    expect(items.map((item) => item.id)).toEqual(['first', 'second']);
+  });
+
+  it('returns an empty list for no elements', () => {
+    expect(toSelectableItems([])).toEqual([]);
   });
 });

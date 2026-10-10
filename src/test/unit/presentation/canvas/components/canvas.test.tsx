@@ -1,31 +1,37 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Bounds, Position, Size } from '../../../../../domain/shared';
-import type { SelectableItem } from '../../../../../application/services';
+import { Position, ElementId, Size, UserId, WorkspaceId } from '../../../../../domain/shared';
+import { createTextElement } from '../../../../../domain/element';
+import type { Element } from '../../../../../domain/element';
 import {
   createCanvasViewportStore,
   createSelectionStore,
 } from '../../../../../application/services';
 import { Canvas } from '../../../../../presentation/canvas/components/canvas';
 
-function renderCanvas(items: readonly SelectableItem[] = []) {
+function createElement(id: string, x: number, y: number, width: number, height: number): Element {
+  return createTextElement({
+    id: ElementId.create(id),
+    workspaceId: WorkspaceId.create('ws-1'),
+    createdBy: UserId.create('user-1'),
+    position: Position.create(x, y),
+    size: Size.create(width, height),
+    content: 'hello',
+  });
+}
+
+function renderCanvas(elements: readonly Element[] = []) {
   const store = createCanvasViewportStore(Size.create(800, 600));
   const selectionStore = createSelectionStore();
 
-  render(<Canvas store={store} selectionStore={selectionStore} items={items} />);
+  render(<Canvas store={store} selectionStore={selectionStore} elements={elements} />);
 
   return { store, selectionStore };
 }
 
-const FIRST_ITEM: SelectableItem = {
-  id: 'first',
-  bounds: Bounds.fromXYWH(100, 100, 120, 80),
-};
+const FIRST_ITEM = createElement('first', 100, 100, 120, 80);
 
-const SECOND_ITEM: SelectableItem = {
-  id: 'second',
-  bounds: Bounds.fromXYWH(300, 200, 100, 100),
-};
+const SECOND_ITEM = createElement('second', 300, 200, 100, 100);
 
 describe('Canvas', () => {
   beforeAll(() => {
