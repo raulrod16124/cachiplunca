@@ -1,5 +1,15 @@
 # Session Log
 
+## 2026-10-10 — TASK-043 LinkElement
+
+- Siguiente tarea del backlog: TASK-043 (dependencia TASK-037 DONE, sin IN PROGRESS).
+- `LinkElement` ya existía como tipo + `validateLinkElement` (TASK-037); el hueco era el comportamiento de creación/edición que necesitarán TASK-044 y TASK-056.
+- Nuevo módulo `src/domain/element/link-element.ts`: `createLinkElement(props)` (defaults de `rotation`/timestamps, valida `url` string no vacío y `title` opcional no vacío) y actualizaciones puras `withLinkUrl` y `withLinkTitle` (devuelven copia, revalidan, no mutan). `withLinkTitle` acepta `undefined` para limpiar el título y omite el campo del objeto (mismo patrón que `note-element.ts`/`task-element.ts`).
+- Errores con `Error` descriptivo, consistente con los validadores de dominio; no se tocó `element-types.ts`.
+- Tests en `src/test/unit/domain/element/link-element.test.ts` (17 casos, sin `any` ni casts; datos no confiables con `Object.assign`).
+- Quality gates: `lint`, `format:check`, `tsc -b --noEmit`, `test` y `build` en verde. `link-element.ts` sin imports de React/Firebase/UI.
+- Sin ADR nuevo: no hay decisión arquitectónica significativa.
+
 ## 2026-10-10 — TASK-042 ConnectorElement
 
 - Siguiente tarea del backlog: TASK-042 (dependencia TASK-037 DONE, sin IN PROGRESS).
