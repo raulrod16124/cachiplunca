@@ -1,5 +1,16 @@
 # Session Log
 
+## 2026-10-10 — TASK-041 FrameElement
+
+- Siguiente tarea del backlog: TASK-041 (dependencia TASK-037 DONE, sin IN PROGRESS).
+- `FrameElement` ya existía como tipo + `validateFrameElement` (TASK-037); el hueco era el comportamiento de creación/edición que necesitarán TASK-044 y TASK-054.
+- Nuevo módulo `src/domain/element/frame-element.ts`: `createFrameElement(props)` (defaults de `rotation`/timestamps, valida `title` no vacío y `parentFrameId` opcional como `ElementId`) y actualizaciones puras `withFrameTitle` y `withFrameParent` (devuelven copia, revalidan, no mutan). `withFrameParent` acepta `undefined` para limpiar el anidamiento y omite el campo del objeto (mismo patrón que `note-element.ts`/`task-element.ts`).
+- La auto-referencia (`parentFrameId === id`) queda cubierta por `validateFrameElement`, no se duplica la regla.
+- Errores con `Error` descriptivo, consistente con los validadores de dominio; no se tocó `element-types.ts`.
+- Tests en `src/test/unit/domain/element/frame-element.test.ts` (17 casos, sin `any` ni casts; datos no confiables con `Object.assign`).
+- Quality gates: `lint`, `format:check`, `tsc -b --noEmit`, `test` y `build` en verde. `frame-element.ts` sin imports de React/Firebase/UI.
+- Sin ADR nuevo: no hay decisión arquitectónica significativa.
+
 ## 2026-10-10 — TASK-040 TaskElement
 
 - Siguiente tarea del backlog: TASK-040 (dependencia TASK-037 DONE, sin IN PROGRESS).
