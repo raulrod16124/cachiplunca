@@ -1917,7 +1917,7 @@ Completar **DeleteElement command** dejando un resultado verificable y apto para
 
 ### TASK-049 — DuplicateElement command
 
-**Priority:** P0 · **Depends:** TASK-044 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-044 · **Status:** DONE
 
 #### Objetivo
 
@@ -1932,13 +1932,13 @@ Completar **DuplicateElement command** dejando un resultado verificable y apto p
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
-- [ ] Undo/redo no corrompe el estado ante secuencias válidas.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] Undo/redo no corrompe el estado ante secuencias válidas.
 
 #### Fuera de alcance
 
@@ -4868,6 +4868,14 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) contrato **por elemento** (no por id sobre colección) para ser simétrico con Create/Move/Resize/Update y no introducir una abstracción de colección antes de que el dominio/persistencia la definan (TASK-068+); (2) el comando devuelve el elemento eliminado como payload, de modo que la inversa (restaurarlo) es exactamente el create existente y undo/redo no necesita estado extra; (3) sin dependencias inyectadas: una eliminación no genera timestamps, así que no hay reloj; (4) sin ADR por seguir el patrón local ya establecido en TASK-044→047.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-049 (DuplicateElement command).
+
+## 2026-10-10 — TASK-049
+
+- Resultado: DuplicateElement command en Application (React/Firebase-free). Nuevo helper puro `duplicateElement(source, { id, createdAt, updatedAt?, position? })` en `src/domain/element/element-types.ts` (gemelo de `withPosition`/`withSize`): valida el origen con `validateElement` **antes** de sobrescribir metadatos, aplica spread inmutable sobre `{ ...source }` reemplazando `id`/`createdAt`/`updatedAt` y, si se provee, `position` (default = posición del origen), y revalida la copia. Al ser unión discriminada, el spread conserva el tipo concreto y sus campos específicos. `createDuplicateElement({ generateId, now? })` en `src/application/commands/duplicate-element.ts` recibe `DuplicateElementInput { element, position? }` (posición **absoluta** opcional), genera `id` y `createdAt = updatedAt` vía deps inyectadas, delega en `duplicateElement` y traduce errores con `toValidationAppError`. Exportado en `src/application/commands/index.ts`. Sin wiring de UI (llega con TASK-060) ni persistencia (TASK-068+).
+- Tests/quality gates: 790 tests pasan (67 suites, +21: 10 de `duplicateElement` en `element-types.test.ts` y 11 de `duplicate-element.test.ts` —duplicación de los 6 tipos con id/timestamps nuevos, preservación de metadatos compartidos y campos específicos, endpoints intactos al duplicar un connector, `position` opcional absoluta, fallback a reloj real, ids distintos por invocación, elemento origen inválido → error de validación sin excepción cruda, inmutabilidad input/origen, estatelessness y reversibilidad undo/redo por id—); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) `position` **opcional** con default = posición del origen, de modo que la convención de offset visual quede en la UI (TASK-060) y el comando permanezca puro, coherente con `MoveElement` (posición absoluta); (2) duplicar es una operación **por elemento** y conserva los endpoints de un `Connector` (el remapeo multi-elemento es TASK-061 Copy/paste); (3) el helper de dominio **valida el origen antes** de sobrescribir `createdAt`/`updatedAt`, para no "sanar" un elemento corrupto al copiarlo; (4) el comando es puro, con `generateId`/`now` por DI, para que el historial (TASK-064+) capture la copia sin acoplarse a persistencia; (5) sin ADR por seguir el patrón local ya establecido en TASK-044→048.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-050 (Canvas rendering abstraction).
 
 ---
 

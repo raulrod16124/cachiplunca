@@ -204,6 +204,43 @@ export function withSize(element: Element, size: Size, updatedAt: Date = new Dat
   return next;
 }
 
+export interface DuplicateElementProps {
+  readonly id: ElementId;
+  readonly createdAt: Date;
+  readonly updatedAt?: Date;
+  readonly position?: Position;
+}
+
+export function duplicateElement(source: Element, props: DuplicateElementProps): Element {
+  validateElement(source);
+
+  if (Number.isNaN(props.createdAt.getTime())) {
+    throw new Error('Duplicate element createdAt must be a valid Date');
+  }
+
+  if (
+    props.position !== undefined &&
+    (!Number.isFinite(props.position.x) || !Number.isFinite(props.position.y))
+  ) {
+    throw new Error('Duplicate element position must have finite coordinates');
+  }
+
+  const createdAt = props.createdAt;
+  const updatedAt = props.updatedAt ?? createdAt;
+
+  const next: Element = {
+    ...source,
+    id: props.id,
+    position: props.position ?? source.position,
+    createdAt,
+    updatedAt,
+  };
+
+  validateElement(next);
+
+  return next;
+}
+
 export function validateElement(element: Element): void {
   switch (element.type) {
     case 'text':

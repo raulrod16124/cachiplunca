@@ -1,6 +1,7 @@
 import {
   ELEMENT_TYPES,
   TASK_STATUSES,
+  duplicateElement,
   isConnectorElement,
   isFrameElement,
   isLinkElement,
@@ -398,6 +399,115 @@ describe('withSize', () => {
     });
 
     expect(() => withSize(element, Size.create(1, 1), new Date('2024-04-01T00:00:00Z'))).toThrow(
+      /createdAt/,
+    );
+  });
+});
+
+describe('duplicateElement', () => {
+  const createdAt = new Date('2024-03-01T00:00:00Z');
+
+  it('returns a new element with the provided id and timestamps', () => {
+    const element = createTextElement({ id: ElementId.create('original') });
+    const copy = duplicateElement(element, { id: ElementId.create('copy'), createdAt });
+
+    expect(copy).not.toBe(element);
+    expect(copy.id.value).toBe('copy');
+    expect(copy.createdAt).toBe(createdAt);
+    expect(copy.updatedAt).toBe(createdAt);
+  });
+
+  it('preserves the discriminant, type-specific fields and shared metadata for every type', () => {
+    const id = ElementId.create('copy');
+
+    for (const element of allElements()) {
+      const copy = duplicateElement(element, { id, createdAt });
+
+      expect(copy.type).toBe(element.type);
+      expect(copy.id.value).toBe('copy');
+      expect(copy.workspaceId.equals(element.workspaceId)).toBe(true);
+      expect(copy.createdBy.equals(element.createdBy)).toBe(true);
+      expect(copy.position.equals(element.position)).toBe(true);
+      expect(copy.size.equals(element.size)).toBe(true);
+      expect(copy.rotation).toBe(element.rotation);
+      expect(() => validateElement(copy)).not.toThrow();
+    }
+  });
+
+  it('preserves the original id when it differs from the copy', () => {
+    const element = createTextElement({ id: ElementId.create('original') });
+    const copy = duplicateElement(element, { id: ElementId.create('copy'), createdAt });
+
+    expect(copy.id.value).toBe('copy');
+    expect(element.id.value).toBe('original');
+  });
+
+  it('applies an optional position overriding the source position', () => {
+    const element = createTextElement({ position: Position.create(1, 2) });
+    const copy = duplicateElement(element, {
+      id: ElementId.create('copy'),
+      createdAt,
+      position: Position.create(50, 60),
+    });
+
+    expect(copy.position.equals(Position.create(50, 60))).toBe(true);
+    expect(element.position.equals(Position.create(1, 2))).toBe(true);
+  });
+
+  it('uses the copy createdAt when no updatedAt is provided', () => {
+    const copy = duplicateElement(createTextElement(), { id: ElementId.create('copy'), createdAt });
+
+    expect(copy.updatedAt).toBe(createdAt);
+  });
+
+  it('does not mutate the original element', () => {
+    const element = createTaskElement({ rotation: 10 });
+    const snapshot = { ...element };
+
+    duplicateElement(element, {
+      id: ElementId.create('copy'),
+      createdAt,
+      position: Position.create(9, 9),
+    });
+
+    expect(element).toEqual(snapshot);
+  });
+
+  it('rejects an invalid createdAt', () => {
+    expect(() =>
+      duplicateElement(createTextElement(), {
+        id: ElementId.create('copy'),
+        createdAt: new Date('invalid'),
+      }),
+    ).toThrow(/createdAt/);
+  });
+
+  it('rejects a non-finite position', () => {
+    expect(() =>
+      duplicateElement(createTextElement(), {
+        id: ElementId.create('copy'),
+        createdAt,
+        position: { x: Infinity, y: 0 } as Position,
+      }),
+    ).toThrow(/position/);
+  });
+
+  it('rejects a source element that violates its invariants', () => {
+    const invalid = Object.assign(createTaskElement(), { title: '   ' });
+
+    expect(() => duplicateElement(invalid, { id: ElementId.create('copy'), createdAt })).toThrow(
+      /title/,
+    );
+  });
+
+  it('rejects an invalid source before its metadata is overridden', () => {
+    const invalid = createTextElement();
+    Object.assign(invalid, {
+      createdAt: new Date('2024-06-01T00:00:00Z'),
+      updatedAt: new Date('2024-05-01T00:00:00Z'),
+    });
+
+    expect(() => duplicateElement(invalid, { id: ElementId.create('copy'), createdAt })).toThrow(
       /createdAt/,
     );
   });
