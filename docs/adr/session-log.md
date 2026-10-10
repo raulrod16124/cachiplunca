@@ -1,5 +1,15 @@
 # Session Log
 
+## 2026-10-10 — TASK-039 NoteElement
+
+- Siguiente tarea del backlog: TASK-039 (dependencia TASK-037 DONE, sin IN PROGRESS).
+- `NoteElement` ya existía como tipo + `validateNoteElement` (TASK-037); el hueco era el comportamiento de creación/edición que necesitarán TASK-044 y TASK-052.
+- Nuevo módulo `src/domain/element/note-element.ts`: `createNoteElement(props)` (defaults de `rotation`/timestamps, valida `content` string definido —permite vacío— y `color` opcional no vacío) y actualizaciones puras `withNoteContent` y `withNoteColor` (devuelven copia, revalidan, no mutan). Errores con `Error` descriptivo, consistente con los validadores de dominio.
+- `color` se omite del objeto cuando es `undefined` para mantener el discriminante limpio; la unión discriminada en `element-types.ts` no se tocó.
+- Tests en `src/test/unit/domain/element/note-element.test.ts` (17 casos, sin `any` ni casts; datos no confiables con `Object.assign`).
+- Quality gates: `lint`, `format:check`, `tsc -b --noEmit`, `test` (626 tests) y `build` en verde. `note-element.ts` sin imports de React/Firebase/UI.
+- Sin ADR nuevo: no hay decisión arquitectónica significativa.
+
 ## 2026-10-10 — TASK-038 TextElement
 
 - Siguiente tarea del backlog: TASK-038 (dependencia TASK-037 DONE, sin IN PROGRESS).
