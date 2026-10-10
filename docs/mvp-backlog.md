@@ -1843,7 +1843,7 @@ Completar **MoveElement command** dejando un resultado verificable y apto para l
 
 ### TASK-047 — ResizeElement command
 
-**Priority:** P0 · **Depends:** TASK-044 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-044 · **Status:** DONE
 
 #### Objetivo
 
@@ -1858,13 +1858,13 @@ Completar **ResizeElement command** dejando un resultado verificable y apto para
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
-- [ ] Undo/redo no corrompe el estado ante secuencias válidas.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] Undo/redo no corrompe el estado ante secuencias válidas.
 
 #### Fuera de alcance
 
@@ -4852,6 +4852,14 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) la posición se expresa como **destino absoluto** (no delta), alineada con la estrategia last-write-wins de TASK-081 y con la actualización parcial de la propiedad `position` en persistencia; la inversa para undo es la posición previa y no depende de un estado base posiblemente desactualizado; (2) `withPosition` vive en el dominio junto a `withRotation` (misma firma y revalidación) para no duplicar invariantes en Application; (3) el comando es puro, recibe el elemento actual y el reloj por DI, de modo que el historial (TASK-064+) capture el estado previo sin acoplarse a persistencia; (4) sin ADR por seguir el patrón local ya establecido en TASK-044/TASK-045.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-047 (ResizeElement command).
+
+## 2026-10-10 — TASK-047
+
+- Resultado: ResizeElement command en Application (React/Firebase-free). Nuevo helper puro `withSize(element, size, updatedAt?)` en `src/domain/element/element-types.ts` (gemelo de `withRotation`/`withPosition`: spread inmutable de `{ size, updatedAt }`, valida finitud de `width`/`height` y revalida el elemento con `validateElement`). `createResizeElement({ now? })` en `src/application/commands/resize-element.ts` recibe `ResizeElementInput { element, size }` (tamaño **absoluto**, `Size` VO) y devuelve `ResizeElementResult = ok | error`; calcula `updatedAt` desde el reloj inyectado y delega la mutación en `withSize`. Los `Error` de dominio se traducen a `AppError` de kind `validation` (`VALIDATION_INVALID_INPUT`) con `cause`, reutilizando `toValidationAppError`. Exportado en `src/application/commands/index.ts`. Sin wiring de UI (llega con TASK-058) ni persistencia (TASK-068+).
+- Tests/quality gates: 762 tests pasan (65 suites, +16: 5 de `withSize` en `element-types.test.ts` y 11 de `resize-element.test.ts` —resize de los 6 tipos preservando campos específicos, invariabilidad de la posición, `updatedAt` determinista preservando `createdAt`, fallback a reloj real, tamaño inválido y fallo de dominio → error de validación sin excepción cruda, inmutabilidad del input/elemento, estatelessness, reversibilidad resize↔resize-back para undo/redo—); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) el tamaño se expresa como **absoluto** (no delta ni acoplamiento de posición), gemelo de `MoveElement`; el resize desde handles que desplazan el ancla se compone con `MoveElement` en la capa de interacción (TASK-058) para no introducir una combinación especulativa en Application; (2) `withSize` vive en el dominio junto a `withRotation`/`withPosition` (misma firma y revalidación) para no duplicar invariantes; (3) el comando es puro, recibe el elemento actual y el reloj por DI, de modo que el historial (TASK-064+) capture el estado previo sin acoplarse a persistencia; (4) sin ADR por seguir el patrón local ya establecido en TASK-044/TASK-045/TASK-046.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-048 (DeleteElement command).
 
 ---
 

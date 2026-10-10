@@ -5,6 +5,7 @@ export * from './login-user';
 export * from './logout-user';
 export * from './move-element';
 export * from './register-user';
+export * from './resize-element';
 export * from './update-element';
 export * from './update-workspace';
 export * from './validate-workspace-name';

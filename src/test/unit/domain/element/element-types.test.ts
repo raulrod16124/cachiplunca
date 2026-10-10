@@ -16,6 +16,7 @@ import {
   validateTextElement,
   withPosition,
   withRotation,
+  withSize,
 } from '../../../../domain/element';
 import type {
   BaseElement,
@@ -346,5 +347,58 @@ describe('withPosition', () => {
     expect(() =>
       withPosition(element, Position.create(1, 1), new Date('2024-04-01T00:00:00Z')),
     ).toThrow(/createdAt/);
+  });
+});
+
+describe('withSize', () => {
+  const updatedAt = new Date('2024-03-01T00:00:00Z');
+
+  it('returns a new element with the provided size and timestamp', () => {
+    const element = createTextElement({ size: Size.create(10, 10) });
+    const resized = withSize(element, Size.create(120, 34.5), updatedAt);
+
+    expect(resized.size.equals(Size.create(120, 34.5))).toBe(true);
+    expect(resized.updatedAt).toBe(updatedAt);
+    expect(resized).not.toBe(element);
+  });
+
+  it('preserves the discriminant and type-specific fields for every element type', () => {
+    const size = Size.create(250, 175);
+
+    for (const element of allElements()) {
+      const resized = withSize(element, size, updatedAt);
+
+      expect(resized.type).toBe(element.type);
+      expect(resized.id.equals(element.id)).toBe(true);
+      expect(resized.size.equals(size)).toBe(true);
+    }
+  });
+
+  it('does not mutate the original element', () => {
+    const element = createTaskElement({ size: Size.create(30, 40) });
+    const snapshot = { ...element };
+
+    withSize(element, Size.create(99, 99), updatedAt);
+
+    expect(element).toEqual(snapshot);
+    expect(element.size.equals(Size.create(30, 40))).toBe(true);
+  });
+
+  it('rejects a non-finite size', () => {
+    const element = createTextElement();
+    const invalidSize = { width: Infinity, height: 10 } as Size;
+
+    expect(() => withSize(element, invalidSize, updatedAt)).toThrow(/finite/);
+  });
+
+  it('rejects a timestamp older than createdAt', () => {
+    const element = createTextElement({
+      createdAt: new Date('2024-05-01T00:00:00Z'),
+      updatedAt: new Date('2024-05-01T00:00:00Z'),
+    });
+
+    expect(() => withSize(element, Size.create(1, 1), new Date('2024-04-01T00:00:00Z'))).toThrow(
+      /createdAt/,
+    );
   });
 });

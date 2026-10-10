@@ -192,6 +192,18 @@ export function withPosition(
   return next;
 }
 
+export function withSize(element: Element, size: Size, updatedAt: Date = new Date()): Element {
+  if (!Number.isFinite(size.width) || !Number.isFinite(size.height)) {
+    throw new Error('Element size must have finite dimensions');
+  }
+
+  const next: Element = { ...element, size, updatedAt };
+
+  validateElement(next);
+
+  return next;
+}
+
 export function validateElement(element: Element): void {
   switch (element.type) {
     case 'text':
