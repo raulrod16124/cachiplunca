@@ -21,6 +21,11 @@ export type {
   UseElementDuplicateOptions,
   UseElementDuplicateResult,
 } from './use-element-duplicate';
+export { useElementCopyPaste } from './use-element-copy-paste';
+export type {
+  UseElementCopyPasteOptions,
+  UseElementCopyPasteResult,
+} from './use-element-copy-paste';
 export { useSpacePressed } from './use-space-pressed';
 export { useSelectionKeyboard } from './use-selection-keyboard';
 export type {

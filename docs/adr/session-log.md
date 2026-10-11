@@ -1,5 +1,15 @@
 # Session Log
 
+## 2026-10-11 — TASK-061 Copy/paste
+
+- Siguiente tarea del backlog: TASK-061 (dependencia TASK-060 DONE, sin IN PROGRESS ni BLOCKED); primera TODO ejecutable. La capa Application ya venía commiteada (`1a8f85b`) pero la tarea seguía TODO: faltaba la integración en Presentation y el cierre.
+- En Presentation, nuevo hook `src/presentation/canvas/hooks/use-element-copy-paste.ts` (espejo de `use-element-duplicate`): clipboard en memoria (`clipboardRef`) con los elementos copiados; `Ctrl/Cmd+C` ejecuta `copyElements(elements, selectedIds)` y guarda el snapshot solo si hay selección; `Ctrl/Cmd+V` ejecuta `pasteElements(elements, clipboard, { generateId, now?, offset? })` con el offset por defecto `DEFAULT_PASTE_OFFSET` (16,16) y emite `onPasteElements(elements, pastedIds)` cuando hay clipboard y `generateId`/callback disponibles. Ignora `repeat`, targets editables, `disabled` y hace `preventDefault` solo cuando maneja el comando. Exportado en `hooks/index.ts`.
+- Cableado en `Canvas`: prop `onPasteElements?`, `elementCopyPasteRef` en `setContainerRef`, selección de los ids pegados tras pegar (mismo patrón que duplicate), `aria-keyshortcuts` ampliado con `Control+C Meta+C Control+V Meta+V` y hint actualizado. `use-selection-keyboard.ts` ignora explícitamente `'copy'`/`'paste'` para no interceptar ni vaciar la selección.
+- Decisiones confirmadas con el usuario: clipboard **en memoria** (sin portapapeles del sistema) y offset fijo de 16px al pegar (consistente con Duplicate).
+- Tests: nuevo `use-element-copy-paste.test.tsx` (15 casos: copia/pega Ctrl/Cmd, multiselección, offset, pegar sin copy, copy sin selección, editable, repeat, disabled, sin `generateId`, sin callback, `preventDefault`, cleanup), +12 casos en `selection-keyboard.test.ts` (`Ctrl/Cmd+C → copy`, `Ctrl/Cmd+V → paste`, Alt ignorado, plain sin modificador) y 4 casos de integración en `canvas.test.tsx` (copy/paste con selección simple y múltiple, pegar sin copy, copy sin selección). 987 tests pasan (87 suites).
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Sin ADR nuevo: decisión local de interacción/composición, coherente con TASK-059/060.
+
 ## 2026-10-11 — TASK-059 Delete elements
 
 - Siguiente tarea del backlog: TASK-059 (dependencia TASK-048 DONE, sin IN PROGRESS ni BLOCKED); primera TODO ejecutable tras el cierre de TASK-058.

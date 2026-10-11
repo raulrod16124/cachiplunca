@@ -67,6 +67,50 @@ describe('resolveSelectionKeyCommand', () => {
     ).toBeNull();
   });
 
+  it('resolves Ctrl+C to copy', () => {
+    expect(resolveSelectionKeyCommand({ key: 'c', ...NO_MODIFIERS, ctrlKey: true })).toBe('copy');
+  });
+
+  it('resolves Cmd+C to copy', () => {
+    expect(resolveSelectionKeyCommand({ key: 'c', ...NO_MODIFIERS, metaKey: true })).toBe('copy');
+  });
+
+  it('resolves an uppercase C with a modifier to copy', () => {
+    expect(resolveSelectionKeyCommand({ key: 'C', ...NO_MODIFIERS, ctrlKey: true })).toBe('copy');
+  });
+
+  it('returns null for a plain C without a modifier', () => {
+    expect(resolveSelectionKeyCommand({ key: 'c', ...NO_MODIFIERS })).toBeNull();
+  });
+
+  it('ignores the copy shortcut when Alt is also pressed', () => {
+    expect(
+      resolveSelectionKeyCommand({ key: 'c', ...NO_MODIFIERS, ctrlKey: true, altKey: true }),
+    ).toBeNull();
+  });
+
+  it('resolves Ctrl+V to paste', () => {
+    expect(resolveSelectionKeyCommand({ key: 'v', ...NO_MODIFIERS, ctrlKey: true })).toBe('paste');
+  });
+
+  it('resolves Cmd+V to paste', () => {
+    expect(resolveSelectionKeyCommand({ key: 'v', ...NO_MODIFIERS, metaKey: true })).toBe('paste');
+  });
+
+  it('resolves an uppercase V with a modifier to paste', () => {
+    expect(resolveSelectionKeyCommand({ key: 'V', ...NO_MODIFIERS, ctrlKey: true })).toBe('paste');
+  });
+
+  it('returns null for a plain V without a modifier', () => {
+    expect(resolveSelectionKeyCommand({ key: 'v', ...NO_MODIFIERS })).toBeNull();
+  });
+
+  it('ignores the paste shortcut when Alt is also pressed', () => {
+    expect(
+      resolveSelectionKeyCommand({ key: 'v', ...NO_MODIFIERS, ctrlKey: true, altKey: true }),
+    ).toBeNull();
+  });
+
   it('returns null for unmapped keys', () => {
     expect(resolveSelectionKeyCommand({ key: 'ArrowRight', ...NO_MODIFIERS })).toBeNull();
     expect(resolveSelectionKeyCommand({ key: 'Backspace', ...NO_MODIFIERS })).toBeNull();

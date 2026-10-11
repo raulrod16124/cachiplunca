@@ -7,6 +7,7 @@ import type { ElementId } from '../../../domain/shared';
 import type { CanvasViewportStore, SelectionStore } from '../../../application/services';
 import { toSelectableItems } from '../../../application/services';
 import { useDragSelection } from '../hooks/use-drag-selection';
+import { useElementCopyPaste } from '../hooks/use-element-copy-paste';
 import { useElementDelete } from '../hooks/use-element-delete';
 import { useElementDuplicate } from '../hooks/use-element-duplicate';
 import { useElementMove } from '../hooks/use-element-move';
@@ -106,6 +107,7 @@ export interface CanvasProps {
     elements: readonly Element[],
     duplicatedIds: readonly string[],
   ) => void;
+  readonly onPasteElements?: (elements: readonly Element[], pastedIds: readonly string[]) => void;
   readonly generateId?: () => ElementId;
 }
 
@@ -118,6 +120,7 @@ export function Canvas({
   onResizeElements,
   onDeleteElements,
   onDuplicateElements,
+  onPasteElements,
   generateId,
 }: CanvasProps): ReactElement {
   const viewport = useSyncExternalStore(store.subscribe, store.getSnapshot);
@@ -238,6 +241,24 @@ export function Canvas({
     onDuplicateElements: handleDuplicateElements,
   });
 
+  const handlePasteElements = useMemo(() => {
+    if (onPasteElements === undefined) {
+      return undefined;
+    }
+
+    return (nextElements: readonly Element[], pastedIds: readonly string[]): void => {
+      onPasteElements(nextElements, pastedIds);
+      selectionStore.selectMany(pastedIds);
+    };
+  }, [onPasteElements, selectionStore]);
+
+  const { ref: elementCopyPasteRef } = useElementCopyPaste({
+    elements,
+    selectedIds: selection.selectedIds,
+    generateId,
+    onPasteElements: handlePasteElements,
+  });
+
   const setContainerRef = useCallback(
     (node: HTMLDivElement | null) => {
       panRef.current = node;
@@ -249,6 +270,7 @@ export function Canvas({
       elementResizeRef.current = node;
       elementDeleteRef.current = node;
       elementDuplicateRef.current = node;
+      elementCopyPasteRef.current = node;
     },
     [
       panRef,
@@ -260,6 +282,7 @@ export function Canvas({
       elementResizeRef,
       elementDeleteRef,
       elementDuplicateRef,
+      elementCopyPasteRef,
     ],
   );
 
@@ -281,7 +304,7 @@ export function Canvas({
       ref={setContainerRef}
       role="application"
       aria-label="Canvas"
-      aria-keyshortcuts="Escape Control+A Meta+A Delete Control+D Meta+D"
+      aria-keyshortcuts="Escape Control+A Meta+A Delete Control+D Meta+D Control+C Meta+C Control+V Meta+V"
       aria-grabbed={isPanning}
       tabIndex={0}
       data-panning={isPanning}
@@ -316,7 +339,8 @@ export function Canvas({
         {items.length === 0 ? (
           <Hint>
             Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear ·
-            Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate
+            Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C
+            to copy · Ctrl/Cmd + V to paste
           </Hint>
         ) : null}
       </World>

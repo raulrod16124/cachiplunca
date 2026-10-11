@@ -27,6 +27,7 @@ function renderCanvas(
   onDeleteElements?: (next: readonly Element[]) => void,
   onDuplicateElements?: (next: readonly Element[], duplicatedIds: readonly string[]) => void,
   generateId?: () => ElementId,
+  onPasteElements?: (next: readonly Element[], pastedIds: readonly string[]) => void,
 ) {
   const store = createCanvasViewportStore(Size.create(800, 600));
   const selectionStore = createSelectionStore();
@@ -41,6 +42,7 @@ function renderCanvas(
       onDeleteElements={onDeleteElements}
       onDuplicateElements={onDuplicateElements}
       generateId={generateId}
+      onPasteElements={onPasteElements}
     />,
   );
 
@@ -83,7 +85,7 @@ describe('Canvas', () => {
     expect(screen.getByRole('application', { name: 'Canvas' })).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate',
+        'Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste',
       ),
     ).toBeInTheDocument();
   });
@@ -95,7 +97,7 @@ describe('Canvas', () => {
     expect(canvas).toHaveAttribute('tabindex', '0');
     expect(canvas).toHaveAttribute(
       'aria-keyshortcuts',
-      'Escape Control+A Meta+A Delete Control+D Meta+D',
+      'Escape Control+A Meta+A Delete Control+D Meta+D Control+C Meta+C Control+V Meta+V',
     );
   });
 
@@ -763,6 +765,110 @@ describe('Canvas', () => {
       await userEvent.setup().keyboard('{Control>}d{/Control}');
 
       expect(onDuplicateElements).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('copy/paste', () => {
+    it('copies the selection on Ctrl+C and pastes a new element on Ctrl+V', async () => {
+      const calls: (readonly Element[])[] = [];
+      const onPasteElements = jest.fn((next: readonly Element[], pastedIds: readonly string[]) => {
+        calls.push(next);
+        expect(pastedIds).toEqual(['copy-1']);
+      });
+      const { selectionStore } = renderCanvas(
+        [FIRST_ITEM, SECOND_ITEM],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        sequentialIds(),
+        onPasteElements,
+      );
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const user = userEvent.setup();
+
+      act(() => {
+        selectionStore.select('first');
+      });
+
+      canvas.focus();
+      await user.keyboard('{Control>}c{/Control}');
+      await user.keyboard('{Control>}v{/Control}');
+
+      expect(onPasteElements).toHaveBeenCalledTimes(1);
+      expect(calls.at(-1)?.map((element) => element.id.value)).toEqual([
+        'first',
+        'second',
+        'copy-1',
+      ]);
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['copy-1']);
+    });
+
+    it('pastes every copied element after a multi selection', async () => {
+      const onPasteElements = jest.fn();
+      const { selectionStore } = renderCanvas(
+        [FIRST_ITEM, SECOND_ITEM],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        sequentialIds(),
+        onPasteElements,
+      );
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const user = userEvent.setup();
+
+      act(() => {
+        selectionStore.selectMany(['first', 'second']);
+      });
+
+      canvas.focus();
+      await user.keyboard('{Control>}c{/Control}');
+      await user.keyboard('{Control>}v{/Control}');
+
+      expect(onPasteElements).toHaveBeenCalledTimes(1);
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['copy-1', 'copy-2']);
+    });
+
+    it('does nothing on paste when nothing was copied', async () => {
+      const onPasteElements = jest.fn();
+      renderCanvas(
+        [FIRST_ITEM],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        sequentialIds(),
+        onPasteElements,
+      );
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      canvas.focus();
+      await userEvent.setup().keyboard('{Control>}v{/Control}');
+
+      expect(onPasteElements).not.toHaveBeenCalled();
+    });
+
+    it('does nothing on copy when there is no selection', async () => {
+      const onPasteElements = jest.fn();
+      const { selectionStore } = renderCanvas(
+        [FIRST_ITEM],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        sequentialIds(),
+        onPasteElements,
+      );
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const user = userEvent.setup();
+
+      canvas.focus();
+      await user.keyboard('{Control>}c{/Control}');
+      await user.keyboard('{Control>}v{/Control}');
+
+      expect(onPasteElements).not.toHaveBeenCalled();
+      expect(selectionStore.getSnapshot().selectedIds).toEqual([]);
     });
   });
 });

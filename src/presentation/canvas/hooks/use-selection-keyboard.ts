@@ -50,7 +50,13 @@ export function useSelectionKeyboard({
         altKey: event.altKey,
       });
 
-      if (command === null || command === 'delete' || command === 'duplicate') {
+      if (
+        command === null ||
+        command === 'delete' ||
+        command === 'duplicate' ||
+        command === 'copy' ||
+        command === 'paste'
+      ) {
         return;
       }
 
