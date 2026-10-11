@@ -2098,7 +2098,7 @@ Completar **Task renderer** dejando un resultado verificable y apto para las tar
 
 ### TASK-054 — Frame renderer
 
-**Priority:** P0 · **Depends:** TASK-041, TASK-050 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-041, TASK-050 · **Status:** DONE
 
 #### Objetivo
 
@@ -2113,12 +2113,12 @@ Completar **Frame renderer** dejando un resultado verificable y apto para las ta
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -4884,6 +4884,14 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) el renderer es de presentación pura y defensivo ante el tipo ancho `Element` (`null` en vez de cast), coherente con `resolveElementRenderer`; (2) contenido vacío sin placeholder textual para no introducir UI de edición fuera de alcance; (3) sin registro central ni wiring en `Canvas` todavía — el `ElementRendererRegistry` es opcional y los elementos no se cargan hasta TASK-070, de modo que añadir un registro ahora sería una abstracción especulativa; (4) sin ADR por ser una decisión local de presentación.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-052 (Note renderer).
+
+## 2026-10-11 — TASK-054
+
+- Resultado: Frame renderer implementado sobre la abstracción de TASK-050. Nuevo `FrameRenderer` en `src/presentation/canvas/renderers/frame-renderer.tsx` que cumple el contrato `ElementRenderer`, estrecha la unión con `isFrameElement` y devuelve `null` ante elementos no-frame (sin casts). Renderiza el `title` en una cabecera destacada sobre un contenedor con borde punteado (`--rr-color-border-default`) y fondo sutil (`--rr-color-background-subtle`), tokens `--rr-*` coherentes con los demás renderers; `position/size/rotation` y atributos de interacción siguen viniendo de `ElementView`, así que el renderer solo aporta contenido. `parentFrameId` no tiene representación visual (sin UI de anidación en el MVP). Exportado en `renderers/index.ts`.
+- Tests/quality gates: 830 tests pasan (73 suites, +6 en `src/test/unit/presentation/canvas/renderers/frame-renderer.test.tsx`: render del título, atributo `data-element-content`/`data-element-type=frame`, nodo `[data-frame-title]`, frame con `parentFrameId` sin romper, `null` ante un `TextElement` y delegación real vía `ElementView` con `renderers={{ frame: FrameRenderer }}` sin fallback); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) estética de "contenedor" (cabecera + borde punteado) confirmada con el usuario, sin copiar branding de Miro; (2) `parentFrameId` no se renderiza: la anidación/agrupación es tarea futura y mostrar el id crudo sería ruido visual; (3) sin registro central ni wiring en `Canvas` (los elementos no se cargan hasta TASK-070), coherente con TASK-051→053; (4) sin ADR por ser una decisión local de presentación.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-055 (Connector renderer).
 
 ---
 
