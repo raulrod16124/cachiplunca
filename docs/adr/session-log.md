@@ -1,5 +1,15 @@
 # Session Log
 
+## 2026-10-11 — TASK-055 Connector renderer
+
+- Siguiente tarea del backlog: TASK-055 (dependencias TASK-042 y TASK-050 DONE, sin IN PROGRESS ni BLOCKED); confirmado por el cierre de TASK-054. Es la primera TODO ejecutable.
+- Nuevo `src/presentation/canvas/renderers/connector-renderer.tsx`, mismo patrón que `text/note/task/frame-renderer.tsx`: narrowing con `isConnectorElement`, `return null` para no-connector, raíz `styled.svg` con `data-element-content="true"` y `data-element-type="connector"`, y endpoints expuestos como hooks de test `data-connector-source`/`data-connector-target`. Exportado en `renderers/index.ts`.
+- Representación visual (decisión confirmada con el usuario): SVG que llena la caja de `ElementView` (`width/height 100%`, `overflow: visible`) dibujando una línea diagonal de source→target (`2%`→`98%`) con `marker-end` de punta de flecha. El `id` del marker se deriva de forma determinista del id del elemento (`connector-arrow-<id>` saneado) para evitar colisiones entre conectores sin hooks de estado. El renderer no resuelve la geometría real de los endpoints: `ElementView` solo entrega su propio elemento y la resolución de extremos queda para una tarea futura (no existe aún en el backlog); por eso el trazo se dibuja dentro de la propia caja.
+- Sin cambios en `resolveElementRenderer`/`ElementRendererRegistry` (ya soportaban `'connector'` vía `ElementType`) ni en Domain/Application. Sin registro central ni wiring en `Canvas` (los elementos no se cargan hasta TASK-070), coherente con TASK-051→054.
+- Tests en `src/test/unit/presentation/canvas/renderers/connector-renderer.test.tsx` (6 casos: data-attrs de contenido/tipo, endpoints source/target, coordenadas de la línea, wiring línea↔marker de flecha, `null` ante un `TextElement` y delegación real vía `ElementView` con `renderers={{ connector: ConnectorRenderer }}` sin fallback).
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` (836 tests, 74 suites) y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Sin ADR nuevo: decisión local de presentación sobre styled-components, coherente con TASK-050/051/052/053/054.
+
 ## 2026-10-10 — TASK-053 Task renderer
 
 - Siguiente tarea del backlog: TASK-053 (dependencias TASK-040 y TASK-050 DONE, sin IN PROGRESS); confirmado por el cierre de TASK-052. Sin IN PROGRESS ni BLOCKED.
