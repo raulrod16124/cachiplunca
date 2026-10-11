@@ -1,5 +1,14 @@
 # Session Log
 
+## 2026-10-11 — TASK-057 Move elements
+
+- Siguiente tarea del backlog: TASK-057 (dependencias TASK-046/051/052/053 DONE, sin IN PROGRESS ni BLOCKED); confirmado por el cierre de TASK-056.
+- En Application, `src/application/services/element-move.ts`: `resolveMoveIds(hitId, selectedIds)` y `moveElementsByDelta(elements, ids, delta, { now? })`. El helper aplica un delta de mundo desde la posición absoluta capturada en el `pointerdown` (no acumula), delega en `createMoveElement`/`withPosition`, preserva orden y no muta las entradas; resultado `ok | error` con `AppError` de validación. Exportado en `services/index.ts`. Sin dependencias de React/Firebase/UI (Clean/Hexagonal intactas).
+- En Presentation, `src/presentation/canvas/hooks/use-element-move.ts`: arrastre por pointer events con umbral `DRAG_SELECTION_THRESHOLD`, `setPointerCapture`, `Viewport.screenToWorld`, gestos aditivos/`spacePressed`/botón central/interactivos ignorados, y `onMoveElements(elements)` solo si el callback existe (Canvas controlado, sin store de elementos). Click sin arrastre → `onSelectOnly(id)`. Cableado en `Canvas` con prop `onMoveElements?`, colapso diferido en `handleSelect`, `data-moving` + cursor `grabbing`.
+- Decisiones confirmadas con el usuario: Canvas controlado por callback (sin store nuevo; board store llega en TASK-070/072) y el arrastre mueve la multiselección completa, con click que colapsa.
+- Tests/quality gates: `element-move.test.ts` (12), `use-element-move.test.tsx` (11) y 3 casos de integración en `canvas.test.tsx`; 866 tests pasan (77 suites). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Sin ADR nuevo: decisión local de interacción/composición, coherente con TASK-046/050/051.
+
 ## 2026-10-11 — TASK-055 Connector renderer
 
 - Siguiente tarea del backlog: TASK-055 (dependencias TASK-042 y TASK-050 DONE, sin IN PROGRESS ni BLOCKED); confirmado por el cierre de TASK-054. Es la primera TODO ejecutable.

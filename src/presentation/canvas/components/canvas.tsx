@@ -6,6 +6,7 @@ import type { Element } from '../../../domain/element';
 import type { CanvasViewportStore, SelectionStore } from '../../../application/services';
 import { toSelectableItems } from '../../../application/services';
 import { useDragSelection } from '../hooks/use-drag-selection';
+import { useElementMove } from '../hooks/use-element-move';
 import { usePan } from '../hooks/use-pan';
 import { useSelection } from '../hooks/use-selection';
 import { useSelectionKeyboard } from '../hooks/use-selection-keyboard';
@@ -41,6 +42,10 @@ const CanvasContainer = styled.div`
 
   &[data-selecting='true'] {
     cursor: crosshair;
+  }
+
+  &[data-moving='true'] {
+    cursor: grabbing;
   }
 `;
 
@@ -86,6 +91,7 @@ export interface CanvasProps {
   readonly selectionStore: SelectionStore;
   readonly elements?: readonly Element[];
   readonly renderers?: ElementRendererRegistry;
+  readonly onMoveElements?: (elements: readonly Element[]) => void;
 }
 
 export function Canvas({
@@ -93,6 +99,7 @@ export function Canvas({
   selectionStore,
   elements = [],
   renderers,
+  onMoveElements,
 }: CanvasProps): ReactElement {
   const viewport = useSyncExternalStore(store.subscribe, store.getSnapshot);
   const selection = useSyncExternalStore(selectionStore.subscribe, selectionStore.getSnapshot);
@@ -109,6 +116,17 @@ export function Canvas({
         return;
       }
 
+      if (selection.selectedIds.includes(id)) {
+        return;
+      }
+
+      selectionStore.select(id);
+    },
+    [selectionStore, selection.selectedIds],
+  );
+
+  const handleSelectOnly = useCallback(
+    (id: string) => {
       selectionStore.select(id);
     },
     [selectionStore],
@@ -143,6 +161,15 @@ export function Canvas({
     onSelect: handleSelect,
   });
 
+  const { isMoving, ref: elementMoveRef } = useElementMove({
+    elements,
+    viewport,
+    selectedIds: selection.selectedIds,
+    onMoveElements,
+    onSelectOnly: handleSelectOnly,
+    spacePressed,
+  });
+
   const { ref: dragSelectionRef, rect: marqueeRect } = useDragSelection({
     items,
     viewport,
@@ -166,8 +193,9 @@ export function Canvas({
       selectionRef.current = node;
       dragSelectionRef.current = node;
       selectionKeyboardRef.current = node;
+      elementMoveRef.current = node;
     },
-    [panRef, zoomRef, selectionRef, dragSelectionRef, selectionKeyboardRef],
+    [panRef, zoomRef, selectionRef, dragSelectionRef, selectionKeyboardRef, elementMoveRef],
   );
 
   const transform = viewport.transform;
@@ -194,6 +222,7 @@ export function Canvas({
       data-panning={isPanning}
       data-pan-key={spacePressed}
       data-selecting={marqueeRect !== null}
+      data-moving={isMoving}
       data-scale={transform.scale}
     >
       <GridLayer

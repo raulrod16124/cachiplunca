@@ -2206,7 +2206,7 @@ Completar **Link renderer** dejando un resultado verificable y apto para las tar
 
 ### TASK-057 — Move elements
 
-**Priority:** P0 · **Depends:** TASK-046, TASK-051, TASK-052, TASK-053 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-046, TASK-051, TASK-052, TASK-053 · **Status:** DONE
 
 #### Objetivo
 
@@ -2221,12 +2221,12 @@ Completar **Move elements** dejando un resultado verificable y apto para las tar
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -4899,7 +4899,16 @@ Añadir una entrada breve por sesión.
 - Tests/quality gates: 842 tests pasan (75 suites, +6 en `src/test/unit/presentation/canvas/renderers/link-renderer.test.tsx`: render del url, título presente/ausente, atributos `data-*`, `null` ante un `TextElement` y delegación real vía `ElementView` con `renderers={{ link: LinkRenderer }}` sin fallback); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
 - Decisiones: (1) el renderer es **solo visual** (sin `<a>`) confirmado con el usuario: evita XSS vía esquemas peligrosos (`javascript:`) sin introducir validación/sanitización especulativa, y la apertura del enlace no está en el backlog; (2) `title` opcional se omite cuando está ausente (el campo puede no existir en el objeto, patrón del dominio), coherente con TASK-053; (3) sin registro central ni wiring en `Canvas` (los elementos no se cargan hasta TASK-070), coherente con TASK-051→055; (4) sin ADR por ser una decisión local de presentación.
 - Bloqueos: ninguno.
-- Siguiente tarea: TASK-057 (Move elements).
+- Siguiente tarea: TASK-058 (Resize elements).
+
+## 2026-10-11 — TASK-057
+
+- Resultado: **Move elements** completado con interacción controlada por callback, desacoplada de persistencia (llega en TASK-068+). En Application, `src/application/services/element-move.ts`: `resolveMoveIds(hitId, selectedIds)` devuelve la selección completa si el elemento pulsado está seleccionado, o solo el id pulsado si no; `moveElementsByDelta(elements, ids, delta, { now? })` aplica un delta de mundo **absoluto** desde la línea base capturada en el `pointerdown` (idempotente por diseño), delega la mutación en `createMoveElement`/`withPosition`, preserva el orden y el resto de elementos y devuelve `ok | error` (traduciendo validaciones a `AppError`). Exportado en `services/index.ts`.
+- En Presentation, `src/presentation/canvas/hooks/use-element-move.ts`: arrastre con umbral `DRAG_SELECTION_THRESHOLD` (4px) reutilizado, `setPointerCapture`, baseline capturada al pulsar (evita acumulación), conversión con `Viewport.screenToWorld`, respeto a gestos aditivos (Shift/Cmd/Ctrl), botón central, `isInteractiveTarget` y `spacePressed` (cede el turno a pan); expone `{ isMoving, ref }` y emite `onMoveElements(elements)` solo cuando el callback existe (Canvas controlado, sin store de elementos). Sin arrastre → `onSelectOnly(id)` en el `pointerup` para colapsar la selección. Exportado en `hooks/index.ts` y cableado en `Canvas` vía prop `onMoveElements?`: `handleSelect` difiere el colapso cuando se pulsa un item ya seleccionado, `data-moving` + cursor `grabbing`, y `elementMoveRef` compartido en `setContainerRef`.
+- Decisiones confirmadas con el usuario tras revisar el backlog: (1) Canvas controlado por callback (`onMoveElements`) + helper puro en Application, sin store nuevo de elementos (el board store llega en TASK-070/072); (2) el arrastre mueve **toda la multiselección** y un click sin arrastre colapsa la selección al item pulsado; (3) la semántica de tolerancia de drag/re-selección (Espacio, modificadores) se propaga de TASK-046/051.
+- Tests/quality gates: +36 casos netos → `element-move.test.ts` (12) en `src/test/unit/application/services/`, `use-element-move.test.tsx` (11) en `src/test/unit/presentation/canvas/hooks/` y 3 casos de integración en `canvas.test.tsx` (move simple con `data-moving`, colapso de multiselección por click y arrastre de selección completa sin perderla); 866 tests pasan (77 suites). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-058 (Resize elements).
 
 ---
 

@@ -10,6 +10,8 @@ export type {
   UseDragSelectionOptions,
   UseDragSelectionResult,
 } from './use-drag-selection';
+export { useElementMove } from './use-element-move';
+export type { UseElementMoveOptions, UseElementMoveResult } from './use-element-move';
 export { useSpacePressed } from './use-space-pressed';
 export { useSelectionKeyboard } from './use-selection-keyboard';
 export type {

@@ -20,11 +20,21 @@ function createElement(id: string, x: number, y: number, width: number, height: 
   });
 }
 
-function renderCanvas(elements: readonly Element[] = []) {
+function renderCanvas(
+  elements: readonly Element[] = [],
+  onMoveElements?: (next: readonly Element[]) => void,
+) {
   const store = createCanvasViewportStore(Size.create(800, 600));
   const selectionStore = createSelectionStore();
 
-  render(<Canvas store={store} selectionStore={selectionStore} elements={elements} />);
+  render(
+    <Canvas
+      store={store}
+      selectionStore={selectionStore}
+      elements={elements}
+      onMoveElements={onMoveElements}
+    />,
+  );
 
   return { store, selectionStore };
 }
@@ -453,6 +463,77 @@ describe('Canvas', () => {
       await user.keyboard('{Escape}');
 
       expect(selectionStore.getSnapshot().selectedIds).toEqual(['first']);
+    });
+  });
+
+  describe('movement', () => {
+    it('reports the moved position when dragging an item', async () => {
+      const calls: (readonly Element[])[] = [];
+      const onMoveElements = jest.fn((next: readonly Element[]) => {
+        calls.push(next);
+      });
+      renderCanvas([FIRST_ITEM], onMoveElements);
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const item = screen.getByTestId('canvas-item-first');
+      const user = userEvent.setup();
+
+      await user.pointer([
+        { keys: '[MouseLeft>]', target: item, coords: { x: 150, y: 130 } },
+        { coords: { x: 200, y: 160 } },
+      ]);
+
+      expect(canvas).toHaveAttribute('data-moving', 'true');
+      expect(onMoveElements).toHaveBeenCalled();
+      expect(calls.at(-1)?.[0]?.position.equals(Position.create(150, 130))).toBe(true);
+
+      await user.pointer({ keys: '[/MouseLeft]' });
+      expect(canvas).toHaveAttribute('data-moving', 'false');
+    });
+
+    it('collapses a multi selection to the clicked item on a plain click', async () => {
+      const { selectionStore } = renderCanvas([FIRST_ITEM, SECOND_ITEM]);
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const item = screen.getByTestId('canvas-item-first');
+      const user = userEvent.setup();
+
+      await user.pointer({ keys: '[MouseLeft>]', target: canvas, coords: { x: 150, y: 130 } });
+      await user.keyboard('{Shift>}');
+      await user.pointer({ keys: '[MouseLeft>]', target: canvas, coords: { x: 350, y: 250 } });
+      await user.keyboard('{/Shift}');
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['first', 'second']);
+
+      await user.pointer([
+        { keys: '[MouseLeft>]', target: item, coords: { x: 150, y: 130 } },
+        { keys: '[/MouseLeft]' },
+      ]);
+
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['first']);
+    });
+
+    it('moves the whole selection and keeps it when dragging a selected item', async () => {
+      const calls: (readonly Element[])[] = [];
+      const onMoveElements = jest.fn((next: readonly Element[]) => {
+        calls.push(next);
+      });
+      const { selectionStore } = renderCanvas([FIRST_ITEM, SECOND_ITEM], onMoveElements);
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const item = screen.getByTestId('canvas-item-first');
+      const user = userEvent.setup();
+
+      await user.pointer({ keys: '[MouseLeft>]', target: canvas, coords: { x: 150, y: 130 } });
+      await user.keyboard('{Shift>}');
+      await user.pointer({ keys: '[MouseLeft>]', target: canvas, coords: { x: 350, y: 250 } });
+      await user.keyboard('{/Shift}');
+
+      await user.pointer([
+        { keys: '[MouseLeft>]', target: item, coords: { x: 150, y: 130 } },
+        { coords: { x: 180, y: 160 } },
+        { keys: '[/MouseLeft]' },
+      ]);
+
+      expect(calls.at(-1)?.[0]?.position.equals(Position.create(130, 130))).toBe(true);
+      expect(calls.at(-1)?.[1]?.position.equals(Position.create(330, 230))).toBe(true);
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['first', 'second']);
     });
   });
 });
