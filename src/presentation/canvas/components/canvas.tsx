@@ -7,6 +7,7 @@ import type { CanvasViewportStore, SelectionStore } from '../../../application/s
 import { toSelectableItems } from '../../../application/services';
 import { useDragSelection } from '../hooks/use-drag-selection';
 import { useElementMove } from '../hooks/use-element-move';
+import { useElementResize } from '../hooks/use-element-resize';
 import { usePan } from '../hooks/use-pan';
 import { useSelection } from '../hooks/use-selection';
 import { useSelectionKeyboard } from '../hooks/use-selection-keyboard';
@@ -46,6 +47,10 @@ const CanvasContainer = styled.div`
 
   &[data-moving='true'] {
     cursor: grabbing;
+  }
+
+  &[data-resizing='true'] {
+    cursor: nwse-resize;
   }
 `;
 
@@ -92,6 +97,7 @@ export interface CanvasProps {
   readonly elements?: readonly Element[];
   readonly renderers?: ElementRendererRegistry;
   readonly onMoveElements?: (elements: readonly Element[]) => void;
+  readonly onResizeElements?: (elements: readonly Element[]) => void;
 }
 
 export function Canvas({
@@ -100,6 +106,7 @@ export function Canvas({
   elements = [],
   renderers,
   onMoveElements,
+  onResizeElements,
 }: CanvasProps): ReactElement {
   const viewport = useSyncExternalStore(store.subscribe, store.getSnapshot);
   const selection = useSyncExternalStore(selectionStore.subscribe, selectionStore.getSnapshot);
@@ -170,6 +177,14 @@ export function Canvas({
     spacePressed,
   });
 
+  const { isResizing, ref: elementResizeRef } = useElementResize({
+    elements,
+    viewport,
+    selectedIds: selection.selectedIds,
+    onResizeElements,
+    spacePressed,
+  });
+
   const { ref: dragSelectionRef, rect: marqueeRect } = useDragSelection({
     items,
     viewport,
@@ -194,8 +209,17 @@ export function Canvas({
       dragSelectionRef.current = node;
       selectionKeyboardRef.current = node;
       elementMoveRef.current = node;
+      elementResizeRef.current = node;
     },
-    [panRef, zoomRef, selectionRef, dragSelectionRef, selectionKeyboardRef, elementMoveRef],
+    [
+      panRef,
+      zoomRef,
+      selectionRef,
+      dragSelectionRef,
+      selectionKeyboardRef,
+      elementMoveRef,
+      elementResizeRef,
+    ],
   );
 
   const transform = viewport.transform;
@@ -223,6 +247,7 @@ export function Canvas({
       data-pan-key={spacePressed}
       data-selecting={marqueeRect !== null}
       data-moving={isMoving}
+      data-resizing={isResizing}
       data-scale={transform.scale}
     >
       <GridLayer

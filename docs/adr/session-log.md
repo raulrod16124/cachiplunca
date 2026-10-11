@@ -1,5 +1,16 @@
 # Session Log
 
+## 2026-10-11 — TASK-058 Resize elements
+
+- Siguiente tarea del backlog: TASK-058 (dependencia TASK-047 DONE, sin IN PROGRESS ni BLOCKED); primera TODO ejecutable tras el cierre de TASK-057.
+- En Application, `src/application/services/element-resize.ts`: `ResizeHandleAnchor` (8 anclas), `MIN_ELEMENT_SIZE`, `resizeElementByHandle(element, anchor, worldDelta, { now?, minSize? })`. Calcula posición/tamaño desde los bounds del elemento y el delta, clampea al mínimo por eje (nunca dimensiones negativas), delega el tamaño en `createResizeElement` (TASK-047) y aplica `withPosition` cuando el ancla mueve el origen, con `updatedAt` inyectado; resultado `ok | error` con `AppError` de validación. Puro, sin mutar entradas. Exportado en `services/index.ts`.
+- En Presentation, handles interactivos en `selection-overlay.tsx`: `data-resize-handle`/`data-resize-anchor` por handle, `pointer-events: auto` y cursor por ancla (`nwse-resize`, `ns-resize`, etc.); el overlay sigue `pointer-events: none`. El tipo de ancla se importa de Application (fuente única).
+- Nuevo hook `src/presentation/canvas/hooks/use-element-resize.ts` (espejo de `use-element-move.ts`): detecta el ancla vía `closest('[data-resize-handle]')`, exige selección simple, `setPointerCapture`, umbral `DRAG_SELECTION_THRESHOLD`, `Viewport.screenToWorld` y `onResizeElements(elements)` solo si el callback existe. Ignora `spacePressed`, botón no primario, targets interactivos y anclas desconocidas. Exportado en `hooks/index.ts`.
+- Cableado en `Canvas`: prop `onResizeElements?`, `data-resizing` y cursor de fallback; `[data-resize-handle]` añadido a `isInteractiveTarget` de `use-drag-selection.ts` como guard defensivo (los handles quedan fuera de `[data-selectable]`, así que move/pan no los capturan).
+- Decisiones confirmadas con el usuario: Canvas controlado por callback (sin store de elementos) y resize de **elemento único**, coherente con el overlay y su test vigente (los handles solo se dibujan en selección simple; la multiselección queda fuera de alcance).
+- Tests: `element-resize.test.ts` (13), `use-element-resize.test.tsx` (10), `selection-overlay.test.tsx` (4) nuevas suites y 3 casos de integración en `canvas.test.tsx`; 897 tests pasan (80 suites). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Sin ADR nuevo: decisión local de interacción/composición, coherente con TASK-047/057.
+
 ## 2026-10-11 — TASK-057 Move elements
 
 - Siguiente tarea del backlog: TASK-057 (dependencias TASK-046/051/052/053 DONE, sin IN PROGRESS ni BLOCKED); confirmado por el cierre de TASK-056.

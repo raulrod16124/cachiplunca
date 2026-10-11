@@ -33,8 +33,9 @@ function isInteractiveTarget(target: EventTarget | null): boolean {
   }
 
   return (
-    target.closest('button, a, input, textarea, select, [role="button"], [data-selectable]') !==
-    null
+    target.closest(
+      'button, a, input, textarea, select, [role="button"], [data-selectable], [data-resize-handle]',
+    ) !== null
   );
 }
 

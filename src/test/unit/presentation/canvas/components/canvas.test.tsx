@@ -23,6 +23,7 @@ function createElement(id: string, x: number, y: number, width: number, height: 
 function renderCanvas(
   elements: readonly Element[] = [],
   onMoveElements?: (next: readonly Element[]) => void,
+  onResizeElements?: (next: readonly Element[]) => void,
 ) {
   const store = createCanvasViewportStore(Size.create(800, 600));
   const selectionStore = createSelectionStore();
@@ -33,6 +34,7 @@ function renderCanvas(
       selectionStore={selectionStore}
       elements={elements}
       onMoveElements={onMoveElements}
+      onResizeElements={onResizeElements}
     />,
   );
 
@@ -534,6 +536,81 @@ describe('Canvas', () => {
       expect(calls.at(-1)?.[0]?.position.equals(Position.create(130, 130))).toBe(true);
       expect(calls.at(-1)?.[1]?.position.equals(Position.create(330, 230))).toBe(true);
       expect(selectionStore.getSnapshot().selectedIds).toEqual(['first', 'second']);
+    });
+  });
+
+  describe('resizing', () => {
+    it('resizes the single selected item when dragging a resize handle', async () => {
+      const calls: (readonly Element[])[] = [];
+      const onResizeElements = jest.fn((next: readonly Element[]) => {
+        calls.push(next);
+      });
+      const { selectionStore } = renderCanvas([FIRST_ITEM], undefined, onResizeElements);
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      act(() => {
+        selectionStore.select('first');
+      });
+
+      const overlay = screen.getByTestId('selection-overlay');
+      const handle = overlay.querySelector('[data-resize-anchor="bottom-right"]');
+      if (!(handle instanceof HTMLElement)) {
+        throw new Error('Expected a bottom-right resize handle');
+      }
+
+      const user = userEvent.setup();
+
+      await user.pointer([
+        { keys: '[MouseLeft>]', target: handle, coords: { x: 220, y: 180 } },
+        { coords: { x: 250, y: 210 } },
+      ]);
+
+      expect(canvas).toHaveAttribute('data-resizing', 'true');
+      expect(onResizeElements).toHaveBeenCalled();
+      expect(calls.at(-1)?.[0]?.size.equals(Size.create(150, 110))).toBe(true);
+
+      await user.pointer({ keys: '[/MouseLeft]' });
+      expect(canvas).toHaveAttribute('data-resizing', 'false');
+    });
+
+    it('resizes from the top-left handle moving the origin', async () => {
+      const calls: (readonly Element[])[] = [];
+      const onResizeElements = jest.fn((next: readonly Element[]) => {
+        calls.push(next);
+      });
+      const { selectionStore } = renderCanvas([FIRST_ITEM], undefined, onResizeElements);
+
+      act(() => {
+        selectionStore.select('first');
+      });
+
+      const overlay = screen.getByTestId('selection-overlay');
+      const handle = overlay.querySelector('[data-resize-anchor="top-left"]');
+      if (!(handle instanceof HTMLElement)) {
+        throw new Error('Expected a top-left resize handle');
+      }
+
+      const user = userEvent.setup();
+
+      await user.pointer([
+        { keys: '[MouseLeft>]', target: handle, coords: { x: 100, y: 100 } },
+        { coords: { x: 120, y: 120 } },
+      ]);
+
+      expect(calls.at(-1)?.[0]?.position.equals(Position.create(120, 120))).toBe(true);
+      expect(calls.at(-1)?.[0]?.size.equals(Size.create(100, 60))).toBe(true);
+    });
+
+    it('does not offer resize handles for a multi selection', () => {
+      const { selectionStore } = renderCanvas([FIRST_ITEM, SECOND_ITEM]);
+
+      act(() => {
+        selectionStore.selectMany(['first', 'second']);
+      });
+
+      const overlay = screen.getByTestId('selection-overlay');
+
+      expect(overlay.querySelectorAll('[data-resize-handle]')).toHaveLength(0);
     });
   });
 });
