@@ -2170,7 +2170,7 @@ Completar **Connector renderer** dejando un resultado verificable y apto para la
 
 ### TASK-056 — Link renderer
 
-**Priority:** P0 · **Depends:** TASK-043, TASK-050 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-043, TASK-050 · **Status:** DONE
 
 #### Objetivo
 
@@ -2185,12 +2185,12 @@ Completar **Link renderer** dejando un resultado verificable y apto para las tar
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -4892,6 +4892,14 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) estética de "contenedor" (cabecera + borde punteado) confirmada con el usuario, sin copiar branding de Miro; (2) `parentFrameId` no se renderiza: la anidación/agrupación es tarea futura y mostrar el id crudo sería ruido visual; (3) sin registro central ni wiring en `Canvas` (los elementos no se cargan hasta TASK-070), coherente con TASK-051→053; (4) sin ADR por ser una decisión local de presentación.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-055 (Connector renderer).
+
+## 2026-10-11 — TASK-056
+
+- Resultado: Link renderer implementado sobre la abstracción de TASK-050. Nuevo `LinkRenderer` en `src/presentation/canvas/renderers/link-renderer.tsx` que cumple el contrato `ElementRenderer`, estrecha la unión con `isLinkElement` y devuelve `null` ante elementos no-link (sin casts). Renderiza el `title` (solo si está presente) como titular destacado y el `url` como texto no interactivo (sin `<a>`), sobre un contenedor con tokens `--rr-*` (`--rr-color-background-default`, `--rr-color-text-default`, `--rr-color-link-default`, `--rr-font-size-200`, `--rr-radius-100`) y `overflow-wrap:anywhere` para urls largas; `position/size/rotation` y atributos de interacción siguen viniendo de `ElementView`, así que el renderer solo aporta contenido. Atributos de test `data-element-content`, `data-element-type="link"`, `data-link-url` y `data-link-title`. Exportado en `renderers/index.ts`.
+- Tests/quality gates: 842 tests pasan (75 suites, +6 en `src/test/unit/presentation/canvas/renderers/link-renderer.test.tsx`: render del url, título presente/ausente, atributos `data-*`, `null` ante un `TextElement` y delegación real vía `ElementView` con `renderers={{ link: LinkRenderer }}` sin fallback); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) el renderer es **solo visual** (sin `<a>`) confirmado con el usuario: evita XSS vía esquemas peligrosos (`javascript:`) sin introducir validación/sanitización especulativa, y la apertura del enlace no está en el backlog; (2) `title` opcional se omite cuando está ausente (el campo puede no existir en el objeto, patrón del dominio), coherente con TASK-053; (3) sin registro central ni wiring en `Canvas` (los elementos no se cargan hasta TASK-070), coherente con TASK-051→055; (4) sin ADR por ser una decisión local de presentación.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-057 (Move elements).
 
 ---
 
