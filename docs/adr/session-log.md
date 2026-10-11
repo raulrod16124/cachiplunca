@@ -1,5 +1,13 @@
 # Session Log
 
+## 2026-10-11 — TASK-067 History edge cases
+
+- Siguiente tarea del backlog: TASK-067 (dependencia TASK-066 DONE, sin IN PROGRESS ni BLOCKED). Alcance confirmado con el usuario: **endurecer + tests exhaustivos** sobre el `CommandHistory` en Application; `command-history.ts` solo se toca si un test revela un defecto real.
+- Revisión del manager (`src/application/services/command-history.ts`): sin defectos funcionales detectados (pilas respetan capacity, la rama redo solo se limpia en `execute` exitoso, y los errores restauran el comando a su pila sin corromper estado). **Producción intacta** por diseño (no-scope-creep).
+- Tests en `src/test/unit/application/services/command-history.test.ts` (+20 casos): refactor menor del helper `move` hacia `moveElementTo` reutilizable; casos dirigidos de edge cases (capacity=1, capacity exacta sin evicción, capacity fraccionaria→floor, capacity negativa/NaN/Infinity→default, execute con error conserva la rama redo, redo con error restaura `redoStack`, clear conserva estado y capacity, no-op devuelve la misma instancia de estado, secuencia intercalada undo/redo con flags) y **test de propiedad determinista** (mulberry32, 3 semillas × 3 capacities × 600 ops `execute|undo|redo`) con un modelo de referencia independiente que reconstruye el estado desde `base + undoSteps` y verifica en cada paso `getState()`, `canUndo/canRedo` y el acotamiento de pilas por capacity.
+- Resultado: 1068 tests pasan (91 suites). Quality gates en verde: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Sin ADR nuevo: no hay decisión arquitectónica significativa (el contrato ya está en ADR-0007; decisión local de testeo/refuerzo, coherente con TASK-064).
+
 ## 2026-10-11 — TASK-065 Undo
 
 - Siguiente tarea del backlog: TASK-065 (dependencia TASK-064 DONE, sin IN PROGRESS ni BLOCKED). Alcance confirmado con el usuario: **solo Undo** ahora (Redo queda para TASK-066) y conexión del history manager vía **hook de Presentation + callback** (Canvas controlado, sin store de elementos, coherente con TASK-057→061).
