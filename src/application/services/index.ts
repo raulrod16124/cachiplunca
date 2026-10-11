@@ -7,3 +7,4 @@ export * from './element-delete';
 export * from './element-duplicate';
 export * from './selection-store';
 export * from './selection-keyboard';
+export * from './element-copy-paste';

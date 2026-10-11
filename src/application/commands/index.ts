@@ -11,3 +11,4 @@ export * from './resize-element';
 export * from './update-element';
 export * from './update-workspace';
 export * from './validate-workspace-name';
+export * from './paste-element';

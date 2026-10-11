@@ -1,4 +1,5 @@
-export type SelectionKeyCommand = 'clear' | 'select-all' | 'delete' | 'duplicate' | null;
+export type SelectionKeyCommand =
+  'clear' | 'select-all' | 'delete' | 'duplicate' | 'copy' | 'paste' | null;
 
 export interface SelectionKeyInput {
   readonly key: string;
@@ -14,6 +15,14 @@ export function resolveSelectionKeyCommand(input: SelectionKeyInput): SelectionK
 
   if ((input.ctrlKey || input.metaKey) && !input.altKey && input.key.toLowerCase() === 'a') {
     return 'select-all';
+  }
+
+  if ((input.ctrlKey || input.metaKey) && !input.altKey && input.key.toLowerCase() === 'c') {
+    return 'copy';
+  }
+
+  if ((input.ctrlKey || input.metaKey) && !input.altKey && input.key.toLowerCase() === 'v') {
+    return 'paste';
   }
 
   if ((input.ctrlKey || input.metaKey) && !input.altKey && input.key.toLowerCase() === 'd') {
