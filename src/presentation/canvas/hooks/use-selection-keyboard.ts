@@ -50,7 +50,7 @@ export function useSelectionKeyboard({
         altKey: event.altKey,
       });
 
-      if (command === null) {
+      if (command === null || command === 'delete') {
         return;
       }
 

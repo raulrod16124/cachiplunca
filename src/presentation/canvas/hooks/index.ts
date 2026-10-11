@@ -14,6 +14,8 @@ export { useElementMove } from './use-element-move';
 export type { UseElementMoveOptions, UseElementMoveResult } from './use-element-move';
 export { useElementResize } from './use-element-resize';
 export type { UseElementResizeOptions, UseElementResizeResult } from './use-element-resize';
+export { useElementDelete } from './use-element-delete';
+export type { UseElementDeleteOptions, UseElementDeleteResult } from './use-element-delete';
 export { useSpacePressed } from './use-space-pressed';
 export { useSelectionKeyboard } from './use-selection-keyboard';
 export type {

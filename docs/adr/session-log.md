@@ -1,5 +1,16 @@
 # Session Log
 
+## 2026-10-11 — TASK-059 Delete elements
+
+- Siguiente tarea del backlog: TASK-059 (dependencia TASK-048 DONE, sin IN PROGRESS ni BLOCKED); primera TODO ejecutable tras el cierre de TASK-058.
+- En Application, `src/application/services/element-delete.ts`: `deleteElements(elements, ids)` recorre en orden preservando el resto, valida cada elemento objetivo con `createDeleteElement` (TASK-048) y devuelve `{ status: 'ok', elements } | { status: 'error', error }` con `AppError` de validación (nunca lanza); no muta las entradas y devuelve un array nuevo. Exportado en `services/index.ts`.
+- `selection-keyboard.ts`: se añade el comando `'delete'` a `SelectionKeyCommand`, resuelto para la tecla `Delete` (sin modificadores). `use-selection-keyboard.ts` se ajusta para ignorar explícitamente `'delete'` y no interceptar `preventDefault`/`onClear`.
+- Nuevo hook `src/presentation/canvas/hooks/use-element-delete.ts` (Application-service + callback, espejo de move/resize): listener `keydown` en el surface, ignora `repeat` y targets editables, exige selección no vacía, resuelve el comando a `'delete'`, hace `preventDefault`, llama a `deleteElements` y emite `onDeleteElements(restantes)` + `onSelectionCleared`; solo si el resultado es `ok`. Exportado en `hooks/index.ts`.
+- Cableado en `Canvas`: prop `onDeleteElements?`, `useElementDelete({ elements, selectedIds, onDeleteElements, onSelectionCleared: handleClear })`, `elementDeleteRef` en `setContainerRef`, `aria-keyshortcuts` ampliado con `Delete` y hint actualizado. Canvas sigue controlado por callback (sin store de elementos).
+- Decisiones confirmadas con el usuario: disparador **solo tecla `Delete`** (Backspace fuera), se borra **toda la multiselección**, y **sin cascada** de ConnectorElement huérfanos (diferido; no está en el backlog actual).
+- Tests: `element-delete.test.ts` (7), `use-element-delete.test.tsx` (11) y 3 casos de integración (`describe('deletion')`) en `canvas.test.tsx`; `selection-keyboard.test.ts` actualizado a `Delete → 'delete'`. 918 tests pasan (82 suites). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Sin ADR nuevo: decisión local de interacción/composición, coherente con TASK-047/048/057/058.
+
 ## 2026-10-11 — TASK-058 Resize elements
 
 - Siguiente tarea del backlog: TASK-058 (dependencia TASK-047 DONE, sin IN PROGRESS ni BLOCKED); primera TODO ejecutable tras el cierre de TASK-057.

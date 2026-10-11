@@ -1,4 +1,4 @@
-export type SelectionKeyCommand = 'clear' | 'select-all' | null;
+export type SelectionKeyCommand = 'clear' | 'select-all' | 'delete' | null;
 
 export interface SelectionKeyInput {
   readonly key: string;
@@ -14,6 +14,10 @@ export function resolveSelectionKeyCommand(input: SelectionKeyInput): SelectionK
 
   if ((input.ctrlKey || input.metaKey) && !input.altKey && input.key.toLowerCase() === 'a') {
     return 'select-all';
+  }
+
+  if (input.key === 'Delete') {
+    return 'delete';
   }
 
   return null;

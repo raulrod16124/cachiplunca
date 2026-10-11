@@ -6,6 +6,7 @@ import type { Element } from '../../../domain/element';
 import type { CanvasViewportStore, SelectionStore } from '../../../application/services';
 import { toSelectableItems } from '../../../application/services';
 import { useDragSelection } from '../hooks/use-drag-selection';
+import { useElementDelete } from '../hooks/use-element-delete';
 import { useElementMove } from '../hooks/use-element-move';
 import { useElementResize } from '../hooks/use-element-resize';
 import { usePan } from '../hooks/use-pan';
@@ -98,6 +99,7 @@ export interface CanvasProps {
   readonly renderers?: ElementRendererRegistry;
   readonly onMoveElements?: (elements: readonly Element[]) => void;
   readonly onResizeElements?: (elements: readonly Element[]) => void;
+  readonly onDeleteElements?: (elements: readonly Element[]) => void;
 }
 
 export function Canvas({
@@ -107,6 +109,7 @@ export function Canvas({
   renderers,
   onMoveElements,
   onResizeElements,
+  onDeleteElements,
 }: CanvasProps): ReactElement {
   const viewport = useSyncExternalStore(store.subscribe, store.getSnapshot);
   const selection = useSyncExternalStore(selectionStore.subscribe, selectionStore.getSnapshot);
@@ -201,6 +204,13 @@ export function Canvas({
     onSelectAll: handleSelectAll,
   });
 
+  const { ref: elementDeleteRef } = useElementDelete({
+    elements,
+    selectedIds: selection.selectedIds,
+    onDeleteElements,
+    onSelectionCleared: handleClear,
+  });
+
   const setContainerRef = useCallback(
     (node: HTMLDivElement | null) => {
       panRef.current = node;
@@ -210,6 +220,7 @@ export function Canvas({
       selectionKeyboardRef.current = node;
       elementMoveRef.current = node;
       elementResizeRef.current = node;
+      elementDeleteRef.current = node;
     },
     [
       panRef,
@@ -219,6 +230,7 @@ export function Canvas({
       selectionKeyboardRef,
       elementMoveRef,
       elementResizeRef,
+      elementDeleteRef,
     ],
   );
 
@@ -240,7 +252,7 @@ export function Canvas({
       ref={setContainerRef}
       role="application"
       aria-label="Canvas"
-      aria-keyshortcuts="Escape Control+A Meta+A"
+      aria-keyshortcuts="Escape Control+A Meta+A Delete"
       aria-grabbed={isPanning}
       tabIndex={0}
       data-panning={isPanning}
@@ -275,7 +287,7 @@ export function Canvas({
         {items.length === 0 ? (
           <Hint>
             Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear ·
-            Ctrl/Cmd + A to select all
+            Ctrl/Cmd + A to select all · Delete to remove
           </Hint>
         ) : null}
       </World>

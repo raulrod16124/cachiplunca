@@ -24,6 +24,7 @@ function renderCanvas(
   elements: readonly Element[] = [],
   onMoveElements?: (next: readonly Element[]) => void,
   onResizeElements?: (next: readonly Element[]) => void,
+  onDeleteElements?: (next: readonly Element[]) => void,
 ) {
   const store = createCanvasViewportStore(Size.create(800, 600));
   const selectionStore = createSelectionStore();
@@ -35,6 +36,7 @@ function renderCanvas(
       elements={elements}
       onMoveElements={onMoveElements}
       onResizeElements={onResizeElements}
+      onDeleteElements={onDeleteElements}
     />,
   );
 
@@ -69,7 +71,7 @@ describe('Canvas', () => {
     expect(screen.getByRole('application', { name: 'Canvas' })).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all',
+        'Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove',
       ),
     ).toBeInTheDocument();
   });
@@ -79,7 +81,7 @@ describe('Canvas', () => {
 
     const canvas = screen.getByRole('application', { name: 'Canvas' });
     expect(canvas).toHaveAttribute('tabindex', '0');
-    expect(canvas).toHaveAttribute('aria-keyshortcuts', 'Escape Control+A Meta+A');
+    expect(canvas).toHaveAttribute('aria-keyshortcuts', 'Escape Control+A Meta+A Delete');
   });
 
   it('renders an infinite grid aligned to the world origin', () => {
@@ -611,6 +613,64 @@ describe('Canvas', () => {
       const overlay = screen.getByTestId('selection-overlay');
 
       expect(overlay.querySelectorAll('[data-resize-handle]')).toHaveLength(0);
+    });
+  });
+
+  describe('deletion', () => {
+    it('deletes the selected item on Delete and clears the selection', async () => {
+      const calls: (readonly Element[])[] = [];
+      const onDeleteElements = jest.fn((next: readonly Element[]) => {
+        calls.push(next);
+      });
+      const { selectionStore } = renderCanvas(
+        [FIRST_ITEM, SECOND_ITEM],
+        undefined,
+        undefined,
+        onDeleteElements,
+      );
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      act(() => {
+        selectionStore.select('first');
+      });
+
+      canvas.focus();
+      await userEvent.setup().keyboard('{Delete}');
+
+      expect(onDeleteElements).toHaveBeenCalledTimes(1);
+      expect(calls.at(-1)?.map((element) => element.id.value)).toEqual(['second']);
+      expect(selectionStore.getSnapshot().selectedIds).toEqual([]);
+    });
+
+    it('deletes the whole selection on Delete', async () => {
+      const onDeleteElements = jest.fn();
+      const { selectionStore } = renderCanvas(
+        [FIRST_ITEM, SECOND_ITEM],
+        undefined,
+        undefined,
+        onDeleteElements,
+      );
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      act(() => {
+        selectionStore.selectMany(['first', 'second']);
+      });
+
+      canvas.focus();
+      await userEvent.setup().keyboard('{Delete}');
+
+      expect(onDeleteElements).toHaveBeenCalledWith([]);
+    });
+
+    it('does nothing when there is no selection', async () => {
+      const onDeleteElements = jest.fn();
+      renderCanvas([FIRST_ITEM], undefined, undefined, onDeleteElements);
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      canvas.focus();
+      await userEvent.setup().keyboard('{Delete}');
+
+      expect(onDeleteElements).not.toHaveBeenCalled();
     });
   });
 });

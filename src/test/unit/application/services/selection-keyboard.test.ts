@@ -35,8 +35,12 @@ describe('resolveSelectionKeyCommand', () => {
     ).toBeNull();
   });
 
+  it('resolves Delete to delete', () => {
+    expect(resolveSelectionKeyCommand({ key: 'Delete', ...NO_MODIFIERS })).toBe('delete');
+  });
+
   it('returns null for unmapped keys', () => {
     expect(resolveSelectionKeyCommand({ key: 'ArrowRight', ...NO_MODIFIERS })).toBeNull();
-    expect(resolveSelectionKeyCommand({ key: 'Delete', ...NO_MODIFIERS })).toBeNull();
+    expect(resolveSelectionKeyCommand({ key: 'Backspace', ...NO_MODIFIERS })).toBeNull();
   });
 });

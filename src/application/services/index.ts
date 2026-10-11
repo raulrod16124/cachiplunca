@@ -3,5 +3,6 @@ export * from './canvas-viewport-store';
 export * from './canvas-hit-test';
 export * from './element-move';
 export * from './element-resize';
+export * from './element-delete';
 export * from './selection-store';
 export * from './selection-keyboard';
