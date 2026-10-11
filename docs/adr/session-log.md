@@ -1,5 +1,14 @@
 # Session Log
 
+## 2026-10-11 — TASK-064 Command history manager
+
+- Siguiente tarea del backlog: TASK-064 (dependencia TASK-063 DONE, sin IN PROGRESS ni BLOCKED). Alcance confirmado con el usuario: **manager completo reversible** (execute + undo + redo + canUndo/canRedo + clear + capacity) en Application; TASK-065/066 se reservan al wiring en Presentation/atajos y TASK-067 a edge cases adicionales.
+- Nuevo `src/application/services/command-history.ts`: `createCommandHistory<S>({ initial, capacity? })` genérico sobre el estado, React/Firebase-free. Pilas `undoStack`/`redoStack`; `execute` apila y **limpia el redo** (branching); en `error` devuelve el `CommandResult` sin mutar estado ni historial; `undo`/`redo` aplican `command.undo`/`command.execute` y mueven el comando entre pilas (restaurándolo si falla); `capacity` (default `DEFAULT_COMMAND_HISTORY_CAPACITY = 100`, inválida → default) descarta el más antiguo; `clear` vacía ambas pilas sin tocar el estado. Nunca muta el estado de entrada. Exportado en `services/index.ts`.
+- Decisiones: (1) `undo`/`redo` sin historial son **no-op que devuelven el estado actual como `ok`** (los consumidores comprueban `canUndo`/`canRedo`), coherente con el no-op silencioso de `canvas-viewport-store`/`selection-store` y con `deleteElements([])`; evita inventar códigos de error; (2) el error previsible del comando se propaga como valor (`AppError`) sin corromper el historial; (3) "manager completo" en una sola tarea para evitar métodos sin definir entre TASK-064/065/066.
+- Tests: nuevo `src/test/unit/application/services/command-history.test.ts` (11 casos: estado inicial; execute registra; undo→redo; múltiples pasos en orden; branching invalida redo; fallo → `AppError` de validación sin tocar estado/historial; no-op sin historial; clear; capacity descarta el más antiguo; capacity inválida → default; inmutabilidad del estado de entrada en secuencia válida) componiendo `createMoveElement` sobre `readonly Element[]`. 1005 tests pasan (89 suites).
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Sin ADR nuevo: el contrato `Command<S>`/`CommandResult<S>` ya está en ADR-0007; esta es una decisión local de implementación.
+
 ## 2026-10-11 — TASK-063 Command interface
 
 - Siguiente tarea del backlog: TASK-063 (dependencia TASK-044 DONE, sin IN PROGRESS ni BLOCKED); primera TODO ejecutable tras el cierre de TASK-062 (la capa Presentation quedó al día con TASK-061/062). Decisiones confirmadas con el usuario: contrato genérico `Command<S>`, incluir factory en producción y sin refactorizar los comandos existentes, con ADR.

@@ -1,4 +1,5 @@
 export * from './session-store';
+export * from './command-history';
 export * from './canvas-viewport-store';
 export * from './canvas-hit-test';
 export * from './element-move';

@@ -2446,7 +2446,7 @@ Definir la interfaz común de comandos ejecutables y reversibles.
 
 ### TASK-064 — Command history manager
 
-**Priority:** P0 · **Depends:** TASK-063 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-063 · **Status:** DONE
 
 #### Objetivo
 
@@ -2460,12 +2460,12 @@ Completar **Command history manager** dejando un resultado verificable y apto pa
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Undo/redo no corrompe el estado ante secuencias válidas.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Undo/redo no corrompe el estado ante secuencias válidas.
 
 #### Fuera de alcance
 
