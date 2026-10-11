@@ -2516,7 +2516,7 @@ Completar **Undo** dejando un resultado verificable y apto para las tareas depen
 
 ### TASK-066 — Redo
 
-**Priority:** P0 · **Depends:** TASK-065 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-065 · **Status:** DONE
 
 #### Objetivo
 
@@ -2530,12 +2530,12 @@ Completar **Redo** dejando un resultado verificable y apto para las tareas depen
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Undo/redo no corrompe el estado ante secuencias válidas.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Undo/redo no corrompe el estado ante secuencias válidas.
 
 #### Fuera de alcance
 
@@ -4918,6 +4918,14 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) el disparador es `Ctrl/Cmd + D`, simétrico con el `Delete` de TASK-059, sin introducir todavía la capa centralizada de atajos (TASK-062); (2) las copias se **auto-seleccionan**: el servicio devuelve `duplicatedIds` y el owner de la selección sigue siendo el `SelectionStore`, sin moverlo a Application; (3) el offset visual fijo `(16,16)` vive en Application/Presentation, honrando la decisión de TASK-049 ("la convención de offset visual quede en la UI") sin tocar el comando puro; (4) `generateId` y `onDuplicateElements` son opcionales: sin ellos el atajo queda inerte, coherente con el patrón de callbacks controlados de TASK-057→059 (la carga real de elementos y su composición llegan en TASK-070+); (5) sin ADR por seguir el patrón local ya establecido en TASK-057→059.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-061 (Copy/paste).
+
+## 2026-10-11 — TASK-066
+
+- Resultado: Redo expuesto de punta a punta sobre el motor que ya existía en TASK-064 (`CommandHistory.redo()`/`canRedo()`), sin lógica nueva en el manager. En Application, `resolveSelectionKeyCommand` (`src/application/services/selection-keyboard.ts`) amplía `SelectionKeyCommand` con `'redo'` y lo resuelve con **Ctrl/Cmd + Shift + Z** y **Ctrl/Cmd + Y** (`Alt` desactiva ambos, `z` sin shift sigue siendo `undo`). En Presentation, nuevo hook `src/presentation/canvas/hooks/use-element-redo.ts` espejo de `use-element-undo.ts` (listener `keydown` en el contenedor, `latestRef`, ignora `event.repeat`/targets editables, guarda `command !== 'redo'`, comprueba `history.canRedo()`, `preventDefault()` y emite `onRedoElements(result.state)` solo en `ok`, cleanup al desmontar); `use-selection-keyboard.ts` añade `'redo'` a la lista de comandos ignorados; `canvas.tsx` gana la prop `onRedoElements?`, cablea `elementRedoRef` en `setContainerRef` y amplía `aria-keyshortcuts` (`Control+Shift+Z Meta+Shift+Z Control+Y Meta+Y`) y el hint ("Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo"); exportado en `hooks/index.ts`. Sin wiring en `WorkspaceShell*` (paridad con TASK-065: no hay store de elementos hasta TASK-070+).
+- Tests/quality gates: 1048 tests pasan (91 suites, +8 netos tras reconciliar los 2 preexistentes de hint/`aria-keyshortcuts`: reescritura del caso "Shift ignorado" y 8 nuevos en `selection-keyboard.test.ts` —Ctrl/Cmd+Shift+Z, mayúscula, Ctrl/Cmd+Y, `Shift+Z` sin modificador y `Alt`—, 12 de `use-element-redo.test.tsx` —Ctrl/Cmd+Shift+Z, Ctrl+Y, nada que rehacer, `preventDefault` solo cuando aplica, keydown repetido, target editable, `disabled`, sin history, no-op y cleanup— y 4 de integración en el `describe('redo')` de `canvas.test.tsx`). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) redo se apoya en `CommandHistory.redo()` (que **re-ejecuta** el comando) y reutiliza el patrón de callback controlado de TASK-065, sin tocar el manager ni introducir un método `redo` en `Command`; (2) se soportan dos atajos, `Ctrl/Cmd + Shift + Z` (estándar, simétrico con undo) y `Ctrl/Cmd + Y` (alias Windows/Linux), decidido con el usuario; (3) la detección tecla→comando vive en Application (testeable sin React/DOM) y el DOM en Presentation, coherente con TASK-029→065; (4) `onRedoElements` opcional: sin él el atajo queda inerte, misma estrategia que `onUndoElements`; (5) sin ADR por ser una decisión local de interacción.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-067 (History edge cases).
 
 ---
 

@@ -33,6 +33,7 @@ function renderCanvas(
   onPasteElements?: (next: readonly Element[], pastedIds: readonly string[]) => void,
   history?: CommandHistory<readonly Element[]>,
   onUndoElements?: (next: readonly Element[]) => void,
+  onRedoElements?: (next: readonly Element[]) => void,
 ) {
   const store = createCanvasViewportStore(Size.create(800, 600));
   const selectionStore = createSelectionStore();
@@ -50,6 +51,7 @@ function renderCanvas(
       onPasteElements={onPasteElements}
       history={history}
       onUndoElements={onUndoElements}
+      onRedoElements={onRedoElements}
     />,
   );
 
@@ -69,6 +71,16 @@ function historyWithRecordedCommand(
       revert: () => ({ status: 'ok', state: initial }),
     }),
   );
+
+  return history;
+}
+
+function historyWithUndoneCommand(
+  initial: readonly Element[],
+  forward: readonly Element[],
+): CommandHistory<readonly Element[]> {
+  const history = historyWithRecordedCommand(initial, forward);
+  history.undo();
 
   return history;
 }
@@ -109,7 +121,7 @@ describe('Canvas', () => {
     expect(screen.getByRole('application', { name: 'Canvas' })).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo',
+        'Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo',
       ),
     ).toBeInTheDocument();
   });
@@ -121,7 +133,7 @@ describe('Canvas', () => {
     expect(canvas).toHaveAttribute('tabindex', '0');
     expect(canvas).toHaveAttribute(
       'aria-keyshortcuts',
-      'Escape Control+A Meta+A Delete Control+D Meta+D Control+C Meta+C Control+V Meta+V Control+Z Meta+Z',
+      'Escape Control+A Meta+A Delete Control+D Meta+D Control+C Meta+C Control+V Meta+V Control+Z Meta+Z Control+Shift+Z Meta+Shift+Z Control+Y Meta+Y',
     );
   });
 
@@ -963,6 +975,103 @@ describe('Canvas', () => {
       await userEvent.setup().keyboard('{Control>}z{/Control}');
 
       expect(onUndoElements).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('redo', () => {
+    it('redoes the last undone command on Ctrl+Shift+Z and emits the next state', async () => {
+      const onRedoElements = jest.fn();
+      const history = historyWithUndoneCommand([FIRST_ITEM], [FIRST_ITEM, SECOND_ITEM]);
+      renderCanvas(
+        [FIRST_ITEM],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        history,
+        undefined,
+        onRedoElements,
+      );
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      canvas.focus();
+      await userEvent.setup().keyboard('{Control>}{Shift>}z{/Shift}{/Control}');
+
+      expect(onRedoElements).toHaveBeenCalledTimes(1);
+      expect(onRedoElements).toHaveBeenCalledWith([FIRST_ITEM, SECOND_ITEM]);
+      expect(history.canRedo()).toBe(false);
+    });
+
+    it('redoes on Cmd+Shift+Z', async () => {
+      const onRedoElements = jest.fn();
+      const history = historyWithUndoneCommand([FIRST_ITEM], [FIRST_ITEM, SECOND_ITEM]);
+      renderCanvas(
+        [FIRST_ITEM],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        history,
+        undefined,
+        onRedoElements,
+      );
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      canvas.focus();
+      await userEvent.setup().keyboard('{Meta>}{Shift>}z{/Shift}{/Meta}');
+
+      expect(onRedoElements).toHaveBeenCalledTimes(1);
+      expect(onRedoElements).toHaveBeenCalledWith([FIRST_ITEM, SECOND_ITEM]);
+    });
+
+    it('redoes on Ctrl+Y', async () => {
+      const onRedoElements = jest.fn();
+      const history = historyWithUndoneCommand([FIRST_ITEM], [FIRST_ITEM, SECOND_ITEM]);
+      renderCanvas(
+        [FIRST_ITEM],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        history,
+        undefined,
+        onRedoElements,
+      );
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      canvas.focus();
+      await userEvent.setup().keyboard('{Control>}y{/Control}');
+
+      expect(onRedoElements).toHaveBeenCalledTimes(1);
+      expect(onRedoElements).toHaveBeenCalledWith([FIRST_ITEM, SECOND_ITEM]);
+    });
+
+    it('does nothing without a history', async () => {
+      const onRedoElements = jest.fn();
+      renderCanvas(
+        [FIRST_ITEM],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        onRedoElements,
+      );
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      canvas.focus();
+      await userEvent.setup().keyboard('{Control>}{Shift>}z{/Shift}{/Control}');
+
+      expect(onRedoElements).not.toHaveBeenCalled();
     });
   });
 });

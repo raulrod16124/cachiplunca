@@ -133,9 +133,56 @@ describe('resolveSelectionKeyCommand', () => {
     ).toBeNull();
   });
 
-  it('ignores the undo shortcut when Shift is also pressed', () => {
+  it('resolves Ctrl+Shift+Z to redo', () => {
     expect(
       resolveSelectionKeyCommand({ key: 'z', ...NO_MODIFIERS, ctrlKey: true, shiftKey: true }),
+    ).toBe('redo');
+  });
+
+  it('resolves Cmd+Shift+Z to redo', () => {
+    expect(
+      resolveSelectionKeyCommand({ key: 'z', ...NO_MODIFIERS, metaKey: true, shiftKey: true }),
+    ).toBe('redo');
+  });
+
+  it('resolves an uppercase Shift+Z with a modifier to redo', () => {
+    expect(
+      resolveSelectionKeyCommand({ key: 'Z', ...NO_MODIFIERS, ctrlKey: true, shiftKey: true }),
+    ).toBe('redo');
+  });
+
+  it('resolves Ctrl+Y to redo', () => {
+    expect(resolveSelectionKeyCommand({ key: 'y', ...NO_MODIFIERS, ctrlKey: true })).toBe('redo');
+  });
+
+  it('resolves Cmd+Y to redo', () => {
+    expect(resolveSelectionKeyCommand({ key: 'y', ...NO_MODIFIERS, metaKey: true })).toBe('redo');
+  });
+
+  it('resolves an uppercase Y with a modifier to redo', () => {
+    expect(resolveSelectionKeyCommand({ key: 'Y', ...NO_MODIFIERS, ctrlKey: true })).toBe('redo');
+  });
+
+  it('returns null for a plain Y without a modifier', () => {
+    expect(resolveSelectionKeyCommand({ key: 'y', ...NO_MODIFIERS })).toBeNull();
+  });
+
+  it('returns null for a Shift+Z without a modifier', () => {
+    expect(resolveSelectionKeyCommand({ key: 'z', ...NO_MODIFIERS, shiftKey: true })).toBeNull();
+  });
+
+  it('ignores the redo shortcuts when Alt is also pressed', () => {
+    expect(
+      resolveSelectionKeyCommand({
+        key: 'z',
+        ...NO_MODIFIERS,
+        ctrlKey: true,
+        shiftKey: true,
+        altKey: true,
+      }),
+    ).toBeNull();
+    expect(
+      resolveSelectionKeyCommand({ key: 'y', ...NO_MODIFIERS, ctrlKey: true, altKey: true }),
     ).toBeNull();
   });
 

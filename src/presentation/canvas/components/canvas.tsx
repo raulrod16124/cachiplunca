@@ -15,6 +15,7 @@ import { useElementCopyPaste } from '../hooks/use-element-copy-paste';
 import { useElementDelete } from '../hooks/use-element-delete';
 import { useElementDuplicate } from '../hooks/use-element-duplicate';
 import { useElementMove } from '../hooks/use-element-move';
+import { useElementRedo } from '../hooks/use-element-redo';
 import { useElementResize } from '../hooks/use-element-resize';
 import { useElementUndo } from '../hooks/use-element-undo';
 import { usePan } from '../hooks/use-pan';
@@ -116,6 +117,7 @@ export interface CanvasProps {
   readonly generateId?: () => ElementId;
   readonly history?: CommandHistory<readonly Element[]>;
   readonly onUndoElements?: (elements: readonly Element[]) => void;
+  readonly onRedoElements?: (elements: readonly Element[]) => void;
 }
 
 export function Canvas({
@@ -131,6 +133,7 @@ export function Canvas({
   generateId,
   history,
   onUndoElements,
+  onRedoElements,
 }: CanvasProps): ReactElement {
   const viewport = useSyncExternalStore(store.subscribe, store.getSnapshot);
   const selection = useSyncExternalStore(selectionStore.subscribe, selectionStore.getSnapshot);
@@ -269,6 +272,7 @@ export function Canvas({
   });
 
   const { ref: elementUndoRef } = useElementUndo({ history, onUndoElements });
+  const { ref: elementRedoRef } = useElementRedo({ history, onRedoElements });
 
   const setContainerRef = useCallback(
     (node: HTMLDivElement | null) => {
@@ -283,6 +287,7 @@ export function Canvas({
       elementDuplicateRef.current = node;
       elementCopyPasteRef.current = node;
       elementUndoRef.current = node;
+      elementRedoRef.current = node;
     },
     [
       panRef,
@@ -296,6 +301,7 @@ export function Canvas({
       elementDuplicateRef,
       elementCopyPasteRef,
       elementUndoRef,
+      elementRedoRef,
     ],
   );
 
@@ -317,7 +323,7 @@ export function Canvas({
       ref={setContainerRef}
       role="application"
       aria-label="Canvas"
-      aria-keyshortcuts="Escape Control+A Meta+A Delete Control+D Meta+D Control+C Meta+C Control+V Meta+V Control+Z Meta+Z"
+      aria-keyshortcuts="Escape Control+A Meta+A Delete Control+D Meta+D Control+C Meta+C Control+V Meta+V Control+Z Meta+Z Control+Shift+Z Meta+Shift+Z Control+Y Meta+Y"
       aria-grabbed={isPanning}
       tabIndex={0}
       data-panning={isPanning}
@@ -353,7 +359,8 @@ export function Canvas({
           <Hint>
             Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear ·
             Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C
-            to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo
+            to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or
+            Ctrl/Cmd + Y to redo
           </Hint>
         ) : null}
       </World>

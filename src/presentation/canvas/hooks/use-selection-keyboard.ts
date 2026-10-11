@@ -57,7 +57,8 @@ export function useSelectionKeyboard({
         command === 'duplicate' ||
         command === 'copy' ||
         command === 'paste' ||
-        command === 'undo'
+        command === 'undo' ||
+        command === 'redo'
       ) {
         return;
       }
