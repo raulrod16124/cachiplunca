@@ -2413,7 +2413,7 @@ Completar **Keyboard shortcuts** dejando un resultado verificable y apto para la
 
 ### TASK-063 — Command interface
 
-**Priority:** P0 · **Depends:** TASK-044 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-044 · **Status:** DONE
 
 #### Objetivo
 
@@ -2426,11 +2426,11 @@ Definir la interfaz común de comandos ejecutables y reversibles.
 
 #### Criterios de aceptación
 
-- [ ] Es testeable sin React.
-- [ ] Permite implementar undo/redo sin conocer UI.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Undo/redo no corrompe el estado ante secuencias válidas.
+- [x] Es testeable sin React.
+- [x] Permite implementar undo/redo sin conocer UI.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Undo/redo no corrompe el estado ante secuencias válidas.
 
 #### Fuera de alcance
 

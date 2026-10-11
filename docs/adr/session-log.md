@@ -1,5 +1,14 @@
 # Session Log
 
+## 2026-10-11 — TASK-063 Command interface
+
+- Siguiente tarea del backlog: TASK-063 (dependencia TASK-044 DONE, sin IN PROGRESS ni BLOCKED); primera TODO ejecutable tras el cierre de TASK-062 (la capa Presentation quedó al día con TASK-061/062). Decisiones confirmadas con el usuario: contrato genérico `Command<S>`, incluir factory en producción y sin refactorizar los comandos existentes, con ADR.
+- Nuevo `src/application/commands/command.ts`: `CommandMetadata { label }`, `CommandResult<S> = CommandOk<S> | CommandFailure` (con `AppError`), interfaz `Command<S>` (`metadata`, `execute(state)`, `undo(state)`) y factoría `createFunctionCommand<S>({ metadata, apply, revert })`. Sin React/Firebase/UI/persistencia; genérico sobre el estado para no acoplarse a entidades concretas. Exportado en `commands/index.ts`.
+- Sin cambios en Domain/Infrastructure/Presentation ni en los comandos TASK-044–TASK-049 (evitar scope creep): el contrato se compondrá dentro de comandos reversibles en TASK-064+.
+- Tests: `command.test.ts` (7 casos: metadata; delegación apply/revert del factory; execute inmutable; undo restaura el estado exacto; `execute→undo→redo`; error de validación como `AppError` sin lanzar; secuencias válidas sin corrupción) componiendo `createMoveElement` sobre `readonly Element[]`.
+- ADR-0007 registra el modelo `execute`/`undo` genérico, el resultado discriminado con `AppError`, los metadatos mínimos y el desacoplamiento de UI/persistencia.
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+
 ## 2026-10-11 — TASK-061 Copy/paste
 
 - Siguiente tarea del backlog: TASK-061 (dependencia TASK-060 DONE, sin IN PROGRESS ni BLOCKED); primera TODO ejecutable. La capa Application ya venía commiteada (`1a8f85b`) pero la tarea seguía TODO: faltaba la integración en Presentation y el cierre.

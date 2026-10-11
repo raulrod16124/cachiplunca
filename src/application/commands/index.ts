@@ -1,3 +1,4 @@
+export * from './command';
 export * from './create-element';
 export * from './create-workspace';
 export * from './delete-element';
