@@ -321,4 +321,35 @@ describe('createCommandHistory', () => {
     expect(state).toEqual(snapshot);
     expect(positionOf(state, 'elem-1').equals(Position.create(0, 0))).toBe(true);
   });
+
+  it('restores the command to the undo stack when undo fails', () => {
+    const history = historyWith();
+    const failingUndoCommand = createFunctionCommand<readonly Element[]>({
+      metadata: { label: 'FailingUndo' },
+      apply: (state) => ({
+        status: 'ok',
+        state: state,
+      }),
+      revert: () => ({
+        status: 'error',
+        error: {
+          kind: 'validation',
+          code: ERROR_CODES.VALIDATION_INVALID_INPUT,
+          message: 'undo failed',
+        },
+      }),
+    });
+
+    expectOk(history.execute(failingUndoCommand));
+    const result = history.undo();
+
+    expect(result.status).toBe('error');
+    if (result.status === 'error') {
+      expect(result.error.kind).toBe('validation');
+      expect(result.error.code).toBe(ERROR_CODES.VALIDATION_INVALID_INPUT);
+    }
+    expect(history.canUndo()).toBe(true);
+    expect(history.canRedo()).toBe(false);
+    expect(history.getState()).toEqual(initialState());
+  });
 });
