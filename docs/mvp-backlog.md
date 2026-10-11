@@ -2586,7 +2586,7 @@ Completar **History edge cases** dejando un resultado verificable y apto para la
 
 ### TASK-068 — Element repository port
 
-**Priority:** P0 · **Depends:** TASK-037 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-037 · **Status:** DONE
 
 #### Objetivo
 
@@ -2601,11 +2601,11 @@ Definir el port de persistencia de elementos.
 
 #### Criterios de aceptación
 
-- [ ] Application no conoce persistencia concreta.
-- [ ] Cubre las operaciones del MVP.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] Application no conoce persistencia concreta.
+- [x] Cubre las operaciones del MVP.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 

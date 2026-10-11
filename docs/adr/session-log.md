@@ -1,5 +1,16 @@
 # Session Log
 
+## 2026-10-11 — TASK-068 Element repository port
+
+- Siguiente tarea del backlog: TASK-068 (dependencia TASK-037 DONE, sin IN PROGRESS ni BLOCKED). Alcance confirmado con el usuario: **definir el port de persistencia de elementos** en Application, con un fake en test y un contrato reutilizable para el adapter Firestore de TASK-069.
+- Nuevo `src/application/ports/element-repository.ts`: `ElementRepository` con `listByWorkspace`, `findById`, `save`, `saveMany`, `delete` y `deleteMany`. El port depende solo de `domain/element` y `domain/shared` (sin React, Firebase, UI ni APIs del navegador). Exportado en `src/application/ports/index.ts`.
+- Decisión de diseño: el repositorio **persiste elementos ya construidos** (`save` con semántica de upsert) porque los comandos de creación (`create-element.ts`, TASK-044) ya generan `ElementId` y timestamps vía dependencias inyectadas; evita duplicar la generación de identidad en Infrastructure y mantiene la simetría con `Move/Resize/Update/Delete`. Incluye métodos batch (`saveMany`/`deleteMany`) para satisfacer "contrato compatible con batching" sin anticipar la orquestación de TASK-072/073.
+- Nuevo `src/test/fixtures/fake-element-repository.ts`: `FakeElementRepository` en memoria implementa el port, aísla workspaces, revalida entidades con `validateElement` y traduce errores a `AppError` (`validation`/`notFound`).
+- Nuevo `src/test/contract/element-repository-contract.ts`: suite parametrizable que verifica lista vacía, lectura/escritura, round-trip de los 6 tipos MVP con preservación de `position`/`size`/campos específicos, upsert, aislamiento por workspace, batching y errores tipados.
+- Nuevo `src/test/unit/application/ports/fake-element-repository.test.ts`: ejecuta el contrato contra el fake y añade tests de identidad de instancia e independencia entre repositorios.
+- Quality gates en verde: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` (1083 tests, 92 suites) y `npm run build` (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Sin ADR nuevo: la decisión sigue el patrón de ports/repositories ya documentado en ADR-0005 y ADR-0006 para workspaces; el port de elementos es una extensión coherente del mismo modelo.
+
 ## 2026-10-11 — TASK-067 History edge cases
 
 - Siguiente tarea del backlog: TASK-067 (dependencia TASK-066 DONE, sin IN PROGRESS ni BLOCKED). Alcance confirmado con el usuario: **endurecer + tests exhaustivos** sobre el `CommandHistory` en Application; `command-history.ts` solo se toca si un test revela un defecto real.
