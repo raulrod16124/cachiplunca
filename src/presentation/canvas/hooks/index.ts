@@ -16,6 +16,11 @@ export { useElementResize } from './use-element-resize';
 export type { UseElementResizeOptions, UseElementResizeResult } from './use-element-resize';
 export { useElementDelete } from './use-element-delete';
 export type { UseElementDeleteOptions, UseElementDeleteResult } from './use-element-delete';
+export { useElementDuplicate } from './use-element-duplicate';
+export type {
+  UseElementDuplicateOptions,
+  UseElementDuplicateResult,
+} from './use-element-duplicate';
 export { useSpacePressed } from './use-space-pressed';
 export { useSelectionKeyboard } from './use-selection-keyboard';
 export type {

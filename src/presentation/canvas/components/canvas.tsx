@@ -3,10 +3,12 @@ import { useCallback, useMemo, useSyncExternalStore } from 'react';
 import styled from 'styled-components';
 import { Grid } from '../../../domain/shared';
 import type { Element } from '../../../domain/element';
+import type { ElementId } from '../../../domain/shared';
 import type { CanvasViewportStore, SelectionStore } from '../../../application/services';
 import { toSelectableItems } from '../../../application/services';
 import { useDragSelection } from '../hooks/use-drag-selection';
 import { useElementDelete } from '../hooks/use-element-delete';
+import { useElementDuplicate } from '../hooks/use-element-duplicate';
 import { useElementMove } from '../hooks/use-element-move';
 import { useElementResize } from '../hooks/use-element-resize';
 import { usePan } from '../hooks/use-pan';
@@ -100,6 +102,11 @@ export interface CanvasProps {
   readonly onMoveElements?: (elements: readonly Element[]) => void;
   readonly onResizeElements?: (elements: readonly Element[]) => void;
   readonly onDeleteElements?: (elements: readonly Element[]) => void;
+  readonly onDuplicateElements?: (
+    elements: readonly Element[],
+    duplicatedIds: readonly string[],
+  ) => void;
+  readonly generateId?: () => ElementId;
 }
 
 export function Canvas({
@@ -110,6 +117,8 @@ export function Canvas({
   onMoveElements,
   onResizeElements,
   onDeleteElements,
+  onDuplicateElements,
+  generateId,
 }: CanvasProps): ReactElement {
   const viewport = useSyncExternalStore(store.subscribe, store.getSnapshot);
   const selection = useSyncExternalStore(selectionStore.subscribe, selectionStore.getSnapshot);
@@ -211,6 +220,24 @@ export function Canvas({
     onSelectionCleared: handleClear,
   });
 
+  const handleDuplicateElements = useMemo(() => {
+    if (onDuplicateElements === undefined) {
+      return undefined;
+    }
+
+    return (nextElements: readonly Element[], duplicatedIds: readonly string[]): void => {
+      onDuplicateElements(nextElements, duplicatedIds);
+      selectionStore.selectMany(duplicatedIds);
+    };
+  }, [onDuplicateElements, selectionStore]);
+
+  const { ref: elementDuplicateRef } = useElementDuplicate({
+    elements,
+    selectedIds: selection.selectedIds,
+    generateId,
+    onDuplicateElements: handleDuplicateElements,
+  });
+
   const setContainerRef = useCallback(
     (node: HTMLDivElement | null) => {
       panRef.current = node;
@@ -221,6 +248,7 @@ export function Canvas({
       elementMoveRef.current = node;
       elementResizeRef.current = node;
       elementDeleteRef.current = node;
+      elementDuplicateRef.current = node;
     },
     [
       panRef,
@@ -231,6 +259,7 @@ export function Canvas({
       elementMoveRef,
       elementResizeRef,
       elementDeleteRef,
+      elementDuplicateRef,
     ],
   );
 
@@ -252,7 +281,7 @@ export function Canvas({
       ref={setContainerRef}
       role="application"
       aria-label="Canvas"
-      aria-keyshortcuts="Escape Control+A Meta+A Delete"
+      aria-keyshortcuts="Escape Control+A Meta+A Delete Control+D Meta+D"
       aria-grabbed={isPanning}
       tabIndex={0}
       data-panning={isPanning}
@@ -287,7 +316,7 @@ export function Canvas({
         {items.length === 0 ? (
           <Hint>
             Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear ·
-            Ctrl/Cmd + A to select all · Delete to remove
+            Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate
           </Hint>
         ) : null}
       </World>

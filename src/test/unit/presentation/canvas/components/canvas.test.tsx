@@ -25,6 +25,8 @@ function renderCanvas(
   onMoveElements?: (next: readonly Element[]) => void,
   onResizeElements?: (next: readonly Element[]) => void,
   onDeleteElements?: (next: readonly Element[]) => void,
+  onDuplicateElements?: (next: readonly Element[], duplicatedIds: readonly string[]) => void,
+  generateId?: () => ElementId,
 ) {
   const store = createCanvasViewportStore(Size.create(800, 600));
   const selectionStore = createSelectionStore();
@@ -37,10 +39,20 @@ function renderCanvas(
       onMoveElements={onMoveElements}
       onResizeElements={onResizeElements}
       onDeleteElements={onDeleteElements}
+      onDuplicateElements={onDuplicateElements}
+      generateId={generateId}
     />,
   );
 
   return { store, selectionStore };
+}
+
+function sequentialIds(): () => ElementId {
+  let counter = 0;
+  return () => {
+    counter += 1;
+    return ElementId.create(`copy-${counter}`);
+  };
 }
 
 const FIRST_ITEM = createElement('first', 100, 100, 120, 80);
@@ -71,7 +83,7 @@ describe('Canvas', () => {
     expect(screen.getByRole('application', { name: 'Canvas' })).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove',
+        'Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate',
       ),
     ).toBeInTheDocument();
   });
@@ -81,7 +93,10 @@ describe('Canvas', () => {
 
     const canvas = screen.getByRole('application', { name: 'Canvas' });
     expect(canvas).toHaveAttribute('tabindex', '0');
-    expect(canvas).toHaveAttribute('aria-keyshortcuts', 'Escape Control+A Meta+A Delete');
+    expect(canvas).toHaveAttribute(
+      'aria-keyshortcuts',
+      'Escape Control+A Meta+A Delete Control+D Meta+D',
+    );
   });
 
   it('renders an infinite grid aligned to the world origin', () => {
@@ -671,6 +686,83 @@ describe('Canvas', () => {
       await userEvent.setup().keyboard('{Delete}');
 
       expect(onDeleteElements).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('duplication', () => {
+    it('duplicates the selected item on Ctrl+D and selects the copy', async () => {
+      const calls: (readonly Element[])[] = [];
+      const onDuplicateElements = jest.fn(
+        (next: readonly Element[], duplicatedIds: readonly string[]) => {
+          calls.push(next);
+          expect(duplicatedIds).toEqual(['copy-1']);
+        },
+      );
+      const { selectionStore } = renderCanvas(
+        [FIRST_ITEM, SECOND_ITEM],
+        undefined,
+        undefined,
+        undefined,
+        onDuplicateElements,
+        sequentialIds(),
+      );
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      act(() => {
+        selectionStore.select('first');
+      });
+
+      canvas.focus();
+      await userEvent.setup().keyboard('{Control>}d{/Control}');
+
+      expect(onDuplicateElements).toHaveBeenCalledTimes(1);
+      expect(calls.at(-1)?.map((element) => element.id.value)).toEqual([
+        'first',
+        'second',
+        'copy-1',
+      ]);
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['copy-1']);
+    });
+
+    it('duplicates the whole selection on Ctrl+D', async () => {
+      const onDuplicateElements = jest.fn();
+      const { selectionStore } = renderCanvas(
+        [FIRST_ITEM, SECOND_ITEM],
+        undefined,
+        undefined,
+        undefined,
+        onDuplicateElements,
+        sequentialIds(),
+      );
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      act(() => {
+        selectionStore.selectMany(['first', 'second']);
+      });
+
+      canvas.focus();
+      await userEvent.setup().keyboard('{Control>}d{/Control}');
+
+      expect(onDuplicateElements).toHaveBeenCalledTimes(1);
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['copy-1', 'copy-2']);
+    });
+
+    it('does nothing when there is no selection', async () => {
+      const onDuplicateElements = jest.fn();
+      renderCanvas(
+        [FIRST_ITEM],
+        undefined,
+        undefined,
+        undefined,
+        onDuplicateElements,
+        sequentialIds(),
+      );
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      canvas.focus();
+      await userEvent.setup().keyboard('{Control>}d{/Control}');
+
+      expect(onDuplicateElements).not.toHaveBeenCalled();
     });
   });
 });

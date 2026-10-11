@@ -4,5 +4,6 @@ export * from './canvas-hit-test';
 export * from './element-move';
 export * from './element-resize';
 export * from './element-delete';
+export * from './element-duplicate';
 export * from './selection-store';
 export * from './selection-keyboard';

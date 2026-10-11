@@ -91,6 +91,17 @@ describe('useSelectionKeyboard', () => {
     expect(onSelectAll).not.toHaveBeenCalled();
   });
 
+  it('ignores the duplicate shortcut (Ctrl+D)', async () => {
+    const { onClear, onSelectAll } = renderKeyboard();
+    const user = userEvent.setup();
+
+    screen.getByTestId('keyboard-surface').focus();
+    await user.keyboard('{Control>}d{/Control}');
+
+    expect(onClear).not.toHaveBeenCalled();
+    expect(onSelectAll).not.toHaveBeenCalled();
+  });
+
   it('ignores commands while an editable target is focused', async () => {
     const onClear = jest.fn();
     const onSelectAll = jest.fn();

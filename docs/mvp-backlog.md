@@ -2311,7 +2311,7 @@ Completar **Delete elements** dejando un resultado verificable y apto para las t
 
 ### TASK-060 — Duplicate elements
 
-**Priority:** P0 · **Depends:** TASK-049 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-049 · **Status:** DONE
 
 #### Objetivo
 
@@ -2326,12 +2326,12 @@ Completar **Duplicate elements** dejando un resultado verificable y apto para la
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -4909,6 +4909,15 @@ Añadir una entrada breve por sesión.
 - Tests/quality gates: +36 casos netos → `element-move.test.ts` (12) en `src/test/unit/application/services/`, `use-element-move.test.tsx` (11) en `src/test/unit/presentation/canvas/hooks/` y 3 casos de integración en `canvas.test.tsx` (move simple con `data-moving`, colapso de multiselección por click y arrastre de selección completa sin perderla); 866 tests pasan (77 suites). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-058 (Resize elements).
+
+## 2026-10-11 — TASK-060
+
+- Resultado: **Duplicate elements** de punta a punta y desacoplado de la persistencia (llega en TASK-068+). En Application, `src/application/services/element-duplicate.ts`: `DEFAULT_DUPLICATE_OFFSET = Position.create(16, 16)`, `DuplicateElementsDeps { generateId, now?, offset? }` y `duplicateElements(elements, ids, deps)` → `{ status:'ok', elements, duplicatedIds } | { status:'error', error }`; recorre los elementos en orden, delega cada copia en `createDuplicateElement` (TASK-049) con `position = origen + offset` (offset inyectable, default 16px), concatena las copias al final sin mutar la entrada y traduce errores de dominio a `validation`/`VALIDATION_INVALID_INPUT`. `SelectionKeyCommand` se amplía con `'duplicate'` resuelto por `Ctrl/Cmd + D` (case-insensitive, `Alt` lo desactiva) en `selection-keyboard.ts`. Exportado en `services/index.ts`.
+- En Presentation, `src/presentation/canvas/hooks/use-element-duplicate.ts` (espejo de `use-element-delete.ts`): listener `keydown` en el contenedor, `latestRef`, ignora `event.repeat` y targets editables; sin selección, sin `generateId` o sin callback es inerte y no llama a `preventDefault`. `use-selection-keyboard.ts` ignora también `'duplicate'` (no limpia la selección con Ctrl/Cmd+D). `Canvas` gana `onDuplicateElements?(elements, duplicatedIds)` y `generateId?()`, cablea `elementDuplicateRef` en `setContainerRef`, y al completar la duplicación auto-selecciona las copias vía `selectionStore.selectMany(duplicatedIds)`; `aria-keyshortcuts` y el hint incorporan el atajo. Exportado en `hooks/index.ts`.
+- Tests/quality gates: 950 tests pasan (84 suites, +33: 9 de `duplicateElements` en `src/test/unit/application/services/element-duplicate.test.ts` —duplicado simple y múltiple preservando orden, offset por defecto y custom, lista vacía/sin match, inmutabilidad, timestamps del reloj inyectado, ids distintos por invocación y origen inválido → error de validación—; 14 de `useElementDuplicate`; 6 de `resolveSelectionKeyCommand`; 1 de `useSelectionKeyboard`; 3 de integración en `canvas.test.tsx` —atajo, multiselección y auto-selección de copias, y no-op sin selección—). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) el disparador es `Ctrl/Cmd + D`, simétrico con el `Delete` de TASK-059, sin introducir todavía la capa centralizada de atajos (TASK-062); (2) las copias se **auto-seleccionan**: el servicio devuelve `duplicatedIds` y el owner de la selección sigue siendo el `SelectionStore`, sin moverlo a Application; (3) el offset visual fijo `(16,16)` vive en Application/Presentation, honrando la decisión de TASK-049 ("la convención de offset visual quede en la UI") sin tocar el comando puro; (4) `generateId` y `onDuplicateElements` son opcionales: sin ellos el atajo queda inerte, coherente con el patrón de callbacks controlados de TASK-057→059 (la carga real de elementos y su composición llegan en TASK-070+); (5) sin ADR por seguir el patrón local ya establecido en TASK-057→059.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-061 (Copy/paste).
 
 ---
 
