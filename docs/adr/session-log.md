@@ -1,5 +1,15 @@
 # Session Log
 
+## 2026-10-10 — TASK-053 Task renderer
+
+- Siguiente tarea del backlog: TASK-053 (dependencias TASK-040 y TASK-050 DONE, sin IN PROGRESS); confirmado por el cierre de TASK-052. Sin IN PROGRESS ni BLOCKED.
+- Nuevo `src/presentation/canvas/renderers/task-renderer.tsx`, mismo patrón que `text-renderer.tsx`/`note-renderer.tsx`: narrowing con `isTaskElement`, `return null` para no-task, raíz styled-components con `data-element-content="true"`, `data-element-type="task"` y `data-task-status`. Renderiza `title`, etiqueta de estado en inglés (`Todo`/`In progress`/`Done`) y, de forma condicional, `assigneeId.value` (`data-task-assignee`) y `dueDate` en ISO `YYYY-MM-DD` (`data-task-due-date`). Exportado en `renderers/index.ts`.
+- `dueDate` se formatea con un helper puro local (`toISOString().slice(0, 10)`) para que la salida sea determinista y testeable; el formateo localizado se deja a una tarea de UI posterior.
+- Sin cambios en `resolveElementRenderer`/`ElementRendererRegistry` (ya soportaban `'task'` vía `ElementType`) ni en Domain/Application.
+- Tests en `src/test/unit/presentation/canvas/renderers/task-renderer.test.tsx` (9 casos: título, data-attrs + estado, los tres estados con su etiqueta, assignee presente/ausente, dueDate ISO presente/ausente, `null` para TextElement, delegación vía `ElementView` con `{ task: TaskRenderer }`).
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` (824 tests, 72 suites) y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Sin ADR nuevo: no hay decisión arquitectónica significativa; el renderer se mantiene Presentation-only sobre styled-components, coherente con TASK-050/051/052.
+
 ## 2026-10-10 — TASK-052 Note renderer
 
 - Siguiente tarea del backlog: TASK-052 (dependencias TASK-039 y TASK-050 DONE, sin IN PROGRESS); confirmado por el cierre de TASK-051.
