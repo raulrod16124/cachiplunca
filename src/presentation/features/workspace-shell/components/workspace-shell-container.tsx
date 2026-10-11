@@ -4,8 +4,17 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import type { LogoutUser } from '../../../../application/commands';
 import type { GetWorkspace, GetWorkspaceResult } from '../../../../application/queries';
-import { createCanvasViewportStore, createSelectionStore } from '../../../../application/services';
-import type { CanvasViewportStore, SelectionStore } from '../../../../application/services';
+import {
+  createCanvasViewportStore,
+  createCommandHistory,
+  createSelectionStore,
+} from '../../../../application/services';
+import type {
+  CanvasViewportStore,
+  CommandHistory,
+  SelectionStore,
+} from '../../../../application/services';
+import type { Element } from '../../../../domain/element';
 import { Size } from '../../../../domain/shared';
 import { toAppError } from '../../../../shared/errors';
 import { WorkspaceShellLayout } from './workspace-shell-layout';
@@ -34,6 +43,9 @@ export function WorkspaceShellContainer({
     createCanvasViewportStore(Size.create(800, 600)),
   );
   const selectionStoreRef = useRef<SelectionStore>(createSelectionStore());
+  const commandHistoryRef = useRef<CommandHistory<readonly Element[]>>(
+    createCommandHistory<readonly Element[]>({ initial: [] }),
+  );
 
   const fetchWorkspace = useCallback(async (): Promise<void> => {
     setStatus('loading');
@@ -113,6 +125,7 @@ export function WorkspaceShellContainer({
         onBack={onBack}
         canvasViewportStore={canvasViewportStoreRef.current}
         selectionStore={selectionStoreRef.current}
+        commandHistory={commandHistoryRef.current}
       />
     );
   }

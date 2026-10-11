@@ -3,9 +3,14 @@ import { ArrowLeft } from '@raulrod/icons';
 import type { ReactNode } from 'react';
 import styled from 'styled-components';
 import type { Workspace } from '../../../../domain/workspace';
+import type { Element } from '../../../../domain/element';
 import { SignOutButton } from '../../auth/sign-out-button';
 import type { LogoutUser } from '../../../../application/commands';
-import type { CanvasViewportStore, SelectionStore } from '../../../../application/services';
+import type {
+  CanvasViewportStore,
+  CommandHistory,
+  SelectionStore,
+} from '../../../../application/services';
 import { Canvas } from '../../../canvas';
 
 const Shell = styled.div`
@@ -32,6 +37,7 @@ export interface WorkspaceShellLayoutProps {
   readonly onBack: () => void;
   readonly canvasViewportStore: CanvasViewportStore;
   readonly selectionStore: SelectionStore;
+  readonly commandHistory: CommandHistory<readonly Element[]>;
 }
 
 export function WorkspaceShellLayout({
@@ -40,6 +46,7 @@ export function WorkspaceShellLayout({
   onBack,
   canvasViewportStore,
   selectionStore,
+  commandHistory,
 }: WorkspaceShellLayoutProps): ReactNode {
   return (
     <Shell>
@@ -64,7 +71,11 @@ export function WorkspaceShellLayout({
         </Inline>
       </Header>
       <CanvasArea>
-        <Canvas store={canvasViewportStore} selectionStore={selectionStore} />
+        <Canvas
+          store={canvasViewportStore}
+          selectionStore={selectionStore}
+          history={commandHistory}
+        />
       </CanvasArea>
     </Shell>
   );

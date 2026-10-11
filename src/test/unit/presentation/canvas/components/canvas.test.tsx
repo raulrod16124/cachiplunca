@@ -5,8 +5,11 @@ import { createTextElement } from '../../../../../domain/element';
 import type { Element } from '../../../../../domain/element';
 import {
   createCanvasViewportStore,
+  createCommandHistory,
   createSelectionStore,
 } from '../../../../../application/services';
+import type { CommandHistory } from '../../../../../application/services';
+import { createFunctionCommand } from '../../../../../application/commands';
 import { Canvas } from '../../../../../presentation/canvas/components/canvas';
 
 function createElement(id: string, x: number, y: number, width: number, height: number): Element {
@@ -28,6 +31,8 @@ function renderCanvas(
   onDuplicateElements?: (next: readonly Element[], duplicatedIds: readonly string[]) => void,
   generateId?: () => ElementId,
   onPasteElements?: (next: readonly Element[], pastedIds: readonly string[]) => void,
+  history?: CommandHistory<readonly Element[]>,
+  onUndoElements?: (next: readonly Element[]) => void,
 ) {
   const store = createCanvasViewportStore(Size.create(800, 600));
   const selectionStore = createSelectionStore();
@@ -43,10 +48,29 @@ function renderCanvas(
       onDuplicateElements={onDuplicateElements}
       generateId={generateId}
       onPasteElements={onPasteElements}
+      history={history}
+      onUndoElements={onUndoElements}
     />,
   );
 
   return { store, selectionStore };
+}
+
+function historyWithRecordedCommand(
+  initial: readonly Element[],
+  forward: readonly Element[],
+): CommandHistory<readonly Element[]> {
+  const history = createCommandHistory<readonly Element[]>({ initial });
+
+  history.execute(
+    createFunctionCommand<readonly Element[]>({
+      metadata: { label: 'Change elements' },
+      apply: () => ({ status: 'ok', state: forward }),
+      revert: () => ({ status: 'ok', state: initial }),
+    }),
+  );
+
+  return history;
 }
 
 function sequentialIds(): () => ElementId {
@@ -85,7 +109,7 @@ describe('Canvas', () => {
     expect(screen.getByRole('application', { name: 'Canvas' })).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste',
+        'Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo',
       ),
     ).toBeInTheDocument();
   });
@@ -97,7 +121,7 @@ describe('Canvas', () => {
     expect(canvas).toHaveAttribute('tabindex', '0');
     expect(canvas).toHaveAttribute(
       'aria-keyshortcuts',
-      'Escape Control+A Meta+A Delete Control+D Meta+D Control+C Meta+C Control+V Meta+V',
+      'Escape Control+A Meta+A Delete Control+D Meta+D Control+C Meta+C Control+V Meta+V Control+Z Meta+Z',
     );
   });
 
@@ -869,6 +893,76 @@ describe('Canvas', () => {
 
       expect(onPasteElements).not.toHaveBeenCalled();
       expect(selectionStore.getSnapshot().selectedIds).toEqual([]);
+    });
+  });
+
+  describe('undo', () => {
+    it('undoes the last command on Ctrl+Z and emits the previous state', async () => {
+      const onUndoElements = jest.fn();
+      const history = historyWithRecordedCommand([FIRST_ITEM], [FIRST_ITEM, SECOND_ITEM]);
+      renderCanvas(
+        [FIRST_ITEM, SECOND_ITEM],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        history,
+        onUndoElements,
+      );
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      canvas.focus();
+      await userEvent.setup().keyboard('{Control>}z{/Control}');
+
+      expect(onUndoElements).toHaveBeenCalledTimes(1);
+      expect(onUndoElements).toHaveBeenCalledWith([FIRST_ITEM]);
+      expect(history.canUndo()).toBe(false);
+    });
+
+    it('undoes on Cmd+Z', async () => {
+      const onUndoElements = jest.fn();
+      const history = historyWithRecordedCommand([FIRST_ITEM], [FIRST_ITEM, SECOND_ITEM]);
+      renderCanvas(
+        [FIRST_ITEM, SECOND_ITEM],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        history,
+        onUndoElements,
+      );
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      canvas.focus();
+      await userEvent.setup().keyboard('{Meta>}z{/Meta}');
+
+      expect(onUndoElements).toHaveBeenCalledTimes(1);
+      expect(onUndoElements).toHaveBeenCalledWith([FIRST_ITEM]);
+    });
+
+    it('does nothing without a history', async () => {
+      const onUndoElements = jest.fn();
+      renderCanvas(
+        [FIRST_ITEM],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        onUndoElements,
+      );
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      canvas.focus();
+      await userEvent.setup().keyboard('{Control>}z{/Control}');
+
+      expect(onUndoElements).not.toHaveBeenCalled();
     });
   });
 });

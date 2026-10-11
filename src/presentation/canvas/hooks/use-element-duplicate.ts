@@ -59,6 +59,7 @@ export function useElementDuplicate({
         ctrlKey: event.ctrlKey,
         metaKey: event.metaKey,
         altKey: event.altKey,
+        shiftKey: event.shiftKey,
       });
 
       if (command !== 'duplicate') {

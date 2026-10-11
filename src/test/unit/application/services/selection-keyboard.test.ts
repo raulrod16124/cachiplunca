@@ -1,6 +1,6 @@
 import { resolveSelectionKeyCommand } from '../../../../application/services/selection-keyboard';
 
-const NO_MODIFIERS = { ctrlKey: false, metaKey: false, altKey: false };
+const NO_MODIFIERS = { ctrlKey: false, metaKey: false, altKey: false, shiftKey: false };
 
 describe('resolveSelectionKeyCommand', () => {
   it('resolves Escape to clear', () => {
@@ -108,6 +108,34 @@ describe('resolveSelectionKeyCommand', () => {
   it('ignores the paste shortcut when Alt is also pressed', () => {
     expect(
       resolveSelectionKeyCommand({ key: 'v', ...NO_MODIFIERS, ctrlKey: true, altKey: true }),
+    ).toBeNull();
+  });
+
+  it('resolves Ctrl+Z to undo', () => {
+    expect(resolveSelectionKeyCommand({ key: 'z', ...NO_MODIFIERS, ctrlKey: true })).toBe('undo');
+  });
+
+  it('resolves Cmd+Z to undo', () => {
+    expect(resolveSelectionKeyCommand({ key: 'z', ...NO_MODIFIERS, metaKey: true })).toBe('undo');
+  });
+
+  it('resolves an uppercase Z with a modifier to undo', () => {
+    expect(resolveSelectionKeyCommand({ key: 'Z', ...NO_MODIFIERS, ctrlKey: true })).toBe('undo');
+  });
+
+  it('returns null for a plain Z without a modifier', () => {
+    expect(resolveSelectionKeyCommand({ key: 'z', ...NO_MODIFIERS })).toBeNull();
+  });
+
+  it('ignores the undo shortcut when Alt is also pressed', () => {
+    expect(
+      resolveSelectionKeyCommand({ key: 'z', ...NO_MODIFIERS, ctrlKey: true, altKey: true }),
+    ).toBeNull();
+  });
+
+  it('ignores the undo shortcut when Shift is also pressed', () => {
+    expect(
+      resolveSelectionKeyCommand({ key: 'z', ...NO_MODIFIERS, ctrlKey: true, shiftKey: true }),
     ).toBeNull();
   });
 

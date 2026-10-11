@@ -48,6 +48,7 @@ export function useSelectionKeyboard({
         ctrlKey: event.ctrlKey,
         metaKey: event.metaKey,
         altKey: event.altKey,
+        shiftKey: event.shiftKey,
       });
 
       if (
@@ -55,7 +56,8 @@ export function useSelectionKeyboard({
         command === 'delete' ||
         command === 'duplicate' ||
         command === 'copy' ||
-        command === 'paste'
+        command === 'paste' ||
+        command === 'undo'
       ) {
         return;
       }

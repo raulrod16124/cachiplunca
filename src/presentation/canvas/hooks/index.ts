@@ -26,6 +26,8 @@ export type {
   UseElementCopyPasteOptions,
   UseElementCopyPasteResult,
 } from './use-element-copy-paste';
+export { useElementUndo } from './use-element-undo';
+export type { UseElementUndoOptions, UseElementUndoResult } from './use-element-undo';
 export { useSpacePressed } from './use-space-pressed';
 export { useSelectionKeyboard } from './use-selection-keyboard';
 export type {

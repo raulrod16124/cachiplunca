@@ -1,11 +1,12 @@
 export type SelectionKeyCommand =
-  'clear' | 'select-all' | 'delete' | 'duplicate' | 'copy' | 'paste' | null;
+  'clear' | 'select-all' | 'delete' | 'duplicate' | 'copy' | 'paste' | 'undo' | null;
 
 export interface SelectionKeyInput {
   readonly key: string;
   readonly ctrlKey: boolean;
   readonly metaKey: boolean;
   readonly altKey: boolean;
+  readonly shiftKey: boolean;
 }
 
 export function resolveSelectionKeyCommand(input: SelectionKeyInput): SelectionKeyCommand {
@@ -27,6 +28,15 @@ export function resolveSelectionKeyCommand(input: SelectionKeyInput): SelectionK
 
   if ((input.ctrlKey || input.metaKey) && !input.altKey && input.key.toLowerCase() === 'd') {
     return 'duplicate';
+  }
+
+  if (
+    (input.ctrlKey || input.metaKey) &&
+    !input.altKey &&
+    !input.shiftKey &&
+    input.key.toLowerCase() === 'z'
+  ) {
+    return 'undo';
   }
 
   if (input.key === 'Delete') {
