@@ -14,14 +14,28 @@ export interface MockQuerySnapshot {
   readonly docs: readonly MockDocumentSnapshot[];
 }
 
+export interface MockConstraint {
+  readonly field: string;
+  readonly op: '==';
+  readonly value: unknown;
+}
+
+export interface MockQuery {
+  readonly kind: 'query';
+  readonly ref: MockRef;
+  readonly constraints: readonly MockConstraint[];
+}
+
 export interface InMemoryFirestoreApi {
   collection(db: unknown, ...segments: string[]): MockRef;
   doc(ref: MockRef, ...segments: string[]): MockRef;
   getDoc(ref: MockRef): Promise<MockDocumentSnapshot>;
-  getDocs(ref: MockRef): Promise<MockQuerySnapshot>;
+  getDocs(ref: MockRef | MockQuery): Promise<MockQuerySnapshot>;
   setDoc(ref: MockRef, data: Record<string, unknown>): Promise<void>;
   updateDoc(ref: MockRef, data: Record<string, unknown>): Promise<void>;
   deleteDoc(ref: MockRef): Promise<void>;
+  query(ref: MockRef, ...constraints: MockConstraint[]): MockQuery;
+  where(field: string, op: '==', value: unknown): MockConstraint;
   __reset(): void;
   __seed(path: string, data: Record<string, unknown>): void;
   __failNextWith(code: string): void;
@@ -72,6 +86,34 @@ export function createInMemoryFirestoreModule(): InMemoryFirestoreApi {
     return data;
   }
 
+  function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+  }
+
+  function readField(data: Record<string, unknown>, field: string): unknown {
+    const parts = field.split('.');
+    let current: unknown = data;
+    for (const part of parts) {
+      if (!isRecord(current)) {
+        return undefined;
+      }
+      current = current[part];
+    }
+    return current;
+  }
+
+  function matchesConstraints(
+    data: Record<string, unknown>,
+    constraints: readonly MockConstraint[],
+  ): boolean {
+    for (const constraint of constraints) {
+      if (constraint.op === '==' && readField(data, constraint.field) !== constraint.value) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   return {
     collection(_db: unknown, ...segments: string[]): MockRef {
       const path = segments.join('/');
@@ -92,13 +134,18 @@ export function createInMemoryFirestoreModule(): InMemoryFirestoreApi {
       return makeSnapshot(ref.id, ref.path);
     },
 
-    async getDocs(ref: MockRef): Promise<MockQuerySnapshot> {
+    async getDocs(ref: MockRef | MockQuery): Promise<MockQuerySnapshot> {
       maybeFail();
-      const prefix = `${ref.path}/`;
+      const baseRef = ref.kind === 'query' ? ref.ref : ref;
+      const prefix = `${baseRef.path}/`;
+      const constraints = ref.kind === 'query' ? ref.constraints : [];
       const docs: MockDocumentSnapshot[] = [];
       for (const path of store.keys()) {
         if (path.startsWith(prefix)) {
-          docs.push(makeSnapshot(lastSegment(path), path));
+          const data = store.get(path);
+          if (data !== undefined && matchesConstraints(data, constraints)) {
+            docs.push(makeSnapshot(lastSegment(path), path));
+          }
         }
       }
       return { docs };
@@ -117,6 +164,14 @@ export function createInMemoryFirestoreModule(): InMemoryFirestoreApi {
     async deleteDoc(ref: MockRef): Promise<void> {
       maybeFail();
       store.delete(ref.path);
+    },
+
+    query(ref: MockRef, ...constraints: MockConstraint[]): MockQuery {
+      return { kind: 'query', ref, constraints };
+    },
+
+    where(field: string, op: '==', value: unknown): MockConstraint {
+      return { field, op, value };
     },
 
     __reset(): void {

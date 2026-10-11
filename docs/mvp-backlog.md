@@ -2622,7 +2622,7 @@ Definir el port de persistencia de elementos.
 
 ### TASK-069 — Firestore element repository
 
-**Priority:** P0 · **Depends:** TASK-068 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-068 · **Status:** DONE
 
 #### Objetivo
 
@@ -2637,12 +2637,12 @@ Completar **Firestore element repository** dejando un resultado verificable y ap
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 

@@ -1,5 +1,15 @@
 # Session Log
 
+## 2026-10-11 — TASK-069 Firestore element repository
+
+- Siguiente tarea del backlog: TASK-069 (dependencia TASK-068 DONE, sin IN PROGRESS ni BLOCKED). Alcance confirmado con el usuario: implementar el adapter Firestore del `ElementRepository` usando colección top-level `elements` con campo `workspaceId` (el port no incluye `workspaceId` en `findById`/`delete`/`deleteMany`, por lo que una subcolección por workspace no es viable sin cambiar el contrato ya cerrado de TASK-068).
+- Nuevo `src/infrastructure/firebase/firebase-element-mapper.ts`: mapper puro sin import del SDK. Define `ElementDocument` como unión discriminada por tipo (`TextElementDocument`, `NoteElementDocument`, `TaskElementDocument`, `FrameElementDocument`, `ConnectorElementDocument`, `LinkElementDocument`). `toElementDocument` aplana value objects a primitivos y omite campos opcionales ausentes; `fromElementDocument` valida la forma del documento, acepta fechas `Date` o `Timestamp`-like, y reconstruye entidades de dominio via las factories `create*Element`.
+- Nuevo `src/infrastructure/firebase/firebase-element-repository.ts`: `createFirebaseElementRepository(db: Firestore)`. Opera sobre la colección `elements`, con `listByWorkspace` via `query(..., where('workspaceId', '==', ...))`. `save`/`saveMany` validan entidades y escriben con `setDoc`; `delete`/`deleteMany` prechequean existencia (Firestore `deleteDoc` es idempotente) y lanzan `AppError` `notFound` si falta algún id. Todos los errores del SDK pasan por `mapFirebaseError`; documentos corruptos se traducen a `validation`/`VALIDATION_INVALID_INPUT`.
+- Extensión de `src/test/fixtures/in-memory-firestore.ts` con `query` y `where` para poder testear `listByWorkspace` sin emulador de Firestore. El mock replica solo `==` sobre campos simples, suficiente para el contrato.
+- Tests: nuevo `src/test/unit/infrastructure/firebase/firebase-element-mapper.test.ts` (round-trip de los 6 tipos, campos opcionales omitidos, fechas Timestamp-like, documentos corruptos) y `src/test/unit/infrastructure/firebase/firebase-element-repository.test.ts` (contrato reutilizable + tests específicos de persistencia, errores Firebase, documentos corruptos y query por workspace).
+- Quality gates en verde: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` (1121 tests, 94 suites) y `npm run build` (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Sin ADR nuevo: la decisión sigue el patrón de adapter/mapper de ADR-0006 para workspaces; la elección de colección top-level `elements` deriva del contrato del port de TASK-068 y se documenta aquí.
+
 ## 2026-10-11 — TASK-068 Element repository port
 
 - Siguiente tarea del backlog: TASK-068 (dependencia TASK-037 DONE, sin IN PROGRESS ni BLOCKED). Alcance confirmado con el usuario: **definir el port de persistencia de elementos** en Application, con un fake en test y un contrato reutilizable para el adapter Firestore de TASK-069.
