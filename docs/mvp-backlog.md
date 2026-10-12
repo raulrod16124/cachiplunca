@@ -3195,7 +3195,7 @@ Completar **Remote cursors** dejando un resultado verificable y apto para las ta
 
 ### TASK-085 — Presence cleanup
 
-**Priority:** P0 · **Depends:** TASK-083 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-083 · **Status:** DONE
 
 #### Objetivo
 
@@ -3213,13 +3213,13 @@ Completar **Presence cleanup** dejando un resultado verificable y apto para las 
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] No se crean listeners duplicados.
-- [ ] La presencia no modifica ni bloquea el documento persistido.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] No se crean listeners duplicados.
+- [x] La presencia no modifica ni bloquea el documento persistido.
 
 #### Fuera de alcance
 

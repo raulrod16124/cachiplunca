@@ -137,6 +137,9 @@ export function WorkspaceShellContainer({
         userId: UserId.create(localUserId),
         workspaceId: WorkspaceId.create(workspaceId),
       }),
+      onError: (error) => {
+        setCollaborationError(error);
+      },
     });
   }, [presencePort, localUserId, workspaceId]);
 
@@ -148,13 +151,29 @@ export function WorkspaceShellContainer({
   );
 
   useEffect(() => {
-    return () => {
-      if (cursorBroadcaster === null) {
-        return;
-      }
+    if (cursorBroadcaster === null || elementsStatus !== 'success') {
+      return;
+    }
 
-      void cursorBroadcaster.flush();
-      cursorBroadcaster.stop();
+    cursorBroadcaster.join();
+  }, [cursorBroadcaster, elementsStatus]);
+
+  useEffect(() => {
+    if (cursorBroadcaster === null) {
+      return;
+    }
+
+    const broadcaster = cursorBroadcaster;
+
+    function handlePagehide(): void {
+      void broadcaster.leave();
+    }
+
+    window.addEventListener('pagehide', handlePagehide);
+
+    return () => {
+      window.removeEventListener('pagehide', handlePagehide);
+      void broadcaster.leave();
     };
   }, [cursorBroadcaster]);
 

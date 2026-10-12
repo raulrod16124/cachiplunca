@@ -23,6 +23,7 @@ import { Workspace } from '../../../../../../domain/workspace';
 import { createAppError, ERROR_CODES } from '../../../../../../shared/errors';
 import { WorkspaceShellContainer } from '../../../../../../presentation/features/workspace-shell/components/workspace-shell-container';
 import { FakeElementRepository } from '../../../../../fixtures/fake-element-repository';
+import { FakePresencePort } from '../../../../../fixtures/fake-presence-port';
 import { FakeRealtimePort } from '../../../../../fixtures/fake-realtime-port';
 import { ManualScheduler, flushMicrotasks } from '../../../../../fixtures/manual-scheduler';
 
@@ -98,6 +99,8 @@ interface RenderOptions {
   readonly persistenceDebounceMs?: number;
   readonly realtimePort?: FakeRealtimePort;
   readonly realtimeSubscriptionManager?: RealtimeSubscriptionManager;
+  readonly presencePort?: FakePresencePort;
+  readonly localUserId?: string;
 }
 
 function renderContainer(getWorkspace: GetWorkspace, options: RenderOptions = {}) {
@@ -118,6 +121,8 @@ function renderContainer(getWorkspace: GetWorkspace, options: RenderOptions = {}
         onBack={ON_BACK}
         persistenceScheduler={options.persistenceScheduler}
         persistenceDebounceMs={options.persistenceDebounceMs}
+        presencePort={options.presencePort}
+        localUserId={options.localUserId}
       />
     </MemoryRouter>,
   );
@@ -998,5 +1003,102 @@ describe('WorkspaceShellContainer', () => {
     });
 
     expect(realtimePort.activeSubscriptionCount(workspaceId)).toBe(1);
+  });
+
+  it('announces local presence when the workspace loads and withdraws it on unmount', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const presencePort = new FakePresencePort();
+    const workspaceId = WorkspaceId.create('ws-test');
+    const userId = UserId.create('user-local');
+    const { unmount } = renderContainer(getWorkspace, {
+      presencePort,
+      localUserId: userId.value,
+    });
+
+    await screen.findByRole('application', { name: 'Canvas' });
+
+    expect(presencePort.presenceOf(workspaceId, userId)).toBeDefined();
+    expect(presencePort.activeSubscriptionCount(workspaceId)).toBe(1);
+
+    act(() => {
+      unmount();
+    });
+    await flushMicrotasks();
+
+    expect(presencePort.presenceOf(workspaceId, userId)).toBeUndefined();
+    expect(presencePort.activeSubscriptionCount()).toBe(0);
+  });
+
+  it('does not announce presence while the workspace is still loading', async () => {
+    const getWorkspace = jest.fn().mockImplementation(
+      () =>
+        new Promise<GetWorkspaceResult>(() => {
+          // never resolves
+        }),
+    );
+    const presencePort = new FakePresencePort();
+    const userId = UserId.create('user-local');
+
+    renderContainer(getWorkspace, { presencePort, localUserId: userId.value });
+
+    expect(screen.getByRole('status')).toHaveTextContent('Loading workspace');
+    await flushMicrotasks();
+
+    expect(presencePort.presenceOf(WorkspaceId.create('ws-test'), userId)).toBeUndefined();
+  });
+
+  it('withdraws local presence on pagehide', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const presencePort = new FakePresencePort();
+    const workspaceId = WorkspaceId.create('ws-test');
+    const userId = UserId.create('user-local');
+
+    renderContainer(getWorkspace, { presencePort, localUserId: userId.value });
+
+    await screen.findByRole('application', { name: 'Canvas' });
+    expect(presencePort.presenceOf(workspaceId, userId)).toBeDefined();
+
+    act(() => {
+      window.dispatchEvent(new Event('pagehide'));
+    });
+    await flushMicrotasks();
+
+    expect(presencePort.presenceOf(workspaceId, userId)).toBeUndefined();
+  });
+
+  it('does not announce presence when presence is not wired to a local user', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const presencePort = new FakePresencePort();
+
+    renderContainer(getWorkspace, { presencePort });
+
+    await screen.findByRole('application', { name: 'Canvas' });
+    await flushMicrotasks();
+
+    expect(presencePort.activePresenceCount(WorkspaceId.create('ws-test'))).toBe(0);
+  });
+
+  it('surfaces a presence channel error as a collaboration alert', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const presencePort = new FakePresencePort();
+    jest
+      .spyOn(presencePort, 'announce')
+      .mockRejectedValue(
+        createAppError(
+          'collaboration',
+          ERROR_CODES.COLLABORATION_SYNC_FAILED,
+          'Presence channel failed.',
+        ),
+      );
+
+    renderContainer(getWorkspace, { presencePort, localUserId: 'user-local' });
+
+    await act(async () => {
+      await flushMicrotasks();
+    });
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'We could not keep the board in sync. Reconnecting automatically.',
+    );
   });
 });

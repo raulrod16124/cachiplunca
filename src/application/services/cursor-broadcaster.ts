@@ -11,8 +11,10 @@ import {
 export const DEFAULT_CURSOR_THROTTLE_MS = 80;
 
 export interface CursorBroadcaster {
+  join(): void;
   move(cursor: Position): void;
   flush(): Promise<void>;
+  leave(): Promise<void>;
   stop(): void;
 }
 
@@ -41,12 +43,39 @@ export function createCursorBroadcaster(options: CursorBroadcasterOptions): Curs
   let lastSent: Position | null = null;
   let cancelScheduled: CancelScheduledFlush | null = null;
   let stopped = false;
+  let joined = false;
 
   function send(cursor: Position): Promise<void> {
     lastSent = cursor;
     return presencePort.announce(basePresence.moveCursor(cursor)).catch((error: unknown) => {
       onError?.(toAppError(error));
     });
+  }
+
+  function join(): void {
+    if (stopped || joined) {
+      return;
+    }
+    joined = true;
+    presencePort.announce(basePresence).catch((error: unknown) => {
+      onError?.(toAppError(error));
+    });
+  }
+
+  function leave(): Promise<void> {
+    if (cancelScheduled !== null) {
+      cancelScheduled();
+      cancelScheduled = null;
+    }
+    latest = null;
+    lastSent = null;
+    joined = false;
+
+    return presencePort
+      .withdraw(basePresence.workspaceId, basePresence.userId)
+      .catch((error: unknown) => {
+        onError?.(toAppError(error));
+      });
   }
 
   function flush(): Promise<void> {
@@ -74,6 +103,8 @@ export function createCursorBroadcaster(options: CursorBroadcasterOptions): Curs
   }
 
   return {
+    join,
+
     move(cursor) {
       if (stopped) {
         return;
@@ -97,6 +128,8 @@ export function createCursorBroadcaster(options: CursorBroadcasterOptions): Curs
     flush() {
       return flush();
     },
+
+    leave,
 
     stop() {
       stopped = true;

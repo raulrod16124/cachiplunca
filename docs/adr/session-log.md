@@ -1,5 +1,14 @@
 # Session Log
 
+## 2026-10-12 — TASK-085 Presence cleanup
+
+- Siguiente tarea del backlog: TASK-085 (dependencia TASK-083 DONE, sin IN PROGRESS ni BLOCKED). Alcance confirmado con el usuario: **extender `CursorBroadcaster` con `join()`/`leave()`** (único dueño de la presencia local), **join al entrar al workspace**, y **limpieza en `unmount` + `pagehide`** (sin `visibilitychange`/mini-heartbeat). La presencia ya no deja documentos huérfanos: `PresencePort.withdraw` (existente) queda por fin cableado.
+- Application (`src/application/services/cursor-broadcaster.ts`): nuevo `join()` anuncia `basePresence` sin cursor (upsert idempotente) y `leave()` cancela el trailing, resetea `latest`/`lastSent`/`joined` y hace `withdraw(workspaceId, userId)` sin fijar `stopped` (un `move()`/`join()` posterior re-anuncia). Errores por `onError` (ya existente) con `toAppError`. Sin flush del cursor final al salir (sería write-then-delete).
+- Presentation: `WorkspaceShellContainer` dispara `join()` cuando `elementsStatus === 'success'` (board activo, tras el reset de error del suscriptor del board) y `leave()` en el cleanup del efecto de presencia y en un listener de `pagehide`. `onError` del broadcaster → `collaborationError` (surfacing `role="alert"` igual que realtime).
+- Tests: `cursor-broadcaster.test.ts` +8 (join anuncia base sin cursor, join idempotente, leave retira presencia y cancela trailing, leave sin presencia = no-op, move tras leave re-anuncia, errores de announce/withdraw → `onError` sin lanzar); `workspace-shell-container.test.tsx` +6 (presencia creada al cargar el board y retirada en unmount con `activeSubscriptionCount` de presencia a 0, sin announce en loading, withdraw en pagehide, sin announce sin `localUserId`, error de presencia → alerta de colaboración). Render harness del container gana `presencePort`/`localUserId`.
+- ADR-0015 (`docs/adr/0015-presence-cleanup.md`): dueño único de la presencia local, ciclo join/leave, limpieza best-effort en unmount+pagehide (sin TTL/heartbeat, sin visibilitychange), y alternativas descartadas.
+- Quality gates en verde: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` (1448 tests, 115 suites) y `npm run build` (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+
 ## 2026-10-12 — TASK-080 Reconnect handling
 
 - Siguiente tarea del backlog: TASK-080 (dependencia TASK-078 DONE, sin IN PROGRESS ni BLOCKED). Alcance confirmado con el usuario: **señal de conexión en el `RealtimePort`** (opción A), traduciendo `metadata.fromCache` en el adapter Firestore, con estado en Application y reacción (badge + flush + limpieza) en Presentation; LWW (081) e historial vs remotos (088) quedan fuera.
