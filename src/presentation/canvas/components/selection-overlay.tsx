@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react';
 import styled from 'styled-components';
-import type { SelectableItem } from '../../../application/services';
+import type { ResizeHandleAnchor, SelectableItem } from '../../../application/services';
+import type { Bounds } from '../../../domain/shared';
 
 const ACCENT = 'var(--rr-color-accent-default, #2563eb)';
 const SURFACE = 'var(--rr-color-background-default, #ffffff)';
@@ -20,12 +21,10 @@ const Handle = styled.span`
   border: 1.5px solid ${ACCENT};
   border-radius: 2px;
   background: ${SURFACE};
+  pointer-events: auto;
 `;
 
-type HandleAnchor =
-  'top-left' | 'top' | 'top-right' | 'right' | 'bottom-right' | 'bottom' | 'bottom-left' | 'left';
-
-const HANDLE_OFFSETS: Record<HandleAnchor, { readonly x: number; readonly y: number }> = {
+const HANDLE_OFFSETS: Record<ResizeHandleAnchor, { readonly x: number; readonly y: number }> = {
   'top-left': { x: 0, y: 0 },
   top: { x: 0.5, y: 0 },
   'top-right': { x: 1, y: 0 },
@@ -36,9 +35,20 @@ const HANDLE_OFFSETS: Record<HandleAnchor, { readonly x: number; readonly y: num
   left: { x: 0, y: 0.5 },
 };
 
-const HANDLE_ANCHORS = Object.keys(HANDLE_OFFSETS) as readonly HandleAnchor[];
+const HANDLE_CURSORS: Record<ResizeHandleAnchor, string> = {
+  'top-left': 'nwse-resize',
+  top: 'ns-resize',
+  'top-right': 'nesw-resize',
+  right: 'ew-resize',
+  'bottom-right': 'nwse-resize',
+  bottom: 'ns-resize',
+  'bottom-left': 'nesw-resize',
+  left: 'ew-resize',
+};
 
-function handleStyle(anchor: HandleAnchor): { readonly left: string; readonly top: string } {
+const HANDLE_ANCHORS = Object.keys(HANDLE_OFFSETS) as readonly ResizeHandleAnchor[];
+
+function handleStyle(anchor: ResizeHandleAnchor): { readonly left: string; readonly top: string } {
   const offset = HANDLE_OFFSETS[anchor];
 
   return {
@@ -48,29 +58,47 @@ function handleStyle(anchor: HandleAnchor): { readonly left: string; readonly to
 }
 
 export interface SelectionOverlayProps {
-  readonly item: SelectableItem | null;
+  readonly items: readonly SelectableItem[];
 }
 
-export function SelectionOverlay({ item }: SelectionOverlayProps): ReactElement | null {
-  if (item === null) {
+function unionBounds(items: readonly SelectableItem[]): Bounds {
+  return items
+    .map((item) => item.bounds)
+    .reduce((accumulator, bounds) => accumulator.union(bounds));
+}
+
+export function SelectionOverlay({ items }: SelectionOverlayProps): ReactElement | null {
+  if (items.length === 0) {
     return null;
   }
+
+  const bounds = unionBounds(items);
+  const isSingle = items.length === 1;
 
   return (
     <Overlay
       data-testid="selection-overlay"
-      data-selected-id={item.id}
+      data-selection-count={items.length}
+      data-selected-ids={items.map((item) => item.id).join(',')}
+      data-selected-id={isSingle ? items[0]?.id : undefined}
       aria-hidden="true"
       style={{
-        left: item.bounds.x,
-        top: item.bounds.y,
-        width: item.bounds.width,
-        height: item.bounds.height,
+        left: bounds.x,
+        top: bounds.y,
+        width: bounds.width,
+        height: bounds.height,
       }}
     >
-      {HANDLE_ANCHORS.map((anchor) => (
-        <Handle key={anchor} style={handleStyle(anchor)} />
-      ))}
+      {isSingle
+        ? HANDLE_ANCHORS.map((anchor) => (
+            <Handle
+              key={anchor}
+              data-resize-handle="true"
+              data-resize-anchor={anchor}
+              style={{ ...handleStyle(anchor), cursor: HANDLE_CURSORS[anchor] }}
+            />
+          ))
+        : null}
     </Overlay>
   );
 }

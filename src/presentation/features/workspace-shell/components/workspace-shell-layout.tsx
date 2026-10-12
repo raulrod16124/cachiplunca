@@ -1,12 +1,21 @@
-import { Button, Heading, Inline, Text } from '@raulrod/ui';
+import { Badge, Button, Heading, Inline, Text } from '@raulrod/ui';
 import { ArrowLeft } from '@raulrod/icons';
 import type { ReactNode } from 'react';
 import styled from 'styled-components';
 import type { Workspace } from '../../../../domain/workspace';
+import type { Element } from '../../../../domain/element';
+import type { ElementId } from '../../../../domain/shared';
 import { SignOutButton } from '../../auth/sign-out-button';
 import type { LogoutUser } from '../../../../application/commands';
-import type { CanvasViewportStore, SelectionStore } from '../../../../application/services';
+import type {
+  CanvasViewportStore,
+  CommandHistory,
+  PersistenceSyncStatus,
+  SelectionStore,
+} from '../../../../application/services';
+import type { RealtimeConnectionStatus } from '../../../../application/ports';
 import { Canvas } from '../../../canvas';
+import { describeConnectionStatus, describeSyncStatus } from '../workspace-sync-status';
 
 const Shell = styled.div`
   display: flex;
@@ -28,19 +37,55 @@ const CanvasArea = styled.main`
 
 export interface WorkspaceShellLayoutProps {
   readonly workspace: Workspace;
+  readonly elements: readonly Element[];
   readonly logoutUser: LogoutUser;
   readonly onBack: () => void;
   readonly canvasViewportStore: CanvasViewportStore;
   readonly selectionStore: SelectionStore;
+  readonly commandHistory: CommandHistory<readonly Element[]>;
+  readonly onMoveElements: (elements: readonly Element[]) => void;
+  readonly onResizeElements: (elements: readonly Element[]) => void;
+  readonly onTransformEnd: () => void;
+  readonly onDeleteElements: (elements: readonly Element[]) => void;
+  readonly onDuplicateElements: (
+    elements: readonly Element[],
+    duplicatedIds: readonly string[],
+  ) => void;
+  readonly onPasteElements: (elements: readonly Element[], pastedIds: readonly string[]) => void;
+  readonly onUndoElements: (elements: readonly Element[]) => void;
+  readonly onRedoElements: (elements: readonly Element[]) => void;
+  readonly generateElementId: () => ElementId;
+  readonly syncStatus: PersistenceSyncStatus;
+  readonly connectionStatus: RealtimeConnectionStatus;
+  readonly persistenceErrorMessage: string | null;
+  readonly collaborationErrorMessage: string | null;
 }
 
 export function WorkspaceShellLayout({
   workspace,
+  elements,
   logoutUser,
   onBack,
   canvasViewportStore,
   selectionStore,
+  commandHistory,
+  onMoveElements,
+  onResizeElements,
+  onTransformEnd,
+  onDeleteElements,
+  onDuplicateElements,
+  onPasteElements,
+  onUndoElements,
+  onRedoElements,
+  generateElementId,
+  syncStatus,
+  connectionStatus,
+  persistenceErrorMessage,
+  collaborationErrorMessage,
 }: WorkspaceShellLayoutProps): ReactNode {
+  const syncBadge = describeSyncStatus(syncStatus);
+  const connectionBadge = describeConnectionStatus(connectionStatus);
+
   return (
     <Shell>
       <Header>
@@ -59,12 +104,46 @@ export function WorkspaceShellLayout({
               </Inline>
             </Button>
             <Heading as="h1">{workspace.name}</Heading>
+            {syncBadge === null ? null : (
+              <span role="status" aria-live="polite">
+                <Badge variant={syncBadge.variant}>{syncBadge.label}</Badge>
+              </span>
+            )}
+            {connectionBadge === null ? null : (
+              <span role="status" aria-live="polite">
+                <Badge variant={connectionBadge.variant}>{connectionBadge.label}</Badge>
+              </span>
+            )}
           </Inline>
           <SignOutButton logoutUser={logoutUser} />
         </Inline>
+        {persistenceErrorMessage === null ? null : (
+          <Text role="alert" color="color.text.danger">
+            {persistenceErrorMessage}
+          </Text>
+        )}
+        {collaborationErrorMessage === null ? null : (
+          <Text role="alert" color="color.text.danger">
+            {collaborationErrorMessage}
+          </Text>
+        )}
       </Header>
       <CanvasArea>
-        <Canvas store={canvasViewportStore} selectionStore={selectionStore} />
+        <Canvas
+          store={canvasViewportStore}
+          selectionStore={selectionStore}
+          elements={elements}
+          history={commandHistory}
+          onMoveElements={onMoveElements}
+          onResizeElements={onResizeElements}
+          onTransformEnd={onTransformEnd}
+          onDeleteElements={onDeleteElements}
+          onDuplicateElements={onDuplicateElements}
+          onPasteElements={onPasteElements}
+          onUndoElements={onUndoElements}
+          onRedoElements={onRedoElements}
+          generateId={generateElementId}
+        />
       </CanvasArea>
     </Shell>
   );

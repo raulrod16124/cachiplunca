@@ -11,8 +11,10 @@ import {
 } from '../../application/commands';
 import { createGetWorkspace } from '../../application/queries';
 import type { AuthPort } from '../../application/ports';
-import { createSessionStore } from '../../application/services';
+import { createRealtimeSubscriptionManager, createSessionStore } from '../../application/services';
+import { ElementId } from '../../domain/shared';
 import { FakeAuthPort } from '../fixtures/fake-auth-port';
+import { FakeRealtimePort } from '../fixtures/fake-realtime-port';
 import { PendingAuthPort } from '../fixtures/pending-auth-port';
 
 const CREDENTIALS = { email: 'user@example.com', password: 'secret123' };
@@ -53,6 +55,14 @@ function renderApp(
               throw new Error('Not implemented');
             },
           })}
+          loadWorkspaceElements={jest
+            .fn()
+            .mockResolvedValue({ status: 'ok' as const, elements: [] })}
+          elementPersistenceOrchestrator={{
+            persistDelta: jest.fn().mockResolvedValue({ status: 'ok' as const }),
+          }}
+          realtimeSubscriptionManager={createRealtimeSubscriptionManager(new FakeRealtimePort())}
+          generateElementId={() => ElementId.create('generated')}
         />
       </SessionProvider>
       <LocationProbe />

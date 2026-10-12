@@ -1,25 +1,39 @@
 import type { Unsubscribe } from '../../shared/types';
 
 export interface SelectionSnapshot {
-  readonly selectedId: string | null;
+  readonly selectedIds: readonly string[];
 }
 
 export interface SelectionStore {
   readonly getSnapshot: () => SelectionSnapshot;
   readonly subscribe: (onChange: () => void) => Unsubscribe;
-  readonly select: (id: string | null) => void;
+  readonly select: (id: string) => void;
+  readonly selectMany: (ids: readonly string[]) => void;
+  readonly toggle: (id: string) => void;
+  readonly addMany: (ids: readonly string[]) => void;
   readonly clear: () => void;
 }
 
-export function createSelectionStore(initialId: string | null = null): SelectionStore {
-  let snapshot: SelectionSnapshot = { selectedId: initialId };
+function sameMembers(a: readonly string[], b: readonly string[]): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+
+  const members = new Set(a);
+
+  return b.every((id) => members.has(id));
+}
+
+export function createSelectionStore(initialIds: readonly string[] = []): SelectionStore {
+  let snapshot: SelectionSnapshot = { selectedIds: [...initialIds] };
   const listeners = new Set<() => void>();
 
-  function publish(next: SelectionSnapshot): void {
-    if (snapshot.selectedId === next.selectedId) {
+  function publish(nextIds: readonly string[]): void {
+    if (sameMembers(snapshot.selectedIds, nextIds)) {
       return;
     }
-    snapshot = next;
+
+    snapshot = { selectedIds: nextIds };
     for (const listener of listeners) {
       listener();
     }
@@ -34,10 +48,39 @@ export function createSelectionStore(initialId: string | null = null): Selection
       };
     },
     select(id) {
-      publish({ selectedId: id });
+      if (snapshot.selectedIds.length === 1 && snapshot.selectedIds[0] === id) {
+        return;
+      }
+
+      publish([id]);
+    },
+    selectMany(ids) {
+      publish([...new Set(ids)]);
+    },
+    toggle(id) {
+      const isSelected = snapshot.selectedIds.includes(id);
+      publish(
+        isSelected
+          ? snapshot.selectedIds.filter((entry) => entry !== id)
+          : [...snapshot.selectedIds, id],
+      );
+    },
+    addMany(ids) {
+      const next = [...snapshot.selectedIds];
+      for (const id of ids) {
+        if (!next.includes(id)) {
+          next.push(id);
+        }
+      }
+
+      publish(next);
     },
     clear() {
-      publish({ selectedId: null });
+      if (snapshot.selectedIds.length === 0) {
+        return;
+      }
+
+      publish([]);
     },
   };
 }

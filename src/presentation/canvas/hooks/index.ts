@@ -4,3 +4,35 @@ export { useZoom, DEFAULT_ZOOM_SENSITIVITY } from './use-zoom';
 export type { UseZoomOptions, UseZoomResult } from './use-zoom';
 export { useSelection } from './use-selection';
 export type { UseSelectionOptions, UseSelectionResult } from './use-selection';
+export { useDragSelection, DRAG_SELECTION_THRESHOLD } from './use-drag-selection';
+export type {
+  DragSelectionRect,
+  UseDragSelectionOptions,
+  UseDragSelectionResult,
+} from './use-drag-selection';
+export { useElementMove } from './use-element-move';
+export type { UseElementMoveOptions, UseElementMoveResult } from './use-element-move';
+export { useElementResize } from './use-element-resize';
+export type { UseElementResizeOptions, UseElementResizeResult } from './use-element-resize';
+export { useElementDelete } from './use-element-delete';
+export type { UseElementDeleteOptions, UseElementDeleteResult } from './use-element-delete';
+export { useElementDuplicate } from './use-element-duplicate';
+export type {
+  UseElementDuplicateOptions,
+  UseElementDuplicateResult,
+} from './use-element-duplicate';
+export { useElementCopyPaste } from './use-element-copy-paste';
+export type {
+  UseElementCopyPasteOptions,
+  UseElementCopyPasteResult,
+} from './use-element-copy-paste';
+export { useElementUndo } from './use-element-undo';
+export type { UseElementUndoOptions, UseElementUndoResult } from './use-element-undo';
+export { useElementRedo } from './use-element-redo';
+export type { UseElementRedoOptions, UseElementRedoResult } from './use-element-redo';
+export { useSpacePressed } from './use-space-pressed';
+export { useSelectionKeyboard } from './use-selection-keyboard';
+export type {
+  UseSelectionKeyboardOptions,
+  UseSelectionKeyboardResult,
+} from './use-selection-keyboard';

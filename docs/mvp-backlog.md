@@ -1384,7 +1384,7 @@ Completar **Single selection** dejando un resultado verificable y apto para las 
 
 ### TASK-034 — Multi-selection
 
-**Priority:** P0 · **Depends:** TASK-033 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-033 · **Status:** DONE
 
 #### Objetivo
 
@@ -1399,12 +1399,12 @@ Completar **Multi-selection** dejando un resultado verificable y apto para las t
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -1419,7 +1419,7 @@ Completar **Multi-selection** dejando un resultado verificable y apto para las t
 
 ### TASK-035 — Drag selection
 
-**Priority:** P1 · **Depends:** TASK-034 · **Status:** TODO
+**Priority:** P1 · **Depends:** TASK-034 · **Status:** DONE
 
 #### Objetivo
 
@@ -1434,12 +1434,12 @@ Completar **Drag selection** dejando un resultado verificable y apto para las ta
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -1454,7 +1454,7 @@ Completar **Drag selection** dejando un resultado verificable y apto para las ta
 
 ### TASK-036 — Selection keyboard interactions
 
-**Priority:** P0 · **Depends:** TASK-034 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-034 · **Status:** DONE
 
 #### Objetivo
 
@@ -1469,13 +1469,13 @@ Completar **Selection keyboard interactions** dejando un resultado verificable y
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
-- [ ] La interacción principal es navegable con teclado y mantiene foco predecible.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] La interacción principal es navegable con teclado y mantiene foco predecible.
 
 #### Fuera de alcance
 
@@ -1490,7 +1490,7 @@ Completar **Selection keyboard interactions** dejando un resultado verificable y
 
 ### TASK-037 — BaseElement
 
-**Priority:** P0 · **Depends:** TASK-026 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-026 · **Status:** DONE
 
 #### Objetivo
 
@@ -1504,11 +1504,11 @@ Definir el contrato común de elementos del canvas y sus invariantes.
 
 #### Criterios de aceptación
 
-- [ ] Los tipos se distinguen sin casts.
-- [ ] Invariantes cubiertos por tests.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] Los tipos se distinguen sin casts.
+- [x] Invariantes cubiertos por tests.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -1523,7 +1523,7 @@ Definir el contrato común de elementos del canvas y sus invariantes.
 
 ### TASK-038 — TextElement
 
-**Priority:** P0 · **Depends:** TASK-037 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-037 · **Status:** DONE
 
 #### Objetivo
 
@@ -1538,12 +1538,12 @@ Completar **TextElement** dejando un resultado verificable y apto para las tarea
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -1558,7 +1558,7 @@ Completar **TextElement** dejando un resultado verificable y apto para las tarea
 
 ### TASK-039 — NoteElement
 
-**Priority:** P0 · **Depends:** TASK-037 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-037 · **Status:** DONE
 
 #### Objetivo
 
@@ -1573,12 +1573,12 @@ Completar **NoteElement** dejando un resultado verificable y apto para las tarea
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -1593,7 +1593,7 @@ Completar **NoteElement** dejando un resultado verificable y apto para las tarea
 
 ### TASK-040 — TaskElement
 
-**Priority:** P0 · **Depends:** TASK-037 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-037 · **Status:** DONE
 
 #### Objetivo
 
@@ -1608,12 +1608,12 @@ Completar **TaskElement** dejando un resultado verificable y apto para las tarea
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -1628,7 +1628,7 @@ Completar **TaskElement** dejando un resultado verificable y apto para las tarea
 
 ### TASK-041 — FrameElement
 
-**Priority:** P0 · **Depends:** TASK-037 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-037 · **Status:** DONE
 
 #### Objetivo
 
@@ -1643,12 +1643,12 @@ Completar **FrameElement** dejando un resultado verificable y apto para las tare
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -1663,7 +1663,7 @@ Completar **FrameElement** dejando un resultado verificable y apto para las tare
 
 ### TASK-042 — ConnectorElement
 
-**Priority:** P0 · **Depends:** TASK-037 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-037 · **Status:** DONE
 
 #### Objetivo
 
@@ -1678,12 +1678,12 @@ Completar **ConnectorElement** dejando un resultado verificable y apto para las 
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -1698,7 +1698,7 @@ Completar **ConnectorElement** dejando un resultado verificable y apto para las 
 
 ### TASK-043 — LinkElement
 
-**Priority:** P0 · **Depends:** TASK-037 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-037 · **Status:** DONE
 
 #### Objetivo
 
@@ -1713,12 +1713,12 @@ Completar **LinkElement** dejando un resultado verificable y apto para las tarea
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -1733,7 +1733,7 @@ Completar **LinkElement** dejando un resultado verificable y apto para las tarea
 
 ### TASK-044 — CreateElement command
 
-**Priority:** P0 · **Depends:** TASK-038 a TASK-043 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-038 a TASK-043 · **Status:** DONE
 
 #### Objetivo
 
@@ -1748,12 +1748,12 @@ Implementar el comando de creación de elementos.
 
 #### Criterios de aceptación
 
-- [ ] Cada tipo válido puede crearse.
-- [ ] La operación es apta para history/undo.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
-- [ ] Undo/redo no corrompe el estado ante secuencias válidas.
+- [x] Cada tipo válido puede crearse.
+- [x] La operación es apta para history/undo.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] Undo/redo no corrompe el estado ante secuencias válidas.
 
 #### Fuera de alcance
 
@@ -1769,28 +1769,28 @@ Implementar el comando de creación de elementos.
 
 ### TASK-045 — UpdateElement command
 
-**Priority:** P0 · **Depends:** TASK-044 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-044 · **Status:** DONE
 
 #### Objetivo
 
-Completar **UpdateElement command** dejando un resultado verificable y apto para las tareas dependientes.
+Implementar el comando de actualización de elementos.
 
 #### Alcance
 
-- Implementar el comportamiento necesario para **UpdateElement command**.
-- Integrarlo con las capas existentes sin romper sus límites.
-- Añadir o actualizar tests relevantes.
+- Comando puro de actualización de un elemento existente a partir de un patch tipado por tipo.
+- Generar metadatos (`updatedAt`) mediante dependencias inyectadas.
+- Validar payload y tipo del patch frente al elemento.
 - Mantener la interacción desacoplada de la persistencia.
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
-- [ ] Undo/redo no corrompe el estado ante secuencias válidas.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] Undo/redo no corrompe el estado ante secuencias válidas.
 
 #### Fuera de alcance
 
@@ -1806,7 +1806,7 @@ Completar **UpdateElement command** dejando un resultado verificable y apto para
 
 ### TASK-046 — MoveElement command
 
-**Priority:** P0 · **Depends:** TASK-044 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-044 · **Status:** DONE
 
 #### Objetivo
 
@@ -1821,13 +1821,13 @@ Completar **MoveElement command** dejando un resultado verificable y apto para l
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
-- [ ] Undo/redo no corrompe el estado ante secuencias válidas.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] Undo/redo no corrompe el estado ante secuencias válidas.
 
 #### Fuera de alcance
 
@@ -1843,7 +1843,7 @@ Completar **MoveElement command** dejando un resultado verificable y apto para l
 
 ### TASK-047 — ResizeElement command
 
-**Priority:** P0 · **Depends:** TASK-044 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-044 · **Status:** DONE
 
 #### Objetivo
 
@@ -1858,13 +1858,13 @@ Completar **ResizeElement command** dejando un resultado verificable y apto para
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
-- [ ] Undo/redo no corrompe el estado ante secuencias válidas.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] Undo/redo no corrompe el estado ante secuencias válidas.
 
 #### Fuera de alcance
 
@@ -1880,7 +1880,7 @@ Completar **ResizeElement command** dejando un resultado verificable y apto para
 
 ### TASK-048 — DeleteElement command
 
-**Priority:** P0 · **Depends:** TASK-044 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-044 · **Status:** DONE
 
 #### Objetivo
 
@@ -1895,13 +1895,13 @@ Completar **DeleteElement command** dejando un resultado verificable y apto para
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
-- [ ] Undo/redo no corrompe el estado ante secuencias válidas.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] Undo/redo no corrompe el estado ante secuencias válidas.
 
 #### Fuera de alcance
 
@@ -1917,7 +1917,7 @@ Completar **DeleteElement command** dejando un resultado verificable y apto para
 
 ### TASK-049 — DuplicateElement command
 
-**Priority:** P0 · **Depends:** TASK-044 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-044 · **Status:** DONE
 
 #### Objetivo
 
@@ -1932,13 +1932,13 @@ Completar **DuplicateElement command** dejando un resultado verificable y apto p
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
-- [ ] Undo/redo no corrompe el estado ante secuencias válidas.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] Undo/redo no corrompe el estado ante secuencias válidas.
 
 #### Fuera de alcance
 
@@ -1954,7 +1954,7 @@ Completar **DuplicateElement command** dejando un resultado verificable y apto p
 
 ### TASK-050 — Canvas rendering abstraction
 
-**Priority:** P0 · **Depends:** TASK-037 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-037 · **Status:** DONE
 
 #### Objetivo
 
@@ -1969,12 +1969,12 @@ Completar **Canvas rendering abstraction** dejando un resultado verificable y ap
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -1990,7 +1990,7 @@ Completar **Canvas rendering abstraction** dejando un resultado verificable y ap
 
 ### TASK-051 — Text renderer
 
-**Priority:** P0 · **Depends:** TASK-038, TASK-050 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-038, TASK-050 · **Status:** DONE
 
 #### Objetivo
 
@@ -2005,12 +2005,12 @@ Completar **Text renderer** dejando un resultado verificable y apto para las tar
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -2026,7 +2026,7 @@ Completar **Text renderer** dejando un resultado verificable y apto para las tar
 
 ### TASK-052 — Note renderer
 
-**Priority:** P0 · **Depends:** TASK-039, TASK-050 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-039, TASK-050 · **Status:** DONE
 
 #### Objetivo
 
@@ -2041,12 +2041,12 @@ Completar **Note renderer** dejando un resultado verificable y apto para las tar
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -2062,7 +2062,7 @@ Completar **Note renderer** dejando un resultado verificable y apto para las tar
 
 ### TASK-053 — Task renderer
 
-**Priority:** P0 · **Depends:** TASK-040, TASK-050 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-040, TASK-050 · **Status:** DONE
 
 #### Objetivo
 
@@ -2077,12 +2077,12 @@ Completar **Task renderer** dejando un resultado verificable y apto para las tar
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -2098,7 +2098,7 @@ Completar **Task renderer** dejando un resultado verificable y apto para las tar
 
 ### TASK-054 — Frame renderer
 
-**Priority:** P0 · **Depends:** TASK-041, TASK-050 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-041, TASK-050 · **Status:** DONE
 
 #### Objetivo
 
@@ -2113,12 +2113,12 @@ Completar **Frame renderer** dejando un resultado verificable y apto para las ta
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -2134,7 +2134,7 @@ Completar **Frame renderer** dejando un resultado verificable y apto para las ta
 
 ### TASK-055 — Connector renderer
 
-**Priority:** P0 · **Depends:** TASK-042, TASK-050 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-042, TASK-050 · **Status:** DONE
 
 #### Objetivo
 
@@ -2149,12 +2149,12 @@ Completar **Connector renderer** dejando un resultado verificable y apto para la
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -2170,7 +2170,7 @@ Completar **Connector renderer** dejando un resultado verificable y apto para la
 
 ### TASK-056 — Link renderer
 
-**Priority:** P0 · **Depends:** TASK-043, TASK-050 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-043, TASK-050 · **Status:** DONE
 
 #### Objetivo
 
@@ -2185,12 +2185,12 @@ Completar **Link renderer** dejando un resultado verificable y apto para las tar
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -2206,7 +2206,7 @@ Completar **Link renderer** dejando un resultado verificable y apto para las tar
 
 ### TASK-057 — Move elements
 
-**Priority:** P0 · **Depends:** TASK-046, TASK-051, TASK-052, TASK-053 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-046, TASK-051, TASK-052, TASK-053 · **Status:** DONE
 
 #### Objetivo
 
@@ -2221,12 +2221,12 @@ Completar **Move elements** dejando un resultado verificable y apto para las tar
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -2241,7 +2241,7 @@ Completar **Move elements** dejando un resultado verificable y apto para las tar
 
 ### TASK-058 — Resize elements
 
-**Priority:** P0 · **Depends:** TASK-047 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-047 · **Status:** DONE
 
 #### Objetivo
 
@@ -2256,12 +2256,12 @@ Completar **Resize elements** dejando un resultado verificable y apto para las t
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -2276,7 +2276,7 @@ Completar **Resize elements** dejando un resultado verificable y apto para las t
 
 ### TASK-059 — Delete elements
 
-**Priority:** P0 · **Depends:** TASK-048 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-048 · **Status:** DONE
 
 #### Objetivo
 
@@ -2291,12 +2291,12 @@ Completar **Delete elements** dejando un resultado verificable y apto para las t
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -2311,7 +2311,7 @@ Completar **Delete elements** dejando un resultado verificable y apto para las t
 
 ### TASK-060 — Duplicate elements
 
-**Priority:** P0 · **Depends:** TASK-049 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-049 · **Status:** DONE
 
 #### Objetivo
 
@@ -2326,12 +2326,12 @@ Completar **Duplicate elements** dejando un resultado verificable y apto para la
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -2346,7 +2346,7 @@ Completar **Duplicate elements** dejando un resultado verificable y apto para la
 
 ### TASK-061 — Copy/paste
 
-**Priority:** P1 · **Depends:** TASK-060 · **Status:** TODO
+**Priority:** P1 · **Depends:** TASK-060 · **Status:** DONE
 
 #### Objetivo
 
@@ -2360,11 +2360,11 @@ Completar **Copy/paste** dejando un resultado verificable y apto para las tareas
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -2379,7 +2379,7 @@ Completar **Copy/paste** dejando un resultado verificable y apto para las tareas
 
 ### TASK-062 — Keyboard shortcuts
 
-**Priority:** P0 · **Depends:** TASK-059, TASK-061 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-059, TASK-061 · **Status:** DONE
 
 #### Objetivo
 
@@ -2393,12 +2393,12 @@ Completar **Keyboard shortcuts** dejando un resultado verificable y apto para la
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción principal es navegable con teclado y mantiene foco predecible.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción principal es navegable con teclado y mantiene foco predecible.
 
 #### Fuera de alcance
 
@@ -2413,7 +2413,7 @@ Completar **Keyboard shortcuts** dejando un resultado verificable y apto para la
 
 ### TASK-063 — Command interface
 
-**Priority:** P0 · **Depends:** TASK-044 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-044 · **Status:** DONE
 
 #### Objetivo
 
@@ -2426,11 +2426,11 @@ Definir la interfaz común de comandos ejecutables y reversibles.
 
 #### Criterios de aceptación
 
-- [ ] Es testeable sin React.
-- [ ] Permite implementar undo/redo sin conocer UI.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Undo/redo no corrompe el estado ante secuencias válidas.
+- [x] Es testeable sin React.
+- [x] Permite implementar undo/redo sin conocer UI.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Undo/redo no corrompe el estado ante secuencias válidas.
 
 #### Fuera de alcance
 
@@ -2446,7 +2446,7 @@ Definir la interfaz común de comandos ejecutables y reversibles.
 
 ### TASK-064 — Command history manager
 
-**Priority:** P0 · **Depends:** TASK-063 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-063 · **Status:** DONE
 
 #### Objetivo
 
@@ -2460,12 +2460,12 @@ Completar **Command history manager** dejando un resultado verificable y apto pa
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Undo/redo no corrompe el estado ante secuencias válidas.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Undo/redo no corrompe el estado ante secuencias válidas.
 
 #### Fuera de alcance
 
@@ -2481,7 +2481,7 @@ Completar **Command history manager** dejando un resultado verificable y apto pa
 
 ### TASK-065 — Undo
 
-**Priority:** P0 · **Depends:** TASK-064 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-064 · **Status:** DONE
 
 #### Objetivo
 
@@ -2495,12 +2495,12 @@ Completar **Undo** dejando un resultado verificable y apto para las tareas depen
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Undo/redo no corrompe el estado ante secuencias válidas.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Undo/redo no corrompe el estado ante secuencias válidas.
 
 #### Fuera de alcance
 
@@ -2516,7 +2516,7 @@ Completar **Undo** dejando un resultado verificable y apto para las tareas depen
 
 ### TASK-066 — Redo
 
-**Priority:** P0 · **Depends:** TASK-065 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-065 · **Status:** DONE
 
 #### Objetivo
 
@@ -2530,12 +2530,12 @@ Completar **Redo** dejando un resultado verificable y apto para las tareas depen
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Undo/redo no corrompe el estado ante secuencias válidas.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Undo/redo no corrompe el estado ante secuencias válidas.
 
 #### Fuera de alcance
 
@@ -2551,7 +2551,7 @@ Completar **Redo** dejando un resultado verificable y apto para las tareas depen
 
 ### TASK-067 — History edge cases
 
-**Priority:** P0 · **Depends:** TASK-066 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-066 · **Status:** DONE
 
 #### Objetivo
 
@@ -2565,12 +2565,12 @@ Completar **History edge cases** dejando un resultado verificable y apto para la
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Undo/redo no corrompe el estado ante secuencias válidas.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Undo/redo no corrompe el estado ante secuencias válidas.
 
 #### Fuera de alcance
 
@@ -2586,7 +2586,7 @@ Completar **History edge cases** dejando un resultado verificable y apto para la
 
 ### TASK-068 — Element repository port
 
-**Priority:** P0 · **Depends:** TASK-037 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-037 · **Status:** DONE
 
 #### Objetivo
 
@@ -2601,11 +2601,11 @@ Definir el port de persistencia de elementos.
 
 #### Criterios de aceptación
 
-- [ ] Application no conoce persistencia concreta.
-- [ ] Cubre las operaciones del MVP.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] Application no conoce persistencia concreta.
+- [x] Cubre las operaciones del MVP.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -2622,7 +2622,7 @@ Definir el port de persistencia de elementos.
 
 ### TASK-069 — Firestore element repository
 
-**Priority:** P0 · **Depends:** TASK-068 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-068 · **Status:** DONE
 
 #### Objetivo
 
@@ -2637,12 +2637,12 @@ Completar **Firestore element repository** dejando un resultado verificable y ap
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -2660,7 +2660,7 @@ Completar **Firestore element repository** dejando un resultado verificable y ap
 
 ### TASK-070 — Load workspace elements
 
-**Priority:** P0 · **Depends:** TASK-069 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-069 · **Status:** DONE
 
 #### Objetivo
 
@@ -2675,12 +2675,12 @@ Completar **Load workspace elements** dejando un resultado verificable y apto pa
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -2695,7 +2695,7 @@ Completar **Load workspace elements** dejando un resultado verificable y apto pa
 
 ### TASK-071 — Persist element mutations
 
-**Priority:** P0 · **Depends:** TASK-069 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-069 · **Status:** DONE
 
 #### Objetivo
 
@@ -2710,12 +2710,12 @@ Completar **Persist element mutations** dejando un resultado verificable y apto 
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -2730,7 +2730,7 @@ Completar **Persist element mutations** dejando un resultado verificable y apto 
 
 ### TASK-072 — Persistence orchestration
 
-**Priority:** P0 · **Depends:** TASK-071 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-071 · **Status:** DONE
 
 #### Objetivo
 
@@ -2744,11 +2744,11 @@ Completar **Persistence orchestration** dejando un resultado verificable y apto 
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -2763,7 +2763,7 @@ Completar **Persistence orchestration** dejando un resultado verificable y apto 
 
 ### TASK-073 — Debounce/batching
 
-**Priority:** P0 · **Depends:** TASK-072 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-072 · **Status:** DONE
 
 #### Objetivo
 
@@ -2777,11 +2777,11 @@ Completar **Debounce/batching** dejando un resultado verificable y apto para las
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -2796,7 +2796,7 @@ Completar **Debounce/batching** dejando un resultado verificable y apto para las
 
 ### TASK-074 — Sync status
 
-**Priority:** P1 · **Depends:** TASK-072 · **Status:** TODO
+**Priority:** P1 · **Depends:** TASK-072 · **Status:** DONE
 
 #### Objetivo
 
@@ -2810,11 +2810,11 @@ Completar **Sync status** dejando un resultado verificable y apto para las tarea
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -2829,7 +2829,7 @@ Completar **Sync status** dejando un resultado verificable y apto para las tarea
 
 ### TASK-075 — Recovery after refresh
 
-**Priority:** P0 · **Depends:** TASK-070, TASK-073 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-070, TASK-073 · **Status:** DONE
 
 #### Objetivo
 
@@ -2843,11 +2843,11 @@ Completar **Recovery after refresh** dejando un resultado verificable y apto par
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -2862,7 +2862,7 @@ Completar **Recovery after refresh** dejando un resultado verificable y apto par
 
 ### TASK-076 — Realtime port
 
-**Priority:** P0 · **Depends:** TASK-068 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-068 · **Status:** DONE
 
 #### Objetivo
 
@@ -2878,11 +2878,11 @@ Definir el port de colaboración realtime.
 
 #### Criterios de aceptación
 
-- [ ] Application usa realtime mediante port.
-- [ ] No se expone Firestore a Presentation.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] No se crean listeners duplicados.
+- [x] Application usa realtime mediante port.
+- [x] No se expone Firestore a Presentation.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] No se crean listeners duplicados.
 
 #### Fuera de alcance
 
@@ -2898,7 +2898,7 @@ Definir el port de colaboración realtime.
 
 ### TASK-077 — Firestore realtime adapter
 
-**Priority:** P0 · **Depends:** TASK-076 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-076 · **Status:** DONE
 
 #### Objetivo
 
@@ -2914,12 +2914,12 @@ Completar **Firestore realtime adapter** dejando un resultado verificable y apto
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] No se crean listeners duplicados.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] No se crean listeners duplicados.
 
 #### Fuera de alcance
 
@@ -2936,7 +2936,7 @@ Completar **Firestore realtime adapter** dejando un resultado verificable y apto
 
 ### TASK-078 — Remote element updates
 
-**Priority:** P0 · **Depends:** TASK-077 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-077 · **Status:** DONE
 
 #### Objetivo
 
@@ -2953,13 +2953,13 @@ Completar **Remote element updates** dejando un resultado verificable y apto par
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
-- [ ] No se crean listeners duplicados.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] No se crean listeners duplicados.
 
 #### Fuera de alcance
 
@@ -2975,25 +2975,26 @@ Completar **Remote element updates** dejando un resultado verificable y apto par
 
 ### TASK-079 — Optimistic updates
 
-**Priority:** P0 · **Depends:** TASK-078 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-078 · **Status:** DONE
 
 #### Objetivo
 
-Completar **Optimistic updates** dejando un resultado verificable y apto para las tareas dependientes.
+Aplicar cambios locales de forma optimista y revertirlos de forma determinista si la persistencia falla, sin pisar cambios remotos más nuevos.
 
 #### Alcance
 
 - Implementar el comportamiento necesario para **Optimistic updates**.
 - Integrarlo con las capas existentes sin romper sus límites.
 - Añadir o actualizar tests relevantes.
+- Rollback por elemento (modificado/creado/borrado) con guard monótono `updatedAt` y descarte de pendientes tras el fallo.
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -3008,7 +3009,7 @@ Completar **Optimistic updates** dejando un resultado verificable y apto para la
 
 ### TASK-080 — Reconnect handling
 
-**Priority:** P0 · **Depends:** TASK-078 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-078 · **Status:** DONE
 
 #### Objetivo
 
@@ -3024,12 +3025,12 @@ Completar **Reconnect handling** dejando un resultado verificable y apto para la
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] No se crean listeners duplicados.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] No se crean listeners duplicados.
 
 #### Fuera de alcance
 
@@ -4804,6 +4805,136 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) la selección es estado efímero de interacción en Application (mismo patrón que el viewport), no dominio ni persistencia; (2) al no existir aún elementos (TASK-037+), `Canvas` acepta `items: readonly SelectableItem[]` con prompts `{ id, bounds }` y los pinta como nodos placeholder; el render real (TASK-050+) reutilizará el mismo store y hit-test; (3) el `pointerdown` de selección convive con el de pan vía el guard `[data-selectable]` en `usePan`, sin acoplar ambas lógicas; (4) el overlay es puramente visual pese a representar posición/tamaño/estado; teclado y foco son TASK-036; (5) sin ADR por ser una decisión local de interacción.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-034 (Multi-selection).
+
+## 2026-10-09 — TASK-034
+
+- Resultado: Multi-selection de punta a punta y desacoplada de la persistencia. En Application (React-free): `SelectionSnapshot` pasa a `{ selectedIds: readonly string[] }` y el store gana `select(id)` (reemplaza), `toggle(id)` (añade/quita) y conserva `clear()`/`getSnapshot`/`subscribe`, con igualdad por pertenencia (orden-insensible), referencia de snapshot estable para `useSyncExternalStore` y no-op silencioso ante cambio nulo. En Presentation: `useSelection` amplía su callback a `onSelect(id, additive)` y calcula `additive` desde `shiftKey || metaKey || ctrlKey`; `SelectionOverlay` acepta una lista de ítems y dibuja la caja envolvente (`Bounds.union`) con `data-selection-count`/`data-selected-ids`, mostrando los 8 handles solo cuando hay un único ítem; `Canvas` cablea el `onSelect` al store (`null` → `clear`, modificador → `toggle`, resto → `select`) y marca `data-selected` por nodo vía `Set`. El hit-test (`findSelectableAt`) y pan/zoom no se tocan.
+- Tests/quality gates: 525 tests pasan (50 suites, +11: reescritura de los 7 de `selection-store` a conjunto, 3 nuevos de modificador en `useSelection` y 4 de multiselección en `canvas` —añadir, quitar, limpiar con modificador en vacío y caja envolvente sin handles—); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente). Smoke manual con `npm run dev` pendiente.
+- Decisiones: (1) modificador `Shift` y `Ctrl/Cmd` (cualquiera) para toggle aditivo; (2) representación por caja envolvente con handles solo con 1 ítem, dejando el resize de grupo a TASK-058; (3) el clic (con o sin modificador) en espacio vacío siempre limpia la selección por previsibilidad; (4) la semántica de selección (`select`/`toggle`) vive en el store de Application y el modificador se resuelve en Presentation, sin acoplar el store al DOM; (5) sin ADR por ser una decisión local de interacción.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-035 (Drag selection).
+
+## 2026-10-09 — TASK-035
+
+- Resultado: Drag selection (marquee) de punta a punta y desacoplada de la persistencia. En Application (React-free): `findSelectablesInBounds(items, worldBounds)` en `src/application/services/canvas-hit-test.ts` (preserva el orden de entrada y usa `Bounds.intersects`) y el `SelectionStore` gana `selectMany(ids)` (reemplaza, dedupe por `Set`, no-op ante conjunto igual) y `addMany(ids)` (unión sin duplicados). En Presentation: nuevo hook `useSpacePressed` (keydown/keyup/blur en `window`, ignora `event.repeat` y targets editables, `preventDefault`); nuevo hook `useDragSelection` (listener en el contenedor, umbral `DRAG_SELECTION_THRESHOLD = 4`, rect en coords pantalla normalizado a `Bounds.fromXYWH(via screenToWorld)`, `onSelect(ids, additive)`/`onClear`, ignora presses con Space o iniciados sobre `[data-selectable]`/interactivos o con hit de ítem, `pointercancel` cancela sin commit y devuelve `{ rect, ref }`); `useSelection` mantiene `onSelect(id, additive)` pero solo actúa cuando hay hit (el vacío pasa a `onDragSelection`); `usePan` se re-bindea a **Space+drag** y **botón central** y añade **pan con rueda plana** (ctrl/meta sigue siendo zoom), eliminando su antiguo guard `[data-selectable]`; `Canvas` cablea los cuatro hooks (pan, zoom, selection, drag-selection), pinta `<Marquee data-testid="drag-selection-rect">`, expone `data-pan-key`/`data-selecting` y actualiza el hint a `Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom`.
+- Tests/quality gates: 564 tests pasan (52 suites, +39: 6 de `findSelectablesInBounds`, 6 de `selectMany`/`addMany` en `selection-store`, 5 de `useSpacePressed`, ~14 de `useDragSelection`, reescritura de pan a space/middle/wheel y de selección a hit-only, y 4 nuevos de integración del marquee en `canvas`); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente). Smoke manual con `npm run dev` pendiente.
+- Decisiones: (1) **drag plano = marquee** y el pan pasa a **Space+drag**, **botón central** y **rueda plana** (antes el wheel plano era no-op); `Ctrl/Cmd+wheel` sigue siendo zoom — cambio de binding sin ADR por precedente local (TASK-029/030/031/033/034); (2) el módulo de marquee es aditivo con `Shift`/`Ctrl`/`Cmd` y usa **unión** (`addMany`), mientras el rect no aditivo **reemplaza** (`selectMany`); (3) un click (con o sin modificador) en vacío siempre limpia, de modo que `useSelection` delega el manejo del vacío al marquee; (4) la selección es estado efímero de interacción en Application (mismo patrón que el viewport), no dominio ni persistencia; (5) la semántica de conjuntos vive en el store y el modificador se resuelve en Presentation; (6) sin ADR por ser una decisión local de interacción.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-036 (Selection keyboard interactions).
+
+## 2026-10-09 — TASK-036
+
+- Resultado: Selection keyboard interactions de punta a punta y desacopladas de la persistencia. En Application (React-free): `resolveSelectionKeyCommand({ key, ctrlKey, metaKey, altKey })` en `src/application/services/selection-keyboard.ts` con `SelectionKeyCommand = 'clear' | 'select-all' | null` (Escape → clear; Ctrl/Cmd+A case-insensitive → select-all; Alt desactiva el atajo). En Presentation: hook `useSelectionKeyboard` en `src/presentation/canvas/hooks/use-selection-keyboard.ts` (listener `keydown` en el contenedor, no en `window`, con `latestRef` para no re-registrar; ignora `event.repeat` y targets editables; `preventDefault()` al resolver comando; cleanup al desmontar) que emite `onClear`/`onSelectAll(allIds)`. `Canvas` pasa a ser focusable (`tabIndex={0}`, ya tenía `role="application"`), añade `aria-keyshortcuts="Escape Control+A Meta+A"`, outline de `:focus-visible`, cablea el hook (`allIds`, `clear`, `selectMany`) y amplía el hint con "Esc to clear · Ctrl/Cmd + A to select all".
+- Tests/quality gates: 586 tests pasan (54 suites, +22: 7 de `resolveSelectionKeyCommand`, 10 de `useSelectionKeyboard` y 5 de integración en `canvas` —focusable/aria, Escape limpia con foco en el canvas, Ctrl+A y Cmd+A seleccionan todo, e ignora comandos sin foco—); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente). Smoke manual con `npm run dev` pendiente.
+- Decisiones: (1) alcance de teclado limitado a comandos de selección a nivel de canvas (Escape/select-all); la navegación con flechas y el foco por ítem se difieren a TASK-109 (Keyboard navigation) y TASK-110 (Focus management) para no duplicar alcance; (2) la semántica tecla→comando vive en Application (testeable sin React/DOM) y la detección de target editable/DOM en Presentation, coherente con TASK-029→035; (3) listener en el contenedor en vez de `window` para no interferir con formularios y exigir foco en el canvas (a diferencia de `useSpacePressed`, que sí es global); (4) `preventDefault` de Ctrl/Cmd+A evita el "seleccionar todo" del navegador; (5) sin ADR por ser una decisión local de interacción.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-037 (BaseElement).
+
+## 2026-10-10 — TASK-044
+
+- Resultado: CreateElement command en Application (React/Firebase-free). `createCreateElement({ generateId, now? })` en `src/application/commands/create-element.ts` recibe un `CreateElementInput` (unión discriminada por `type` con campos compartidos `workspaceId/createdBy/position/size/rotation?` y específicos por tipo) y devuelve `CreateElementResult = ok | error`; genera el `ElementId` y los timestamps vía deps inyectadas y delega la construcción/invariantes en las factories de dominio (`createTextElement`…`createLinkElement`), sin duplicar validación. Los `Error` de dominio se traducen a `AppError` de kind `validation` (`VALIDATION_INVALID_INPUT`) con `cause`. Exportado en `src/application/commands/index.ts`. Sin wiring de UI (llega con TASK-050+) ni persistencia (TASK-068+).
+- Tests/quality gates: 711 tests pasan (62 suites, +17 en `src/test/unit/application/commands/create-element.test.ts`: creación de los 6 tipos, id/metadatos deterministas, defaults de dominio, payloads inválidos → error de validación sin excepción cruda, inmutabilidad del input, estatelessness y reversibilidad create→delete por id); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) el id se inyecta como dependencia (`generateId: () => ElementId`) en vez de usar `crypto.randomUUID()` en Application — mantiene el comando puro y testeable de forma determinista, coherente con el patrón factory+DI y con ADR-0005 ("el id lo genera el adapter", aquí diferido a la composición); (2) la validación vive en el dominio: el comando solo traduce sus `Error` a `validation`/`VALIDATION_INVALID_INPUT`, sin duplicar invariantes ni introducir `fieldErrors` (no hay flujo de formulario); (3) la reversibilidad (history/undo) se difiere a la interfaz `Command` de TASK-063 y al manager de TASK-064, dejando constancia en tests de que la inversa de un create es un delete por id; (4) sin ADR por ser una decisión local que sigue el patrón ya establecido.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-045 (UpdateElement command).
+
+## 2026-10-10 — TASK-045
+
+- Resultado: UpdateElement command en Application (React/Firebase-free). `createUpdateElement({ now? })` en `src/application/commands/update-element.ts` recibe un `UpdateElementInput` (unión discriminada por `type` con `element` + patch por tipo) y devuelve `UpdateElementResult = ok | error`; aplica los factories `withX` de dominio ya existentes (content, color, title, status, assignee, dueDate, parentFrameId, endpoints, url) y un nuevo helper puro `withRotation` en el dominio, con un único `updatedAt` derivado de `now`. `null` en campos opcionales limpia (task.assigneeId/dueDate, frame.parentFrameId, link.title). El helper `toValidationAppError` se extrajo a `src/application/commands/to-validation-app-error.ts` y `create-element.ts` pasa a reutilizarlo. Exportado en `src/application/commands/index.ts`.
+- Tests/quality gates: 732 tests pasan (63 suites, +21: 18 de `update-element.test.ts` y 5 de `withRotation` en `element-types.test.ts`); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) el comando es puro y recibe el elemento actual, devolviendo el elemento actualizado, para que el historial (TASK-064+) capture el estado previo sin acoplarse a persistencia; (2) la actualización genérica incluye `rotation` (no hay tarea dedicada a rotar) mediante `withRotation`, que valida finitud y revalida el elemento; `position`/`size` se difieren a TASK-046 (Move) y TASK-047 (Resize); (3) el patch se tipa por discriminante y un desajuste `input.type !== element.type` así como un patch vacío son errores de validación explícitos, igual que los `Error` de dominio traducidos a `validation`/`VALIDATION_INVALID_INPUT`; (4) `null` se usa como "limpiar" y `undefined` como "sin cambio", explícito en la unión; (5) sin ADR por seguir el patrón local ya establecido en TASK-044.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-046 (MoveElement command).
+
+## 2026-10-10 — TASK-046
+
+- Resultado: MoveElement command en Application (React/Firebase-free). Nuevo helper puro `withPosition(element, position, updatedAt?)` en `src/domain/element/element-types.ts` (gemelo de `withRotation`: spread inmutable de `{ position, updatedAt }`, valida finitud de coordenadas y revalida el elemento con `validateElement`). `createMoveElement({ now? })` en `src/application/commands/move-element.ts` recibe `MoveElementInput { element, position }` (posición **absoluta** de destino) y devuelve `MoveElementResult = ok | error`; calcula `updatedAt` desde el reloj inyectado y delega la mutación en `withPosition`. Los `Error` de dominio se traducen a `AppError` de kind `validation` (`VALIDATION_INVALID_INPUT`) con `cause`, reutilizando `toValidationAppError`. Exportado en `src/application/commands/index.ts`. Sin wiring de UI (llega con TASK-057) ni persistencia (TASK-068+).
+- Tests/quality gates: 746 tests pasan (64 suites, +14: 4 de `withPosition` en `element-types.test.ts` y 10 de `move-element.test.ts` —movimiento de los 6 tipos preservando campos específicos, `updatedAt` determinista preservando `createdAt`, fallback a reloj real, posición inválida y fallo de dominio → error de validación sin excepción cruda, inmutabilidad del input/elemento, estatelessness, reversibilidad move↔move-back para undo/redo—); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) la posición se expresa como **destino absoluto** (no delta), alineada con la estrategia last-write-wins de TASK-081 y con la actualización parcial de la propiedad `position` en persistencia; la inversa para undo es la posición previa y no depende de un estado base posiblemente desactualizado; (2) `withPosition` vive en el dominio junto a `withRotation` (misma firma y revalidación) para no duplicar invariantes en Application; (3) el comando es puro, recibe el elemento actual y el reloj por DI, de modo que el historial (TASK-064+) capture el estado previo sin acoplarse a persistencia; (4) sin ADR por seguir el patrón local ya establecido en TASK-044/TASK-045.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-047 (ResizeElement command).
+
+## 2026-10-10 — TASK-047
+
+- Resultado: ResizeElement command en Application (React/Firebase-free). Nuevo helper puro `withSize(element, size, updatedAt?)` en `src/domain/element/element-types.ts` (gemelo de `withRotation`/`withPosition`: spread inmutable de `{ size, updatedAt }`, valida finitud de `width`/`height` y revalida el elemento con `validateElement`). `createResizeElement({ now? })` en `src/application/commands/resize-element.ts` recibe `ResizeElementInput { element, size }` (tamaño **absoluto**, `Size` VO) y devuelve `ResizeElementResult = ok | error`; calcula `updatedAt` desde el reloj inyectado y delega la mutación en `withSize`. Los `Error` de dominio se traducen a `AppError` de kind `validation` (`VALIDATION_INVALID_INPUT`) con `cause`, reutilizando `toValidationAppError`. Exportado en `src/application/commands/index.ts`. Sin wiring de UI (llega con TASK-058) ni persistencia (TASK-068+).
+- Tests/quality gates: 762 tests pasan (65 suites, +16: 5 de `withSize` en `element-types.test.ts` y 11 de `resize-element.test.ts` —resize de los 6 tipos preservando campos específicos, invariabilidad de la posición, `updatedAt` determinista preservando `createdAt`, fallback a reloj real, tamaño inválido y fallo de dominio → error de validación sin excepción cruda, inmutabilidad del input/elemento, estatelessness, reversibilidad resize↔resize-back para undo/redo—); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) el tamaño se expresa como **absoluto** (no delta ni acoplamiento de posición), gemelo de `MoveElement`; el resize desde handles que desplazan el ancla se compone con `MoveElement` en la capa de interacción (TASK-058) para no introducir una combinación especulativa en Application; (2) `withSize` vive en el dominio junto a `withRotation`/`withPosition` (misma firma y revalidación) para no duplicar invariantes; (3) el comando es puro, recibe el elemento actual y el reloj por DI, de modo que el historial (TASK-064+) capture el estado previo sin acoplarse a persistencia; (4) sin ADR por seguir el patrón local ya establecido en TASK-044/TASK-045/TASK-046.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-048 (DeleteElement command).
+
+## 2026-10-10 — TASK-048
+
+- Resultado: DeleteElement command en Application (React/Firebase-free). `createDeleteElement()` en `src/application/commands/delete-element.ts` recibe `DeleteElementInput { element }` y devuelve `DeleteElementResult = ok | error`; valida el elemento con `validateElement` del dominio y lo devuelve como payload de undo (re-inserción), sin acoplarse a persistencia. Los `Error` de dominio se traducen a `AppError` de kind `validation` (`VALIDATION_INVALID_INPUT`) con `cause`, reutilizando `toValidationAppError`. Exportado en `src/application/commands/index.ts`. Sin wiring de UI (llega con TASK-059) ni persistencia (TASK-068+).
+- Tests/quality gates: 769 tests pasan (66 suites, +7 en `src/test/unit/application/commands/delete-element.test.ts`: aceptación de los 6 tipos devolviendo el elemento como payload, preservación de campos específicos, elemento inválido → error de validación sin excepción cruda, inmutabilidad del input/elemento, estatelessness, undo de un create por id y redo sobre el elemento restaurado); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) contrato **por elemento** (no por id sobre colección) para ser simétrico con Create/Move/Resize/Update y no introducir una abstracción de colección antes de que el dominio/persistencia la definan (TASK-068+); (2) el comando devuelve el elemento eliminado como payload, de modo que la inversa (restaurarlo) es exactamente el create existente y undo/redo no necesita estado extra; (3) sin dependencias inyectadas: una eliminación no genera timestamps, así que no hay reloj; (4) sin ADR por seguir el patrón local ya establecido en TASK-044→047.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-049 (DuplicateElement command).
+
+## 2026-10-10 — TASK-049
+
+- Resultado: DuplicateElement command en Application (React/Firebase-free). Nuevo helper puro `duplicateElement(source, { id, createdAt, updatedAt?, position? })` en `src/domain/element/element-types.ts` (gemelo de `withPosition`/`withSize`): valida el origen con `validateElement` **antes** de sobrescribir metadatos, aplica spread inmutable sobre `{ ...source }` reemplazando `id`/`createdAt`/`updatedAt` y, si se provee, `position` (default = posición del origen), y revalida la copia. Al ser unión discriminada, el spread conserva el tipo concreto y sus campos específicos. `createDuplicateElement({ generateId, now? })` en `src/application/commands/duplicate-element.ts` recibe `DuplicateElementInput { element, position? }` (posición **absoluta** opcional), genera `id` y `createdAt = updatedAt` vía deps inyectadas, delega en `duplicateElement` y traduce errores con `toValidationAppError`. Exportado en `src/application/commands/index.ts`. Sin wiring de UI (llega con TASK-060) ni persistencia (TASK-068+).
+- Tests/quality gates: 790 tests pasan (67 suites, +21: 10 de `duplicateElement` en `element-types.test.ts` y 11 de `duplicate-element.test.ts` —duplicación de los 6 tipos con id/timestamps nuevos, preservación de metadatos compartidos y campos específicos, endpoints intactos al duplicar un connector, `position` opcional absoluta, fallback a reloj real, ids distintos por invocación, elemento origen inválido → error de validación sin excepción cruda, inmutabilidad input/origen, estatelessness y reversibilidad undo/redo por id—); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) `position` **opcional** con default = posición del origen, de modo que la convención de offset visual quede en la UI (TASK-060) y el comando permanezca puro, coherente con `MoveElement` (posición absoluta); (2) duplicar es una operación **por elemento** y conserva los endpoints de un `Connector` (el remapeo multi-elemento es TASK-061 Copy/paste); (3) el helper de dominio **valida el origen antes** de sobrescribir `createdAt`/`updatedAt`, para no "sanar" un elemento corrupto al copiarlo; (4) el comando es puro, con `generateId`/`now` por DI, para que el historial (TASK-064+) capture la copia sin acoplarse a persistencia; (5) sin ADR por seguir el patrón local ya establecido en TASK-044→048.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-050 (Canvas rendering abstraction).
+
+## 2026-10-10 — TASK-051
+
+- Resultado: Text renderer implementado sobre la abstracción de TASK-050. Nuevo `TextRenderer` en `src/presentation/canvas/renderers/text-renderer.tsx` que cumple el contrato `ElementRenderer` (`{ element, selected }` → `ReactElement | null`), estrecha la unión con `isTextElement` y devuelve `null` ante elementos no-text (sin casts). El contenido se pinta en un `styled.div` con `position:absolute; inset:0`, `white-space:pre-wrap`, `word-break:break-word` y token `var(--rr-color-text-default)`, preservando saltos de línea y espacios; contenido vacío renderiza sin placeholder (la edición llega con una tarea futura). Exportado en el barrel `renderers/index.ts`. `ElementView` sigue aportando posición, tamaño, rotación y atributos de interacción, así que el renderer solo aporta contenido.
+- Tests/quality gates: 807 tests pasan (70 suites, +6 en `src/test/unit/presentation/canvas/renderers/text-renderer.test.tsx`: render del contenido, atributo `data-element-content`, preservación de espacios/saltos, contenido vacío sin romper, `null` ante un `NoteElement` y delegación real vía `ElementView` con `renderers={{ text: TextRenderer }}` sin fallback); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) el renderer es de presentación pura y defensivo ante el tipo ancho `Element` (`null` en vez de cast), coherente con `resolveElementRenderer`; (2) contenido vacío sin placeholder textual para no introducir UI de edición fuera de alcance; (3) sin registro central ni wiring en `Canvas` todavía — el `ElementRendererRegistry` es opcional y los elementos no se cargan hasta TASK-070, de modo que añadir un registro ahora sería una abstracción especulativa; (4) sin ADR por ser una decisión local de presentación.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-052 (Note renderer).
+
+## 2026-10-11 — TASK-054
+
+- Resultado: Frame renderer implementado sobre la abstracción de TASK-050. Nuevo `FrameRenderer` en `src/presentation/canvas/renderers/frame-renderer.tsx` que cumple el contrato `ElementRenderer`, estrecha la unión con `isFrameElement` y devuelve `null` ante elementos no-frame (sin casts). Renderiza el `title` en una cabecera destacada sobre un contenedor con borde punteado (`--rr-color-border-default`) y fondo sutil (`--rr-color-background-subtle`), tokens `--rr-*` coherentes con los demás renderers; `position/size/rotation` y atributos de interacción siguen viniendo de `ElementView`, así que el renderer solo aporta contenido. `parentFrameId` no tiene representación visual (sin UI de anidación en el MVP). Exportado en `renderers/index.ts`.
+- Tests/quality gates: 830 tests pasan (73 suites, +6 en `src/test/unit/presentation/canvas/renderers/frame-renderer.test.tsx`: render del título, atributo `data-element-content`/`data-element-type=frame`, nodo `[data-frame-title]`, frame con `parentFrameId` sin romper, `null` ante un `TextElement` y delegación real vía `ElementView` con `renderers={{ frame: FrameRenderer }}` sin fallback); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) estética de "contenedor" (cabecera + borde punteado) confirmada con el usuario, sin copiar branding de Miro; (2) `parentFrameId` no se renderiza: la anidación/agrupación es tarea futura y mostrar el id crudo sería ruido visual; (3) sin registro central ni wiring en `Canvas` (los elementos no se cargan hasta TASK-070), coherente con TASK-051→053; (4) sin ADR por ser una decisión local de presentación.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-055 (Connector renderer).
+
+## 2026-10-11 — TASK-056
+
+- Resultado: Link renderer implementado sobre la abstracción de TASK-050. Nuevo `LinkRenderer` en `src/presentation/canvas/renderers/link-renderer.tsx` que cumple el contrato `ElementRenderer`, estrecha la unión con `isLinkElement` y devuelve `null` ante elementos no-link (sin casts). Renderiza el `title` (solo si está presente) como titular destacado y el `url` como texto no interactivo (sin `<a>`), sobre un contenedor con tokens `--rr-*` (`--rr-color-background-default`, `--rr-color-text-default`, `--rr-color-link-default`, `--rr-font-size-200`, `--rr-radius-100`) y `overflow-wrap:anywhere` para urls largas; `position/size/rotation` y atributos de interacción siguen viniendo de `ElementView`, así que el renderer solo aporta contenido. Atributos de test `data-element-content`, `data-element-type="link"`, `data-link-url` y `data-link-title`. Exportado en `renderers/index.ts`.
+- Tests/quality gates: 842 tests pasan (75 suites, +6 en `src/test/unit/presentation/canvas/renderers/link-renderer.test.tsx`: render del url, título presente/ausente, atributos `data-*`, `null` ante un `TextElement` y delegación real vía `ElementView` con `renderers={{ link: LinkRenderer }}` sin fallback); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) el renderer es **solo visual** (sin `<a>`) confirmado con el usuario: evita XSS vía esquemas peligrosos (`javascript:`) sin introducir validación/sanitización especulativa, y la apertura del enlace no está en el backlog; (2) `title` opcional se omite cuando está ausente (el campo puede no existir en el objeto, patrón del dominio), coherente con TASK-053; (3) sin registro central ni wiring en `Canvas` (los elementos no se cargan hasta TASK-070), coherente con TASK-051→055; (4) sin ADR por ser una decisión local de presentación.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-058 (Resize elements).
+
+## 2026-10-11 — TASK-057
+
+- Resultado: **Move elements** completado con interacción controlada por callback, desacoplada de persistencia (llega en TASK-068+). En Application, `src/application/services/element-move.ts`: `resolveMoveIds(hitId, selectedIds)` devuelve la selección completa si el elemento pulsado está seleccionado, o solo el id pulsado si no; `moveElementsByDelta(elements, ids, delta, { now? })` aplica un delta de mundo **absoluto** desde la línea base capturada en el `pointerdown` (idempotente por diseño), delega la mutación en `createMoveElement`/`withPosition`, preserva el orden y el resto de elementos y devuelve `ok | error` (traduciendo validaciones a `AppError`). Exportado en `services/index.ts`.
+- En Presentation, `src/presentation/canvas/hooks/use-element-move.ts`: arrastre con umbral `DRAG_SELECTION_THRESHOLD` (4px) reutilizado, `setPointerCapture`, baseline capturada al pulsar (evita acumulación), conversión con `Viewport.screenToWorld`, respeto a gestos aditivos (Shift/Cmd/Ctrl), botón central, `isInteractiveTarget` y `spacePressed` (cede el turno a pan); expone `{ isMoving, ref }` y emite `onMoveElements(elements)` solo cuando el callback existe (Canvas controlado, sin store de elementos). Sin arrastre → `onSelectOnly(id)` en el `pointerup` para colapsar la selección. Exportado en `hooks/index.ts` y cableado en `Canvas` vía prop `onMoveElements?`: `handleSelect` difiere el colapso cuando se pulsa un item ya seleccionado, `data-moving` + cursor `grabbing`, y `elementMoveRef` compartido en `setContainerRef`.
+- Decisiones confirmadas con el usuario tras revisar el backlog: (1) Canvas controlado por callback (`onMoveElements`) + helper puro en Application, sin store nuevo de elementos (el board store llega en TASK-070/072); (2) el arrastre mueve **toda la multiselección** y un click sin arrastre colapsa la selección al item pulsado; (3) la semántica de tolerancia de drag/re-selección (Espacio, modificadores) se propaga de TASK-046/051.
+- Tests/quality gates: +36 casos netos → `element-move.test.ts` (12) en `src/test/unit/application/services/`, `use-element-move.test.tsx` (11) en `src/test/unit/presentation/canvas/hooks/` y 3 casos de integración en `canvas.test.tsx` (move simple con `data-moving`, colapso de multiselección por click y arrastre de selección completa sin perderla); 866 tests pasan (77 suites). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-058 (Resize elements).
+
+## 2026-10-11 — TASK-060
+
+- Resultado: **Duplicate elements** de punta a punta y desacoplado de la persistencia (llega en TASK-068+). En Application, `src/application/services/element-duplicate.ts`: `DEFAULT_DUPLICATE_OFFSET = Position.create(16, 16)`, `DuplicateElementsDeps { generateId, now?, offset? }` y `duplicateElements(elements, ids, deps)` → `{ status:'ok', elements, duplicatedIds } | { status:'error', error }`; recorre los elementos en orden, delega cada copia en `createDuplicateElement` (TASK-049) con `position = origen + offset` (offset inyectable, default 16px), concatena las copias al final sin mutar la entrada y traduce errores de dominio a `validation`/`VALIDATION_INVALID_INPUT`. `SelectionKeyCommand` se amplía con `'duplicate'` resuelto por `Ctrl/Cmd + D` (case-insensitive, `Alt` lo desactiva) en `selection-keyboard.ts`. Exportado en `services/index.ts`.
+- En Presentation, `src/presentation/canvas/hooks/use-element-duplicate.ts` (espejo de `use-element-delete.ts`): listener `keydown` en el contenedor, `latestRef`, ignora `event.repeat` y targets editables; sin selección, sin `generateId` o sin callback es inerte y no llama a `preventDefault`. `use-selection-keyboard.ts` ignora también `'duplicate'` (no limpia la selección con Ctrl/Cmd+D). `Canvas` gana `onDuplicateElements?(elements, duplicatedIds)` y `generateId?()`, cablea `elementDuplicateRef` en `setContainerRef`, y al completar la duplicación auto-selecciona las copias vía `selectionStore.selectMany(duplicatedIds)`; `aria-keyshortcuts` y el hint incorporan el atajo. Exportado en `hooks/index.ts`.
+- Tests/quality gates: 950 tests pasan (84 suites, +33: 9 de `duplicateElements` en `src/test/unit/application/services/element-duplicate.test.ts` —duplicado simple y múltiple preservando orden, offset por defecto y custom, lista vacía/sin match, inmutabilidad, timestamps del reloj inyectado, ids distintos por invocación y origen inválido → error de validación—; 14 de `useElementDuplicate`; 6 de `resolveSelectionKeyCommand`; 1 de `useSelectionKeyboard`; 3 de integración en `canvas.test.tsx` —atajo, multiselección y auto-selección de copias, y no-op sin selección—). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) el disparador es `Ctrl/Cmd + D`, simétrico con el `Delete` de TASK-059, sin introducir todavía la capa centralizada de atajos (TASK-062); (2) las copias se **auto-seleccionan**: el servicio devuelve `duplicatedIds` y el owner de la selección sigue siendo el `SelectionStore`, sin moverlo a Application; (3) el offset visual fijo `(16,16)` vive en Application/Presentation, honrando la decisión de TASK-049 ("la convención de offset visual quede en la UI") sin tocar el comando puro; (4) `generateId` y `onDuplicateElements` son opcionales: sin ellos el atajo queda inerte, coherente con el patrón de callbacks controlados de TASK-057→059 (la carga real de elementos y su composición llegan en TASK-070+); (5) sin ADR por seguir el patrón local ya establecido en TASK-057→059.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-061 (Copy/paste).
+
+## 2026-10-11 — TASK-066
+
+- Resultado: Redo expuesto de punta a punta sobre el motor que ya existía en TASK-064 (`CommandHistory.redo()`/`canRedo()`), sin lógica nueva en el manager. En Application, `resolveSelectionKeyCommand` (`src/application/services/selection-keyboard.ts`) amplía `SelectionKeyCommand` con `'redo'` y lo resuelve con **Ctrl/Cmd + Shift + Z** y **Ctrl/Cmd + Y** (`Alt` desactiva ambos, `z` sin shift sigue siendo `undo`). En Presentation, nuevo hook `src/presentation/canvas/hooks/use-element-redo.ts` espejo de `use-element-undo.ts` (listener `keydown` en el contenedor, `latestRef`, ignora `event.repeat`/targets editables, guarda `command !== 'redo'`, comprueba `history.canRedo()`, `preventDefault()` y emite `onRedoElements(result.state)` solo en `ok`, cleanup al desmontar); `use-selection-keyboard.ts` añade `'redo'` a la lista de comandos ignorados; `canvas.tsx` gana la prop `onRedoElements?`, cablea `elementRedoRef` en `setContainerRef` y amplía `aria-keyshortcuts` (`Control+Shift+Z Meta+Shift+Z Control+Y Meta+Y`) y el hint ("Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo"); exportado en `hooks/index.ts`. Sin wiring en `WorkspaceShell*` (paridad con TASK-065: no hay store de elementos hasta TASK-070+).
+- Tests/quality gates: 1048 tests pasan (91 suites, +8 netos tras reconciliar los 2 preexistentes de hint/`aria-keyshortcuts`: reescritura del caso "Shift ignorado" y 8 nuevos en `selection-keyboard.test.ts` —Ctrl/Cmd+Shift+Z, mayúscula, Ctrl/Cmd+Y, `Shift+Z` sin modificador y `Alt`—, 12 de `use-element-redo.test.tsx` —Ctrl/Cmd+Shift+Z, Ctrl+Y, nada que rehacer, `preventDefault` solo cuando aplica, keydown repetido, target editable, `disabled`, sin history, no-op y cleanup— y 4 de integración en el `describe('redo')` de `canvas.test.tsx`). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) redo se apoya en `CommandHistory.redo()` (que **re-ejecuta** el comando) y reutiliza el patrón de callback controlado de TASK-065, sin tocar el manager ni introducir un método `redo` en `Command`; (2) se soportan dos atajos, `Ctrl/Cmd + Shift + Z` (estándar, simétrico con undo) y `Ctrl/Cmd + Y` (alias Windows/Linux), decidido con el usuario; (3) la detección tecla→comando vive en Application (testeable sin React/DOM) y el DOM en Presentation, coherente con TASK-029→065; (4) `onRedoElements` opcional: sin él el atajo queda inerte, misma estrategia que `onUndoElements`; (5) sin ADR por ser una decisión local de interacción.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-067 (History edge cases).
+
+## 2026-10-12 — TASK-071
+
+- Resultado: Persistencia de mutaciones de elementos en la capa Application, desacoplada de la UI y de la orquestación. Nuevo servicio `src/application/services/element-persistence.ts`: `createElementPersistence(elementRepository: ElementRepository)` devuelve `ElementPersistence` con `save`, `saveMany`, `remove` y `removeMany`, cada uno con resultado discriminado `{ status: 'ok' } | { status: 'error', error: AppError }` y traducción de errores vía `toAppError` (nunca se filtran errores crudos del repositorio). Las listas vacías (`saveMany`/`removeMany`) son no-op y no invocan al repositorio. Solo depende del port; sin React, Firebase ni styled-components. Exportado en `src/application/services/index.ts`.
+- Tests/quality gates: 1144 tests pasan (96 suites, +11 en `src/test/unit/application/services/element-persistence.test.ts` con `FakeElementRepository`: save recuperable, saveMany por lote, remove/removeMany efectivos, no-op con listas vacías verificado con `jest.spyOn`, mapeo de fallos a `AppError` —incluido `notFound`/`NOT_FOUND_RESOURCE`—, `isAppError` en errores mapeados e inmutabilidad de las colecciones de entrada). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) alcance acotado a Application por acuerdo con el usuario: el cableado del `Canvas` y la orquestación de persistencia corresponden a TASK-072 y el debounce/batching a TASK-073; (2) el resultado `ok` no devuelve el elemento (el repositorio ya lo validó y el owner del estado es la UI): mantiene el contrato mínimo y evita duplicar datos; (3) las listas vacías no tocan el repositorio para no generar operaciones innecesarias con Firestore; (4) sin ADR por reutilizar el patrón ya establecido en `load-workspace-elements` (port inyectado, unión discriminada, `toAppError`).
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-072 (Persistence orchestration).
 
 ---
 

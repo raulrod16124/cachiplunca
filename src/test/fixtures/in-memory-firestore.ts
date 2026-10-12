@@ -14,25 +14,95 @@ export interface MockQuerySnapshot {
   readonly docs: readonly MockDocumentSnapshot[];
 }
 
+export type MockRealtimeChangeType = 'added' | 'modified' | 'removed';
+
+export interface MockRealtimeChangeInput {
+  readonly type: MockRealtimeChangeType;
+  readonly id: string;
+  readonly data?: unknown;
+  readonly hasPendingWrites?: boolean;
+}
+
+export interface MockRealtimeDocument {
+  readonly id: string;
+  readonly metadata: { readonly hasPendingWrites: boolean };
+  data(): Record<string, unknown> | undefined;
+}
+
+export interface MockRealtimeDocumentChange {
+  readonly type: MockRealtimeChangeType;
+  readonly doc: MockRealtimeDocument;
+}
+
+export interface MockRealtimeSnapshot {
+  readonly docs: readonly MockRealtimeDocument[];
+  readonly metadata: { readonly fromCache: boolean };
+  docChanges(): readonly MockRealtimeDocumentChange[];
+}
+
+export interface MockConstraint {
+  readonly field: string;
+  readonly op: '==';
+  readonly value: unknown;
+}
+
+export interface MockQuery {
+  readonly kind: 'query';
+  readonly ref: MockRef;
+  readonly constraints: readonly MockConstraint[];
+}
+
+export interface MockWriteBatch {
+  set(ref: MockRef, data: Record<string, unknown>): MockWriteBatch;
+  delete(ref: MockRef): MockWriteBatch;
+  commit(): Promise<void>;
+}
+
 export interface InMemoryFirestoreApi {
   collection(db: unknown, ...segments: string[]): MockRef;
   doc(ref: MockRef, ...segments: string[]): MockRef;
   getDoc(ref: MockRef): Promise<MockDocumentSnapshot>;
-  getDocs(ref: MockRef): Promise<MockQuerySnapshot>;
+  getDocs(ref: MockRef | MockQuery): Promise<MockQuerySnapshot>;
   setDoc(ref: MockRef, data: Record<string, unknown>): Promise<void>;
   updateDoc(ref: MockRef, data: Record<string, unknown>): Promise<void>;
   deleteDoc(ref: MockRef): Promise<void>;
+  writeBatch(db: unknown): MockWriteBatch;
+  query(ref: MockRef, ...constraints: MockConstraint[]): MockQuery;
+  where(field: string, op: '==', value: unknown): MockConstraint;
+  onSnapshot(
+    ref: MockRef | MockQuery,
+    options: { readonly includeMetadataChanges?: boolean },
+    onNext: (snapshot: MockRealtimeSnapshot) => void,
+    onError?: (error: unknown) => void,
+  ): () => void;
   __reset(): void;
-  __seed(path: string, data: Record<string, unknown>): void;
+  __seed(path: string, data: object): void;
   __failNextWith(code: string): void;
+  __setInitialSnapshotFromCache(fromCache: boolean): void;
   __read(path: string): Record<string, unknown> | undefined;
   __paths(): string[];
+  __emitSnapshot(
+    workspaceId: string,
+    changes: readonly MockRealtimeChangeInput[],
+    options?: { readonly fromCache?: boolean },
+  ): void;
+  __emitError(workspaceId: string, error: unknown): void;
+  __activeSnapshotListenerCount(workspaceId?: string): number;
+}
+
+interface SnapshotListener {
+  readonly ref: MockRef;
+  readonly constraints: readonly MockConstraint[];
+  readonly onNext: (snapshot: MockRealtimeSnapshot) => void;
+  readonly onError: (error: unknown) => void;
 }
 
 export function createInMemoryFirestoreModule(): InMemoryFirestoreApi {
   const store = new Map<string, Record<string, unknown>>();
   let sequence = 0;
   let pendingFailureCode: string | null = null;
+  let initialSnapshotFromCache = false;
+  const snapshotListeners = new Set<SnapshotListener>();
 
   function maybeFail(): void {
     if (pendingFailureCode === null) {
@@ -72,6 +142,101 @@ export function createInMemoryFirestoreModule(): InMemoryFirestoreApi {
     return data;
   }
 
+  function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+  }
+
+  function readField(data: Record<string, unknown>, field: string): unknown {
+    const parts = field.split('.');
+    let current: unknown = data;
+    for (const part of parts) {
+      if (!isRecord(current)) {
+        return undefined;
+      }
+      current = current[part];
+    }
+    return current;
+  }
+
+  function matchesConstraints(
+    data: Record<string, unknown>,
+    constraints: readonly MockConstraint[],
+  ): boolean {
+    for (const constraint of constraints) {
+      if (constraint.op === '==' && readField(data, constraint.field) !== constraint.value) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function makeRealtimeDocument(
+    id: string,
+    data: unknown,
+    hasPendingWrites: boolean,
+  ): MockRealtimeDocument {
+    return {
+      id,
+      metadata: { hasPendingWrites },
+      data: () => (data === undefined ? undefined : { ...(data as Record<string, unknown>) }),
+    };
+  }
+
+  function makeRealtimeSnapshot(
+    changes: readonly MockRealtimeDocumentChange[],
+    fromCache = false,
+  ): MockRealtimeSnapshot {
+    return {
+      docs: changes.filter((change) => change.type !== 'removed').map((change) => change.doc),
+      metadata: { fromCache },
+      docChanges: () => changes,
+    };
+  }
+
+  function buildInitialSnapshot(
+    baseRef: MockRef,
+    constraints: readonly MockConstraint[],
+    fromCache: boolean,
+  ): MockRealtimeSnapshot {
+    const prefix = `${baseRef.path}/`;
+    const changes: MockRealtimeDocumentChange[] = [];
+    for (const path of store.keys()) {
+      if (!path.startsWith(prefix)) {
+        continue;
+      }
+      const data = store.get(path);
+      if (data === undefined || !matchesConstraints(data, constraints)) {
+        continue;
+      }
+      changes.push({ type: 'added', doc: makeRealtimeDocument(lastSegment(path), data, false) });
+    }
+    return makeRealtimeSnapshot(changes, fromCache);
+  }
+
+  function buildEmittedSnapshot(
+    changes: readonly MockRealtimeChangeInput[],
+    fromCache: boolean,
+  ): MockRealtimeSnapshot {
+    return makeRealtimeSnapshot(
+      changes.map((change) => ({
+        type: change.type,
+        doc: makeRealtimeDocument(change.id, change.data, change.hasPendingWrites ?? false),
+      })),
+      fromCache,
+    );
+  }
+
+  function forEachMatchingListener(
+    workspaceId: string,
+    visit: (listener: SnapshotListener) => void,
+  ): void {
+    for (const listener of snapshotListeners) {
+      if (matchesConstraints({ workspaceId }, listener.constraints)) {
+        visit(listener);
+      }
+    }
+  }
+
   return {
     collection(_db: unknown, ...segments: string[]): MockRef {
       const path = segments.join('/');
@@ -92,13 +257,18 @@ export function createInMemoryFirestoreModule(): InMemoryFirestoreApi {
       return makeSnapshot(ref.id, ref.path);
     },
 
-    async getDocs(ref: MockRef): Promise<MockQuerySnapshot> {
+    async getDocs(ref: MockRef | MockQuery): Promise<MockQuerySnapshot> {
       maybeFail();
-      const prefix = `${ref.path}/`;
+      const baseRef = ref.kind === 'query' ? ref.ref : ref;
+      const prefix = `${baseRef.path}/`;
+      const constraints = ref.kind === 'query' ? ref.constraints : [];
       const docs: MockDocumentSnapshot[] = [];
       for (const path of store.keys()) {
         if (path.startsWith(prefix)) {
-          docs.push(makeSnapshot(lastSegment(path), path));
+          const data = store.get(path);
+          if (data !== undefined && matchesConstraints(data, constraints)) {
+            docs.push(makeSnapshot(lastSegment(path), path));
+          }
         }
       }
       return { docs };
@@ -119,18 +289,86 @@ export function createInMemoryFirestoreModule(): InMemoryFirestoreApi {
       store.delete(ref.path);
     },
 
+    writeBatch(_db: unknown): MockWriteBatch {
+      const operations: (() => void)[] = [];
+
+      const batch: MockWriteBatch = {
+        set(ref: MockRef, data: Record<string, unknown>): MockWriteBatch {
+          operations.push(() => {
+            store.set(ref.path, { ...data });
+          });
+          return batch;
+        },
+        delete(ref: MockRef): MockWriteBatch {
+          operations.push(() => {
+            store.delete(ref.path);
+          });
+          return batch;
+        },
+        async commit(): Promise<void> {
+          maybeFail();
+          for (const operation of operations) {
+            operation();
+          }
+        },
+      };
+
+      return batch;
+    },
+
+    query(ref: MockRef, ...constraints: MockConstraint[]): MockQuery {
+      return { kind: 'query', ref, constraints };
+    },
+
+    where(field: string, op: '==', value: unknown): MockConstraint {
+      return { field, op, value };
+    },
+
+    onSnapshot(
+      ref: MockRef | MockQuery,
+      _options: { readonly includeMetadataChanges?: boolean },
+      onNext: (snapshot: MockRealtimeSnapshot) => void,
+      onError?: (error: unknown) => void,
+    ): () => void {
+      const baseRef = ref.kind === 'query' ? ref.ref : ref;
+      const constraints = ref.kind === 'query' ? ref.constraints : [];
+      const listener: SnapshotListener = {
+        ref: baseRef,
+        constraints,
+        onNext,
+        onError: onError ?? (() => undefined),
+      };
+      snapshotListeners.add(listener);
+      onNext(buildInitialSnapshot(baseRef, constraints, initialSnapshotFromCache));
+
+      let active = true;
+      return () => {
+        if (!active) {
+          return;
+        }
+        active = false;
+        snapshotListeners.delete(listener);
+      };
+    },
+
     __reset(): void {
       store.clear();
       sequence = 0;
       pendingFailureCode = null;
+      initialSnapshotFromCache = false;
+      snapshotListeners.clear();
     },
 
-    __seed(path: string, data: Record<string, unknown>): void {
-      store.set(path, { ...data });
+    __seed(path: string, data: object): void {
+      store.set(path, { ...(data as Record<string, unknown>) });
     },
 
     __failNextWith(code: string): void {
       pendingFailureCode = code;
+    },
+
+    __setInitialSnapshotFromCache(fromCache: boolean): void {
+      initialSnapshotFromCache = fromCache;
     },
 
     __read(path: string): Record<string, unknown> | undefined {
@@ -140,6 +378,36 @@ export function createInMemoryFirestoreModule(): InMemoryFirestoreApi {
 
     __paths(): string[] {
       return [...store.keys()];
+    },
+
+    __emitSnapshot(
+      workspaceId: string,
+      changes: readonly MockRealtimeChangeInput[],
+      options?: { readonly fromCache?: boolean },
+    ): void {
+      const fromCache = options?.fromCache ?? false;
+      forEachMatchingListener(workspaceId, (listener) => {
+        listener.onNext(buildEmittedSnapshot(changes, fromCache));
+      });
+    },
+
+    __emitError(workspaceId: string, error: unknown): void {
+      forEachMatchingListener(workspaceId, (listener) => {
+        listener.onError(error);
+      });
+    },
+
+    __activeSnapshotListenerCount(workspaceId?: string): number {
+      let count = 0;
+      for (const listener of snapshotListeners) {
+        if (
+          workspaceId === undefined ||
+          matchesConstraints({ workspaceId }, listener.constraints)
+        ) {
+          count += 1;
+        }
+      }
+      return count;
     },
   };
 }

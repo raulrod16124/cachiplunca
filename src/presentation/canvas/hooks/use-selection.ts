@@ -7,7 +7,7 @@ import type { SelectableItem } from '../../../application/services';
 export interface UseSelectionOptions {
   readonly items: readonly SelectableItem[];
   readonly viewport: Viewport;
-  readonly onSelect: (id: string | null) => void;
+  readonly onSelect: (id: string, additive: boolean) => void;
   readonly disabled?: boolean;
 }
 
@@ -51,7 +51,13 @@ export function useSelection({
       const worldPoint = latestRef.current.viewport.screenToWorld(screenPoint);
       const hit = findSelectableAt(latestRef.current.items, worldPoint);
 
-      latestRef.current.onSelect(hit);
+      if (hit === null) {
+        return;
+      }
+
+      const additive = event.shiftKey || event.metaKey || event.ctrlKey;
+
+      latestRef.current.onSelect(hit, additive);
     }
 
     element.addEventListener('pointerdown', handlePointerDown);
