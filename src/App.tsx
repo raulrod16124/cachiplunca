@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { createAuthServices } from './app/config/auth-services';
 import { createElementServices } from './app/config/element-services';
+import { createPresenceServices } from './app/config/presence-services';
 import { createWorkspaceServices } from './app/config/workspace-services';
 import { AppRoutes } from './app/routes/app-routes';
 import { SessionProvider } from './app/providers/session-provider';
@@ -10,6 +11,7 @@ function App() {
   const [authServices] = useState(createAuthServices);
   const [workspaceServices] = useState(createWorkspaceServices);
   const [elementServices] = useState(createElementServices);
+  const [presenceServices] = useState(createPresenceServices);
 
   return (
     <BrowserRouter>
@@ -25,6 +27,7 @@ function App() {
           elementPersistenceOrchestrator={elementServices.elementPersistenceOrchestrator}
           realtimeSubscriptionManager={elementServices.realtimeSubscriptionManager}
           generateElementId={elementServices.generateElementId}
+          presencePort={presenceServices.presencePort}
         />
       </SessionProvider>
     </BrowserRouter>

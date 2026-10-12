@@ -1,17 +1,26 @@
 import { Presence } from '../../domain/collaboration';
-import { UserId, WorkspaceId } from '../../domain/shared';
+import { Position, UserId, WorkspaceId } from '../../domain/shared';
+
+export interface PresenceCursorDocument {
+  readonly x: number;
+  readonly y: number;
+}
 
 export interface PresenceDocument {
   readonly workspaceId: string;
   readonly userId: string;
   readonly lastSeenAt: Date;
+  readonly cursor?: PresenceCursorDocument;
 }
 
 export function toPresenceDocument(presence: Presence): PresenceDocument {
+  const cursor = presence.cursor;
+
   return {
     workspaceId: presence.workspaceId.value,
     userId: presence.userId.value,
     lastSeenAt: presence.lastSeenAt,
+    ...(cursor === null ? {} : { cursor: { x: cursor.x, y: cursor.y } }),
   };
 }
 
@@ -24,7 +33,26 @@ export function fromPresenceDocument(data: unknown): Presence {
     userId: UserId.create(readString(data.userId, 'userId')),
     workspaceId: WorkspaceId.create(readString(data.workspaceId, 'workspaceId')),
     lastSeenAt: readDate(data.lastSeenAt, 'lastSeenAt'),
+    cursor: readCursor(data.cursor),
   });
+}
+
+function readCursor(value: unknown): Position | null {
+  if (value === undefined || value === null) {
+    return null;
+  }
+  if (!isRecord(value)) {
+    throw new Error('Presence document field "cursor" must be an object');
+  }
+
+  return Position.create(readNumber(value.x, 'cursor.x'), readNumber(value.y, 'cursor.y'));
+}
+
+function readNumber(value: unknown, field: string): number {
+  if (typeof value !== 'number') {
+    throw new Error(`Presence document field "${field}" must be a number`);
+  }
+  return value;
 }
 
 function readString(value: unknown, field: string): string {

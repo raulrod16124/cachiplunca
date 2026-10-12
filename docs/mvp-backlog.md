@@ -3156,7 +3156,7 @@ Completar **Connected users** dejando un resultado verificable y apto para las t
 
 ### TASK-084 — Remote cursors
 
-**Priority:** P1 · **Depends:** TASK-082, TASK-028 · **Status:** TODO
+**Priority:** P1 · **Depends:** TASK-082, TASK-028 · **Status:** DONE
 
 #### Objetivo
 
@@ -3174,13 +3174,13 @@ Completar **Remote cursors** dejando un resultado verificable y apto para las ta
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] No se crean listeners duplicados.
-- [ ] La presencia no modifica ni bloquea el documento persistido.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] No se crean listeners duplicados.
+- [x] La presencia no modifica ni bloquea el documento persistido.
 
 #### Fuera de alcance
 
@@ -3192,7 +3192,6 @@ Completar **Remote cursors** dejando un resultado verificable y apto para las ta
 - Domain no importa React, Firebase, styled-components, `@raulrod/ui` ni APIs del navegador.
 - Application depende de ports, no de implementaciones concretas.
 - Infrastructure contiene adapters concretos.
-- Presentation concentra React, UI y composición de dependencias.
 
 ### TASK-085 — Presence cleanup
 
@@ -4961,6 +4960,17 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) el store queda **scopeado a un workspace** mediante la fábrica (el `workspaceId` es una dependencia), de modo que la suscripción perezosa no necesita un parámetro adicional y el ciclo de vida coincide con el de la pantalla; (2) el error vive en el snapshot (`error`) para que la UI pueda consumirlo por `useSyncExternalStore` sin canal aparte, conservando los usuarios conocidos y limpiándose con el siguiente cambio válido; (3) se incluyen cambios `local` y `remote` (la presencia propia también forma parte de los conectados); (4) sin composición ni hook: TASK-084 (Remote cursors), TASK-085 (Presence cleanup) y las tareas de presentación conservan su alcance; (5) sin ADR por reutilizar el patrón de store de Application ya establecido (`session-store`, `realtime-connection-store`).
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-084 (Remote cursors).
+
+## 2026-10-12 — TASK-084
+
+- Resultado: Cursores remotos sobre el canal de presencia existente, sin colección ni port nuevos. Dominio: `Presence` gana `cursor: Position | null` con `moveCursor(cursor)` inmutable (no-op por referencia si no cambia), `refresh` que conserva el cursor, getter `cursor` y `equals`/`toJSON` que lo incluyen. Infrastructure: `toPresenceDocument` omite `cursor` cuando es `null` y `fromPresenceDocument` lo parsea tolerando ausencia/`null` (round-trip y compatibilidad con documentos previos).
+- Application: nuevo `src/application/services/cursor-broadcaster.ts` (`createCursorBroadcaster` con throttle **leading + trailing**, `DEFAULT_CURSOR_THROTTLE_MS = 80`, scheduler inyectable, descarte de posiciones repetidas, errores de `announce` traducidos con `toAppError` y expuestos por `onError`, `flush`/`stop`) y `src/application/services/remote-cursors-store.ts` (`createRemoteCursorsStore` con suscripción perezosa única y snapshot estable apto para `useSyncExternalStore`, `EMPTY_REMOTE_CURSORS_STORE` y el reductor puro `reduceRemoteCursors` que ignora `origin: 'local'`, el propio usuario, otros workspaces y presencias sin cursor, elimina al usuario que se va y devuelve orden determinista por `userId`). Exportados en `services/index.ts`. Sin React ni Firebase.
+- Composición: nuevo `src/app/config/presence-services.ts` (`createPresenceServices` → `createFirebasePresenceAdapter(getFirebaseFirestore())`), cableado como prop **opcional** `presencePort` en `App.tsx → AppRoutes → WorkspaceShellPage → WorkspaceShellContainer`; el `localUserId` se deriva de `useSession()` en la page (patrón de `workspaces-page`).
+- Presentation: `useCursorBroadcast` traduce `pointermove` a coordenadas de mundo (`screenToWorld`, respeta `disabled`) y `RemoteCursorsOverlay` pinta una capa `pointer-events: none`/`aria-hidden` posicionando cada cursor con `viewport.worldToScreen`. `Canvas` recibe `remoteCursors`/`onCursorMove` opcionales y fusiona el ref del hook con `setContainerRef`; el contenedor crea store y broadcaster con `useMemo`, lee el snapshot con `useSyncExternalStore` y hace `flush()` + `stop()` al desmontar. La suscripción al `PresencePort` sigue siendo única y compartida (sin listeners duplicados).
+- Tests/quality gates: 1436 tests pasan (115 suites; +~45: `presence.test.ts` cursores, `firebase-presence-mapper.test.ts` cursor round-trip/validación, nuevo `remote-cursors-store.test.ts` —12 del reductor y 9 del store con `FakePresencePort`—, nuevo `cursor-broadcaster.test.ts` —8 con `ManualScheduler`, incluye leading/trailing, coalescing, flush y `onError`—, nuevo `remote-cursors-overlay.test.tsx` —4— y nuevo `use-cursor-broadcast.test.tsx` —4—). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) el cursor viaja como campo del documento de presencia, reutilizando la suscripción y garantizando que no toca ni bloquea `elements`; (2) emisión con throttle leading+trailing en Application (puro y testeable) para acotar escrituras sin perder la posición final; (3) consumo derivado por un reductor puro + store perezoso, con lifecycle de suscripción compartido; (4) UI de presentación delgada (`useCursorBroadcast` + `RemoteCursorsOverlay`) sin hablar con Firebase; (5) alcance acotado a TASK-084: TTL/heartbeat, interpolación y etiquetas con nombre y la limpieza al desconectar (TASK-085) quedan fuera. Documentado en `docs/adr/0014-remote-cursors.md`.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-085 (Presence cleanup).
 
 ---
 

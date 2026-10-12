@@ -4,3 +4,5 @@ export { ViewportControls } from './viewport-controls';
 export type { ViewportControlsProps } from './viewport-controls';
 export { SelectionOverlay } from './selection-overlay';
 export type { SelectionOverlayProps } from './selection-overlay';
+export { RemoteCursorsOverlay } from './remote-cursors-overlay';
+export type { RemoteCursorsOverlayProps } from './remote-cursors-overlay';

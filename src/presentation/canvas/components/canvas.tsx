@@ -1,15 +1,17 @@
 import type { ReactElement } from 'react';
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
 import styled from 'styled-components';
-import { Grid } from '../../../domain/shared';
+import { Grid, type Position } from '../../../domain/shared';
 import type { Element } from '../../../domain/element';
 import type { ElementId } from '../../../domain/shared';
 import type {
   CanvasViewportStore,
   CommandHistory,
+  RemoteCursor,
   SelectionStore,
 } from '../../../application/services';
 import { toSelectableItems } from '../../../application/services';
+import { useCursorBroadcast } from '../hooks/use-cursor-broadcast';
 import { useDragSelection } from '../hooks/use-drag-selection';
 import { useElementCopyPaste } from '../hooks/use-element-copy-paste';
 import { useElementDelete } from '../hooks/use-element-delete';
@@ -25,6 +27,7 @@ import { useSpacePressed } from '../hooks/use-space-pressed';
 import { useZoom } from '../hooks/use-zoom';
 import { ElementView } from '../renderers';
 import type { ElementRendererRegistry } from '../renderers';
+import { RemoteCursorsOverlay } from './remote-cursors-overlay';
 import { SelectionOverlay } from './selection-overlay';
 import { ViewportControls } from './viewport-controls';
 
@@ -119,6 +122,8 @@ export interface CanvasProps {
   readonly history?: CommandHistory<readonly Element[]>;
   readonly onUndoElements?: (elements: readonly Element[]) => void;
   readonly onRedoElements?: (elements: readonly Element[]) => void;
+  readonly remoteCursors?: readonly RemoteCursor[];
+  readonly onCursorMove?: (position: Position) => void;
 }
 
 export function Canvas({
@@ -136,12 +141,25 @@ export function Canvas({
   history,
   onUndoElements,
   onRedoElements,
+  remoteCursors = [],
+  onCursorMove,
 }: CanvasProps): ReactElement {
   const viewport = useSyncExternalStore(store.subscribe, store.getSnapshot);
   const selection = useSyncExternalStore(selectionStore.subscribe, selectionStore.getSnapshot);
   const spacePressed = useSpacePressed();
   const { isPanning, ref: panRef } = usePan({ onPan: store.pan, spacePressed });
   const { ref: zoomRef } = useZoom({ onZoom: store.zoom });
+  const handleCursorMove = useCallback(
+    (position: Position) => {
+      onCursorMove?.(position);
+    },
+    [onCursorMove],
+  );
+  const { ref: cursorBroadcastRef } = useCursorBroadcast({
+    onCursorMove: handleCursorMove,
+    viewport,
+    disabled: onCursorMove === undefined,
+  });
 
   const items = useMemo(() => toSelectableItems(elements), [elements]);
 
@@ -292,6 +310,7 @@ export function Canvas({
       elementCopyPasteRef.current = node;
       elementUndoRef.current = node;
       elementRedoRef.current = node;
+      cursorBroadcastRef.current = node;
     },
     [
       panRef,
@@ -306,6 +325,7 @@ export function Canvas({
       elementCopyPasteRef,
       elementUndoRef,
       elementRedoRef,
+      cursorBroadcastRef,
     ],
   );
 
@@ -368,6 +388,7 @@ export function Canvas({
           </Hint>
         ) : null}
       </World>
+      <RemoteCursorsOverlay cursors={remoteCursors} viewport={viewport} />
       {marqueeRect !== null ? (
         <Marquee
           data-testid="drag-selection-rect"

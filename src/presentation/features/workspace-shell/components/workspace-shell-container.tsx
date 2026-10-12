@@ -1,6 +1,6 @@
 import { Button, Heading, Inline, Skeleton, Stack, Text, VisuallyHidden } from '@raulrod/ui';
 import type { ReactNode } from 'react';
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import styled from 'styled-components';
 import { createSnapshotCommand, type LogoutUser } from '../../../../application/commands';
 import type {
@@ -12,25 +12,31 @@ import {
   applyRemoteElementChanges,
   createCanvasViewportStore,
   createCommandHistory,
+  createCursorBroadcaster,
   createElementPersistenceBatcher,
   createRealtimeConnectionStore,
+  createRemoteCursorsStore,
   createSelectionStore,
+  EMPTY_REMOTE_CURSORS_STORE,
   rollbackFailedMutation,
 } from '../../../../application/services';
 import type {
   CanvasViewportStore,
   CommandHistory,
+  CursorBroadcaster,
   ElementPersistenceBatcher,
   ElementPersistenceOrchestrator,
   PersistenceSyncStatus,
   RealtimeConnectionStore,
   RealtimeSubscriptionManager,
+  RemoteCursorsStore,
   Scheduler,
   SelectionStore,
 } from '../../../../application/services';
-import type { RealtimeConnectionStatus } from '../../../../application/ports';
+import type { PresencePort, RealtimeConnectionStatus } from '../../../../application/ports';
 import type { Element } from '../../../../domain/element';
-import { Size, WorkspaceId } from '../../../../domain/shared';
+import { Presence } from '../../../../domain/collaboration';
+import { Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
 import type { ElementId } from '../../../../domain/shared';
 import { toAppError, type AppError } from '../../../../shared/errors';
 import { WorkspaceShellLayout } from './workspace-shell-layout';
@@ -54,6 +60,8 @@ export interface WorkspaceShellContainerProps {
   readonly generateElementId: () => ElementId;
   readonly logoutUser: LogoutUser;
   readonly onBack: () => void;
+  readonly presencePort?: PresencePort;
+  readonly localUserId?: string;
   readonly persistenceDebounceMs?: number;
   readonly persistenceScheduler?: Scheduler;
 }
@@ -72,6 +80,8 @@ export function WorkspaceShellContainer({
   generateElementId,
   logoutUser,
   onBack,
+  presencePort,
+  localUserId,
   persistenceDebounceMs,
   persistenceScheduler,
 }: WorkspaceShellContainerProps): ReactNode {
@@ -98,6 +108,55 @@ export function WorkspaceShellContainer({
     createCommandHistory<readonly Element[]>({ initial: [] }),
   );
   const persistenceBatcherRef = useRef<ElementPersistenceBatcher | null>(null);
+
+  const remoteCursorsStore = useMemo<RemoteCursorsStore>(() => {
+    if (presencePort === undefined || localUserId === undefined) {
+      return EMPTY_REMOTE_CURSORS_STORE;
+    }
+
+    return createRemoteCursorsStore(
+      presencePort,
+      WorkspaceId.create(workspaceId),
+      UserId.create(localUserId),
+    );
+  }, [presencePort, localUserId, workspaceId]);
+
+  const remoteCursors = useSyncExternalStore(
+    remoteCursorsStore.subscribe,
+    remoteCursorsStore.getSnapshot,
+  ).cursors;
+
+  const cursorBroadcaster = useMemo<CursorBroadcaster | null>(() => {
+    if (presencePort === undefined || localUserId === undefined) {
+      return null;
+    }
+
+    return createCursorBroadcaster({
+      presencePort,
+      basePresence: Presence.create({
+        userId: UserId.create(localUserId),
+        workspaceId: WorkspaceId.create(workspaceId),
+      }),
+    });
+  }, [presencePort, localUserId, workspaceId]);
+
+  const handleCursorMove = useCallback(
+    (position: Position) => {
+      cursorBroadcaster?.move(position);
+    },
+    [cursorBroadcaster],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (cursorBroadcaster === null) {
+        return;
+      }
+
+      void cursorBroadcaster.flush();
+      cursorBroadcaster.stop();
+    };
+  }, [cursorBroadcaster]);
 
   if (persistenceBatcherRef.current === null) {
     persistenceBatcherRef.current = createElementPersistenceBatcher({
@@ -454,6 +513,8 @@ export function WorkspaceShellContainer({
         onUndoElements={handleUndoElements}
         onRedoElements={handleRedoElements}
         generateElementId={generateElementId}
+        remoteCursors={remoteCursors}
+        onCursorMove={cursorBroadcaster === null ? undefined : handleCursorMove}
         syncStatus={syncStatus}
         connectionStatus={connectionStatus}
         persistenceErrorMessage={

@@ -4,13 +4,14 @@ import type { ReactNode } from 'react';
 import styled from 'styled-components';
 import type { Workspace } from '../../../../domain/workspace';
 import type { Element } from '../../../../domain/element';
-import type { ElementId } from '../../../../domain/shared';
+import type { ElementId, Position } from '../../../../domain/shared';
 import { SignOutButton } from '../../auth/sign-out-button';
 import type { LogoutUser } from '../../../../application/commands';
 import type {
   CanvasViewportStore,
   CommandHistory,
   PersistenceSyncStatus,
+  RemoteCursor,
   SelectionStore,
 } from '../../../../application/services';
 import type { RealtimeConnectionStatus } from '../../../../application/ports';
@@ -55,6 +56,8 @@ export interface WorkspaceShellLayoutProps {
   readonly onUndoElements: (elements: readonly Element[]) => void;
   readonly onRedoElements: (elements: readonly Element[]) => void;
   readonly generateElementId: () => ElementId;
+  readonly remoteCursors: readonly RemoteCursor[];
+  readonly onCursorMove?: (position: Position) => void;
   readonly syncStatus: PersistenceSyncStatus;
   readonly connectionStatus: RealtimeConnectionStatus;
   readonly persistenceErrorMessage: string | null;
@@ -78,6 +81,8 @@ export function WorkspaceShellLayout({
   onUndoElements,
   onRedoElements,
   generateElementId,
+  remoteCursors,
+  onCursorMove,
   syncStatus,
   connectionStatus,
   persistenceErrorMessage,
@@ -143,6 +148,8 @@ export function WorkspaceShellLayout({
           onUndoElements={onUndoElements}
           onRedoElements={onRedoElements}
           generateId={generateElementId}
+          remoteCursors={remoteCursors}
+          onCursorMove={onCursorMove}
         />
       </CanvasArea>
     </Shell>

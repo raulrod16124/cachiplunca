@@ -15,6 +15,8 @@ export * from './element-persistence-batcher';
 export * from './realtime-subscription-manager';
 export * from './realtime-connection-store';
 export * from './connected-users-store';
+export * from './remote-cursors-store';
+export * from './cursor-broadcaster';
 export * from './remote-element-updates';
 export * from './optimistic-element-updates';
 export * from './element-conflict-resolution';

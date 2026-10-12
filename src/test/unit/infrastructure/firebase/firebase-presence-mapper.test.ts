@@ -1,5 +1,5 @@
 import { Presence } from '../../../../domain/collaboration';
-import { UserId, WorkspaceId } from '../../../../domain/shared';
+import { Position, UserId, WorkspaceId } from '../../../../domain/shared';
 import {
   fromPresenceDocument,
   toPresenceDocument,
@@ -31,6 +31,20 @@ describe('toPresenceDocument', () => {
     const presence = buildPresence();
 
     expect(fromPresenceDocument(toPresenceDocument(presence))).toEqual(presence);
+  });
+
+  it('omits the cursor field when there is no cursor', () => {
+    const document = toPresenceDocument(buildPresence());
+
+    expect(document.cursor).toBeUndefined();
+  });
+
+  it('maps a cursor position when present and round-trips it', () => {
+    const presence = buildPresence().moveCursor(Position.create(12.5, -4));
+    const document = toPresenceDocument(presence);
+
+    expect(document.cursor).toEqual({ x: 12.5, y: -4 });
+    expect(fromPresenceDocument(document).cursor?.toJSON()).toEqual({ x: 12.5, y: -4 });
   });
 });
 
@@ -91,5 +105,37 @@ describe('fromPresenceDocument', () => {
     const document = { ...asRecord(toPresenceDocument(buildPresence())), userId: '   ' };
 
     expect(() => fromPresenceDocument(document)).toThrow('UserId cannot be empty');
+  });
+
+  it('reads a document without a cursor as a null cursor', () => {
+    const presence = fromPresenceDocument({
+      workspaceId: 'ws-1',
+      userId: 'user-1',
+      lastSeenAt: LAST_SEEN_AT,
+    });
+
+    expect(presence.cursor).toBeNull();
+  });
+
+  it('rejects a cursor that is not an object', () => {
+    expect(() =>
+      fromPresenceDocument({
+        workspaceId: 'ws-1',
+        userId: 'user-1',
+        lastSeenAt: LAST_SEEN_AT,
+        cursor: 'somewhere',
+      }),
+    ).toThrow('Presence document field "cursor" must be an object');
+  });
+
+  it('rejects a cursor with non-numeric coordinates', () => {
+    expect(() =>
+      fromPresenceDocument({
+        workspaceId: 'ws-1',
+        userId: 'user-1',
+        lastSeenAt: LAST_SEEN_AT,
+        cursor: { x: '1', y: 2 },
+      }),
+    ).toThrow('Presence document field "cursor.x" must be a number');
   });
 });

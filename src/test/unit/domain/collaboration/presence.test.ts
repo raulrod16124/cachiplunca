@@ -1,5 +1,5 @@
 import { Presence } from '../../../../domain/collaboration';
-import { UserId, WorkspaceId } from '../../../../domain/shared';
+import { Position, UserId, WorkspaceId } from '../../../../domain/shared';
 
 const WORKSPACE_ID = WorkspaceId.create('ws-1');
 const OTHER_WORKSPACE_ID = WorkspaceId.create('ws-2');
@@ -89,6 +89,90 @@ describe('Presence', () => {
       userId: 'user-1',
       workspaceId: 'ws-1',
       lastSeenAt: '2024-01-01T00:00:00.000Z',
+      cursor: null,
     });
+  });
+
+  it('creates a presence without a cursor by default', () => {
+    const presence = Presence.create({ userId: USER_ID, workspaceId: WORKSPACE_ID });
+
+    expect(presence.cursor).toBeNull();
+  });
+
+  it('creates a presence with an explicit cursor', () => {
+    const cursor = Position.create(12, -4);
+    const presence = Presence.create({ userId: USER_ID, workspaceId: WORKSPACE_ID, cursor });
+
+    expect(presence.cursor).toBe(cursor);
+  });
+
+  it('moveCursor returns a new instance carrying the cursor and leaves the original untouched', () => {
+    const original = Presence.create({
+      userId: USER_ID,
+      workspaceId: WORKSPACE_ID,
+      lastSeenAt: new Date('2024-01-01T00:00:00.000Z'),
+    });
+    const moved = original.moveCursor(Position.create(5, 6));
+
+    expect(moved).not.toBe(original);
+    expect(original.cursor).toBeNull();
+    expect(moved.userId).toBe(original.userId);
+    expect(moved.workspaceId).toBe(original.workspaceId);
+    expect(moved.cursor?.toJSON()).toEqual({ x: 5, y: 6 });
+  });
+
+  it('moveCursor is a no-op reference when the cursor does not change', () => {
+    const cursor = Position.create(5, 6);
+    const presence = Presence.create({
+      userId: USER_ID,
+      workspaceId: WORKSPACE_ID,
+      cursor,
+    });
+
+    expect(presence.moveCursor(Position.create(5, 6))).toBe(presence);
+  });
+
+  it('refresh keeps the cursor of the original presence', () => {
+    const cursor = Position.create(5, 6);
+    const presence = Presence.create({
+      userId: USER_ID,
+      workspaceId: WORKSPACE_ID,
+      lastSeenAt: new Date('2024-01-01T00:00:00.000Z'),
+      cursor,
+    });
+
+    const refreshed = presence.refresh(new Date('2024-01-01T00:00:05.000Z'));
+
+    expect(refreshed.cursor).toBe(cursor);
+  });
+
+  it('compares cursors by value', () => {
+    const lastSeenAt = new Date('2024-01-01T00:00:00.000Z');
+    const a = Presence.create({
+      userId: USER_ID,
+      workspaceId: WORKSPACE_ID,
+      lastSeenAt,
+      cursor: Position.create(1, 2),
+    });
+    const same = Presence.create({
+      userId: USER_ID,
+      workspaceId: WORKSPACE_ID,
+      lastSeenAt,
+      cursor: Position.create(1, 2),
+    });
+    const different = Presence.create({
+      userId: USER_ID,
+      workspaceId: WORKSPACE_ID,
+      lastSeenAt,
+      cursor: Position.create(3, 4),
+    });
+    const none = Presence.create({ userId: USER_ID, workspaceId: WORKSPACE_ID, lastSeenAt });
+
+    expect(a.equals(same)).toBe(true);
+    expect(a.equals(different)).toBe(false);
+    expect(a.equals(none)).toBe(false);
+    expect(
+      none.equals(Presence.create({ userId: USER_ID, workspaceId: WORKSPACE_ID, lastSeenAt })),
+    ).toBe(true);
   });
 });

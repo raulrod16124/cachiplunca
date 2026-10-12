@@ -11,6 +11,7 @@ import type {
   ListWorkspaces,
   LoadWorkspaceElements,
 } from '../../application/queries';
+import type { PresencePort } from '../../application/ports';
 import type {
   ElementPersistenceOrchestrator,
   RealtimeSubscriptionManager,
@@ -34,6 +35,7 @@ export interface AppRoutesProps {
   readonly elementPersistenceOrchestrator: ElementPersistenceOrchestrator;
   readonly realtimeSubscriptionManager: RealtimeSubscriptionManager;
   readonly generateElementId: () => ElementId;
+  readonly presencePort?: PresencePort;
 }
 
 export function AppRoutes({
@@ -47,6 +49,7 @@ export function AppRoutes({
   elementPersistenceOrchestrator,
   realtimeSubscriptionManager,
   generateElementId,
+  presencePort,
 }: AppRoutesProps): ReactNode {
   return (
     <Routes>
@@ -76,6 +79,7 @@ export function AppRoutes({
               realtimeSubscriptionManager={realtimeSubscriptionManager}
               generateElementId={generateElementId}
               logoutUser={logoutUser}
+              presencePort={presencePort}
             />
           }
         />
