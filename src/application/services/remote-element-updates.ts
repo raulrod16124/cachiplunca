@@ -1,6 +1,7 @@
 import type { Element } from '../../domain/element';
 import type { ElementRealtimeEvent } from '../ports';
 import { sortElementsForLoad } from '../queries/load-workspace-elements';
+import { resolveElementVersion } from './element-conflict-resolution';
 
 export function applyRemoteElementChanges(
   current: readonly Element[],
@@ -35,7 +36,7 @@ export function applyRemoteElementChanges(
 
         const existing = byId.get(incoming.id.value);
 
-        if (existing === undefined || isStrictlyNewer(incoming, existing)) {
+        if (existing === undefined || resolveElementVersion(incoming, existing) === incoming) {
           byId.set(incoming.id.value, incoming);
           changed = true;
         }
@@ -55,8 +56,4 @@ export function applyRemoteElementChanges(
   }
 
   return sortElementsForLoad([...byId.values()]);
-}
-
-export function isStrictlyNewer(incoming: Element, existing: Element): boolean {
-  return incoming.updatedAt.getTime() > existing.updatedAt.getTime();
 }

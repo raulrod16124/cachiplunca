@@ -179,4 +179,38 @@ describe('applyRemoteElementChanges', () => {
 
     expect(next.map((element) => element.id.value)).toEqual(['el-1', 'el-2']);
   });
+
+  it('converges the same way for a same-timestamp conflict regardless of arrival order', () => {
+    const timestamp = new Date('2024-01-02T00:00:00.000Z');
+    const local = buildElement('el-1', { position: Position.create(1, 1), updatedAt: timestamp });
+    const remote = buildElement('el-1', { position: Position.create(2, 2), updatedAt: timestamp });
+
+    const fromLocal = applyRemoteElementChanges([local], added(remote));
+    const fromRemote = applyRemoteElementChanges([remote], added(local));
+
+    expect(fromLocal).toEqual(fromRemote);
+  });
+
+  it('applies concurrent remote edits to independent elements in any order', () => {
+    const elementA = buildElement('el-a', { updatedAt: new Date('2024-01-03T00:00:00.000Z') });
+    const elementB = buildElement('el-b', { updatedAt: new Date('2024-01-04T00:00:00.000Z') });
+
+    const forward = applyRemoteElementChanges([], {
+      workspaceId: WORKSPACE_ID,
+      changes: [
+        { kind: 'added', element: elementA, origin: 'remote' },
+        { kind: 'added', element: elementB, origin: 'remote' },
+      ],
+    });
+    const reversed = applyRemoteElementChanges([], {
+      workspaceId: WORKSPACE_ID,
+      changes: [
+        { kind: 'added', element: elementB, origin: 'remote' },
+        { kind: 'added', element: elementA, origin: 'remote' },
+      ],
+    });
+
+    expect(forward).toEqual(reversed);
+    expect(forward.map((element) => element.id.value)).toEqual(['el-a', 'el-b']);
+  });
 });

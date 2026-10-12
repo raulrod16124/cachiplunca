@@ -3046,7 +3046,7 @@ Completar **Reconnect handling** dejando un resultado verificable y apto para la
 
 ### TASK-081 — Conflict strategy
 
-**Priority:** P0 · **Depends:** TASK-078 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-078 · **Status:** DONE
 
 #### Objetivo
 
@@ -3062,12 +3062,12 @@ Definir e implementar la estrategia de consistencia para cambios concurrentes.
 
 #### Criterios de aceptación
 
-- [ ] La estrategia está documentada.
-- [ ] Los conflictos previsibles son deterministas.
-- [ ] No se introduce CRDT.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] No se crean listeners duplicados.
+- [x] La estrategia está documentada.
+- [x] Los conflictos previsibles son deterministas.
+- [x] No se introduce CRDT.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] No se crean listeners duplicados.
 
 #### Fuera de alcance
 
@@ -3083,7 +3083,7 @@ Definir e implementar la estrategia de consistencia para cambios concurrentes.
 
 ### TASK-082 — Presence port/model
 
-**Priority:** P0 · **Depends:** TASK-076 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-076 · **Status:** DONE
 
 #### Objetivo
 
@@ -3101,13 +3101,13 @@ Completar **Presence port/model** dejando un resultado verificable y apto para l
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] No se crean listeners duplicados.
-- [ ] La presencia no modifica ni bloquea el documento persistido.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] No se crean listeners duplicados.
+- [x] La presencia no modifica ni bloquea el documento persistido.
 
 #### Fuera de alcance
 
@@ -4935,6 +4935,24 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) alcance acotado a Application por acuerdo con el usuario: el cableado del `Canvas` y la orquestación de persistencia corresponden a TASK-072 y el debounce/batching a TASK-073; (2) el resultado `ok` no devuelve el elemento (el repositorio ya lo validó y el owner del estado es la UI): mantiene el contrato mínimo y evita duplicar datos; (3) las listas vacías no tocan el repositorio para no generar operaciones innecesarias con Firestore; (4) sin ADR por reutilizar el patrón ya establecido en `load-workspace-elements` (port inyectado, unión discriminada, `toAppError`).
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-072 (Persistence orchestration).
+
+## 2026-10-12 — TASK-081
+
+- Resultado: Estrategia de conflictos explícita, pura y convergente, sin CRDT. Nuevo `src/application/services/element-conflict-resolution.ts`: `compareElementVersions` (orden total por `updatedAt`), `isStrictlyNewer` (movido aquí desde `remote-element-updates`), `resolveElementVersion(a, b)` (LWW por elemento con desempate determinista y **simétrico**) y `canonicalizeElement` (serialización estable con claves ordenadas y `Date` a ISO). `applyRemoteElementChanges` pasa a usar `resolveElementVersion` en `added`/`modified`, conservando el contrato de ADR-0010 (ignora `origin: 'local'`, aísla por workspace, ordena con `sortElementsForLoad`, misma referencia sin cambios). `rollbackFailedMutation` **mantiene** `isStrictlyNewer` de forma intencional: en un rollback, un empate de `updatedAt` significa que el estado actual es la mutación optimista a revertir (ver ADR-0013 §5). Sin listeners nuevos ni cambios en el port/adapter.
+- Tests/quality gates: 1315 tests pasan (106 suites; +casos: 12 de `element-conflict-resolution.test.ts` —orden estricto en ambos sentidos, empate simétrico, misma referencia, `id` distinto lanza, canonicalización determinista—, 2 nuevos en `remote-element-updates.test.ts` —convergencia ante empate en distinto orden de llegada y ediciones concurrentes a elementos independientes— y 1 en `optimistic-element-updates.test.ts` —rollback con remoto de igual `updatedAt`—). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde.
+- Decisiones: (1) el desempate en empate de `updatedAt` es una **comparación canónica simétrica**, elegida con el usuario para garantizar convergencia entre réplicas sin cambiar el esquema; (2) la política vive en un único módulo puro de Application reutilizado por el camino remoto y el de rollback, eliminando la duplicación previa; (3) se documenta la estrategia en `docs/adr/0013-conflict-strategy.md` por ser una decisión transversal de consistencia realtime (§9); (4) fuera de alcance: CRDT, versionado/`updatedBy`, merge por campo e historial local vs remoto (TASK-088).
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-082 (Presence port/model).
+
+## 2026-10-12 — TASK-082
+
+- Resultado: Port, modelo y adapter Firebase de presencia efímera. Dominio: `src/domain/collaboration/presence.ts` (`Presence` con `userId`, `workspaceId`, `lastSeenAt`; `static create`, `refresh` inmutable para heartbeats, `isFor`, `equals` y `toJSON`) y barrel `src/domain/collaboration/index.ts`. Application: `src/application/ports/presence-port.ts` (`PresencePort.subscribe(workspaceId, listener, onError?, onConnectionChange?): Unsubscribe`, `announce(presence): Promise<void>` para publicar presencia local y `withdraw(workspaceId, userId): Promise<void>` para limpiarla al desconectar; cambios `joined`/`updated`/`left` con `origin: 'local' | 'remote'`, reutilizando `RealtimeChangeOrigin`/`RealtimeConnectionListener` de `realtime-port` como indica ADR-0012). Barrel de ports actualizado.
+- Infrastructure: `src/infrastructure/firebase/firebase-presence-mapper.ts` (`toPresenceDocument`/`fromPresenceDocument`, con lectura de `Date` o `Timestamp`) y `src/infrastructure/firebase/firebase-presence-adapter.ts` (`createFirebasePresenceAdapter(db)`: `subscribe` con `onSnapshot({ includeMetadataChanges: true })` sobre `query(collection('presence'), where('workspaceId', '==', …))`, descarta el primer snapshot, mapea `added`→`joined`, `modified`→`updated`, `removed`→`left` (userId desde el id `${workspaceId}_${userId}`), origen `hasPendingWrites ? 'local' : 'remote'`, estado de conexión `fromCache ? 'reconnecting' : 'connected'`, y `announce`/`withdraw` como `setDoc`/`deleteDoc` con errores mapeados). La presencia vive en la colección `presence`, totalmente separada de `elements`, por lo que no modifica ni bloquea el documento persistido.
+- Alcance: port + model + adapter. El servicio de aplicación de "Connected users" y el cableado en Presentation quedan para TASK-083/084/085 (no se toca App.tsx todavía porque aún no hay consumidor).
+- Tests/quality gates: `src/test/fixtures/fake-presence-port.ts` (fake con `announce`/`withdraw` que emiten `joined`/`updated`/`left` e infiere estado efímero), `src/test/contract/presence-port-contract.ts` (13 casos de contrato: entrega, aislamiento por workspace, unsubscribe idempotente, errores, cambios de conexión, una suscripción activa por subscribe) ejecutado tanto en `src/test/unit/application/ports/fake-presence-port.test.ts` (+5 casos del fake) como en `src/test/unit/infrastructure/firebase/firebase-presence-adapter.test.ts` (contrato + 13 casos del adapter: descarte del primer snapshot, mapeo de cambios/origen, `announce`/`withdraw`, mapeo de errores, documento corrupto, metadata, separación de `elements`), y `src/test/unit/domain/collaboration/presence.test.ts` (8 casos del modelo) + `src/test/unit/infrastructure/firebase/firebase-presence-mapper.test.ts` (10 casos del mapper). 62 tests de presencia en total. `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde.
+- Decisiones: (1) la presencia es efímera: modelo sin persistencia, adapter sobre una colección `presence` aparte, sin heartbeat/TTL (fuera del MVP); (2) se reutiliza el vocabulario de conexión del realtime port (ADR-0012) en vez de duplicarlo; (3) `withdraw(workspaceId, userId)` modela "limpiar presencia al desconectar" que consumirá TASK-085; (4) `announce`/`withdraw` son async para propagar errores de Firestore como `AppError` (patrón del `ElementRepository`).
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-083 (Connected users).
 
 ---
 

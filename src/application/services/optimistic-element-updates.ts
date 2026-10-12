@@ -1,7 +1,7 @@
 import type { Element } from '../../domain/element';
 import { sortElementsForLoad } from '../queries/load-workspace-elements';
+import { isStrictlyNewer } from './element-conflict-resolution';
 import { computeElementDelta } from './element-persistence-orchestrator';
-import { isStrictlyNewer } from './remote-element-updates';
 
 export function rollbackFailedMutation(
   current: readonly Element[],

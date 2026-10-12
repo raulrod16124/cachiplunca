@@ -74,6 +74,18 @@ describe('rollbackFailedMutation', () => {
     expect(positionX(result[0])).toBe(90);
   });
 
+  it('rolls back when a remote update shares the optimistic timestamp', () => {
+    const previous = [buildElement('el-1', { x: 0, updatedAt: new Date('2024-01-01T00:00:00Z') })];
+    const next = [buildElement('el-1', { x: 40, updatedAt: new Date('2024-01-02T00:00:00Z') })];
+    const remote = buildElement('el-1', { x: 90, updatedAt: new Date('2024-01-02T00:00:00Z') });
+    const current = [remote];
+
+    const result = rollbackFailedMutation(current, previous, next);
+
+    expect(result).toEqual(previous);
+    expect(positionX(result[0])).toBe(0);
+  });
+
   it('keeps an optimistically created element superseded by a strictly newer remote version', () => {
     const previous: readonly Element[] = [];
     const next = [buildElement('el-1', { updatedAt: new Date('2024-01-02T00:00:00Z') })];
