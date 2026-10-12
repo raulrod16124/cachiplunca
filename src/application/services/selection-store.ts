@@ -11,6 +11,7 @@ export interface SelectionStore {
   readonly selectMany: (ids: readonly string[]) => void;
   readonly toggle: (id: string) => void;
   readonly addMany: (ids: readonly string[]) => void;
+  readonly retain: (ids: readonly string[]) => void;
   readonly clear: () => void;
 }
 
@@ -72,6 +73,12 @@ export function createSelectionStore(initialIds: readonly string[] = []): Select
           next.push(id);
         }
       }
+
+      publish(next);
+    },
+    retain(ids) {
+      const allowed = new Set(ids);
+      const next = snapshot.selectedIds.filter((id) => allowed.has(id));
 
       publish(next);
     },

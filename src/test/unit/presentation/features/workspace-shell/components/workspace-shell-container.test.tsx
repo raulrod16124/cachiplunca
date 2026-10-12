@@ -12,6 +12,7 @@ import {
   createElementPersistence,
   createElementPersistenceOrchestrator,
   createRealtimeSubscriptionManager,
+  createSelectionStore,
 } from '../../../../../../application/services';
 import type {
   ElementPersistenceOrchestrator,
@@ -101,6 +102,7 @@ interface RenderOptions {
   readonly realtimeSubscriptionManager?: RealtimeSubscriptionManager;
   readonly presencePort?: FakePresencePort;
   readonly localUserId?: string;
+  readonly selectionStore?: ReturnType<typeof createSelectionStore>;
 }
 
 function renderContainer(getWorkspace: GetWorkspace, options: RenderOptions = {}) {
@@ -123,6 +125,7 @@ function renderContainer(getWorkspace: GetWorkspace, options: RenderOptions = {}
         persistenceDebounceMs={options.persistenceDebounceMs}
         presencePort={options.presencePort}
         localUserId={options.localUserId}
+        selectionStore={options.selectionStore}
       />
     </MemoryRouter>,
   );
@@ -880,6 +883,23 @@ describe('WorkspaceShellContainer', () => {
     });
 
     await waitFor(() => expect(screen.queryByTestId('canvas-item-el-1')).not.toBeInTheDocument());
+  });
+
+  it('prunes selection when a remotely deleted element was selected', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const selectionStore = createSelectionStore(['el-1']);
+    const { realtimePort } = renderContainer(getWorkspace, { selectionStore });
+
+    await screen.findByRole('application', { name: 'Canvas' });
+
+    act(() => {
+      realtimePort.emit({
+        workspaceId: WorkspaceId.create('ws-test'),
+        changes: [{ kind: 'removed', elementId: ElementId.create('el-1'), origin: 'remote' }],
+      });
+    });
+
+    await waitFor(() => expect(selectionStore.getSnapshot().selectedIds).toEqual([]));
   });
 
   it('keeps a single realtime subscription per workspace and releases it on unmount', async () => {

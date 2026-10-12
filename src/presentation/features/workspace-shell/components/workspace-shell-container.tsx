@@ -62,6 +62,7 @@ export interface WorkspaceShellContainerProps {
   readonly onBack: () => void;
   readonly presencePort?: PresencePort;
   readonly localUserId?: string;
+  readonly selectionStore?: SelectionStore;
   readonly persistenceDebounceMs?: number;
   readonly persistenceScheduler?: Scheduler;
 }
@@ -82,6 +83,7 @@ export function WorkspaceShellContainer({
   onBack,
   presencePort,
   localUserId,
+  selectionStore,
   persistenceDebounceMs,
   persistenceScheduler,
 }: WorkspaceShellContainerProps): ReactNode {
@@ -97,7 +99,7 @@ export function WorkspaceShellContainer({
   const canvasViewportStoreRef = useRef<CanvasViewportStore>(
     createCanvasViewportStore(Size.create(800, 600)),
   );
-  const selectionStoreRef = useRef<SelectionStore>(createSelectionStore());
+  const selectionStoreRef = useRef<SelectionStore>(selectionStore ?? createSelectionStore());
   const connectionStoreRef = useRef<RealtimeConnectionStore>(createRealtimeConnectionStore());
   const connectionStatus = useSyncExternalStore(
     connectionStoreRef.current.subscribe,
@@ -401,6 +403,7 @@ export function WorkspaceShellContainer({
         if (next !== elementsRef.current) {
           applyElements(next);
         }
+        selectionStoreRef.current.retain(next.map((element) => element.id.value));
       },
       (error) => {
         setCollaborationError(error);

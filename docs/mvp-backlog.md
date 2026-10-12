@@ -3235,7 +3235,7 @@ Completar **Presence cleanup** dejando un resultado verificable y apto para las 
 
 ### TASK-086 — Remote create/delete
 
-**Priority:** P0 · **Depends:** TASK-078 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-078 · **Status:** DONE
 
 #### Objetivo
 
@@ -3251,12 +3251,12 @@ Completar **Remote create/delete** dejando un resultado verificable y apto para 
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] No se crean listeners duplicados.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] No se crean listeners duplicados.
 
 #### Fuera de alcance
 
