@@ -14,6 +14,31 @@ export interface MockQuerySnapshot {
   readonly docs: readonly MockDocumentSnapshot[];
 }
 
+export type MockRealtimeChangeType = 'added' | 'modified' | 'removed';
+
+export interface MockRealtimeChangeInput {
+  readonly type: MockRealtimeChangeType;
+  readonly id: string;
+  readonly data?: unknown;
+  readonly hasPendingWrites?: boolean;
+}
+
+export interface MockRealtimeDocument {
+  readonly id: string;
+  readonly metadata: { readonly hasPendingWrites: boolean };
+  data(): Record<string, unknown> | undefined;
+}
+
+export interface MockRealtimeDocumentChange {
+  readonly type: MockRealtimeChangeType;
+  readonly doc: MockRealtimeDocument;
+}
+
+export interface MockRealtimeSnapshot {
+  readonly docs: readonly MockRealtimeDocument[];
+  docChanges(): readonly MockRealtimeDocumentChange[];
+}
+
 export interface MockConstraint {
   readonly field: string;
   readonly op: '==';
@@ -43,17 +68,34 @@ export interface InMemoryFirestoreApi {
   writeBatch(db: unknown): MockWriteBatch;
   query(ref: MockRef, ...constraints: MockConstraint[]): MockQuery;
   where(field: string, op: '==', value: unknown): MockConstraint;
+  onSnapshot(
+    ref: MockRef | MockQuery,
+    options: { readonly includeMetadataChanges?: boolean },
+    onNext: (snapshot: MockRealtimeSnapshot) => void,
+    onError?: (error: unknown) => void,
+  ): () => void;
   __reset(): void;
-  __seed(path: string, data: Record<string, unknown>): void;
+  __seed(path: string, data: object): void;
   __failNextWith(code: string): void;
   __read(path: string): Record<string, unknown> | undefined;
   __paths(): string[];
+  __emitSnapshot(workspaceId: string, changes: readonly MockRealtimeChangeInput[]): void;
+  __emitError(workspaceId: string, error: unknown): void;
+  __activeSnapshotListenerCount(workspaceId?: string): number;
+}
+
+interface SnapshotListener {
+  readonly ref: MockRef;
+  readonly constraints: readonly MockConstraint[];
+  readonly onNext: (snapshot: MockRealtimeSnapshot) => void;
+  readonly onError: (error: unknown) => void;
 }
 
 export function createInMemoryFirestoreModule(): InMemoryFirestoreApi {
   const store = new Map<string, Record<string, unknown>>();
   let sequence = 0;
   let pendingFailureCode: string | null = null;
+  const snapshotListeners = new Set<SnapshotListener>();
 
   function maybeFail(): void {
     if (pendingFailureCode === null) {
@@ -119,6 +161,66 @@ export function createInMemoryFirestoreModule(): InMemoryFirestoreApi {
       }
     }
     return true;
+  }
+
+  function makeRealtimeDocument(
+    id: string,
+    data: unknown,
+    hasPendingWrites: boolean,
+  ): MockRealtimeDocument {
+    return {
+      id,
+      metadata: { hasPendingWrites },
+      data: () => (data === undefined ? undefined : { ...(data as Record<string, unknown>) }),
+    };
+  }
+
+  function makeRealtimeSnapshot(
+    changes: readonly MockRealtimeDocumentChange[],
+  ): MockRealtimeSnapshot {
+    return {
+      docs: changes.filter((change) => change.type !== 'removed').map((change) => change.doc),
+      docChanges: () => changes,
+    };
+  }
+
+  function buildInitialSnapshot(
+    baseRef: MockRef,
+    constraints: readonly MockConstraint[],
+  ): MockRealtimeSnapshot {
+    const prefix = `${baseRef.path}/`;
+    const changes: MockRealtimeDocumentChange[] = [];
+    for (const path of store.keys()) {
+      if (!path.startsWith(prefix)) {
+        continue;
+      }
+      const data = store.get(path);
+      if (data === undefined || !matchesConstraints(data, constraints)) {
+        continue;
+      }
+      changes.push({ type: 'added', doc: makeRealtimeDocument(lastSegment(path), data, false) });
+    }
+    return makeRealtimeSnapshot(changes);
+  }
+
+  function buildEmittedSnapshot(changes: readonly MockRealtimeChangeInput[]): MockRealtimeSnapshot {
+    return makeRealtimeSnapshot(
+      changes.map((change) => ({
+        type: change.type,
+        doc: makeRealtimeDocument(change.id, change.data, change.hasPendingWrites ?? false),
+      })),
+    );
+  }
+
+  function forEachMatchingListener(
+    workspaceId: string,
+    visit: (listener: SnapshotListener) => void,
+  ): void {
+    for (const listener of snapshotListeners) {
+      if (matchesConstraints({ workspaceId }, listener.constraints)) {
+        visit(listener);
+      }
+    }
   }
 
   return {
@@ -208,14 +310,42 @@ export function createInMemoryFirestoreModule(): InMemoryFirestoreApi {
       return { field, op, value };
     },
 
+    onSnapshot(
+      ref: MockRef | MockQuery,
+      _options: { readonly includeMetadataChanges?: boolean },
+      onNext: (snapshot: MockRealtimeSnapshot) => void,
+      onError?: (error: unknown) => void,
+    ): () => void {
+      const baseRef = ref.kind === 'query' ? ref.ref : ref;
+      const constraints = ref.kind === 'query' ? ref.constraints : [];
+      const listener: SnapshotListener = {
+        ref: baseRef,
+        constraints,
+        onNext,
+        onError: onError ?? (() => undefined),
+      };
+      snapshotListeners.add(listener);
+      onNext(buildInitialSnapshot(baseRef, constraints));
+
+      let active = true;
+      return () => {
+        if (!active) {
+          return;
+        }
+        active = false;
+        snapshotListeners.delete(listener);
+      };
+    },
+
     __reset(): void {
       store.clear();
       sequence = 0;
       pendingFailureCode = null;
+      snapshotListeners.clear();
     },
 
-    __seed(path: string, data: Record<string, unknown>): void {
-      store.set(path, { ...data });
+    __seed(path: string, data: object): void {
+      store.set(path, { ...(data as Record<string, unknown>) });
     },
 
     __failNextWith(code: string): void {
@@ -229,6 +359,31 @@ export function createInMemoryFirestoreModule(): InMemoryFirestoreApi {
 
     __paths(): string[] {
       return [...store.keys()];
+    },
+
+    __emitSnapshot(workspaceId: string, changes: readonly MockRealtimeChangeInput[]): void {
+      forEachMatchingListener(workspaceId, (listener) => {
+        listener.onNext(buildEmittedSnapshot(changes));
+      });
+    },
+
+    __emitError(workspaceId: string, error: unknown): void {
+      forEachMatchingListener(workspaceId, (listener) => {
+        listener.onError(error);
+      });
+    },
+
+    __activeSnapshotListenerCount(workspaceId?: string): number {
+      let count = 0;
+      for (const listener of snapshotListeners) {
+        if (
+          workspaceId === undefined ||
+          matchesConstraints({ workspaceId }, listener.constraints)
+        ) {
+          count += 1;
+        }
+      }
+      return count;
     },
   };
 }

@@ -1,5 +1,15 @@
 # Session Log
 
+## 2026-10-12 — TASK-077 Firestore realtime adapter
+
+- Siguiente tarea del backlog: TASK-077 (dependencia TASK-076 DONE, sin IN PROGRESS ni BLOCKED). Alcance confirmado con el usuario: **solo adapter + tests + ADR** (sin wiring de UI, que llega en TASK-078) y **emitir también los cambios metadata-only** para poder observar la transición `local` → eco `remote`.
+- Nuevo `src/infrastructure/firebase/firebase-realtime-adapter.ts`: `createFirebaseRealtimeAdapter(db: Firestore)` implementa `RealtimePort` con `onSnapshot(query(collection('elements'), where('workspaceId','==',...)), { includeMetadataChanges: true })`. Semántica **subsequent-only**: descarta el primer snapshot (la carga inicial sigue siendo `load-workspace-elements`). Mapea `snapshot.docChanges()` reutilizando `fromElementDocument` de TASK-069: `added`/`modified` con el `Element` completo, `removed` con solo `ElementId`; `origin` derivado de `doc.metadata.hasPendingWrites` (`local`/`remote`). `Unsubscribe` idempotente y un único `onSnapshot` por `subscribe`; el dedup por workspace sigue en `RealtimeSubscriptionManager`.
+- Errores: cualquier fallo del canal (stream del SDK o documento que rompe invariantes) se entrega por `onError` como `collaboration`/`COLLABORATION_SYNC_FAILED` con el error traducido por `mapFirebaseError` como `cause`; sin `onError` no se propaga excepción (ADR-0008 §5).
+- `src/test/fixtures/in-memory-firestore.ts` extendido con `onSnapshot` (snapshot con `docChanges()` + metadata por documento), entrega del snapshot inicial y helpers `__emitSnapshot`/`__emitError`/`__activeSnapshotListenerCount`; `__seed` pasa a aceptar `object` para reutilizar el mapper.
+- Tests: nueva `firebase-realtime-adapter.test.ts` (+20): contrato reutilizable `describeRealtimePortContract` con un harness Firestore (traduce eventos a documentos/snapshots) y casos específicos (descarte del snapshot inicial, `origin` local vs remoto vía `hasPendingWrites`, cambio `removed`, round-trip de los 6 tipos MVP, documento corrupto → `onError` sin notificar, error de stream → `collaboration`, sin `onError` no lanza, un listener por `subscribe` + `unsubscribe` idempotente, `includeMetadataChanges`).
+- ADR-0009 (`docs/adr/0009-firestore-realtime-adapter.md`): query sobre `elements`, `includeMetadataChanges`, subsequent-only, `origin` por metadata, errores `collaboration`, lifecycle y mock del SDK.
+- Quality gates en verde: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build`.
+
 ## 2026-10-12 — TASK-076 Realtime port
 
 - Siguiente tarea del backlog: TASK-076 (dependencia TASK-068 DONE, sin IN PROGRESS ni BLOCKED). Alcance confirmado con el usuario: entregable = **port + gestor de suscripciones**, eventos de **cambios granulares con `origin`**, y **sin `publish` en el port** (las escrituras siguen por `ElementRepository`).

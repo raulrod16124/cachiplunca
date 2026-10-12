@@ -2898,7 +2898,7 @@ Definir el port de colaboración realtime.
 
 ### TASK-077 — Firestore realtime adapter
 
-**Priority:** P0 · **Depends:** TASK-076 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-076 · **Status:** DONE
 
 #### Objetivo
 
@@ -2914,12 +2914,12 @@ Completar **Firestore realtime adapter** dejando un resultado verificable y apto
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] No se crean listeners duplicados.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] No se crean listeners duplicados.
 
 #### Fuera de alcance
 
