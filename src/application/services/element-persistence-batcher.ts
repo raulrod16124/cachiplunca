@@ -6,6 +6,8 @@ export const DEFAULT_PERSIST_DEBOUNCE_MS = 300;
 
 export type CancelScheduledFlush = () => void;
 
+export type PersistenceSyncStatus = 'idle' | 'saving' | 'saved' | 'error';
+
 export interface Scheduler {
   schedule(callback: () => void, delayMs: number): CancelScheduledFlush;
 }
@@ -19,6 +21,7 @@ export interface ElementPersistenceBatcher {
 export interface ElementPersistenceBatcherOptions {
   readonly orchestrator: ElementPersistenceOrchestrator;
   readonly onResult?: (result: PersistElementMutationResult) => void;
+  readonly onStatusChange?: (status: PersistenceSyncStatus) => void;
   readonly delayMs?: number;
   readonly scheduler?: Scheduler;
 }
@@ -40,7 +43,7 @@ interface PendingMutation {
 export function createElementPersistenceBatcher(
   options: ElementPersistenceBatcherOptions,
 ): ElementPersistenceBatcher {
-  const { orchestrator, onResult } = options;
+  const { orchestrator, onResult, onStatusChange } = options;
   const delayMs = normalizeDelayMs(options.delayMs);
   const scheduler = options.scheduler ?? createTimeoutScheduler();
 
@@ -48,11 +51,29 @@ export function createElementPersistenceBatcher(
   let cancelScheduled: CancelScheduledFlush | null = null;
   let chain: Promise<void> = Promise.resolve();
   let disposed = false;
+  let inFlight = 0;
+  let syncStatus: PersistenceSyncStatus = 'idle';
+
+  function emitStatus(next: PersistenceSyncStatus): void {
+    if (syncStatus === next) {
+      return;
+    }
+    syncStatus = next;
+    onStatusChange?.(next);
+  }
 
   function persist(target: PendingMutation): Promise<void> {
+    inFlight += 1;
     chain = chain.then(async () => {
       const result = await orchestrator.persistDelta(target.previous, target.next);
+      inFlight -= 1;
       onResult?.(result);
+
+      if (result.status === 'error') {
+        emitStatus('error');
+      } else if (inFlight === 0 && pending === null) {
+        emitStatus('saved');
+      }
     });
     return chain;
   }
@@ -75,6 +96,7 @@ export function createElementPersistenceBatcher(
       }
 
       pending = pending === null ? { previous, next } : { previous: pending.previous, next };
+      emitStatus('saving');
 
       if (cancelScheduled !== null) {
         cancelScheduled();

@@ -185,4 +185,87 @@ describe('createElementPersistenceBatcher', () => {
 
     expect(orchestrator.persistDelta).not.toHaveBeenCalled();
   });
+
+  describe('sync status', () => {
+    it('emits saving on schedule and saved after a successful flush', async () => {
+      const scheduler = new ManualScheduler();
+      const orchestrator: ElementPersistenceOrchestrator = {
+        persistDelta: jest.fn().mockResolvedValue(OK),
+      };
+      const onStatusChange = jest.fn();
+      const batcher = createElementPersistenceBatcher({ orchestrator, onStatusChange, scheduler });
+
+      expect(onStatusChange).not.toHaveBeenCalled();
+
+      batcher.schedule([buildTextElement('el-1', 0)], [buildTextElement('el-1', 10)]);
+      expect(onStatusChange).toHaveBeenLastCalledWith('saving');
+
+      scheduler.run();
+      await flushMicrotasks();
+
+      expect(onStatusChange).toHaveBeenLastCalledWith('saved');
+    });
+
+    it('emits error on failure and returns to saving on the next schedule', async () => {
+      const scheduler = new ManualScheduler();
+      const error: PersistElementMutationResult = {
+        status: 'error',
+        error: createAppError('persistence', ERROR_CODES.PERSISTENCE_WRITE_FAILED, 'Write failed'),
+      };
+      const orchestrator: ElementPersistenceOrchestrator = {
+        persistDelta: jest.fn().mockResolvedValueOnce(error).mockResolvedValue(OK),
+      };
+      const onStatusChange = jest.fn();
+      const batcher = createElementPersistenceBatcher({ orchestrator, onStatusChange, scheduler });
+
+      batcher.schedule([buildTextElement('el-1', 0)], [buildTextElement('el-1', 10)]);
+      scheduler.run();
+      await flushMicrotasks();
+
+      expect(onStatusChange).toHaveBeenLastCalledWith('error');
+
+      batcher.schedule([buildTextElement('el-1', 10)], [buildTextElement('el-1', 20)]);
+      expect(onStatusChange).toHaveBeenLastCalledWith('saving');
+
+      scheduler.run();
+      await flushMicrotasks();
+
+      expect(onStatusChange).toHaveBeenLastCalledWith('saved');
+    });
+
+    it('does not emit saved while another mutation is still pending or in flight', async () => {
+      const scheduler = new ManualScheduler();
+      const first = createDeferred();
+      const second = createDeferred();
+      const deferreds = [first, second];
+      let callIndex = 0;
+      const orchestrator: ElementPersistenceOrchestrator = {
+        persistDelta: jest.fn().mockImplementation(async () => {
+          const deferred = deferreds[callIndex];
+          callIndex += 1;
+          await deferred?.promise;
+          return OK;
+        }),
+      };
+      const onStatusChange = jest.fn();
+      const batcher = createElementPersistenceBatcher({ orchestrator, onStatusChange, scheduler });
+
+      batcher.schedule([buildTextElement('el-1', 0)], [buildTextElement('el-1', 10)]);
+      scheduler.run();
+      await flushMicrotasks();
+
+      batcher.schedule([buildTextElement('el-1', 10)], [buildTextElement('el-1', 20)]);
+      expect(onStatusChange).toHaveBeenLastCalledWith('saving');
+
+      first.resolve();
+      await flushMicrotasks();
+      expect(onStatusChange).not.toHaveBeenCalledWith('saved');
+
+      scheduler.run();
+      second.resolve();
+      await flushMicrotasks();
+
+      expect(onStatusChange).toHaveBeenLastCalledWith('saved');
+    });
+  });
 });

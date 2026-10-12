@@ -391,6 +391,65 @@ describe('WorkspaceShellContainer', () => {
     expect(orchestrator.persistDelta).toHaveBeenCalledTimes(1);
   });
 
+  it('shows a saving then saved sync indicator around debounced persistence', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const scheduler = new ManualScheduler();
+    const orchestrator: ElementPersistenceOrchestrator = {
+      persistDelta: jest.fn().mockResolvedValue({ status: 'ok' }),
+    };
+
+    renderContainer(getWorkspace, {
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [TEXT_ELEMENT],
+      }),
+      elementPersistenceOrchestrator: orchestrator,
+      persistenceScheduler: scheduler,
+    });
+
+    const item = await screen.findByTestId('canvas-item-el-1');
+    expect(screen.queryByRole('status')).toBeNull();
+    const user = userEvent.setup();
+
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: item, coords: { x: 60, y: 70 } },
+      { coords: { x: 100, y: 110 } },
+    ]);
+
+    expect(screen.getByRole('status')).toHaveTextContent('Saving…');
+
+    await act(async () => {
+      scheduler.run();
+      await flushMicrotasks();
+    });
+
+    expect(screen.getByRole('status')).toHaveTextContent('Saved');
+  });
+
+  it('shows a not-saved sync indicator when persistence fails', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const orchestrator: ElementPersistenceOrchestrator = {
+      persistDelta: jest.fn().mockResolvedValue({
+        status: 'error',
+        error: createAppError('persistence', ERROR_CODES.PERSISTENCE_WRITE_FAILED, 'Write failed'),
+      }),
+    };
+
+    renderContainer(getWorkspace, {
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [TEXT_ELEMENT],
+      }),
+      elementPersistenceOrchestrator: orchestrator,
+    });
+
+    const canvas = await screen.findByRole('application', { name: 'Canvas' });
+    fireEvent.keyDown(canvas, { key: 'a', ctrlKey: true });
+    fireEvent.keyDown(canvas, { key: 'Delete' });
+
+    expect(await screen.findByText('Not saved')).toBeInTheDocument();
+  });
+
   it('flushes pending persistence on pagehide', async () => {
     const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
     const scheduler = new ManualScheduler();

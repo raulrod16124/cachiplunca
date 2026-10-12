@@ -1,4 +1,4 @@
-import { Button, Heading, Inline, Text } from '@raulrod/ui';
+import { Badge, Button, Heading, Inline, Text } from '@raulrod/ui';
 import { ArrowLeft } from '@raulrod/icons';
 import type { ReactNode } from 'react';
 import styled from 'styled-components';
@@ -10,9 +10,11 @@ import type { LogoutUser } from '../../../../application/commands';
 import type {
   CanvasViewportStore,
   CommandHistory,
+  PersistenceSyncStatus,
   SelectionStore,
 } from '../../../../application/services';
 import { Canvas } from '../../../canvas';
+import { describeSyncStatus } from '../workspace-sync-status';
 
 const Shell = styled.div`
   display: flex;
@@ -52,6 +54,7 @@ export interface WorkspaceShellLayoutProps {
   readonly onUndoElements: (elements: readonly Element[]) => void;
   readonly onRedoElements: (elements: readonly Element[]) => void;
   readonly generateElementId: () => ElementId;
+  readonly syncStatus: PersistenceSyncStatus;
   readonly persistenceErrorMessage: string | null;
 }
 
@@ -72,8 +75,11 @@ export function WorkspaceShellLayout({
   onUndoElements,
   onRedoElements,
   generateElementId,
+  syncStatus,
   persistenceErrorMessage,
 }: WorkspaceShellLayoutProps): ReactNode {
+  const syncBadge = describeSyncStatus(syncStatus);
+
   return (
     <Shell>
       <Header>
@@ -92,6 +98,11 @@ export function WorkspaceShellLayout({
               </Inline>
             </Button>
             <Heading as="h1">{workspace.name}</Heading>
+            {syncBadge === null ? null : (
+              <span role="status" aria-live="polite">
+                <Badge variant={syncBadge.variant}>{syncBadge.label}</Badge>
+              </span>
+            )}
           </Inline>
           <SignOutButton logoutUser={logoutUser} />
         </Inline>

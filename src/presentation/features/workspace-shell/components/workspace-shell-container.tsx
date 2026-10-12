@@ -19,6 +19,7 @@ import type {
   CommandHistory,
   ElementPersistenceBatcher,
   ElementPersistenceOrchestrator,
+  PersistenceSyncStatus,
   Scheduler,
   SelectionStore,
 } from '../../../../application/services';
@@ -71,6 +72,7 @@ export function WorkspaceShellContainer({
   const [elementsStatus, setElementsStatus] = useState<'loading' | 'error' | 'success'>('loading');
   const [elementsError, setElementsError] = useState<AppError | null>(null);
   const [persistenceError, setPersistenceError] = useState<AppError | null>(null);
+  const [syncStatus, setSyncStatus] = useState<PersistenceSyncStatus>('idle');
   const elementsRef = useRef<readonly Element[]>([]);
   const canvasViewportStoreRef = useRef<CanvasViewportStore>(
     createCanvasViewportStore(Size.create(800, 600)),
@@ -87,6 +89,7 @@ export function WorkspaceShellContainer({
       onResult: (result) => {
         setPersistenceError(result.status === 'error' ? result.error : null);
       },
+      onStatusChange: setSyncStatus,
       delayMs: persistenceDebounceMs,
       scheduler: persistenceScheduler,
     });
@@ -248,6 +251,7 @@ export function WorkspaceShellContainer({
         elementsRef.current = response.elements;
         setElements(response.elements);
         setPersistenceError(null);
+        setSyncStatus('idle');
         setElementsStatus('success');
         return;
       }
@@ -378,6 +382,7 @@ export function WorkspaceShellContainer({
         onUndoElements={handleUndoElements}
         onRedoElements={handleRedoElements}
         generateElementId={generateElementId}
+        syncStatus={syncStatus}
         persistenceErrorMessage={
           persistenceError === null ? null : describePersistElementsError(persistenceError)
         }

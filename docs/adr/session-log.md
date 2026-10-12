@@ -1,5 +1,14 @@
 # Session Log
 
+## 2026-10-12 — TASK-074 Sync status
+
+- Siguiente tarea del backlog: TASK-074 (dependencia TASK-072 DONE, sin IN PROGRESS ni BLOCKED). Alcance confirmado con el usuario: indicador de sincronización en Application + `Badge` en Presentation; `saved` **persiste hasta el próximo cambio** (sin timers) y el badge se **oculta en `idle`**.
+- En Application, `src/application/services/element-persistence-batcher.ts`: nuevo `PersistenceSyncStatus = 'idle' | 'saving' | 'saved' | 'error'` y opción retrocompatible `onStatusChange?`. El batcher emite `saving` en `schedule`, y al resolver cada `persist` emite `error` si falla o `saved` solo cuando no queda nada pendiente ni en vuelo (contador `inFlight` + `pending === null` para no adelantar `saved` con la cadena serializada y la coalescencia). Deduplica emisiones y no emite el `idle` inicial. Sin temporizadores nuevos.
+- Presentation: `WorkspaceShellContainer` añade `useState<PersistenceSyncStatus>('idle')` cableado a `onStatusChange`, lo pasa al layout y lo resetea a `idle` al recargar el board (`fetchElements`). `WorkspaceShellLayout` muestra un `Badge` de `@raulrod/ui` envuelto en `role="status" aria-live="polite"` junto al título; se conserva el `role="alert"` con el detalle del error. Nuevo helper puro `src/presentation/features/workspace-shell/workspace-sync-status.ts` (`describeSyncStatus`: `idle → null`, `saving → info "Saving…"`, `saved → success "Saved"`, `error → destructive "Not saved"`).
+- Tests: +3 en `element-persistence-batcher.test.ts` (saving→saved, error→saving→saved, no `saved` prematuro con coalescencia/in-flight), nuevo `workspace-sync-status.test.ts` (4 mapeos), +2 en `workspace-shell-container.test.tsx` (badge Saving…/Saved alrededor del debounce con `ManualScheduler`, y "Not saved" ante fallo de persistencia).
+- Quality gates en verde: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` (1189 tests, 99 suites) y `npm run build` (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Sin ADR nuevo: el estado de sync sigue el patrón de estado explícito ya usado en los casos de uso y el batcher; el `Badge` es composición de Presentation. La decisión de ciclo de vida (`saved` persistente, `idle` oculto) queda registrada aquí.
+
 ## 2026-10-12 — TASK-073 Debounce/batching
 
 - Siguiente tarea del backlog: TASK-073 (dependencia TASK-072 DONE, sin IN PROGRESS ni BLOCKED). Alcance confirmado con el usuario: **debounce en Application + `writeBatch` de Firestore**, delay por defecto **300 ms**, flush de pendientes en **unmount + `pagehide`**, **`Scheduler` inyectable** como seam de test y **compactación del historial de drag** a una única entrada de undo.

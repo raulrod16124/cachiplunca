@@ -2796,7 +2796,7 @@ Completar **Debounce/batching** dejando un resultado verificable y apto para las
 
 ### TASK-074 — Sync status
 
-**Priority:** P1 · **Depends:** TASK-072 · **Status:** TODO
+**Priority:** P1 · **Depends:** TASK-072 · **Status:** DONE
 
 #### Objetivo
 
@@ -2810,11 +2810,11 @@ Completar **Sync status** dejando un resultado verificable y apto para las tarea
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
