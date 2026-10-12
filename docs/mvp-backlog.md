@@ -3123,7 +3123,7 @@ Completar **Presence port/model** dejando un resultado verificable y apto para l
 
 ### TASK-083 — Connected users
 
-**Priority:** P0 · **Depends:** TASK-082 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-082 · **Status:** DONE
 
 #### Objetivo
 
@@ -3137,11 +3137,11 @@ Completar **Connected users** dejando un resultado verificable y apto para las t
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -4953,6 +4953,14 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) la presencia es efímera: modelo sin persistencia, adapter sobre una colección `presence` aparte, sin heartbeat/TTL (fuera del MVP); (2) se reutiliza el vocabulario de conexión del realtime port (ADR-0012) en vez de duplicarlo; (3) `withdraw(workspaceId, userId)` modela "limpiar presencia al desconectar" que consumirá TASK-085; (4) `announce`/`withdraw` son async para propagar errores de Firestore como `AppError` (patrón del `ElementRepository`).
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-083 (Connected users).
+
+## 2026-10-12 — TASK-083
+
+- Resultado: Servicio de Application `createConnectedUsersStore(presencePort, workspaceId)` en `src/application/services/connected-users-store.ts` (React/Firebase-free) que deriva de la presencia efímera la lista de usuarios conectados. Snapshot estable `{ users: readonly Presence[], error: AppError | null }` (referencia estable + guarda de igualdad, apto para `useSyncExternalStore`); suscripción perezosa al `PresencePort` con el primer subscriber y liberación con el último (patrón de `session-store`), una única suscripción por store. Reductor puro exportado `reduceConnectedUsers(users, event, workspaceId)`: `joined`/`updated` → upsert por `userId` (filtro defensivo `presence.isFor`), `left` → remove, ignora eventos de otro workspace y devuelve orden determinista por `userId`; errores del puerto fijados en `error` conservando `users` y limpiados en el siguiente cambio. Exportado en `services/index.ts`. Sin composición ni UI (llegan en TASK-084/085 y tareas de presentación con consumidor real).
+- Tests/quality gates: 1391 tests pasan (111 suites, +14 en `src/test/unit/application/services/connected-users-store.test.ts`: 6 del reductor —join/update/left, aislamiento por workspace, orden y no mutación— y 8 del store con `FakePresencePort` —estado inicial, lazy connect, una suscripción compartida, timeline de cambios, no-op sin notificación ni cambio de snapshot, error conservando usuarios y limpieza, reconexión tras el último unsubscribe y unsubscribe idempotente—). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) el store queda **scopeado a un workspace** mediante la fábrica (el `workspaceId` es una dependencia), de modo que la suscripción perezosa no necesita un parámetro adicional y el ciclo de vida coincide con el de la pantalla; (2) el error vive en el snapshot (`error`) para que la UI pueda consumirlo por `useSyncExternalStore` sin canal aparte, conservando los usuarios conocidos y limpiándose con el siguiente cambio válido; (3) se incluyen cambios `local` y `remote` (la presencia propia también forma parte de los conectados); (4) sin composición ni hook: TASK-084 (Remote cursors), TASK-085 (Presence cleanup) y las tareas de presentación conservan su alcance; (5) sin ADR por reutilizar el patrón de store de Application ya establecido (`session-store`, `realtime-connection-store`).
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-084 (Remote cursors).
 
 ---
 
