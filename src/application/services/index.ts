@@ -9,3 +9,4 @@ export * from './element-duplicate';
 export * from './selection-store';
 export * from './selection-keyboard';
 export * from './element-copy-paste';
+export * from './element-persistence';

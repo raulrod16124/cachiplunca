@@ -2695,7 +2695,7 @@ Completar **Load workspace elements** dejando un resultado verificable y apto pa
 
 ### TASK-071 — Persist element mutations
 
-**Priority:** P0 · **Depends:** TASK-069 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-069 · **Status:** DONE
 
 #### Objetivo
 
@@ -2710,12 +2710,12 @@ Completar **Persist element mutations** dejando un resultado verificable y apto 
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -4926,6 +4926,14 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) redo se apoya en `CommandHistory.redo()` (que **re-ejecuta** el comando) y reutiliza el patrón de callback controlado de TASK-065, sin tocar el manager ni introducir un método `redo` en `Command`; (2) se soportan dos atajos, `Ctrl/Cmd + Shift + Z` (estándar, simétrico con undo) y `Ctrl/Cmd + Y` (alias Windows/Linux), decidido con el usuario; (3) la detección tecla→comando vive en Application (testeable sin React/DOM) y el DOM en Presentation, coherente con TASK-029→065; (4) `onRedoElements` opcional: sin él el atajo queda inerte, misma estrategia que `onUndoElements`; (5) sin ADR por ser una decisión local de interacción.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-067 (History edge cases).
+
+## 2026-10-12 — TASK-071
+
+- Resultado: Persistencia de mutaciones de elementos en la capa Application, desacoplada de la UI y de la orquestación. Nuevo servicio `src/application/services/element-persistence.ts`: `createElementPersistence(elementRepository: ElementRepository)` devuelve `ElementPersistence` con `save`, `saveMany`, `remove` y `removeMany`, cada uno con resultado discriminado `{ status: 'ok' } | { status: 'error', error: AppError }` y traducción de errores vía `toAppError` (nunca se filtran errores crudos del repositorio). Las listas vacías (`saveMany`/`removeMany`) son no-op y no invocan al repositorio. Solo depende del port; sin React, Firebase ni styled-components. Exportado en `src/application/services/index.ts`.
+- Tests/quality gates: 1144 tests pasan (96 suites, +11 en `src/test/unit/application/services/element-persistence.test.ts` con `FakeElementRepository`: save recuperable, saveMany por lote, remove/removeMany efectivos, no-op con listas vacías verificado con `jest.spyOn`, mapeo de fallos a `AppError` —incluido `notFound`/`NOT_FOUND_RESOURCE`—, `isAppError` en errores mapeados e inmutabilidad de las colecciones de entrada). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) alcance acotado a Application por acuerdo con el usuario: el cableado del `Canvas` y la orquestación de persistencia corresponden a TASK-072 y el debounce/batching a TASK-073; (2) el resultado `ok` no devuelve el elemento (el repositorio ya lo validó y el owner del estado es la UI): mantiene el contrato mínimo y evita duplicar datos; (3) las listas vacías no tocan el repositorio para no generar operaciones innecesarias con Firestore; (4) sin ADR por reutilizar el patrón ya establecido en `load-workspace-elements` (port inyectado, unión discriminada, `toAppError`).
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-072 (Persistence orchestration).
 
 ---
 
