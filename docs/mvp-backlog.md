@@ -2862,7 +2862,7 @@ Completar **Recovery after refresh** dejando un resultado verificable y apto par
 
 ### TASK-076 — Realtime port
 
-**Priority:** P0 · **Depends:** TASK-068 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-068 · **Status:** DONE
 
 #### Objetivo
 
@@ -2878,11 +2878,11 @@ Definir el port de colaboración realtime.
 
 #### Criterios de aceptación
 
-- [ ] Application usa realtime mediante port.
-- [ ] No se expone Firestore a Presentation.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] No se crean listeners duplicados.
+- [x] Application usa realtime mediante port.
+- [x] No se expone Firestore a Presentation.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] No se crean listeners duplicados.
 
 #### Fuera de alcance
 

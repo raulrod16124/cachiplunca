@@ -1,5 +1,16 @@
 # Session Log
 
+## 2026-10-12 — TASK-076 Realtime port
+
+- Siguiente tarea del backlog: TASK-076 (dependencia TASK-068 DONE, sin IN PROGRESS ni BLOCKED). Alcance confirmado con el usuario: entregable = **port + gestor de suscripciones**, eventos de **cambios granulares con `origin`**, y **sin `publish` en el port** (las escrituras siguen por `ElementRepository`).
+- En Application, nuevo `src/application/ports/realtime-port.ts`: `RealtimePort.subscribe(workspaceId, listener, onError?) → Unsubscribe` (mismo patrón de suscripción que `AuthPort`, ADR-0002). `ElementRealtimeEvent = { workspaceId, changes }`; `ElementRealtimeChange` discriminado por `kind` (`added`/`modified` con `Element`, `removed` con `ElementId`), cada cambio con `origin: 'local' | 'remote'`. Exportado en `ports/index.ts`.
+- Contrato **subsequent-only**: no hay replay del estado inicial; la carga inicial sigue siendo `load-workspace-elements` (TASK-070) y el adapter (TASK-077) descartará el primer snapshot. Errores por `onError(error: AppError)` opcional, usando el kind `collaboration`/`COLLABORATION_SYNC_FAILED` ya existente.
+- Nuevo `src/application/services/realtime-subscription-manager.ts`: `createRealtimeSubscriptionManager(port)` mantiene **una sola** suscripción al port por workspace (canal con `Set` de listeners y de error listeners) y hace fan-out; abre con el primer consumidor y cierra al irse el último, reabrible; `dispose()` cierra todos los canales. `Unsubscribe` idempotente y fan-out sobre copia (un consumidor que se da de baja durante la entrega no rompe al resto). Exportado en `services/index.ts`. Satisface "no se crean listeners duplicados".
+- Nuevo `src/test/fixtures/fake-realtime-port.ts` (bus en memoria con `emit`/`emitError`/`activeSubscriptionCount`) y contrato reutilizable `src/test/contract/realtime-port-contract.ts` sobre un `RealtimePortHarness` (port + controles de emisión) para que TASK-077 lo reutilice con Firestore mockeado.
+- Tests: +12 del contrato del fake (`fake-realtime-port.test.ts`, incl. idempotencia, aislamiento por workspace, errores sin `onError`) y +13 del gestor (`realtime-subscription-manager.test.ts`, incl. suscripción única por workspace, reapertura, baja durante fan-out y `dispose`).
+- Quality gates en verde: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build`.
+- ADR-0008 (`docs/adr/0008-realtime-port.md`): frontera unidireccional de lectura, eventos granulares con origen, sin `publish`, semántica subsequent-only y gestor de suscripciones como punto único de lifecycle.
+
 ## 2026-10-12 — TASK-075 Recovery after refresh
 
 - Siguiente tarea del backlog: TASK-075 (dependencias TASK-070 y TASK-073 DONE, sin IN PROGRESS ni BLOCKED). Alcance confirmado con el usuario: **verificar + endurecer el unload** (tests de recuperación end-to-end y trigger `visibilitychange`), sin persistencia local ni cambios de arquitectura.
