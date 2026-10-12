@@ -1,5 +1,15 @@
 # Session Log
 
+## 2026-10-12 — TASK-070 Load workspace elements
+
+- Siguiente tarea del backlog: TASK-070 (dependencia TASK-069 DONE, sin IN PROGRESS ni BLOCKED). Alcance confirmado con el usuario: query de aplicación **+ wiring de UI** para que el canvas del workspace reciba los elementos cargados.
+- En Application, nuevo `src/application/queries/load-workspace-elements.ts`: `createLoadWorkspaceElements(elementRepository)` devuelve `LoadWorkspaceElementsResult = ok(elements) | error(AppError)`, valida `WorkspaceId.create(workspaceId)` y traduce cualquier fallo del repositorio con `toAppError` (nunca expone errores crudos ni lanza). Helper puro `sortElementsForLoad` con orden determinista por `createdAt` y desempate por `id` (render reproducible). Exportado en `queries/index.ts`.
+- Composición: nuevo `src/app/config/element-services.ts` (`createElementServices`) instancia `createFirebaseElementRepository(getFirebaseFirestore())` y `createLoadWorkspaceElements` en el único punto de contacto con Infrastructure, junto a `auth-services`/`workspace-services`. `App.tsx` lo compone y lo propaga por `AppRoutes → WorkspaceShellPage → WorkspaceShellContainer → WorkspaceShellLayout → Canvas elements`.
+- Presentation: `WorkspaceShellContainer` carga los elementos cuando el workspace resuelve `ok`, con estados explícitos `loading/error/success`, mensaje de error amigable (`describeLoadWorkspaceElementsError` en `workspace-error-messages.ts`) y retry. `WorkspaceShellLayout` pasa `elements` al `Canvas`, que ya los renderizaba con posición/tamaño/rotación vía `ElementView`.
+- Tests: nuevo `src/test/unit/application/queries/load-workspace-elements.test.ts` (8 casos: lista vacía, elementos del workspace, aislamiento por workspace, fallo del repo → `AppError`, `workspaceId` inválido sin tocar el repositorio y orden/estabilidad de `sortElementsForLoad`); `workspace-shell-container.test.tsx` ampliado con carga+render de elementos (posición/tamaño), estado loading de board, error de board + retry y mensaje de error tipado; actualizados `workspace-shell-routes`, `auth-routes` y `create-workspace-flow` al nuevo prop de `AppRoutes`.
+- Quality gates en verde: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` (1133 tests, 95 suites) y `npm run build` (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Sin ADR nuevo: sigue el patrón query/composición ya documentado (get-workspace/list-workspaces); la carga de elementos es una extensión coherente, no una decisión arquitectónica nueva.
+
 ## 2026-10-11 — TASK-069 Firestore element repository
 
 - Siguiente tarea del backlog: TASK-069 (dependencia TASK-068 DONE, sin IN PROGRESS ni BLOCKED). Alcance confirmado con el usuario: implementar el adapter Firestore del `ElementRepository` usando colección top-level `elements` con campo `workspaceId` (el port no incluye `workspaceId` en `findById`/`delete`/`deleteMany`, por lo que una subcolección por workspace no es viable sin cambiar el contrato ya cerrado de TASK-068).

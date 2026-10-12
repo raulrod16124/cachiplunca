@@ -1,16 +1,18 @@
 import type { ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { LogoutUser } from '../../../application/commands';
-import type { GetWorkspace } from '../../../application/queries';
+import type { GetWorkspace, LoadWorkspaceElements } from '../../../application/queries';
 import { WorkspaceShellContainer } from './components/workspace-shell-container';
 
 export interface WorkspaceShellPageProps {
   readonly getWorkspace: GetWorkspace;
+  readonly loadWorkspaceElements: LoadWorkspaceElements;
   readonly logoutUser: LogoutUser;
 }
 
 export function WorkspaceShellPage({
   getWorkspace,
+  loadWorkspaceElements,
   logoutUser,
 }: WorkspaceShellPageProps): ReactNode {
   const { workspaceId } = useParams<{ workspaceId: string }>();
@@ -24,6 +26,7 @@ export function WorkspaceShellPage({
     <WorkspaceShellContainer
       workspaceId={workspaceId}
       getWorkspace={getWorkspace}
+      loadWorkspaceElements={loadWorkspaceElements}
       logoutUser={logoutUser}
       onBack={() => navigate('/workspaces')}
     />

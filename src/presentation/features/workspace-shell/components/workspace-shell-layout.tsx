@@ -33,6 +33,7 @@ const CanvasArea = styled.main`
 
 export interface WorkspaceShellLayoutProps {
   readonly workspace: Workspace;
+  readonly elements: readonly Element[];
   readonly logoutUser: LogoutUser;
   readonly onBack: () => void;
   readonly canvasViewportStore: CanvasViewportStore;
@@ -42,6 +43,7 @@ export interface WorkspaceShellLayoutProps {
 
 export function WorkspaceShellLayout({
   workspace,
+  elements,
   logoutUser,
   onBack,
   canvasViewportStore,
@@ -74,6 +76,7 @@ export function WorkspaceShellLayout({
         <Canvas
           store={canvasViewportStore}
           selectionStore={selectionStore}
+          elements={elements}
           history={commandHistory}
         />
       </CanvasArea>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { createAuthServices } from './app/config/auth-services';
+import { createElementServices } from './app/config/element-services';
 import { createWorkspaceServices } from './app/config/workspace-services';
 import { AppRoutes } from './app/routes/app-routes';
 import { SessionProvider } from './app/providers/session-provider';
@@ -8,6 +9,7 @@ import { SessionProvider } from './app/providers/session-provider';
 function App() {
   const [authServices] = useState(createAuthServices);
   const [workspaceServices] = useState(createWorkspaceServices);
+  const [elementServices] = useState(createElementServices);
 
   return (
     <BrowserRouter>
@@ -19,6 +21,7 @@ function App() {
           listWorkspaces={workspaceServices.listWorkspaces}
           createWorkspace={workspaceServices.createWorkspace}
           getWorkspace={workspaceServices.getWorkspace}
+          loadWorkspaceElements={elementServices.loadWorkspaceElements}
         />
       </SessionProvider>
     </BrowserRouter>

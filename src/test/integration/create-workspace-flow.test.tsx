@@ -8,13 +8,14 @@ import {
   createLogoutUser,
   createRegisterUser,
 } from '../../application/commands';
-import { createGetWorkspace } from '../../application/queries';
+import { createGetWorkspace, createLoadWorkspaceElements } from '../../application/queries';
 import type {
   ListWorkspaces,
   ListWorkspacesResult,
 } from '../../application/queries/list-workspaces';
 import { createSessionStore } from '../../application/services';
 import { FakeAuthPort } from '../fixtures/fake-auth-port';
+import { FakeElementRepository } from '../fixtures/fake-element-repository';
 import { FakeWorkspaceRepository } from '../fixtures/fake-workspace-repository';
 
 const CREDENTIALS = { email: 'user@example.com', password: 'secret123' };
@@ -29,6 +30,7 @@ async function renderAuthenticatedApp() {
     workspaces: await repository.list(),
   }));
   const listWorkspacesQuery: ListWorkspaces = listWorkspaces;
+  const elementRepository = new FakeElementRepository();
 
   const view = render(
     <MemoryRouter initialEntries={['/workspaces']}>
@@ -40,6 +42,7 @@ async function renderAuthenticatedApp() {
           listWorkspaces={listWorkspacesQuery}
           createWorkspace={createCreateWorkspace(repository)}
           getWorkspace={createGetWorkspace(repository)}
+          loadWorkspaceElements={createLoadWorkspaceElements(elementRepository)}
         />
       </SessionProvider>
     </MemoryRouter>,

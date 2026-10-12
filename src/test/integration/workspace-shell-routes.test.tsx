@@ -9,9 +9,14 @@ import {
   createLogoutUser,
   createRegisterUser,
 } from '../../application/commands';
-import { createGetWorkspace, createListWorkspaces } from '../../application/queries';
+import {
+  createGetWorkspace,
+  createListWorkspaces,
+  createLoadWorkspaceElements,
+} from '../../application/queries';
 import { createSessionStore } from '../../application/services';
 import { FakeAuthPort } from '../fixtures/fake-auth-port';
+import { FakeElementRepository } from '../fixtures/fake-element-repository';
 import { FakeWorkspaceRepository } from '../fixtures/fake-workspace-repository';
 
 const CREDENTIALS = { email: 'user@example.com', password: 'secret123' };
@@ -27,6 +32,7 @@ async function renderAuthenticatedApp(initialPath = '/workspaces') {
 
   const repository = new FakeWorkspaceRepository();
   const workspace = await repository.create({ name: 'Roadmap Q4' });
+  const elementRepository = new FakeElementRepository();
 
   const view = render(
     <MemoryRouter initialEntries={[initialPath]}>
@@ -38,13 +44,14 @@ async function renderAuthenticatedApp(initialPath = '/workspaces') {
           listWorkspaces={createListWorkspaces(repository)}
           createWorkspace={createCreateWorkspace(repository)}
           getWorkspace={createGetWorkspace(repository)}
+          loadWorkspaceElements={createLoadWorkspaceElements(elementRepository)}
         />
       </SessionProvider>
       <LocationProbe />
     </MemoryRouter>,
   );
 
-  return { ...view, repository, workspace };
+  return { ...view, repository, elementRepository, workspace };
 }
 
 describe('workspace shell routes', () => {

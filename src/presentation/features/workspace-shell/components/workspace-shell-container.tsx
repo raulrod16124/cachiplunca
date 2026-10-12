@@ -3,7 +3,11 @@ import type { ReactNode } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import type { LogoutUser } from '../../../../application/commands';
-import type { GetWorkspace, GetWorkspaceResult } from '../../../../application/queries';
+import type {
+  GetWorkspace,
+  GetWorkspaceResult,
+  LoadWorkspaceElements,
+} from '../../../../application/queries';
 import {
   createCanvasViewportStore,
   createCommandHistory,
@@ -16,9 +20,12 @@ import type {
 } from '../../../../application/services';
 import type { Element } from '../../../../domain/element';
 import { Size } from '../../../../domain/shared';
-import { toAppError } from '../../../../shared/errors';
+import { toAppError, type AppError } from '../../../../shared/errors';
 import { WorkspaceShellLayout } from './workspace-shell-layout';
-import { describeGetWorkspaceError } from '../workspace-error-messages';
+import {
+  describeGetWorkspaceError,
+  describeLoadWorkspaceElementsError,
+} from '../workspace-error-messages';
 
 const Container = styled.div`
   padding: 24px;
@@ -27,6 +34,7 @@ const Container = styled.div`
 export interface WorkspaceShellContainerProps {
   readonly workspaceId: string;
   readonly getWorkspace: GetWorkspace;
+  readonly loadWorkspaceElements: LoadWorkspaceElements;
   readonly logoutUser: LogoutUser;
   readonly onBack: () => void;
 }
@@ -34,11 +42,15 @@ export interface WorkspaceShellContainerProps {
 export function WorkspaceShellContainer({
   workspaceId,
   getWorkspace,
+  loadWorkspaceElements,
   logoutUser,
   onBack,
 }: WorkspaceShellContainerProps): ReactNode {
   const [status, setStatus] = useState<'loading' | 'notFound' | 'error' | 'success'>('loading');
   const [result, setResult] = useState<GetWorkspaceResult | null>(null);
+  const [elements, setElements] = useState<readonly Element[]>([]);
+  const [elementsStatus, setElementsStatus] = useState<'loading' | 'error' | 'success'>('loading');
+  const [elementsError, setElementsError] = useState<AppError | null>(null);
   const canvasViewportStoreRef = useRef<CanvasViewportStore>(
     createCanvasViewportStore(Size.create(800, 600)),
   );
@@ -59,9 +71,33 @@ export function WorkspaceShellContainer({
     }
   }, [getWorkspace, workspaceId]);
 
+  const fetchElements = useCallback(async (): Promise<void> => {
+    setElementsStatus('loading');
+    setElementsError(null);
+    try {
+      const response = await loadWorkspaceElements(workspaceId);
+      if (response.status === 'ok') {
+        setElements(response.elements);
+        setElementsStatus('success');
+        return;
+      }
+      setElementsError(response.error);
+      setElementsStatus('error');
+    } catch (error) {
+      setElementsError(toAppError(error));
+      setElementsStatus('error');
+    }
+  }, [loadWorkspaceElements, workspaceId]);
+
   useEffect(() => {
     void fetchWorkspace();
   }, [fetchWorkspace]);
+
+  useEffect(() => {
+    if (status === 'success') {
+      void fetchElements();
+    }
+  }, [status, fetchElements]);
 
   if (status === 'loading') {
     return (
@@ -118,9 +154,46 @@ export function WorkspaceShellContainer({
   }
 
   if (result?.status === 'ok') {
+    if (elementsStatus === 'loading') {
+      return (
+        <Container role="status" aria-busy="true">
+          <VisuallyHidden>Loading board</VisuallyHidden>
+          <Stack gap="space-4">
+            <Skeleton style={{ height: '32px', width: '40%' }} />
+            <Skeleton style={{ height: '400px', width: '100%' }} />
+          </Stack>
+        </Container>
+      );
+    }
+
+    if (elementsStatus === 'error') {
+      const errorMessage =
+        elementsError === null
+          ? 'Something went wrong.'
+          : describeLoadWorkspaceElementsError(elementsError);
+
+      return (
+        <Container role="alert" aria-live="polite">
+          <Stack gap="space-4">
+            <Heading as="h1">Could not load board</Heading>
+            <Text color="color.text.muted">{errorMessage}</Text>
+            <Inline gap="space-2">
+              <Button type="button" variant="primary" onClick={fetchElements}>
+                Retry
+              </Button>
+              <Button type="button" variant="outline" onClick={onBack}>
+                Back to workspaces
+              </Button>
+            </Inline>
+          </Stack>
+        </Container>
+      );
+    }
+
     return (
       <WorkspaceShellLayout
         workspace={result.workspace}
+        elements={elements}
         logoutUser={logoutUser}
         onBack={onBack}
         canvasViewportStore={canvasViewportStoreRef.current}

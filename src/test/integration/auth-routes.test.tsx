@@ -53,6 +53,9 @@ function renderApp(
               throw new Error('Not implemented');
             },
           })}
+          loadWorkspaceElements={jest
+            .fn()
+            .mockResolvedValue({ status: 'ok' as const, elements: [] })}
         />
       </SessionProvider>
       <LocationProbe />
