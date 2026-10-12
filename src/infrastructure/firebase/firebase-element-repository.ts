@@ -7,6 +7,7 @@ import {
   query,
   setDoc,
   where,
+  writeBatch,
   type Firestore,
 } from 'firebase/firestore';
 import type { ElementRepository } from '../../application/ports';
@@ -17,6 +18,8 @@ import { mapFirebaseError } from './firebase-error-mapper';
 import { fromElementDocument, toElementDocument } from './firebase-element-mapper';
 
 const ELEMENTS_COLLECTION = 'elements';
+
+const FIRESTORE_BATCH_WRITE_LIMIT = 500;
 
 export function createFirebaseElementRepository(db: Firestore): ElementRepository {
   const elementsCollection = collection(db, ELEMENTS_COLLECTION);
@@ -47,10 +50,17 @@ export function createFirebaseElementRepository(db: Firestore): ElementRepositor
 
     async saveMany(elements: readonly Element[]): Promise<Element[]> {
       const validated = elements.map(assertValidElement);
-      for (const element of validated) {
-        const document = toElementDocument(element);
-        await withMappedErrors(() => setDoc(elementRef(element.id), document));
+
+      for (const chunk of chunkBy(validated, FIRESTORE_BATCH_WRITE_LIMIT)) {
+        await withMappedErrors(async () => {
+          const batch = writeBatch(db);
+          for (const element of chunk) {
+            batch.set(elementRef(element.id), toElementDocument(element));
+          }
+          await batch.commit();
+        });
       }
+
       return validated;
     },
 
@@ -69,11 +79,26 @@ export function createFirebaseElementRepository(db: Firestore): ElementRepositor
           throw notFoundError(id);
         }
       }
-      for (const id of ids) {
-        await withMappedErrors(() => deleteDoc(elementRef(id)));
+
+      for (const chunk of chunkBy(ids, FIRESTORE_BATCH_WRITE_LIMIT)) {
+        await withMappedErrors(async () => {
+          const batch = writeBatch(db);
+          for (const id of chunk) {
+            batch.delete(elementRef(id));
+          }
+          await batch.commit();
+        });
       }
     },
   };
+}
+
+function chunkBy<T>(items: readonly T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+  return chunks;
 }
 
 function readElement(id: string, data: unknown): Element {

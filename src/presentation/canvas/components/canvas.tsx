@@ -108,6 +108,7 @@ export interface CanvasProps {
   readonly renderers?: ElementRendererRegistry;
   readonly onMoveElements?: (elements: readonly Element[]) => void;
   readonly onResizeElements?: (elements: readonly Element[]) => void;
+  readonly onTransformEnd?: () => void;
   readonly onDeleteElements?: (elements: readonly Element[]) => void;
   readonly onDuplicateElements?: (
     elements: readonly Element[],
@@ -127,6 +128,7 @@ export function Canvas({
   renderers,
   onMoveElements,
   onResizeElements,
+  onTransformEnd,
   onDeleteElements,
   onDuplicateElements,
   onPasteElements,
@@ -201,6 +203,7 @@ export function Canvas({
     selectedIds: selection.selectedIds,
     onMoveElements,
     onSelectOnly: handleSelectOnly,
+    onTransformEnd,
     spacePressed,
   });
 
@@ -209,6 +212,7 @@ export function Canvas({
     viewport,
     selectedIds: selection.selectedIds,
     onResizeElements,
+    onTransformEnd,
     spacePressed,
   });
 

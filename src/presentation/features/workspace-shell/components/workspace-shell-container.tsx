@@ -11,12 +11,15 @@ import type {
 import {
   createCanvasViewportStore,
   createCommandHistory,
+  createElementPersistenceBatcher,
   createSelectionStore,
 } from '../../../../application/services';
 import type {
   CanvasViewportStore,
   CommandHistory,
+  ElementPersistenceBatcher,
   ElementPersistenceOrchestrator,
+  Scheduler,
   SelectionStore,
 } from '../../../../application/services';
 import type { Element } from '../../../../domain/element';
@@ -42,6 +45,13 @@ export interface WorkspaceShellContainerProps {
   readonly generateElementId: () => ElementId;
   readonly logoutUser: LogoutUser;
   readonly onBack: () => void;
+  readonly persistenceDebounceMs?: number;
+  readonly persistenceScheduler?: Scheduler;
+}
+
+interface TransformGesture {
+  readonly base: readonly Element[];
+  readonly label: string;
 }
 
 export function WorkspaceShellContainer({
@@ -52,6 +62,8 @@ export function WorkspaceShellContainer({
   generateElementId,
   logoutUser,
   onBack,
+  persistenceDebounceMs,
+  persistenceScheduler,
 }: WorkspaceShellContainerProps): ReactNode {
   const [status, setStatus] = useState<'loading' | 'notFound' | 'error' | 'success'>('loading');
   const [result, setResult] = useState<GetWorkspaceResult | null>(null);
@@ -67,18 +79,46 @@ export function WorkspaceShellContainer({
   const commandHistoryRef = useRef<CommandHistory<readonly Element[]>>(
     createCommandHistory<readonly Element[]>({ initial: [] }),
   );
+  const persistenceBatcherRef = useRef<ElementPersistenceBatcher | null>(null);
+
+  if (persistenceBatcherRef.current === null) {
+    persistenceBatcherRef.current = createElementPersistenceBatcher({
+      orchestrator: elementPersistenceOrchestrator,
+      onResult: (result) => {
+        setPersistenceError(result.status === 'error' ? result.error : null);
+      },
+      delayMs: persistenceDebounceMs,
+      scheduler: persistenceScheduler,
+    });
+  }
+
+  const persistenceBatcher = persistenceBatcherRef.current;
+  const transformGestureRef = useRef<TransformGesture | null>(null);
+
+  useEffect(() => {
+    function flush(): void {
+      void persistenceBatcher.flush();
+    }
+
+    window.addEventListener('pagehide', flush);
+
+    return () => {
+      window.removeEventListener('pagehide', flush);
+      flush();
+    };
+  }, [persistenceBatcher]);
+
+  const applyElements = useCallback((next: readonly Element[]): void => {
+    elementsRef.current = next;
+    setElements(next);
+  }, []);
 
   const persistElements = useCallback(
     (previous: readonly Element[], next: readonly Element[]): void => {
-      elementsRef.current = next;
-      setElements(next);
-
-      void (async () => {
-        const response = await elementPersistenceOrchestrator.persistDelta(previous, next);
-        setPersistenceError(response.status === 'error' ? response.error : null);
-      })();
+      applyElements(next);
+      persistenceBatcher.schedule(previous, next);
     },
-    [elementPersistenceOrchestrator],
+    [applyElements, persistenceBatcher],
   );
 
   const commitElements = useCallback(
@@ -97,24 +137,54 @@ export function WorkspaceShellContainer({
         return;
       }
 
-      persistElements(previous, result.state);
+      applyElements(result.state);
+      persistenceBatcher.schedule(previous, result.state);
+      void persistenceBatcher.flush();
     },
-    [persistElements],
+    [applyElements, persistenceBatcher],
   );
 
   const handleMoveElements = useCallback(
     (next: readonly Element[]) => {
-      commitElements(next, 'Move elements');
+      const previous = elementsRef.current;
+
+      if (previous === next) {
+        return;
+      }
+
+      transformGestureRef.current ??= { base: previous, label: 'Move elements' };
+      persistElements(previous, next);
     },
-    [commitElements],
+    [persistElements],
   );
 
   const handleResizeElements = useCallback(
     (next: readonly Element[]) => {
-      commitElements(next, 'Resize elements');
+      const previous = elementsRef.current;
+
+      if (previous === next) {
+        return;
+      }
+
+      transformGestureRef.current ??= { base: previous, label: 'Resize elements' };
+      persistElements(previous, next);
     },
-    [commitElements],
+    [persistElements],
   );
+
+  const handleTransformEnd = useCallback((): void => {
+    const gesture = transformGestureRef.current;
+
+    if (gesture === null) {
+      return;
+    }
+
+    transformGestureRef.current = null;
+    commandHistoryRef.current.execute(
+      createSnapshotCommand(gesture.base, elementsRef.current, gesture.label),
+    );
+    void persistenceBatcher.flush();
+  }, [persistenceBatcher]);
 
   const handleDeleteElements = useCallback(
     (next: readonly Element[]) => {
@@ -139,16 +209,22 @@ export function WorkspaceShellContainer({
 
   const handleUndoElements = useCallback(
     (restored: readonly Element[]) => {
-      persistElements(elementsRef.current, restored);
+      const previous = elementsRef.current;
+      applyElements(restored);
+      persistenceBatcher.schedule(previous, restored);
+      void persistenceBatcher.flush();
     },
-    [persistElements],
+    [applyElements, persistenceBatcher],
   );
 
   const handleRedoElements = useCallback(
     (restored: readonly Element[]) => {
-      persistElements(elementsRef.current, restored);
+      const previous = elementsRef.current;
+      applyElements(restored);
+      persistenceBatcher.schedule(previous, restored);
+      void persistenceBatcher.flush();
     },
-    [persistElements],
+    [applyElements, persistenceBatcher],
   );
 
   const fetchWorkspace = useCallback(async (): Promise<void> => {
@@ -295,6 +371,7 @@ export function WorkspaceShellContainer({
         commandHistory={commandHistoryRef.current}
         onMoveElements={handleMoveElements}
         onResizeElements={handleResizeElements}
+        onTransformEnd={handleTransformEnd}
         onDeleteElements={handleDeleteElements}
         onDuplicateElements={handleDuplicateElements}
         onPasteElements={handlePasteElements}

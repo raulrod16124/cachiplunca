@@ -173,4 +173,70 @@ describe('createFirebaseElementRepository', () => {
     expect(isTextElement(listed[0] as Element)).toBe(true);
     expect((listed[0] as TextElement).content).toBe('Here');
   });
+
+  it('writes saveMany through a single atomic writeBatch', async () => {
+    const repository = createFirebaseElementRepository(makeFirestore());
+    const workspaceId = WorkspaceId.create('ws-1');
+    const writeSpy = jest.spyOn(firestoreMock, 'writeBatch');
+
+    await repository.saveMany([
+      buildTextElement('el-1', workspaceId, 'One'),
+      buildTextElement('el-2', workspaceId, 'Two'),
+    ]);
+
+    expect(writeSpy).toHaveBeenCalledTimes(1);
+    expect(firestoreMock.__read('elements/el-1')?.content).toBe('One');
+    expect(firestoreMock.__read('elements/el-2')?.content).toBe('Two');
+
+    writeSpy.mockRestore();
+  });
+
+  it('deletes a batch through a single atomic writeBatch', async () => {
+    const repository = createFirebaseElementRepository(makeFirestore());
+    const workspaceId = WorkspaceId.create('ws-1');
+    await repository.saveMany([
+      buildTextElement('el-1', workspaceId, 'One'),
+      buildTextElement('el-2', workspaceId, 'Two'),
+    ]);
+    const writeSpy = jest.spyOn(firestoreMock, 'writeBatch');
+
+    await repository.deleteMany([ElementId.create('el-1'), ElementId.create('el-2')]);
+
+    expect(writeSpy).toHaveBeenCalledTimes(1);
+    expect(firestoreMock.__paths()).toEqual([]);
+
+    writeSpy.mockRestore();
+  });
+
+  it('splits large batches into chunks of at most 500 writes', async () => {
+    const repository = createFirebaseElementRepository(makeFirestore());
+    const workspaceId = WorkspaceId.create('ws-1');
+    const elements = Array.from({ length: 501 }, (_, index) =>
+      buildTextElement(`el-${index}`, workspaceId, `content-${index}`),
+    );
+    const writeSpy = jest.spyOn(firestoreMock, 'writeBatch');
+
+    await repository.saveMany(elements);
+
+    expect(writeSpy).toHaveBeenCalledTimes(2);
+    expect(firestoreMock.__paths()).toHaveLength(501);
+
+    writeSpy.mockRestore();
+  });
+
+  it('maps a writeBatch failure into an AppError without partial writes', async () => {
+    const repository = createFirebaseElementRepository(makeFirestore());
+    firestoreMock.__failNextWith('unavailable');
+
+    const error: unknown = await repository
+      .saveMany([buildTextElement('el-1', WorkspaceId.create('ws-1'), 'Blocked')])
+      .catch((reason: unknown) => reason);
+
+    expect(error).toMatchObject({
+      kind: 'network',
+      code: ERROR_CODES.NETWORK_REQUEST_FAILED,
+    });
+    expect(isAppError(error)).toBe(true);
+    expect(firestoreMock.__paths()).toEqual([]);
+  });
 });

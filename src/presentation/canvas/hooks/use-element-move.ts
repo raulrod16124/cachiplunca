@@ -11,6 +11,7 @@ export interface UseElementMoveOptions {
   readonly selectedIds: readonly string[];
   readonly onMoveElements?: (elements: readonly Element[]) => void;
   readonly onSelectOnly?: (id: string) => void;
+  readonly onTransformEnd?: () => void;
   readonly spacePressed?: boolean;
   readonly disabled?: boolean;
 }
@@ -54,6 +55,7 @@ export function useElementMove({
   selectedIds,
   onMoveElements,
   onSelectOnly,
+  onTransformEnd,
   spacePressed = false,
   disabled = false,
 }: UseElementMoveOptions): UseElementMoveResult {
@@ -65,6 +67,7 @@ export function useElementMove({
     selectedIds,
     onMoveElements,
     onSelectOnly,
+    onTransformEnd,
     spacePressed,
   });
   latestRef.current = {
@@ -73,6 +76,7 @@ export function useElementMove({
     selectedIds,
     onMoveElements,
     onSelectOnly,
+    onTransformEnd,
     spacePressed,
   };
 
@@ -184,7 +188,12 @@ export function useElementMove({
       const pressedId = hitId;
       reset();
 
-      if (!wasActive && pressedId !== null) {
+      if (wasActive) {
+        latestRef.current.onTransformEnd?.();
+        return;
+      }
+
+      if (pressedId !== null) {
         latestRef.current.onSelectOnly?.(pressedId);
       }
     }
@@ -194,7 +203,12 @@ export function useElementMove({
         return;
       }
 
+      const wasActive = isActive;
       reset();
+
+      if (wasActive) {
+        latestRef.current.onTransformEnd?.();
+      }
     }
 
     element.addEventListener('pointerdown', handlePointerDown);

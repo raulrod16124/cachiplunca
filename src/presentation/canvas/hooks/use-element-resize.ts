@@ -22,6 +22,7 @@ export interface UseElementResizeOptions {
   readonly viewport: Viewport;
   readonly selectedIds: readonly string[];
   readonly onResizeElements?: (elements: readonly Element[]) => void;
+  readonly onTransformEnd?: () => void;
   readonly spacePressed?: boolean;
   readonly disabled?: boolean;
 }
@@ -70,6 +71,7 @@ export function useElementResize({
   viewport,
   selectedIds,
   onResizeElements,
+  onTransformEnd,
   spacePressed = false,
   disabled = false,
 }: UseElementResizeOptions): UseElementResizeResult {
@@ -80,6 +82,7 @@ export function useElementResize({
     viewport,
     selectedIds,
     onResizeElements,
+    onTransformEnd,
     spacePressed,
   });
   latestRef.current = {
@@ -87,6 +90,7 @@ export function useElementResize({
     viewport,
     selectedIds,
     onResizeElements,
+    onTransformEnd,
     spacePressed,
   };
 
@@ -223,7 +227,12 @@ export function useElementResize({
         return;
       }
 
+      const wasActive = isActive;
       reset();
+
+      if (wasActive) {
+        latestRef.current.onTransformEnd?.();
+      }
     }
 
     function handlePointerCancel(event: PointerEvent): void {
@@ -231,7 +240,12 @@ export function useElementResize({
         return;
       }
 
+      const wasActive = isActive;
       reset();
+
+      if (wasActive) {
+        latestRef.current.onTransformEnd?.();
+      }
     }
 
     element.addEventListener('pointerdown', handlePointerDown);

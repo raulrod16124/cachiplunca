@@ -11,3 +11,4 @@ export * from './selection-keyboard';
 export * from './element-copy-paste';
 export * from './element-persistence';
 export * from './element-persistence-orchestrator';
+export * from './element-persistence-batcher';

@@ -288,6 +288,60 @@ describe('useElementMove', () => {
     expect(onSelectOnly).not.toHaveBeenCalled();
   });
 
+  it('calls onTransformEnd once after an active drag ends', async () => {
+    const onMoveElements = jest.fn();
+    const onTransformEnd = jest.fn();
+    renderSurface({ onMoveElements, onTransformEnd });
+    const item = screen.getByTestId('item');
+    const user = userEvent.setup();
+
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: item, coords: { x: 10, y: 10 } },
+      { coords: { x: 60, y: 40 } },
+      { keys: '[/MouseLeft]' },
+    ]);
+
+    expect(onTransformEnd).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not call onTransformEnd for a click below the drag threshold', async () => {
+    const onMoveElements = jest.fn();
+    const onSelectOnly = jest.fn();
+    const onTransformEnd = jest.fn();
+    renderSurface({ onMoveElements, onSelectOnly, onTransformEnd });
+    const item = screen.getByTestId('item');
+    const user = userEvent.setup();
+
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: item, coords: { x: 10, y: 10 } },
+      { coords: { x: 12, y: 11 } },
+      { keys: '[/MouseLeft]' },
+    ]);
+
+    expect(onTransformEnd).not.toHaveBeenCalled();
+    expect(onSelectOnly).toHaveBeenCalledWith('item');
+  });
+
+  it('calls onTransformEnd on pointer cancel after an active drag', () => {
+    const onMoveElements = jest.fn();
+    const onTransformEnd = jest.fn();
+    renderSurface({ onMoveElements, onTransformEnd });
+    const item = screen.getByTestId('item');
+
+    dispatchPointer('pointerdown', item, { button: 0, pointerId: 1, clientX: 10, clientY: 10 });
+    act(() => {
+      dispatchPointer('pointermove', item, { pointerId: 1, clientX: 100, clientY: 100 });
+    });
+
+    expect(onTransformEnd).not.toHaveBeenCalled();
+
+    act(() => {
+      dispatchPointer('pointercancel', item, { pointerId: 1 });
+    });
+
+    expect(onTransformEnd).toHaveBeenCalledTimes(1);
+  });
+
   it('does nothing when disabled', async () => {
     const onMoveElements = jest.fn();
     const onSelectOnly = jest.fn();

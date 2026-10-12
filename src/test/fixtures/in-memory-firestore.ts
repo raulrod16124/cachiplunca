@@ -26,6 +26,12 @@ export interface MockQuery {
   readonly constraints: readonly MockConstraint[];
 }
 
+export interface MockWriteBatch {
+  set(ref: MockRef, data: Record<string, unknown>): MockWriteBatch;
+  delete(ref: MockRef): MockWriteBatch;
+  commit(): Promise<void>;
+}
+
 export interface InMemoryFirestoreApi {
   collection(db: unknown, ...segments: string[]): MockRef;
   doc(ref: MockRef, ...segments: string[]): MockRef;
@@ -34,6 +40,7 @@ export interface InMemoryFirestoreApi {
   setDoc(ref: MockRef, data: Record<string, unknown>): Promise<void>;
   updateDoc(ref: MockRef, data: Record<string, unknown>): Promise<void>;
   deleteDoc(ref: MockRef): Promise<void>;
+  writeBatch(db: unknown): MockWriteBatch;
   query(ref: MockRef, ...constraints: MockConstraint[]): MockQuery;
   where(field: string, op: '==', value: unknown): MockConstraint;
   __reset(): void;
@@ -164,6 +171,33 @@ export function createInMemoryFirestoreModule(): InMemoryFirestoreApi {
     async deleteDoc(ref: MockRef): Promise<void> {
       maybeFail();
       store.delete(ref.path);
+    },
+
+    writeBatch(_db: unknown): MockWriteBatch {
+      const operations: (() => void)[] = [];
+
+      const batch: MockWriteBatch = {
+        set(ref: MockRef, data: Record<string, unknown>): MockWriteBatch {
+          operations.push(() => {
+            store.set(ref.path, { ...data });
+          });
+          return batch;
+        },
+        delete(ref: MockRef): MockWriteBatch {
+          operations.push(() => {
+            store.delete(ref.path);
+          });
+          return batch;
+        },
+        async commit(): Promise<void> {
+          maybeFail();
+          for (const operation of operations) {
+            operation();
+          }
+        },
+      };
+
+      return batch;
     },
 
     query(ref: MockRef, ...constraints: MockConstraint[]): MockQuery {

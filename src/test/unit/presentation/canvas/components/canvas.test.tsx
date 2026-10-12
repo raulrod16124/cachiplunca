@@ -34,6 +34,7 @@ function renderCanvas(
   history?: CommandHistory<readonly Element[]>,
   onUndoElements?: (next: readonly Element[]) => void,
   onRedoElements?: (next: readonly Element[]) => void,
+  onTransformEnd?: () => void,
 ) {
   const store = createCanvasViewportStore(Size.create(800, 600));
   const selectionStore = createSelectionStore();
@@ -52,6 +53,7 @@ function renderCanvas(
       history={history}
       onUndoElements={onUndoElements}
       onRedoElements={onRedoElements}
+      onTransformEnd={onTransformEnd}
     />,
   );
 
@@ -545,6 +547,34 @@ describe('Canvas', () => {
 
       await user.pointer({ keys: '[/MouseLeft]' });
       expect(canvas).toHaveAttribute('data-moving', 'false');
+    });
+
+    it('signals the end of a move gesture through onTransformEnd', async () => {
+      const onMoveElements = jest.fn();
+      const onTransformEnd = jest.fn();
+      renderCanvas(
+        [FIRST_ITEM],
+        onMoveElements,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        onTransformEnd,
+      );
+      const item = screen.getByTestId('canvas-item-first');
+      const user = userEvent.setup();
+
+      await user.pointer([
+        { keys: '[MouseLeft>]', target: item, coords: { x: 150, y: 130 } },
+        { coords: { x: 200, y: 160 } },
+        { keys: '[/MouseLeft]' },
+      ]);
+
+      expect(onTransformEnd).toHaveBeenCalledTimes(1);
     });
 
     it('collapses a multi selection to the clicked item on a plain click', async () => {

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import type {
@@ -18,6 +18,7 @@ import { Workspace } from '../../../../../../domain/workspace';
 import { createAppError, ERROR_CODES } from '../../../../../../shared/errors';
 import { WorkspaceShellContainer } from '../../../../../../presentation/features/workspace-shell/components/workspace-shell-container';
 import { FakeElementRepository } from '../../../../../fixtures/fake-element-repository';
+import { ManualScheduler, flushMicrotasks } from '../../../../../fixtures/manual-scheduler';
 
 const WORKSPACE = Workspace.create({
   id: WorkspaceId.create('ws-test'),
@@ -60,6 +61,8 @@ interface RenderOptions {
   readonly id?: string;
   readonly loadWorkspaceElements?: LoadWorkspaceElements;
   readonly elementPersistenceOrchestrator?: ElementPersistenceOrchestrator;
+  readonly persistenceScheduler?: ManualScheduler;
+  readonly persistenceDebounceMs?: number;
 }
 
 function renderContainer(getWorkspace: GetWorkspace, options: RenderOptions = {}) {
@@ -73,6 +76,8 @@ function renderContainer(getWorkspace: GetWorkspace, options: RenderOptions = {}
         generateElementId={sequentialElementIds()}
         logoutUser={LOGOUT_USER}
         onBack={ON_BACK}
+        persistenceScheduler={options.persistenceScheduler}
+        persistenceDebounceMs={options.persistenceDebounceMs}
       />
     </MemoryRouter>,
   );
@@ -304,5 +309,147 @@ describe('WorkspaceShellContainer', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'We could not save your latest changes. Please try again.',
     );
+  });
+
+  it('collapses a drag into a single history entry and persists the final position', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const repository = new FakeElementRepository();
+    await repository.save(TEXT_ELEMENT);
+    const orchestrator = createElementPersistenceOrchestrator(createElementPersistence(repository));
+
+    renderContainer(getWorkspace, {
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [TEXT_ELEMENT],
+      }),
+      elementPersistenceOrchestrator: orchestrator,
+    });
+
+    const canvas = await screen.findByRole('application', { name: 'Canvas' });
+    const item = await screen.findByTestId('canvas-item-el-1');
+    const user = userEvent.setup();
+
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: item, coords: { x: 60, y: 70 } },
+      { coords: { x: 80, y: 90 } },
+      { coords: { x: 100, y: 110 } },
+      { keys: '[/MouseLeft]' },
+    ]);
+
+    await waitFor(async () => {
+      const stored = await repository.findById(ElementId.create('el-1'));
+      expect(stored?.position.equals(Position.create(70, 80))).toBe(true);
+    });
+
+    fireEvent.keyDown(canvas, { key: 'z', ctrlKey: true });
+
+    await waitFor(async () => {
+      const stored = await repository.findById(ElementId.create('el-1'));
+      expect(stored?.position.equals(Position.create(30, 40))).toBe(true);
+    });
+
+    fireEvent.keyDown(canvas, { key: 'z', ctrlKey: true });
+    await flushMicrotasks();
+
+    const stored = await repository.findById(ElementId.create('el-1'));
+    expect(stored?.position.equals(Position.create(30, 40))).toBe(true);
+  });
+
+  it('debounces drag persistence until the injected scheduler fires', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const scheduler = new ManualScheduler();
+    const orchestrator: ElementPersistenceOrchestrator = {
+      persistDelta: jest.fn().mockResolvedValue({ status: 'ok' }),
+    };
+
+    renderContainer(getWorkspace, {
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [TEXT_ELEMENT],
+      }),
+      elementPersistenceOrchestrator: orchestrator,
+      persistenceScheduler: scheduler,
+    });
+
+    const item = await screen.findByTestId('canvas-item-el-1');
+    const user = userEvent.setup();
+
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: item, coords: { x: 60, y: 70 } },
+      { coords: { x: 80, y: 90 } },
+      { coords: { x: 100, y: 110 } },
+    ]);
+
+    expect(orchestrator.persistDelta).not.toHaveBeenCalled();
+    expect(scheduler.pending).toBe(1);
+
+    await act(async () => {
+      scheduler.run();
+      await flushMicrotasks();
+    });
+
+    expect(orchestrator.persistDelta).toHaveBeenCalledTimes(1);
+  });
+
+  it('flushes pending persistence on pagehide', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const scheduler = new ManualScheduler();
+    const orchestrator: ElementPersistenceOrchestrator = {
+      persistDelta: jest.fn().mockResolvedValue({ status: 'ok' }),
+    };
+
+    renderContainer(getWorkspace, {
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [TEXT_ELEMENT],
+      }),
+      elementPersistenceOrchestrator: orchestrator,
+      persistenceScheduler: scheduler,
+    });
+
+    const item = await screen.findByTestId('canvas-item-el-1');
+    const user = userEvent.setup();
+
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: item, coords: { x: 60, y: 70 } },
+      { coords: { x: 100, y: 110 } },
+    ]);
+
+    await act(async () => {
+      window.dispatchEvent(new Event('pagehide'));
+      await flushMicrotasks();
+    });
+
+    expect(orchestrator.persistDelta).toHaveBeenCalledTimes(1);
+  });
+
+  it('flushes pending persistence when unmounted', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const scheduler = new ManualScheduler();
+    const orchestrator: ElementPersistenceOrchestrator = {
+      persistDelta: jest.fn().mockResolvedValue({ status: 'ok' }),
+    };
+
+    const { unmount } = renderContainer(getWorkspace, {
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [TEXT_ELEMENT],
+      }),
+      elementPersistenceOrchestrator: orchestrator,
+      persistenceScheduler: scheduler,
+    });
+
+    const item = await screen.findByTestId('canvas-item-el-1');
+    const user = userEvent.setup();
+
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: item, coords: { x: 60, y: 70 } },
+      { coords: { x: 100, y: 110 } },
+    ]);
+
+    unmount();
+    await flushMicrotasks();
+
+    expect(orchestrator.persistDelta).toHaveBeenCalledTimes(1);
   });
 });

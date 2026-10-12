@@ -262,6 +262,58 @@ describe('useElementResize', () => {
     expect(surface).toHaveAttribute('data-resizing', 'false');
   });
 
+  it('calls onTransformEnd once after an active resize ends', async () => {
+    const onResizeElements = jest.fn();
+    const onTransformEnd = jest.fn();
+    renderSurface({ onResizeElements, onTransformEnd });
+    const handle = screen.getByTestId('handle');
+    const user = userEvent.setup();
+
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: handle, coords: { x: 110, y: 60 } },
+      { coords: { x: 140, y: 90 } },
+      { keys: '[/MouseLeft]' },
+    ]);
+
+    expect(onTransformEnd).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not call onTransformEnd below the drag threshold', async () => {
+    const onResizeElements = jest.fn();
+    const onTransformEnd = jest.fn();
+    renderSurface({ onResizeElements, onTransformEnd });
+    const handle = screen.getByTestId('handle');
+    const user = userEvent.setup();
+
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: handle, coords: { x: 110, y: 60 } },
+      { coords: { x: 112, y: 61 } },
+      { keys: '[/MouseLeft]' },
+    ]);
+
+    expect(onTransformEnd).not.toHaveBeenCalled();
+  });
+
+  it('calls onTransformEnd on pointer cancel after an active resize', () => {
+    const onResizeElements = jest.fn();
+    const onTransformEnd = jest.fn();
+    renderSurface({ onResizeElements, onTransformEnd });
+    const handle = screen.getByTestId('handle');
+
+    dispatchPointer('pointerdown', handle, { button: 0, pointerId: 1, clientX: 110, clientY: 60 });
+    act(() => {
+      dispatchPointer('pointermove', handle, { pointerId: 1, clientX: 160, clientY: 110 });
+    });
+
+    expect(onTransformEnd).not.toHaveBeenCalled();
+
+    act(() => {
+      dispatchPointer('pointercancel', handle, { pointerId: 1 });
+    });
+
+    expect(onTransformEnd).toHaveBeenCalledTimes(1);
+  });
+
   it('does nothing when disabled', async () => {
     const onResizeElements = jest.fn();
     renderSurface({ onResizeElements, disabled: true });
