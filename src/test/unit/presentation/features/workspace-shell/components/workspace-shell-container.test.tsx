@@ -916,4 +916,87 @@ describe('WorkspaceShellContainer', () => {
       'We could not keep the board in sync. Reconnecting automatically.',
     );
   });
+
+  it('shows a reconnecting indicator while the realtime channel recovers', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const { realtimePort } = renderContainer(getWorkspace);
+    const workspaceId = WorkspaceId.create('ws-test');
+
+    await screen.findByRole('application', { name: 'Canvas' });
+
+    act(() => {
+      realtimePort.emitConnectionChange(workspaceId, 'reconnecting');
+    });
+
+    expect(await screen.findByText('Reconnecting…')).toBeInTheDocument();
+
+    act(() => {
+      realtimePort.emitConnectionChange(workspaceId, 'connected');
+    });
+
+    await waitFor(() => expect(screen.queryByText('Reconnecting…')).not.toBeInTheDocument());
+  });
+
+  it('flushes pending persistence and clears the collaboration error on reconnect', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const scheduler = new ManualScheduler();
+    const orchestrator: ElementPersistenceOrchestrator = {
+      persistDelta: jest.fn().mockResolvedValue({ status: 'ok' }),
+    };
+    const { realtimePort } = renderContainer(getWorkspace, {
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [TEXT_ELEMENT],
+      }),
+      elementPersistenceOrchestrator: orchestrator,
+      persistenceScheduler: scheduler,
+    });
+    const workspaceId = WorkspaceId.create('ws-test');
+
+    const item = await screen.findByTestId('canvas-item-el-1');
+    const user = userEvent.setup();
+
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: item, coords: { x: 60, y: 70 } },
+      { coords: { x: 100, y: 110 } },
+    ]);
+
+    expect(orchestrator.persistDelta).not.toHaveBeenCalled();
+
+    act(() => {
+      realtimePort.emitConnectionChange(workspaceId, 'reconnecting');
+      realtimePort.emitError(
+        workspaceId,
+        createAppError('collaboration', ERROR_CODES.COLLABORATION_SYNC_FAILED, 'Sync failed.'),
+      );
+    });
+
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+
+    await act(async () => {
+      realtimePort.emitConnectionChange(workspaceId, 'connected');
+      await flushMicrotasks();
+    });
+
+    expect(orchestrator.persistDelta).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('does not open extra realtime subscriptions across a reconnect cycle', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const { realtimePort } = renderContainer(getWorkspace);
+    const workspaceId = WorkspaceId.create('ws-test');
+
+    await screen.findByRole('application', { name: 'Canvas' });
+    expect(realtimePort.activeSubscriptionCount(workspaceId)).toBe(1);
+
+    act(() => {
+      realtimePort.emitConnectionChange(workspaceId, 'reconnecting');
+    });
+    act(() => {
+      realtimePort.emitConnectionChange(workspaceId, 'connected');
+    });
+
+    expect(realtimePort.activeSubscriptionCount(workspaceId)).toBe(1);
+  });
 });

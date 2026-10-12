@@ -1,6 +1,6 @@
 import { Button, Heading, Inline, Skeleton, Stack, Text, VisuallyHidden } from '@raulrod/ui';
 import type { ReactNode } from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import styled from 'styled-components';
 import { createSnapshotCommand, type LogoutUser } from '../../../../application/commands';
 import type {
@@ -13,6 +13,7 @@ import {
   createCanvasViewportStore,
   createCommandHistory,
   createElementPersistenceBatcher,
+  createRealtimeConnectionStore,
   createSelectionStore,
   rollbackFailedMutation,
 } from '../../../../application/services';
@@ -22,10 +23,12 @@ import type {
   ElementPersistenceBatcher,
   ElementPersistenceOrchestrator,
   PersistenceSyncStatus,
+  RealtimeConnectionStore,
   RealtimeSubscriptionManager,
   Scheduler,
   SelectionStore,
 } from '../../../../application/services';
+import type { RealtimeConnectionStatus } from '../../../../application/ports';
 import type { Element } from '../../../../domain/element';
 import { Size, WorkspaceId } from '../../../../domain/shared';
 import type { ElementId } from '../../../../domain/shared';
@@ -85,6 +88,12 @@ export function WorkspaceShellContainer({
     createCanvasViewportStore(Size.create(800, 600)),
   );
   const selectionStoreRef = useRef<SelectionStore>(createSelectionStore());
+  const connectionStoreRef = useRef<RealtimeConnectionStore>(createRealtimeConnectionStore());
+  const connectionStatus = useSyncExternalStore(
+    connectionStoreRef.current.subscribe,
+    connectionStoreRef.current.getSnapshot,
+  ).status;
+  const previousConnectionStatusRef = useRef<RealtimeConnectionStatus>('connected');
   const commandHistoryRef = useRef<CommandHistory<readonly Element[]>>(
     createCommandHistory<readonly Element[]>({ initial: [] }),
   );
@@ -318,10 +327,23 @@ export function WorkspaceShellContainer({
       (error) => {
         setCollaborationError(error);
       },
+      (connection) => {
+        connectionStoreRef.current.setStatus(connection);
+      },
     );
 
     return unsubscribe;
   }, [realtimeSubscriptionManager, workspaceId, elementsStatus, applyElements]);
+
+  useEffect(() => {
+    const previous = previousConnectionStatusRef.current;
+    previousConnectionStatusRef.current = connectionStatus;
+
+    if (previous === 'reconnecting' && connectionStatus === 'connected') {
+      void persistenceBatcher.flush();
+      setCollaborationError(null);
+    }
+  }, [connectionStatus, persistenceBatcher]);
 
   if (status === 'loading') {
     return (
@@ -433,6 +455,7 @@ export function WorkspaceShellContainer({
         onRedoElements={handleRedoElements}
         generateElementId={generateElementId}
         syncStatus={syncStatus}
+        connectionStatus={connectionStatus}
         persistenceErrorMessage={
           persistenceError === null ? null : describePersistElementsError(persistenceError)
         }

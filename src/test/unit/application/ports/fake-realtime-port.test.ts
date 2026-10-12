@@ -8,6 +8,7 @@ describeRealtimePortContract('FakeRealtimePort', () => {
     port: fake,
     emit: (event) => fake.emit(event),
     emitError: (workspaceId, error) => fake.emitError(workspaceId, error),
+    emitConnectionChange: (workspaceId, status) => fake.emitConnectionChange(workspaceId, status),
     activeSubscriptionCount: (workspaceId) => fake.activeSubscriptionCount(workspaceId),
   };
 });

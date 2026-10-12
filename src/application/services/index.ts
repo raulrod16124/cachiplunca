@@ -13,5 +13,6 @@ export * from './element-persistence';
 export * from './element-persistence-orchestrator';
 export * from './element-persistence-batcher';
 export * from './realtime-subscription-manager';
+export * from './realtime-connection-store';
 export * from './remote-element-updates';
 export * from './optimistic-element-updates';

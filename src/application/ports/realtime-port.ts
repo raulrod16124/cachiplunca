@@ -35,10 +35,15 @@ export type RealtimeEventListener = (event: ElementRealtimeEvent) => void;
 
 export type RealtimeErrorListener = (error: AppError) => void;
 
+export type RealtimeConnectionStatus = 'connected' | 'reconnecting';
+
+export type RealtimeConnectionListener = (status: RealtimeConnectionStatus) => void;
+
 export interface RealtimePort {
   subscribe(
     workspaceId: WorkspaceId,
     listener: RealtimeEventListener,
     onError?: RealtimeErrorListener,
+    onConnectionChange?: RealtimeConnectionListener,
   ): Unsubscribe;
 }

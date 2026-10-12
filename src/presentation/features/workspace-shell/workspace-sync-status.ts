@@ -1,4 +1,5 @@
 import type { BadgeVariant } from '@raulrod/ui';
+import type { RealtimeConnectionStatus } from '../../../application/ports';
 import type { PersistenceSyncStatus } from '../../../application/services';
 
 export interface SyncStatusBadge {
@@ -16,5 +17,14 @@ export function describeSyncStatus(status: PersistenceSyncStatus): SyncStatusBad
       return { label: 'Saved', variant: 'success' };
     case 'error':
       return { label: 'Not saved', variant: 'destructive' };
+  }
+}
+
+export function describeConnectionStatus(status: RealtimeConnectionStatus): SyncStatusBadge | null {
+  switch (status) {
+    case 'connected':
+      return null;
+    case 'reconnecting':
+      return { label: 'Reconnecting…', variant: 'warning' };
   }
 }

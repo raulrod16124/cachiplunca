@@ -36,6 +36,7 @@ export interface MockRealtimeDocumentChange {
 
 export interface MockRealtimeSnapshot {
   readonly docs: readonly MockRealtimeDocument[];
+  readonly metadata: { readonly fromCache: boolean };
   docChanges(): readonly MockRealtimeDocumentChange[];
 }
 
@@ -77,9 +78,14 @@ export interface InMemoryFirestoreApi {
   __reset(): void;
   __seed(path: string, data: object): void;
   __failNextWith(code: string): void;
+  __setInitialSnapshotFromCache(fromCache: boolean): void;
   __read(path: string): Record<string, unknown> | undefined;
   __paths(): string[];
-  __emitSnapshot(workspaceId: string, changes: readonly MockRealtimeChangeInput[]): void;
+  __emitSnapshot(
+    workspaceId: string,
+    changes: readonly MockRealtimeChangeInput[],
+    options?: { readonly fromCache?: boolean },
+  ): void;
   __emitError(workspaceId: string, error: unknown): void;
   __activeSnapshotListenerCount(workspaceId?: string): number;
 }
@@ -95,6 +101,7 @@ export function createInMemoryFirestoreModule(): InMemoryFirestoreApi {
   const store = new Map<string, Record<string, unknown>>();
   let sequence = 0;
   let pendingFailureCode: string | null = null;
+  let initialSnapshotFromCache = false;
   const snapshotListeners = new Set<SnapshotListener>();
 
   function maybeFail(): void {
@@ -177,9 +184,11 @@ export function createInMemoryFirestoreModule(): InMemoryFirestoreApi {
 
   function makeRealtimeSnapshot(
     changes: readonly MockRealtimeDocumentChange[],
+    fromCache = false,
   ): MockRealtimeSnapshot {
     return {
       docs: changes.filter((change) => change.type !== 'removed').map((change) => change.doc),
+      metadata: { fromCache },
       docChanges: () => changes,
     };
   }
@@ -187,6 +196,7 @@ export function createInMemoryFirestoreModule(): InMemoryFirestoreApi {
   function buildInitialSnapshot(
     baseRef: MockRef,
     constraints: readonly MockConstraint[],
+    fromCache: boolean,
   ): MockRealtimeSnapshot {
     const prefix = `${baseRef.path}/`;
     const changes: MockRealtimeDocumentChange[] = [];
@@ -200,15 +210,19 @@ export function createInMemoryFirestoreModule(): InMemoryFirestoreApi {
       }
       changes.push({ type: 'added', doc: makeRealtimeDocument(lastSegment(path), data, false) });
     }
-    return makeRealtimeSnapshot(changes);
+    return makeRealtimeSnapshot(changes, fromCache);
   }
 
-  function buildEmittedSnapshot(changes: readonly MockRealtimeChangeInput[]): MockRealtimeSnapshot {
+  function buildEmittedSnapshot(
+    changes: readonly MockRealtimeChangeInput[],
+    fromCache: boolean,
+  ): MockRealtimeSnapshot {
     return makeRealtimeSnapshot(
       changes.map((change) => ({
         type: change.type,
         doc: makeRealtimeDocument(change.id, change.data, change.hasPendingWrites ?? false),
       })),
+      fromCache,
     );
   }
 
@@ -325,7 +339,7 @@ export function createInMemoryFirestoreModule(): InMemoryFirestoreApi {
         onError: onError ?? (() => undefined),
       };
       snapshotListeners.add(listener);
-      onNext(buildInitialSnapshot(baseRef, constraints));
+      onNext(buildInitialSnapshot(baseRef, constraints, initialSnapshotFromCache));
 
       let active = true;
       return () => {
@@ -341,6 +355,7 @@ export function createInMemoryFirestoreModule(): InMemoryFirestoreApi {
       store.clear();
       sequence = 0;
       pendingFailureCode = null;
+      initialSnapshotFromCache = false;
       snapshotListeners.clear();
     },
 
@@ -352,6 +367,10 @@ export function createInMemoryFirestoreModule(): InMemoryFirestoreApi {
       pendingFailureCode = code;
     },
 
+    __setInitialSnapshotFromCache(fromCache: boolean): void {
+      initialSnapshotFromCache = fromCache;
+    },
+
     __read(path: string): Record<string, unknown> | undefined {
       const data = store.get(path);
       return data === undefined ? undefined : { ...data };
@@ -361,9 +380,14 @@ export function createInMemoryFirestoreModule(): InMemoryFirestoreApi {
       return [...store.keys()];
     },
 
-    __emitSnapshot(workspaceId: string, changes: readonly MockRealtimeChangeInput[]): void {
+    __emitSnapshot(
+      workspaceId: string,
+      changes: readonly MockRealtimeChangeInput[],
+      options?: { readonly fromCache?: boolean },
+    ): void {
+      const fromCache = options?.fromCache ?? false;
       forEachMatchingListener(workspaceId, (listener) => {
-        listener.onNext(buildEmittedSnapshot(changes));
+        listener.onNext(buildEmittedSnapshot(changes, fromCache));
       });
     },
 

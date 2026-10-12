@@ -13,8 +13,9 @@ import type {
   PersistenceSyncStatus,
   SelectionStore,
 } from '../../../../application/services';
+import type { RealtimeConnectionStatus } from '../../../../application/ports';
 import { Canvas } from '../../../canvas';
-import { describeSyncStatus } from '../workspace-sync-status';
+import { describeConnectionStatus, describeSyncStatus } from '../workspace-sync-status';
 
 const Shell = styled.div`
   display: flex;
@@ -55,6 +56,7 @@ export interface WorkspaceShellLayoutProps {
   readonly onRedoElements: (elements: readonly Element[]) => void;
   readonly generateElementId: () => ElementId;
   readonly syncStatus: PersistenceSyncStatus;
+  readonly connectionStatus: RealtimeConnectionStatus;
   readonly persistenceErrorMessage: string | null;
   readonly collaborationErrorMessage: string | null;
 }
@@ -77,10 +79,12 @@ export function WorkspaceShellLayout({
   onRedoElements,
   generateElementId,
   syncStatus,
+  connectionStatus,
   persistenceErrorMessage,
   collaborationErrorMessage,
 }: WorkspaceShellLayoutProps): ReactNode {
   const syncBadge = describeSyncStatus(syncStatus);
+  const connectionBadge = describeConnectionStatus(connectionStatus);
 
   return (
     <Shell>
@@ -103,6 +107,11 @@ export function WorkspaceShellLayout({
             {syncBadge === null ? null : (
               <span role="status" aria-live="polite">
                 <Badge variant={syncBadge.variant}>{syncBadge.label}</Badge>
+              </span>
+            )}
+            {connectionBadge === null ? null : (
+              <span role="status" aria-live="polite">
+                <Badge variant={connectionBadge.variant}>{connectionBadge.label}</Badge>
               </span>
             )}
           </Inline>

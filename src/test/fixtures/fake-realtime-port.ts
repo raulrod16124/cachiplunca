@@ -1,5 +1,7 @@
 import type {
   ElementRealtimeEvent,
+  RealtimeConnectionListener,
+  RealtimeConnectionStatus,
   RealtimeErrorListener,
   RealtimeEventListener,
   RealtimePort,
@@ -11,6 +13,7 @@ import type { Unsubscribe } from '../../shared/types';
 interface Subscription {
   readonly listener: RealtimeEventListener;
   readonly onError: RealtimeErrorListener | undefined;
+  readonly onConnectionChange: RealtimeConnectionListener | undefined;
 }
 
 export class FakeRealtimePort implements RealtimePort {
@@ -20,8 +23,9 @@ export class FakeRealtimePort implements RealtimePort {
     workspaceId: WorkspaceId,
     listener: RealtimeEventListener,
     onError?: RealtimeErrorListener,
+    onConnectionChange?: RealtimeConnectionListener,
   ): Unsubscribe {
-    const subscription: Subscription = { listener, onError };
+    const subscription: Subscription = { listener, onError, onConnectionChange };
     const subscriptions = this.#subscriptions.get(workspaceId.value) ?? new Set<Subscription>();
     subscriptions.add(subscription);
     this.#subscriptions.set(workspaceId.value, subscriptions);
@@ -56,6 +60,16 @@ export class FakeRealtimePort implements RealtimePort {
     }
     for (const subscription of subscriptions) {
       subscription.onError?.(error);
+    }
+  }
+
+  emitConnectionChange(workspaceId: WorkspaceId, status: RealtimeConnectionStatus): void {
+    const subscriptions = this.#subscriptions.get(workspaceId.value);
+    if (subscriptions === undefined) {
+      return;
+    }
+    for (const subscription of subscriptions) {
+      subscription.onConnectionChange?.(status);
     }
   }
 

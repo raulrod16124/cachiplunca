@@ -1,4 +1,8 @@
-import type { ElementRealtimeEvent, RealtimePort } from '../../application/ports';
+import type {
+  ElementRealtimeEvent,
+  RealtimeConnectionStatus,
+  RealtimePort,
+} from '../../application/ports';
 import { createTextElement, type Element } from '../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../domain/shared';
 import { createAppError, ERROR_CODES, type AppError } from '../../shared/errors';
@@ -7,6 +11,7 @@ export interface RealtimePortHarness {
   readonly port: RealtimePort;
   emit(event: ElementRealtimeEvent): void;
   emitError(workspaceId: WorkspaceId, error: AppError): void;
+  emitConnectionChange(workspaceId: WorkspaceId, status: RealtimeConnectionStatus): void;
   activeSubscriptionCount(workspaceId?: WorkspaceId): number;
 }
 
@@ -112,6 +117,49 @@ export function describeRealtimePortContract(
       );
 
       expect(() => harness.emitError(WORKSPACE_ID, error)).not.toThrow();
+    });
+
+    it('delivers connection status changes to the onConnectionChange listener', () => {
+      const onConnectionChange = jest.fn();
+      harness.port.subscribe(WORKSPACE_ID, jest.fn(), undefined, onConnectionChange);
+
+      harness.emitConnectionChange(WORKSPACE_ID, 'reconnecting');
+      expect(onConnectionChange).toHaveBeenCalledTimes(1);
+      expect(onConnectionChange).toHaveBeenCalledWith('reconnecting');
+
+      harness.emitConnectionChange(WORKSPACE_ID, 'connected');
+      expect(onConnectionChange).toHaveBeenCalledTimes(2);
+      expect(onConnectionChange).toHaveBeenLastCalledWith('connected');
+    });
+
+    it('does not deliver connection changes for a different workspace', () => {
+      const onConnectionChange = jest.fn();
+      harness.port.subscribe(WORKSPACE_ID, jest.fn(), undefined, onConnectionChange);
+
+      harness.emitConnectionChange(OTHER_WORKSPACE_ID, 'reconnecting');
+
+      expect(onConnectionChange).not.toHaveBeenCalled();
+    });
+
+    it('stops delivering connection changes after unsubscribe', () => {
+      const onConnectionChange = jest.fn();
+      const unsubscribe = harness.port.subscribe(
+        WORKSPACE_ID,
+        jest.fn(),
+        undefined,
+        onConnectionChange,
+      );
+
+      unsubscribe();
+      harness.emitConnectionChange(WORKSPACE_ID, 'reconnecting');
+
+      expect(onConnectionChange).not.toHaveBeenCalled();
+    });
+
+    it('does not throw when a connection change arrives without a listener', () => {
+      harness.port.subscribe(WORKSPACE_ID, jest.fn());
+
+      expect(() => harness.emitConnectionChange(WORKSPACE_ID, 'reconnecting')).not.toThrow();
     });
 
     it('reports one active subscription per subscribe and zero after unsubscribe', () => {

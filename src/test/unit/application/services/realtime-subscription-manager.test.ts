@@ -161,6 +161,44 @@ describe('createRealtimeSubscriptionManager', () => {
     expect(() => port.emitError(WORKSPACE_ID, syncError)).not.toThrow();
   });
 
+  it('fans connection status changes out to registered listeners', () => {
+    const first = jest.fn();
+    const second = jest.fn();
+    manager.subscribe(WORKSPACE_ID, jest.fn(), undefined, first);
+    manager.subscribe(WORKSPACE_ID, jest.fn(), undefined, second);
+
+    port.emitConnectionChange(WORKSPACE_ID, 'reconnecting');
+
+    expect(first).toHaveBeenCalledWith('reconnecting');
+    expect(second).toHaveBeenCalledWith('reconnecting');
+  });
+
+  it('delivers connection changes to every consumer of a workspace over a single port subscription', () => {
+    manager.subscribe(WORKSPACE_ID, jest.fn(), undefined, jest.fn());
+    manager.subscribe(WORKSPACE_ID, jest.fn(), undefined, jest.fn());
+
+    expect(port.activeSubscriptionCount(WORKSPACE_ID)).toBe(1);
+
+    port.emitConnectionChange(WORKSPACE_ID, 'reconnecting');
+  });
+
+  it('stops delivering connection changes to a consumer after it unsubscribes', () => {
+    const onConnectionChange = jest.fn();
+    const unsubscribe = manager.subscribe(WORKSPACE_ID, jest.fn(), undefined, onConnectionChange);
+
+    unsubscribe();
+    port.emitConnectionChange(WORKSPACE_ID, 'reconnecting');
+
+    expect(onConnectionChange).not.toHaveBeenCalled();
+    expect(port.activeSubscriptionCount(WORKSPACE_ID)).toBe(0);
+  });
+
+  it('does not throw when a connection change arrives with no listener', () => {
+    manager.subscribe(WORKSPACE_ID, jest.fn());
+
+    expect(() => port.emitConnectionChange(WORKSPACE_ID, 'reconnecting')).not.toThrow();
+  });
+
   it('closes every port subscription on dispose', () => {
     manager.subscribe(WORKSPACE_ID, jest.fn());
     manager.subscribe(OTHER_WORKSPACE_ID, jest.fn());

@@ -83,6 +83,11 @@ function createHarness(): RealtimePortHarness {
     emitError(workspaceId: WorkspaceId, error) {
       firestoreMock.__emitError(workspaceId.value, error);
     },
+    emitConnectionChange(workspaceId: WorkspaceId, status) {
+      firestoreMock.__emitSnapshot(workspaceId.value, [], {
+        fromCache: status === 'reconnecting',
+      });
+    },
     activeSubscriptionCount(workspaceId?: WorkspaceId) {
       return firestoreMock.__activeSnapshotListenerCount(workspaceId?.value);
     },
@@ -257,6 +262,61 @@ describe('createFirebaseRealtimeAdapter', () => {
     port.subscribe(WORKSPACE_ID, jest.fn());
 
     expect(() => firestoreMock.__emitError('ws-1', new Error('Down'))).not.toThrow();
+  });
+
+  it('reports reconnecting while Firestore serves snapshots from cache', () => {
+    const port = createFirebaseRealtimeAdapter(makeFirestore());
+    const onConnectionChange = jest.fn();
+    port.subscribe(WORKSPACE_ID, jest.fn(), undefined, onConnectionChange);
+
+    firestoreMock.__emitSnapshot('ws-1', [], { fromCache: true });
+
+    expect(onConnectionChange).toHaveBeenCalledTimes(1);
+    expect(onConnectionChange).toHaveBeenCalledWith('reconnecting');
+  });
+
+  it('reports connected once the server snapshot arrives after a cache snapshot', () => {
+    const port = createFirebaseRealtimeAdapter(makeFirestore());
+    const onConnectionChange = jest.fn();
+    port.subscribe(WORKSPACE_ID, jest.fn(), undefined, onConnectionChange);
+
+    firestoreMock.__emitSnapshot('ws-1', [], { fromCache: true });
+    firestoreMock.__emitSnapshot('ws-1', [], { fromCache: false });
+
+    expect(onConnectionChange).toHaveBeenNthCalledWith(1, 'reconnecting');
+    expect(onConnectionChange).toHaveBeenNthCalledWith(2, 'connected');
+  });
+
+  it('does not repeat the connection status when it does not change', () => {
+    const port = createFirebaseRealtimeAdapter(makeFirestore());
+    const onConnectionChange = jest.fn();
+    port.subscribe(WORKSPACE_ID, jest.fn(), undefined, onConnectionChange);
+
+    firestoreMock.__emitSnapshot('ws-1', [], { fromCache: true });
+    firestoreMock.__emitSnapshot('ws-1', [], { fromCache: true });
+
+    expect(onConnectionChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports reconnecting from a cache-backed initial snapshot', () => {
+    const port = createFirebaseRealtimeAdapter(makeFirestore());
+    const onConnectionChange = jest.fn();
+    firestoreMock.__setInitialSnapshotFromCache(true);
+
+    port.subscribe(WORKSPACE_ID, jest.fn(), undefined, onConnectionChange);
+
+    expect(onConnectionChange).toHaveBeenCalledTimes(1);
+    expect(onConnectionChange).toHaveBeenCalledWith('reconnecting');
+  });
+
+  it('reports reconnecting when the stream errors', () => {
+    const port = createFirebaseRealtimeAdapter(makeFirestore());
+    const onConnectionChange = jest.fn();
+    port.subscribe(WORKSPACE_ID, jest.fn(), undefined, onConnectionChange);
+
+    firestoreMock.__emitError('ws-1', Object.assign(new Error('Down'), { code: 'unavailable' }));
+
+    expect(onConnectionChange).toHaveBeenCalledWith('reconnecting');
   });
 
   it('creates exactly one snapshot listener per subscribe and none after unsubscribe', () => {

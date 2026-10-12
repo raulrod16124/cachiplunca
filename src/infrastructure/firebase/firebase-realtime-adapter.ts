@@ -11,6 +11,8 @@ import {
 import type {
   ElementRealtimeChange,
   RealtimeChangeOrigin,
+  RealtimeConnectionListener,
+  RealtimeConnectionStatus,
   RealtimeErrorListener,
   RealtimeEventListener,
   RealtimePort,
@@ -32,13 +34,24 @@ export function createFirebaseRealtimeAdapter(db: Firestore): RealtimePort {
       workspaceId: WorkspaceId,
       listener: RealtimeEventListener,
       onError?: RealtimeErrorListener,
+      onConnectionChange?: RealtimeConnectionListener,
     ): Unsubscribe {
       const target = query(elementsCollection, where('workspaceId', '==', workspaceId.value));
 
       let isInitialSnapshot = true;
       let isActive = true;
+      let connectionStatus: RealtimeConnectionStatus = 'connected';
+
+      const reportConnection = (next: RealtimeConnectionStatus): void => {
+        if (next === connectionStatus) {
+          return;
+        }
+        connectionStatus = next;
+        onConnectionChange?.(next);
+      };
 
       const handleError = (error: unknown): void => {
+        reportConnection('reconnecting');
         if (onError === undefined) {
           return;
         }
@@ -52,6 +65,7 @@ export function createFirebaseRealtimeAdapter(db: Firestore): RealtimePort {
           if (!isActive) {
             return;
           }
+          reportConnection(resolveConnectionStatus(snapshot));
           if (isInitialSnapshot) {
             isInitialSnapshot = false;
             return;
@@ -82,6 +96,10 @@ export function createFirebaseRealtimeAdapter(db: Firestore): RealtimePort {
       };
     },
   };
+}
+
+function resolveConnectionStatus(snapshot: QuerySnapshot<DocumentData>): RealtimeConnectionStatus {
+  return snapshot.metadata.fromCache ? 'reconnecting' : 'connected';
 }
 
 function toElementChanges(snapshot: QuerySnapshot<DocumentData>): ElementRealtimeChange[] {
