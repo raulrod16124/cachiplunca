@@ -2975,25 +2975,26 @@ Completar **Remote element updates** dejando un resultado verificable y apto par
 
 ### TASK-079 — Optimistic updates
 
-**Priority:** P0 · **Depends:** TASK-078 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-078 · **Status:** DONE
 
 #### Objetivo
 
-Completar **Optimistic updates** dejando un resultado verificable y apto para las tareas dependientes.
+Aplicar cambios locales de forma optimista y revertirlos de forma determinista si la persistencia falla, sin pisar cambios remotos más nuevos.
 
 #### Alcance
 
 - Implementar el comportamiento necesario para **Optimistic updates**.
 - Integrarlo con las capas existentes sin romper sus límites.
 - Añadir o actualizar tests relevantes.
+- Rollback por elemento (modificado/creado/borrado) con guard monótono `updatedAt` y descarte de pendientes tras el fallo.
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 

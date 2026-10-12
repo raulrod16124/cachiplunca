@@ -63,6 +63,20 @@ function sequentialElementIds(): () => ElementId {
   return () => ElementId.create(`generated-${++counter}`);
 }
 
+interface Deferred {
+  readonly promise: Promise<void>;
+  readonly resolve: () => void;
+}
+
+function createDeferred(): Deferred {
+  let resolve: () => void = () => undefined;
+  const promise = new Promise<void>((innerResolve) => {
+    resolve = innerResolve;
+  });
+
+  return { promise, resolve };
+}
+
 function setDocumentVisibility(state: 'visible' | 'hidden'): void {
   Object.defineProperty(document, 'visibilityState', {
     configurable: true,
@@ -339,6 +353,126 @@ describe('WorkspaceShellContainer', () => {
     );
   });
 
+  it('rolls back an optimistic delete when persistence fails', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const orchestrator: ElementPersistenceOrchestrator = {
+      persistDelta: jest.fn().mockResolvedValue({
+        status: 'error',
+        error: createAppError('persistence', ERROR_CODES.PERSISTENCE_WRITE_FAILED, 'Write failed'),
+      }),
+    };
+
+    renderContainer(getWorkspace, {
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [TEXT_ELEMENT],
+      }),
+      elementPersistenceOrchestrator: orchestrator,
+    });
+
+    const canvas = await screen.findByRole('application', { name: 'Canvas' });
+    await screen.findByTestId('canvas-item-el-1');
+
+    fireEvent.keyDown(canvas, { key: 'a', ctrlKey: true });
+    fireEvent.keyDown(canvas, { key: 'Delete' });
+
+    expect(await screen.findByText('Not saved')).toBeInTheDocument();
+    expect(await screen.findByTestId('canvas-item-el-1')).toBeInTheDocument();
+  });
+
+  it('rolls back an optimistic move when persistence fails', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const orchestrator: ElementPersistenceOrchestrator = {
+      persistDelta: jest.fn().mockResolvedValue({
+        status: 'error',
+        error: createAppError('persistence', ERROR_CODES.PERSISTENCE_WRITE_FAILED, 'Write failed'),
+      }),
+    };
+
+    renderContainer(getWorkspace, {
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [TEXT_ELEMENT],
+      }),
+      elementPersistenceOrchestrator: orchestrator,
+    });
+
+    const item = await screen.findByTestId('canvas-item-el-1');
+    const user = userEvent.setup();
+
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: item, coords: { x: 60, y: 70 } },
+      { coords: { x: 100, y: 110 } },
+      { keys: '[/MouseLeft]' },
+    ]);
+
+    await waitFor(() =>
+      expect(screen.getByTestId('canvas-item-el-1')).toHaveStyle({
+        left: '30px',
+        top: '40px',
+      }),
+    );
+  });
+
+  it('preserves a newer remote version when a local write fails', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const gate = createDeferred();
+    const orchestrator: ElementPersistenceOrchestrator = {
+      persistDelta: jest.fn().mockImplementation(async () => {
+        await gate.promise;
+        return {
+          status: 'error',
+          error: createAppError(
+            'persistence',
+            ERROR_CODES.PERSISTENCE_WRITE_FAILED,
+            'Write failed',
+          ),
+        };
+      }),
+    };
+
+    const { realtimePort } = renderContainer(getWorkspace, {
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [TEXT_ELEMENT],
+      }),
+      elementPersistenceOrchestrator: orchestrator,
+    });
+
+    const canvas = await screen.findByRole('application', { name: 'Canvas' });
+    await screen.findByTestId('canvas-item-el-1');
+
+    fireEvent.keyDown(canvas, { key: 'a', ctrlKey: true });
+    fireEvent.keyDown(canvas, { key: 'Delete' });
+
+    const remote = createTextElement({
+      id: ElementId.create('el-1'),
+      workspaceId: WorkspaceId.create('ws-test'),
+      createdBy: UserId.create('user-1'),
+      position: Position.create(90, 110),
+      size: Size.create(120, 80),
+      content: 'Hello',
+      createdAt: new Date('2024-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2024-02-01T00:00:00.000Z'),
+    });
+
+    act(() => {
+      realtimePort.emit({
+        workspaceId: WorkspaceId.create('ws-test'),
+        changes: [{ kind: 'added', element: remote, origin: 'remote' }],
+      });
+    });
+
+    await screen.findByTestId('canvas-item-el-1');
+
+    await act(async () => {
+      gate.resolve();
+      await flushMicrotasks();
+    });
+
+    expect(screen.getByTestId('canvas-item-el-1')).toHaveStyle({ left: '90px', top: '110px' });
+  });
+
   it('collapses a drag into a single history entry and persists the final position', async () => {
     const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
     const repository = new FakeElementRepository();
@@ -605,7 +739,7 @@ describe('WorkspaceShellContainer', () => {
     expect(restored).toHaveStyle({ left: '70px', top: '80px' });
   });
 
-  it('does not lose the previously persisted board when a write fails', async () => {
+  it('rolls back the failed change and keeps the previously persisted board after a refresh', async () => {
     const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
     const repository = new FakeElementRepository();
     await repository.save(TEXT_ELEMENT);
@@ -627,6 +761,7 @@ describe('WorkspaceShellContainer', () => {
     fireEvent.keyDown(canvas, { key: 'Delete' });
 
     expect(await screen.findByText('Not saved')).toBeInTheDocument();
+    expect(await screen.findByTestId('canvas-item-el-1')).toBeInTheDocument();
 
     unmount();
 

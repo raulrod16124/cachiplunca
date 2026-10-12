@@ -14,3 +14,4 @@ export * from './element-persistence-orchestrator';
 export * from './element-persistence-batcher';
 export * from './realtime-subscription-manager';
 export * from './remote-element-updates';
+export * from './optimistic-element-updates';

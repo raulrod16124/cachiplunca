@@ -14,6 +14,7 @@ import {
   createCommandHistory,
   createElementPersistenceBatcher,
   createSelectionStore,
+  rollbackFailedMutation,
 } from '../../../../application/services';
 import type {
   CanvasViewportStore,
@@ -96,6 +97,17 @@ export function WorkspaceShellContainer({
         setPersistenceError(result.status === 'error' ? result.error : null);
       },
       onStatusChange: setSyncStatus,
+      onMutationFailed: (mutation) => {
+        const rolledBack = rollbackFailedMutation(
+          elementsRef.current,
+          mutation.previous,
+          mutation.next,
+        );
+        if (rolledBack !== elementsRef.current) {
+          elementsRef.current = rolledBack;
+          setElements(rolledBack);
+        }
+      },
       delayMs: persistenceDebounceMs,
       scheduler: persistenceScheduler,
     });

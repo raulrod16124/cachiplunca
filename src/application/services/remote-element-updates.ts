@@ -57,6 +57,6 @@ export function applyRemoteElementChanges(
   return sortElementsForLoad([...byId.values()]);
 }
 
-function isStrictlyNewer(incoming: Element, existing: Element): boolean {
+export function isStrictlyNewer(incoming: Element, existing: Element): boolean {
   return incoming.updatedAt.getTime() > existing.updatedAt.getTime();
 }

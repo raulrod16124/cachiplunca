@@ -186,6 +186,101 @@ describe('createElementPersistenceBatcher', () => {
     expect(orchestrator.persistDelta).not.toHaveBeenCalled();
   });
 
+  describe('optimistic rollback', () => {
+    it('notifies onMutationFailed with the failed coalesced mutation and error', async () => {
+      const scheduler = new ManualScheduler();
+      const appError = createAppError(
+        'persistence',
+        ERROR_CODES.PERSISTENCE_WRITE_FAILED,
+        'Write failed',
+      );
+      const error: PersistElementMutationResult = { status: 'error', error: appError };
+      const orchestrator: ElementPersistenceOrchestrator = {
+        persistDelta: jest.fn().mockResolvedValue(error),
+      };
+      const onMutationFailed = jest.fn();
+      const batcher = createElementPersistenceBatcher({
+        orchestrator,
+        onMutationFailed,
+        scheduler,
+      });
+
+      const previous = [buildTextElement('el-1', 0)];
+      const next = [buildTextElement('el-1', 10)];
+      batcher.schedule(previous, next);
+      scheduler.run();
+      await flushMicrotasks();
+
+      expect(onMutationFailed).toHaveBeenCalledWith({ previous, next }, appError);
+    });
+
+    it('does not notify onMutationFailed on a successful flush', async () => {
+      const scheduler = new ManualScheduler();
+      const orchestrator: ElementPersistenceOrchestrator = {
+        persistDelta: jest.fn().mockResolvedValue(OK),
+      };
+      const onMutationFailed = jest.fn();
+      const batcher = createElementPersistenceBatcher({
+        orchestrator,
+        onMutationFailed,
+        scheduler,
+      });
+
+      batcher.schedule([buildTextElement('el-1', 0)], [buildTextElement('el-1', 10)]);
+      scheduler.run();
+      await flushMicrotasks();
+
+      expect(onMutationFailed).not.toHaveBeenCalled();
+    });
+
+    it('drops pending work after a failure and accepts a fresh schedule', async () => {
+      const scheduler = new ManualScheduler();
+      const deferred = createDeferred();
+      const appError = createAppError(
+        'persistence',
+        ERROR_CODES.PERSISTENCE_WRITE_FAILED,
+        'Write failed',
+      );
+      const error: PersistElementMutationResult = { status: 'error', error: appError };
+      const orchestrator: ElementPersistenceOrchestrator = {
+        persistDelta: jest
+          .fn()
+          .mockImplementationOnce(async () => {
+            await deferred.promise;
+            return error;
+          })
+          .mockResolvedValue(OK),
+      };
+      const onMutationFailed = jest.fn();
+      const batcher = createElementPersistenceBatcher({
+        orchestrator,
+        onMutationFailed,
+        scheduler,
+      });
+
+      batcher.schedule([buildTextElement('el-1', 0)], [buildTextElement('el-1', 10)]);
+      scheduler.run();
+      await flushMicrotasks();
+
+      batcher.schedule([buildTextElement('el-1', 10)], [buildTextElement('el-1', 20)]);
+      expect(scheduler.pending).toBe(1);
+
+      deferred.resolve();
+      await flushMicrotasks();
+
+      expect(onMutationFailed).toHaveBeenCalledTimes(1);
+      expect(scheduler.pending).toBe(0);
+      expect(orchestrator.persistDelta).toHaveBeenCalledTimes(1);
+
+      batcher.schedule([buildTextElement('el-1', 20)], [buildTextElement('el-1', 30)]);
+      scheduler.run();
+      await flushMicrotasks();
+
+      expect(orchestrator.persistDelta).toHaveBeenCalledTimes(2);
+      expect(onMutationFailed).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('sync status', () => {
     it('emits saving on schedule and saved after a successful flush', async () => {
       const scheduler = new ManualScheduler();
