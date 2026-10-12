@@ -2936,7 +2936,7 @@ Completar **Firestore realtime adapter** dejando un resultado verificable y apto
 
 ### TASK-078 — Remote element updates
 
-**Priority:** P0 · **Depends:** TASK-077 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-077 · **Status:** DONE
 
 #### Objetivo
 
@@ -2953,13 +2953,13 @@ Completar **Remote element updates** dejando un resultado verificable y apto par
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
-- [ ] No se crean listeners duplicados.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] No se crean listeners duplicados.
 
 #### Fuera de alcance
 

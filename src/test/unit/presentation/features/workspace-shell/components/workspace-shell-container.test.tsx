@@ -11,14 +11,19 @@ import { createLoadWorkspaceElements as createLoadWorkspaceElementsQuery } from 
 import {
   createElementPersistence,
   createElementPersistenceOrchestrator,
+  createRealtimeSubscriptionManager,
 } from '../../../../../../application/services';
-import type { ElementPersistenceOrchestrator } from '../../../../../../application/services';
+import type {
+  ElementPersistenceOrchestrator,
+  RealtimeSubscriptionManager,
+} from '../../../../../../application/services';
 import { createTextElement } from '../../../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../../../domain/shared';
 import { Workspace } from '../../../../../../domain/workspace';
 import { createAppError, ERROR_CODES } from '../../../../../../shared/errors';
 import { WorkspaceShellContainer } from '../../../../../../presentation/features/workspace-shell/components/workspace-shell-container';
 import { FakeElementRepository } from '../../../../../fixtures/fake-element-repository';
+import { FakeRealtimePort } from '../../../../../fixtures/fake-realtime-port';
 import { ManualScheduler, flushMicrotasks } from '../../../../../fixtures/manual-scheduler';
 
 const WORKSPACE = Workspace.create({
@@ -77,16 +82,23 @@ interface RenderOptions {
   readonly elementPersistenceOrchestrator?: ElementPersistenceOrchestrator;
   readonly persistenceScheduler?: ManualScheduler;
   readonly persistenceDebounceMs?: number;
+  readonly realtimePort?: FakeRealtimePort;
+  readonly realtimeSubscriptionManager?: RealtimeSubscriptionManager;
 }
 
 function renderContainer(getWorkspace: GetWorkspace, options: RenderOptions = {}) {
-  return render(
+  const realtimePort = options.realtimePort ?? new FakeRealtimePort();
+  const realtimeSubscriptionManager =
+    options.realtimeSubscriptionManager ?? createRealtimeSubscriptionManager(realtimePort);
+
+  const view = render(
     <MemoryRouter>
       <WorkspaceShellContainer
         workspaceId={options.id ?? 'ws-test'}
         getWorkspace={getWorkspace}
         loadWorkspaceElements={options.loadWorkspaceElements ?? LOAD_NO_ELEMENTS}
         elementPersistenceOrchestrator={options.elementPersistenceOrchestrator ?? NOOP_ORCHESTRATOR}
+        realtimeSubscriptionManager={realtimeSubscriptionManager}
         generateElementId={sequentialElementIds()}
         logoutUser={LOGOUT_USER}
         onBack={ON_BACK}
@@ -95,6 +107,8 @@ function renderContainer(getWorkspace: GetWorkspace, options: RenderOptions = {}
       />
     </MemoryRouter>,
   );
+
+  return { ...view, realtimePort };
 }
 
 describe('WorkspaceShellContainer', () => {
@@ -663,5 +677,108 @@ describe('WorkspaceShellContainer', () => {
     expect(orchestrator.persistDelta).toHaveBeenCalledTimes(1);
 
     resetDocumentVisibility();
+  });
+
+  it('applies remote element changes to the canvas', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const { realtimePort } = renderContainer(getWorkspace);
+
+    await screen.findByRole('application', { name: 'Canvas' });
+
+    act(() => {
+      realtimePort.emit({
+        workspaceId: WorkspaceId.create('ws-test'),
+        changes: [{ kind: 'added', element: TEXT_ELEMENT, origin: 'remote' }],
+      });
+    });
+
+    expect(await screen.findByTestId('canvas-item-el-1')).toBeInTheDocument();
+
+    const moved = createTextElement({
+      id: ElementId.create('el-1'),
+      workspaceId: WorkspaceId.create('ws-test'),
+      createdBy: UserId.create('user-1'),
+      position: Position.create(90, 110),
+      size: Size.create(120, 80),
+      content: 'Hello',
+      createdAt: new Date('2024-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2024-01-02T00:00:00.000Z'),
+    });
+
+    act(() => {
+      realtimePort.emit({
+        workspaceId: WorkspaceId.create('ws-test'),
+        changes: [{ kind: 'modified', element: moved, origin: 'remote' }],
+      });
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId('canvas-item-el-1')).toHaveStyle({ left: '90px', top: '110px' }),
+    );
+
+    act(() => {
+      realtimePort.emit({
+        workspaceId: WorkspaceId.create('ws-test'),
+        changes: [{ kind: 'removed', elementId: ElementId.create('el-1'), origin: 'remote' }],
+      });
+    });
+
+    await waitFor(() => expect(screen.queryByTestId('canvas-item-el-1')).not.toBeInTheDocument());
+  });
+
+  it('ignores local-origin echoes from the realtime feed', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const { realtimePort } = renderContainer(getWorkspace);
+
+    await screen.findByRole('application', { name: 'Canvas' });
+
+    act(() => {
+      realtimePort.emit({
+        workspaceId: WorkspaceId.create('ws-test'),
+        changes: [{ kind: 'added', element: TEXT_ELEMENT, origin: 'local' }],
+      });
+    });
+
+    await waitFor(() => expect(screen.queryByTestId('canvas-item-el-1')).not.toBeInTheDocument());
+  });
+
+  it('keeps a single realtime subscription per workspace and releases it on unmount', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const { realtimePort, unmount } = renderContainer(getWorkspace);
+
+    await screen.findByRole('application', { name: 'Canvas' });
+    const workspaceId = WorkspaceId.create('ws-test');
+    expect(realtimePort.activeSubscriptionCount(workspaceId)).toBe(1);
+
+    act(() => {
+      realtimePort.emit({
+        workspaceId,
+        changes: [{ kind: 'added', element: TEXT_ELEMENT, origin: 'remote' }],
+      });
+    });
+    await screen.findByTestId('canvas-item-el-1');
+
+    expect(realtimePort.activeSubscriptionCount(workspaceId)).toBe(1);
+
+    unmount();
+    expect(realtimePort.activeSubscriptionCount()).toBe(0);
+  });
+
+  it('surfaces a collaboration sync error', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const { realtimePort } = renderContainer(getWorkspace);
+
+    await screen.findByRole('application', { name: 'Canvas' });
+
+    act(() => {
+      realtimePort.emitError(
+        WorkspaceId.create('ws-test'),
+        createAppError('collaboration', ERROR_CODES.COLLABORATION_SYNC_FAILED, 'Sync failed.'),
+      );
+    });
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'We could not keep the board in sync. Reconnecting automatically.',
+    );
   });
 });

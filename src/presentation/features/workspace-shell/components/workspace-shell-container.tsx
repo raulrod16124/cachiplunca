@@ -9,6 +9,7 @@ import type {
   LoadWorkspaceElements,
 } from '../../../../application/queries';
 import {
+  applyRemoteElementChanges,
   createCanvasViewportStore,
   createCommandHistory,
   createElementPersistenceBatcher,
@@ -20,15 +21,17 @@ import type {
   ElementPersistenceBatcher,
   ElementPersistenceOrchestrator,
   PersistenceSyncStatus,
+  RealtimeSubscriptionManager,
   Scheduler,
   SelectionStore,
 } from '../../../../application/services';
 import type { Element } from '../../../../domain/element';
-import { Size } from '../../../../domain/shared';
+import { Size, WorkspaceId } from '../../../../domain/shared';
 import type { ElementId } from '../../../../domain/shared';
 import { toAppError, type AppError } from '../../../../shared/errors';
 import { WorkspaceShellLayout } from './workspace-shell-layout';
 import {
+  describeCollaborationSyncError,
   describeGetWorkspaceError,
   describeLoadWorkspaceElementsError,
   describePersistElementsError,
@@ -43,6 +46,7 @@ export interface WorkspaceShellContainerProps {
   readonly getWorkspace: GetWorkspace;
   readonly loadWorkspaceElements: LoadWorkspaceElements;
   readonly elementPersistenceOrchestrator: ElementPersistenceOrchestrator;
+  readonly realtimeSubscriptionManager: RealtimeSubscriptionManager;
   readonly generateElementId: () => ElementId;
   readonly logoutUser: LogoutUser;
   readonly onBack: () => void;
@@ -60,6 +64,7 @@ export function WorkspaceShellContainer({
   getWorkspace,
   loadWorkspaceElements,
   elementPersistenceOrchestrator,
+  realtimeSubscriptionManager,
   generateElementId,
   logoutUser,
   onBack,
@@ -72,6 +77,7 @@ export function WorkspaceShellContainer({
   const [elementsStatus, setElementsStatus] = useState<'loading' | 'error' | 'success'>('loading');
   const [elementsError, setElementsError] = useState<AppError | null>(null);
   const [persistenceError, setPersistenceError] = useState<AppError | null>(null);
+  const [collaborationError, setCollaborationError] = useState<AppError | null>(null);
   const [syncStatus, setSyncStatus] = useState<PersistenceSyncStatus>('idle');
   const elementsRef = useRef<readonly Element[]>([]);
   const canvasViewportStoreRef = useRef<CanvasViewportStore>(
@@ -281,6 +287,30 @@ export function WorkspaceShellContainer({
     }
   }, [status, fetchElements]);
 
+  useEffect(() => {
+    if (elementsStatus !== 'success') {
+      return;
+    }
+
+    setCollaborationError(null);
+
+    const unsubscribe = realtimeSubscriptionManager.subscribe(
+      WorkspaceId.create(workspaceId),
+      (event) => {
+        const next = applyRemoteElementChanges(elementsRef.current, event);
+
+        if (next !== elementsRef.current) {
+          applyElements(next);
+        }
+      },
+      (error) => {
+        setCollaborationError(error);
+      },
+    );
+
+    return unsubscribe;
+  }, [realtimeSubscriptionManager, workspaceId, elementsStatus, applyElements]);
+
   if (status === 'loading') {
     return (
       <Container role="status" aria-busy="true">
@@ -393,6 +423,9 @@ export function WorkspaceShellContainer({
         syncStatus={syncStatus}
         persistenceErrorMessage={
           persistenceError === null ? null : describePersistElementsError(persistenceError)
+        }
+        collaborationErrorMessage={
+          collaborationError === null ? null : describeCollaborationSyncError(collaborationError)
         }
       />
     );

@@ -34,6 +34,17 @@ export function describeLoadWorkspaceElementsError(error: AppError): string {
   }
 }
 
+export function describeCollaborationSyncError(error: AppError): string {
+  switch (error.code) {
+    case ERROR_CODES.NETWORK_REQUEST_FAILED:
+      return 'Live collaboration is offline. Changes from other people may not appear.';
+    case ERROR_CODES.COLLABORATION_SYNC_FAILED:
+      return 'We could not keep the board in sync. Reconnecting automatically.';
+    default:
+      return error.message;
+  }
+}
+
 export function describePersistElementsError(error: AppError): string {
   switch (error.code) {
     case ERROR_CODES.NETWORK_REQUEST_FAILED:

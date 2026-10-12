@@ -23,6 +23,7 @@ function App() {
           getWorkspace={workspaceServices.getWorkspace}
           loadWorkspaceElements={elementServices.loadWorkspaceElements}
           elementPersistenceOrchestrator={elementServices.elementPersistenceOrchestrator}
+          realtimeSubscriptionManager={elementServices.realtimeSubscriptionManager}
           generateElementId={elementServices.generateElementId}
         />
       </SessionProvider>

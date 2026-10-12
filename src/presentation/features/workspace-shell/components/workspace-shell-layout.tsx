@@ -56,6 +56,7 @@ export interface WorkspaceShellLayoutProps {
   readonly generateElementId: () => ElementId;
   readonly syncStatus: PersistenceSyncStatus;
   readonly persistenceErrorMessage: string | null;
+  readonly collaborationErrorMessage: string | null;
 }
 
 export function WorkspaceShellLayout({
@@ -77,6 +78,7 @@ export function WorkspaceShellLayout({
   generateElementId,
   syncStatus,
   persistenceErrorMessage,
+  collaborationErrorMessage,
 }: WorkspaceShellLayoutProps): ReactNode {
   const syncBadge = describeSyncStatus(syncStatus);
 
@@ -109,6 +111,11 @@ export function WorkspaceShellLayout({
         {persistenceErrorMessage === null ? null : (
           <Text role="alert" color="color.text.danger">
             {persistenceErrorMessage}
+          </Text>
+        )}
+        {collaborationErrorMessage === null ? null : (
+          <Text role="alert" color="color.text.danger">
+            {collaborationErrorMessage}
           </Text>
         )}
       </Header>

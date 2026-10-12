@@ -17,11 +17,13 @@ import {
 import {
   createElementPersistence,
   createElementPersistenceOrchestrator,
+  createRealtimeSubscriptionManager,
   createSessionStore,
 } from '../../application/services';
 import { ElementId } from '../../domain/shared';
 import { FakeAuthPort } from '../fixtures/fake-auth-port';
 import { FakeElementRepository } from '../fixtures/fake-element-repository';
+import { FakeRealtimePort } from '../fixtures/fake-realtime-port';
 import { FakeWorkspaceRepository } from '../fixtures/fake-workspace-repository';
 
 const CREDENTIALS = { email: 'user@example.com', password: 'secret123' };
@@ -53,6 +55,7 @@ async function renderAuthenticatedApp(initialPath = '/workspaces') {
           elementPersistenceOrchestrator={createElementPersistenceOrchestrator(
             createElementPersistence(elementRepository),
           )}
+          realtimeSubscriptionManager={createRealtimeSubscriptionManager(new FakeRealtimePort())}
           generateElementId={() => ElementId.create('generated')}
         />
       </SessionProvider>

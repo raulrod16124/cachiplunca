@@ -11,7 +11,10 @@ import type {
   ListWorkspaces,
   LoadWorkspaceElements,
 } from '../../application/queries';
-import type { ElementPersistenceOrchestrator } from '../../application/services';
+import type {
+  ElementPersistenceOrchestrator,
+  RealtimeSubscriptionManager,
+} from '../../application/services';
 import type { ElementId } from '../../domain/shared';
 import { LoginPage } from '../../presentation/features/auth/login-page';
 import { RegisterPage } from '../../presentation/features/auth/register-page';
@@ -29,6 +32,7 @@ export interface AppRoutesProps {
   readonly getWorkspace: GetWorkspace;
   readonly loadWorkspaceElements: LoadWorkspaceElements;
   readonly elementPersistenceOrchestrator: ElementPersistenceOrchestrator;
+  readonly realtimeSubscriptionManager: RealtimeSubscriptionManager;
   readonly generateElementId: () => ElementId;
 }
 
@@ -41,6 +45,7 @@ export function AppRoutes({
   getWorkspace,
   loadWorkspaceElements,
   elementPersistenceOrchestrator,
+  realtimeSubscriptionManager,
   generateElementId,
 }: AppRoutesProps): ReactNode {
   return (
@@ -68,6 +73,7 @@ export function AppRoutes({
               getWorkspace={getWorkspace}
               loadWorkspaceElements={loadWorkspaceElements}
               elementPersistenceOrchestrator={elementPersistenceOrchestrator}
+              realtimeSubscriptionManager={realtimeSubscriptionManager}
               generateElementId={generateElementId}
               logoutUser={logoutUser}
             />
