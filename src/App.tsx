@@ -22,6 +22,8 @@ function App() {
           createWorkspace={workspaceServices.createWorkspace}
           getWorkspace={workspaceServices.getWorkspace}
           loadWorkspaceElements={elementServices.loadWorkspaceElements}
+          elementPersistenceOrchestrator={elementServices.elementPersistenceOrchestrator}
+          generateElementId={elementServices.generateElementId}
         />
       </SessionProvider>
     </BrowserRouter>

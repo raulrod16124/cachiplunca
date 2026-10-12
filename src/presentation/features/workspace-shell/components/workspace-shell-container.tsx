@@ -2,7 +2,7 @@ import { Button, Heading, Inline, Skeleton, Stack, Text, VisuallyHidden } from '
 import type { ReactNode } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
-import type { LogoutUser } from '../../../../application/commands';
+import { createSnapshotCommand, type LogoutUser } from '../../../../application/commands';
 import type {
   GetWorkspace,
   GetWorkspaceResult,
@@ -16,15 +16,18 @@ import {
 import type {
   CanvasViewportStore,
   CommandHistory,
+  ElementPersistenceOrchestrator,
   SelectionStore,
 } from '../../../../application/services';
 import type { Element } from '../../../../domain/element';
 import { Size } from '../../../../domain/shared';
+import type { ElementId } from '../../../../domain/shared';
 import { toAppError, type AppError } from '../../../../shared/errors';
 import { WorkspaceShellLayout } from './workspace-shell-layout';
 import {
   describeGetWorkspaceError,
   describeLoadWorkspaceElementsError,
+  describePersistElementsError,
 } from '../workspace-error-messages';
 
 const Container = styled.div`
@@ -35,6 +38,8 @@ export interface WorkspaceShellContainerProps {
   readonly workspaceId: string;
   readonly getWorkspace: GetWorkspace;
   readonly loadWorkspaceElements: LoadWorkspaceElements;
+  readonly elementPersistenceOrchestrator: ElementPersistenceOrchestrator;
+  readonly generateElementId: () => ElementId;
   readonly logoutUser: LogoutUser;
   readonly onBack: () => void;
 }
@@ -43,6 +48,8 @@ export function WorkspaceShellContainer({
   workspaceId,
   getWorkspace,
   loadWorkspaceElements,
+  elementPersistenceOrchestrator,
+  generateElementId,
   logoutUser,
   onBack,
 }: WorkspaceShellContainerProps): ReactNode {
@@ -51,12 +58,97 @@ export function WorkspaceShellContainer({
   const [elements, setElements] = useState<readonly Element[]>([]);
   const [elementsStatus, setElementsStatus] = useState<'loading' | 'error' | 'success'>('loading');
   const [elementsError, setElementsError] = useState<AppError | null>(null);
+  const [persistenceError, setPersistenceError] = useState<AppError | null>(null);
+  const elementsRef = useRef<readonly Element[]>([]);
   const canvasViewportStoreRef = useRef<CanvasViewportStore>(
     createCanvasViewportStore(Size.create(800, 600)),
   );
   const selectionStoreRef = useRef<SelectionStore>(createSelectionStore());
   const commandHistoryRef = useRef<CommandHistory<readonly Element[]>>(
     createCommandHistory<readonly Element[]>({ initial: [] }),
+  );
+
+  const persistElements = useCallback(
+    (previous: readonly Element[], next: readonly Element[]): void => {
+      elementsRef.current = next;
+      setElements(next);
+
+      void (async () => {
+        const response = await elementPersistenceOrchestrator.persistDelta(previous, next);
+        setPersistenceError(response.status === 'error' ? response.error : null);
+      })();
+    },
+    [elementPersistenceOrchestrator],
+  );
+
+  const commitElements = useCallback(
+    (next: readonly Element[], label: string): void => {
+      const previous = elementsRef.current;
+
+      if (previous === next) {
+        return;
+      }
+
+      const result = commandHistoryRef.current.execute(
+        createSnapshotCommand(previous, next, label),
+      );
+
+      if (result.status === 'error') {
+        return;
+      }
+
+      persistElements(previous, result.state);
+    },
+    [persistElements],
+  );
+
+  const handleMoveElements = useCallback(
+    (next: readonly Element[]) => {
+      commitElements(next, 'Move elements');
+    },
+    [commitElements],
+  );
+
+  const handleResizeElements = useCallback(
+    (next: readonly Element[]) => {
+      commitElements(next, 'Resize elements');
+    },
+    [commitElements],
+  );
+
+  const handleDeleteElements = useCallback(
+    (next: readonly Element[]) => {
+      commitElements(next, 'Delete elements');
+    },
+    [commitElements],
+  );
+
+  const handleDuplicateElements = useCallback(
+    (next: readonly Element[]) => {
+      commitElements(next, 'Duplicate elements');
+    },
+    [commitElements],
+  );
+
+  const handlePasteElements = useCallback(
+    (next: readonly Element[]) => {
+      commitElements(next, 'Paste elements');
+    },
+    [commitElements],
+  );
+
+  const handleUndoElements = useCallback(
+    (restored: readonly Element[]) => {
+      persistElements(elementsRef.current, restored);
+    },
+    [persistElements],
+  );
+
+  const handleRedoElements = useCallback(
+    (restored: readonly Element[]) => {
+      persistElements(elementsRef.current, restored);
+    },
+    [persistElements],
   );
 
   const fetchWorkspace = useCallback(async (): Promise<void> => {
@@ -77,7 +169,9 @@ export function WorkspaceShellContainer({
     try {
       const response = await loadWorkspaceElements(workspaceId);
       if (response.status === 'ok') {
+        elementsRef.current = response.elements;
         setElements(response.elements);
+        setPersistenceError(null);
         setElementsStatus('success');
         return;
       }
@@ -199,6 +293,17 @@ export function WorkspaceShellContainer({
         canvasViewportStore={canvasViewportStoreRef.current}
         selectionStore={selectionStoreRef.current}
         commandHistory={commandHistoryRef.current}
+        onMoveElements={handleMoveElements}
+        onResizeElements={handleResizeElements}
+        onDeleteElements={handleDeleteElements}
+        onDuplicateElements={handleDuplicateElements}
+        onPasteElements={handlePasteElements}
+        onUndoElements={handleUndoElements}
+        onRedoElements={handleRedoElements}
+        generateElementId={generateElementId}
+        persistenceErrorMessage={
+          persistenceError === null ? null : describePersistElementsError(persistenceError)
+        }
       />
     );
   }

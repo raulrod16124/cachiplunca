@@ -14,7 +14,12 @@ import {
   createListWorkspaces,
   createLoadWorkspaceElements,
 } from '../../application/queries';
-import { createSessionStore } from '../../application/services';
+import {
+  createElementPersistence,
+  createElementPersistenceOrchestrator,
+  createSessionStore,
+} from '../../application/services';
+import { ElementId } from '../../domain/shared';
 import { FakeAuthPort } from '../fixtures/fake-auth-port';
 import { FakeElementRepository } from '../fixtures/fake-element-repository';
 import { FakeWorkspaceRepository } from '../fixtures/fake-workspace-repository';
@@ -45,6 +50,10 @@ async function renderAuthenticatedApp(initialPath = '/workspaces') {
           createWorkspace={createCreateWorkspace(repository)}
           getWorkspace={createGetWorkspace(repository)}
           loadWorkspaceElements={createLoadWorkspaceElements(elementRepository)}
+          elementPersistenceOrchestrator={createElementPersistenceOrchestrator(
+            createElementPersistence(elementRepository),
+          )}
+          generateElementId={() => ElementId.create('generated')}
         />
       </SessionProvider>
       <LocationProbe />

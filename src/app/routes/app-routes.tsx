@@ -11,6 +11,8 @@ import type {
   ListWorkspaces,
   LoadWorkspaceElements,
 } from '../../application/queries';
+import type { ElementPersistenceOrchestrator } from '../../application/services';
+import type { ElementId } from '../../domain/shared';
 import { LoginPage } from '../../presentation/features/auth/login-page';
 import { RegisterPage } from '../../presentation/features/auth/register-page';
 import { WorkspaceShellPage } from '../../presentation/features/workspace-shell';
@@ -26,6 +28,8 @@ export interface AppRoutesProps {
   readonly createWorkspace: CreateWorkspace;
   readonly getWorkspace: GetWorkspace;
   readonly loadWorkspaceElements: LoadWorkspaceElements;
+  readonly elementPersistenceOrchestrator: ElementPersistenceOrchestrator;
+  readonly generateElementId: () => ElementId;
 }
 
 export function AppRoutes({
@@ -36,6 +40,8 @@ export function AppRoutes({
   createWorkspace,
   getWorkspace,
   loadWorkspaceElements,
+  elementPersistenceOrchestrator,
+  generateElementId,
 }: AppRoutesProps): ReactNode {
   return (
     <Routes>
@@ -61,6 +67,8 @@ export function AppRoutes({
             <WorkspaceShellPage
               getWorkspace={getWorkspace}
               loadWorkspaceElements={loadWorkspaceElements}
+              elementPersistenceOrchestrator={elementPersistenceOrchestrator}
+              generateElementId={generateElementId}
               logoutUser={logoutUser}
             />
           }

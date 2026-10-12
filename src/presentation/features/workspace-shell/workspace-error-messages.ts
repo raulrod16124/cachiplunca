@@ -33,3 +33,19 @@ export function describeLoadWorkspaceElementsError(error: AppError): string {
       return error.message;
   }
 }
+
+export function describePersistElementsError(error: AppError): string {
+  switch (error.code) {
+    case ERROR_CODES.NETWORK_REQUEST_FAILED:
+      return 'We could not save your changes. Check your connection.';
+    case ERROR_CODES.PERSISTENCE_UNAVAILABLE:
+    case ERROR_CODES.PERSISTENCE_WRITE_FAILED:
+      return 'We could not save your latest changes. Please try again.';
+    case ERROR_CODES.AUTH_UNAUTHENTICATED:
+      return 'Your session has expired. Sign in again to keep editing.';
+    case ERROR_CODES.AUTH_FORBIDDEN:
+      return 'You do not have permission to edit this board.';
+    default:
+      return 'We could not save your latest changes.';
+  }
+}

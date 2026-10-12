@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import styled from 'styled-components';
 import type { Workspace } from '../../../../domain/workspace';
 import type { Element } from '../../../../domain/element';
+import type { ElementId } from '../../../../domain/shared';
 import { SignOutButton } from '../../auth/sign-out-button';
 import type { LogoutUser } from '../../../../application/commands';
 import type {
@@ -39,6 +40,18 @@ export interface WorkspaceShellLayoutProps {
   readonly canvasViewportStore: CanvasViewportStore;
   readonly selectionStore: SelectionStore;
   readonly commandHistory: CommandHistory<readonly Element[]>;
+  readonly onMoveElements: (elements: readonly Element[]) => void;
+  readonly onResizeElements: (elements: readonly Element[]) => void;
+  readonly onDeleteElements: (elements: readonly Element[]) => void;
+  readonly onDuplicateElements: (
+    elements: readonly Element[],
+    duplicatedIds: readonly string[],
+  ) => void;
+  readonly onPasteElements: (elements: readonly Element[], pastedIds: readonly string[]) => void;
+  readonly onUndoElements: (elements: readonly Element[]) => void;
+  readonly onRedoElements: (elements: readonly Element[]) => void;
+  readonly generateElementId: () => ElementId;
+  readonly persistenceErrorMessage: string | null;
 }
 
 export function WorkspaceShellLayout({
@@ -49,6 +62,15 @@ export function WorkspaceShellLayout({
   canvasViewportStore,
   selectionStore,
   commandHistory,
+  onMoveElements,
+  onResizeElements,
+  onDeleteElements,
+  onDuplicateElements,
+  onPasteElements,
+  onUndoElements,
+  onRedoElements,
+  generateElementId,
+  persistenceErrorMessage,
 }: WorkspaceShellLayoutProps): ReactNode {
   return (
     <Shell>
@@ -71,6 +93,11 @@ export function WorkspaceShellLayout({
           </Inline>
           <SignOutButton logoutUser={logoutUser} />
         </Inline>
+        {persistenceErrorMessage === null ? null : (
+          <Text role="alert" color="color.text.danger">
+            {persistenceErrorMessage}
+          </Text>
+        )}
       </Header>
       <CanvasArea>
         <Canvas
@@ -78,6 +105,14 @@ export function WorkspaceShellLayout({
           selectionStore={selectionStore}
           elements={elements}
           history={commandHistory}
+          onMoveElements={onMoveElements}
+          onResizeElements={onResizeElements}
+          onDeleteElements={onDeleteElements}
+          onDuplicateElements={onDuplicateElements}
+          onPasteElements={onPasteElements}
+          onUndoElements={onUndoElements}
+          onRedoElements={onRedoElements}
+          generateId={generateElementId}
         />
       </CanvasArea>
     </Shell>

@@ -35,3 +35,11 @@ export function createFunctionCommand<S>(input: FunctionCommandInput<S>): Comman
     undo: (state) => input.revert(state),
   };
 }
+
+export function createSnapshotCommand<S>(previous: S, next: S, label: string): Command<S> {
+  return createFunctionCommand<S>({
+    metadata: { label },
+    apply: () => ({ status: 'ok', state: next }),
+    revert: () => ({ status: 'ok', state: previous }),
+  });
+}

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import type {
@@ -7,11 +7,17 @@ import type {
   LoadWorkspaceElements,
   LoadWorkspaceElementsResult,
 } from '../../../../../../application/queries';
+import {
+  createElementPersistence,
+  createElementPersistenceOrchestrator,
+} from '../../../../../../application/services';
+import type { ElementPersistenceOrchestrator } from '../../../../../../application/services';
 import { createTextElement } from '../../../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../../../domain/shared';
 import { Workspace } from '../../../../../../domain/workspace';
 import { createAppError, ERROR_CODES } from '../../../../../../shared/errors';
 import { WorkspaceShellContainer } from '../../../../../../presentation/features/workspace-shell/components/workspace-shell-container';
+import { FakeElementRepository } from '../../../../../fixtures/fake-element-repository';
 
 const WORKSPACE = Workspace.create({
   id: WorkspaceId.create('ws-test'),
@@ -41,9 +47,19 @@ function createLoadWorkspaceElements(result: LoadWorkspaceElementsResult): LoadW
 
 const LOAD_NO_ELEMENTS = createLoadWorkspaceElements({ status: 'ok', elements: [] });
 
+const NOOP_ORCHESTRATOR: ElementPersistenceOrchestrator = {
+  persistDelta: jest.fn().mockResolvedValue({ status: 'ok' }),
+};
+
+function sequentialElementIds(): () => ElementId {
+  let counter = 0;
+  return () => ElementId.create(`generated-${++counter}`);
+}
+
 interface RenderOptions {
   readonly id?: string;
   readonly loadWorkspaceElements?: LoadWorkspaceElements;
+  readonly elementPersistenceOrchestrator?: ElementPersistenceOrchestrator;
 }
 
 function renderContainer(getWorkspace: GetWorkspace, options: RenderOptions = {}) {
@@ -53,6 +69,8 @@ function renderContainer(getWorkspace: GetWorkspace, options: RenderOptions = {}
         workspaceId={options.id ?? 'ws-test'}
         getWorkspace={getWorkspace}
         loadWorkspaceElements={options.loadWorkspaceElements ?? LOAD_NO_ELEMENTS}
+        elementPersistenceOrchestrator={options.elementPersistenceOrchestrator ?? NOOP_ORCHESTRATOR}
+        generateElementId={sequentialElementIds()}
         logoutUser={LOGOUT_USER}
         onBack={ON_BACK}
       />
@@ -230,5 +248,61 @@ describe('WorkspaceShellContainer', () => {
     expect(
       screen.getByText('We could not reach the server. Check your connection and try again.'),
     ).toBeInTheDocument();
+  });
+
+  it('persists canvas mutations and restores them on undo', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const repository = new FakeElementRepository();
+    await repository.save(TEXT_ELEMENT);
+    const orchestrator = createElementPersistenceOrchestrator(createElementPersistence(repository));
+
+    renderContainer(getWorkspace, {
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [TEXT_ELEMENT],
+      }),
+      elementPersistenceOrchestrator: orchestrator,
+    });
+
+    const canvas = await screen.findByRole('application', { name: 'Canvas' });
+    fireEvent.keyDown(canvas, { key: 'a', ctrlKey: true });
+    fireEvent.keyDown(canvas, { key: 'Delete' });
+
+    await waitFor(async () => {
+      await expect(repository.listByWorkspace(WorkspaceId.create('ws-test'))).resolves.toEqual([]);
+    });
+
+    fireEvent.keyDown(canvas, { key: 'z', ctrlKey: true });
+
+    await waitFor(async () => {
+      const restored = await repository.listByWorkspace(WorkspaceId.create('ws-test'));
+      expect(restored).toHaveLength(1);
+    });
+  });
+
+  it('surfaces a persistence error explicitly', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const orchestrator: ElementPersistenceOrchestrator = {
+      persistDelta: jest.fn().mockResolvedValue({
+        status: 'error',
+        error: createAppError('persistence', ERROR_CODES.PERSISTENCE_WRITE_FAILED, 'Write failed'),
+      }),
+    };
+
+    renderContainer(getWorkspace, {
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [TEXT_ELEMENT],
+      }),
+      elementPersistenceOrchestrator: orchestrator,
+    });
+
+    const canvas = await screen.findByRole('application', { name: 'Canvas' });
+    fireEvent.keyDown(canvas, { key: 'a', ctrlKey: true });
+    fireEvent.keyDown(canvas, { key: 'Delete' });
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'We could not save your latest changes. Please try again.',
+    );
   });
 });

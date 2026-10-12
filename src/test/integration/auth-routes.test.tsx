@@ -12,6 +12,7 @@ import {
 import { createGetWorkspace } from '../../application/queries';
 import type { AuthPort } from '../../application/ports';
 import { createSessionStore } from '../../application/services';
+import { ElementId } from '../../domain/shared';
 import { FakeAuthPort } from '../fixtures/fake-auth-port';
 import { PendingAuthPort } from '../fixtures/pending-auth-port';
 
@@ -56,6 +57,10 @@ function renderApp(
           loadWorkspaceElements={jest
             .fn()
             .mockResolvedValue({ status: 'ok' as const, elements: [] })}
+          elementPersistenceOrchestrator={{
+            persistDelta: jest.fn().mockResolvedValue({ status: 'ok' as const }),
+          }}
+          generateElementId={() => ElementId.create('generated')}
         />
       </SessionProvider>
       <LocationProbe />

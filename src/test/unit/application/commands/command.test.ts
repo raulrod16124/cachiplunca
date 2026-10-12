@@ -1,6 +1,7 @@
 import {
   createFunctionCommand,
   createMoveElement,
+  createSnapshotCommand,
   type Command,
   type CommandResult,
 } from '../../../../application/commands';
@@ -106,6 +107,18 @@ describe('createFunctionCommand', () => {
     expect(expectOk(command.execute(1))).toBe(2);
     expect(expectOk(command.undo(1))).toBe(0);
     expect(calls).toEqual(['apply:1', 'revert:1']);
+  });
+});
+
+describe('createSnapshotCommand', () => {
+  it('applies the next state and reverts to the previous one regardless of input', () => {
+    const previous: readonly Element[] = [textElement('elem-1', Position.create(10, 20))];
+    const next: readonly Element[] = [textElement('elem-1', Position.create(30, 40))];
+    const command = createSnapshotCommand(previous, next, 'Move elem-1');
+
+    expect(command.metadata.label).toBe('Move elem-1');
+    expect(expectOk(command.execute([textElement('unrelated', Position.create(0, 0))]))).toBe(next);
+    expect(expectOk(command.undo(next))).toBe(previous);
   });
 });
 
