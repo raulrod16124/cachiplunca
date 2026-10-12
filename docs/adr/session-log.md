@@ -1,5 +1,14 @@
 # Session Log
 
+## 2026-10-12 — TASK-075 Recovery after refresh
+
+- Siguiente tarea del backlog: TASK-075 (dependencias TASK-070 y TASK-073 DONE, sin IN PROGRESS ni BLOCKED). Alcance confirmado con el usuario: **verificar + endurecer el unload** (tests de recuperación end-to-end y trigger `visibilitychange`), sin persistencia local ni cambios de arquitectura.
+- La recuperación ya estaba cableada por TASK-070 (carga en montaje) y TASK-073 (flush en `unmount`/`pagehide`); el hueco era la **falta de verificación de punta a punta** y la fiabilidad del trigger en móvil.
+- Presentation: `WorkspaceShellContainer` añade `document.addEventListener('visibilitychange', ...)` que hace `flush()` cuando `document.visibilityState === 'hidden'`, junto al `pagehide` existente; el cleanup elimina ambos listeners y conserva el flush de unmount. Sin nuevas dependencias ni cambios de firmas.
+- Tests (+4 en `workspace-shell-container.test.tsx`): recuperación del board persistido tras un remount (refresh) con `FakeElementRepository` + `createLoadWorkspaceElements` real; recuperación del último cambio en debounce tras `pagehide` + remount (posición final persistida); no pérdida del estado previamente persistido cuando un write falla (el remount recarga el original); y flush **solo** al pasar la página a `hidden` (visible no dispara y `hidden` persiste una vez, con `visibilityState` forzado y restaurado vía `Object.defineProperty`/`afterEach`).
+- Quality gates en verde: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` (1193 tests, 99 suites) y `npm run build` (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Sin ADR nuevo: la recuperación tras refresh es la composición de la carga (TASK-070) y el autosave con flush (TASK-073); añadir `visibilitychange` es un trigger de ciclo de vida, no una decisión arquitectónica.
+
 ## 2026-10-12 — TASK-074 Sync status
 
 - Siguiente tarea del backlog: TASK-074 (dependencia TASK-072 DONE, sin IN PROGRESS ni BLOCKED). Alcance confirmado con el usuario: indicador de sincronización en Application + `Badge` en Presentation; `saved` **persiste hasta el próximo cambio** (sin timers) y el badge se **oculta en `idle`**.

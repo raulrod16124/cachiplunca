@@ -7,6 +7,7 @@ import type {
   LoadWorkspaceElements,
   LoadWorkspaceElementsResult,
 } from '../../../../../../application/queries';
+import { createLoadWorkspaceElements as createLoadWorkspaceElementsQuery } from '../../../../../../application/queries';
 import {
   createElementPersistence,
   createElementPersistenceOrchestrator,
@@ -56,6 +57,19 @@ function sequentialElementIds(): () => ElementId {
   let counter = 0;
   return () => ElementId.create(`generated-${++counter}`);
 }
+
+function setDocumentVisibility(state: 'visible' | 'hidden'): void {
+  Object.defineProperty(document, 'visibilityState', {
+    configurable: true,
+    get: () => state,
+  });
+}
+
+function resetDocumentVisibility(): void {
+  Reflect.deleteProperty(document, 'visibilityState');
+}
+
+afterEach(resetDocumentVisibility);
 
 interface RenderOptions {
   readonly id?: string;
@@ -510,5 +524,144 @@ describe('WorkspaceShellContainer', () => {
     await flushMicrotasks();
 
     expect(orchestrator.persistDelta).toHaveBeenCalledTimes(1);
+  });
+
+  it('recovers the persisted board after a refresh', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const repository = new FakeElementRepository();
+    await repository.save(TEXT_ELEMENT);
+    const orchestrator = createElementPersistenceOrchestrator(createElementPersistence(repository));
+    const loadWorkspaceElements = createLoadWorkspaceElementsQuery(repository);
+
+    const { unmount } = renderContainer(getWorkspace, {
+      loadWorkspaceElements,
+      elementPersistenceOrchestrator: orchestrator,
+    });
+
+    expect(await screen.findByTestId('canvas-item-el-1')).toBeInTheDocument();
+
+    unmount();
+
+    renderContainer(getWorkspace, {
+      loadWorkspaceElements,
+      elementPersistenceOrchestrator: orchestrator,
+    });
+
+    const restored = await screen.findByTestId('canvas-item-el-1');
+    expect(restored).toHaveStyle({ left: '30px', top: '40px', width: '120px', height: '80px' });
+  });
+
+  it('recovers the last debounced change after a refresh', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const repository = new FakeElementRepository();
+    await repository.save(TEXT_ELEMENT);
+    const scheduler = new ManualScheduler();
+    const orchestrator = createElementPersistenceOrchestrator(createElementPersistence(repository));
+    const loadWorkspaceElements = createLoadWorkspaceElementsQuery(repository);
+    const user = userEvent.setup();
+
+    const { unmount } = renderContainer(getWorkspace, {
+      loadWorkspaceElements,
+      elementPersistenceOrchestrator: orchestrator,
+      persistenceScheduler: scheduler,
+    });
+
+    const item = await screen.findByTestId('canvas-item-el-1');
+
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: item, coords: { x: 60, y: 70 } },
+      { coords: { x: 80, y: 90 } },
+      { coords: { x: 100, y: 110 } },
+    ]);
+
+    await act(async () => {
+      window.dispatchEvent(new Event('pagehide'));
+      await flushMicrotasks();
+    });
+
+    unmount();
+
+    renderContainer(getWorkspace, {
+      loadWorkspaceElements,
+      elementPersistenceOrchestrator: orchestrator,
+      persistenceScheduler: new ManualScheduler(),
+    });
+
+    const restored = await screen.findByTestId('canvas-item-el-1');
+    expect(restored).toHaveStyle({ left: '70px', top: '80px' });
+  });
+
+  it('does not lose the previously persisted board when a write fails', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const repository = new FakeElementRepository();
+    await repository.save(TEXT_ELEMENT);
+    const loadWorkspaceElements = createLoadWorkspaceElementsQuery(repository);
+    const orchestrator: ElementPersistenceOrchestrator = {
+      persistDelta: jest.fn().mockResolvedValue({
+        status: 'error',
+        error: createAppError('persistence', ERROR_CODES.PERSISTENCE_WRITE_FAILED, 'Write failed'),
+      }),
+    };
+
+    const { unmount } = renderContainer(getWorkspace, {
+      loadWorkspaceElements,
+      elementPersistenceOrchestrator: orchestrator,
+    });
+
+    const canvas = await screen.findByRole('application', { name: 'Canvas' });
+    fireEvent.keyDown(canvas, { key: 'a', ctrlKey: true });
+    fireEvent.keyDown(canvas, { key: 'Delete' });
+
+    expect(await screen.findByText('Not saved')).toBeInTheDocument();
+
+    unmount();
+
+    renderContainer(getWorkspace, {
+      loadWorkspaceElements,
+      elementPersistenceOrchestrator: orchestrator,
+    });
+
+    expect(await screen.findByTestId('canvas-item-el-1')).toBeInTheDocument();
+  });
+
+  it('flushes pending persistence only when the page becomes hidden', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const scheduler = new ManualScheduler();
+    const orchestrator: ElementPersistenceOrchestrator = {
+      persistDelta: jest.fn().mockResolvedValue({ status: 'ok' }),
+    };
+
+    renderContainer(getWorkspace, {
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [TEXT_ELEMENT],
+      }),
+      elementPersistenceOrchestrator: orchestrator,
+      persistenceScheduler: scheduler,
+    });
+
+    const item = await screen.findByTestId('canvas-item-el-1');
+    const user = userEvent.setup();
+
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: item, coords: { x: 60, y: 70 } },
+      { coords: { x: 100, y: 110 } },
+    ]);
+
+    expect(orchestrator.persistDelta).not.toHaveBeenCalled();
+
+    setDocumentVisibility('visible');
+    document.dispatchEvent(new Event('visibilitychange'));
+    expect(orchestrator.persistDelta).not.toHaveBeenCalled();
+
+    setDocumentVisibility('hidden');
+    await act(async () => {
+      document.dispatchEvent(new Event('visibilitychange'));
+      await flushMicrotasks();
+    });
+
+    expect(orchestrator.persistDelta).toHaveBeenCalledTimes(1);
+
+    resetDocumentVisibility();
   });
 });

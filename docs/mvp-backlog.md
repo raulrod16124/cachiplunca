@@ -2829,7 +2829,7 @@ Completar **Sync status** dejando un resultado verificable y apto para las tarea
 
 ### TASK-075 — Recovery after refresh
 
-**Priority:** P0 · **Depends:** TASK-070, TASK-073 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-070, TASK-073 · **Status:** DONE
 
 #### Objetivo
 
@@ -2843,11 +2843,11 @@ Completar **Recovery after refresh** dejando un resultado verificable y apto par
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 

@@ -103,10 +103,18 @@ export function WorkspaceShellContainer({
       void persistenceBatcher.flush();
     }
 
+    function handleVisibilityChange(): void {
+      if (document.visibilityState === 'hidden') {
+        flush();
+      }
+    }
+
     window.addEventListener('pagehide', flush);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       window.removeEventListener('pagehide', flush);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       flush();
     };
   }, [persistenceBatcher]);
