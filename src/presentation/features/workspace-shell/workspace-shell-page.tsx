@@ -1,8 +1,12 @@
 import type { ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { PresencePort } from '../../../application/ports';
-import type { LogoutUser } from '../../../application/commands';
-import type { GetWorkspace, LoadWorkspaceElements } from '../../../application/queries';
+import type { InviteMember, LogoutUser } from '../../../application/commands';
+import type {
+  GetWorkspace,
+  ListPendingInvitations,
+  LoadWorkspaceElements,
+} from '../../../application/queries';
 import type {
   ElementPersistenceOrchestrator,
   RealtimeSubscriptionManager,
@@ -19,6 +23,8 @@ export interface WorkspaceShellPageProps {
   readonly generateElementId: () => ElementId;
   readonly logoutUser: LogoutUser;
   readonly presencePort?: PresencePort;
+  readonly inviteMember?: InviteMember;
+  readonly listPendingInvitations?: ListPendingInvitations;
 }
 
 export function WorkspaceShellPage({
@@ -29,6 +35,8 @@ export function WorkspaceShellPage({
   generateElementId,
   logoutUser,
   presencePort,
+  inviteMember,
+  listPendingInvitations,
 }: WorkspaceShellPageProps): ReactNode {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const navigate = useNavigate();
@@ -51,6 +59,8 @@ export function WorkspaceShellPage({
       logoutUser={logoutUser}
       presencePort={presencePort}
       localUserId={localUserId}
+      inviteMember={inviteMember}
+      listPendingInvitations={listPendingInvitations}
       onBack={() => navigate('/workspaces')}
     />
   );

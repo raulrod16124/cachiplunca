@@ -62,6 +62,7 @@ export interface WorkspaceShellLayoutProps {
   readonly connectionStatus: RealtimeConnectionStatus;
   readonly persistenceErrorMessage: string | null;
   readonly collaborationErrorMessage: string | null;
+  readonly onInvite?: () => void;
 }
 
 export function WorkspaceShellLayout({
@@ -87,6 +88,7 @@ export function WorkspaceShellLayout({
   connectionStatus,
   persistenceErrorMessage,
   collaborationErrorMessage,
+  onInvite,
 }: WorkspaceShellLayoutProps): ReactNode {
   const syncBadge = describeSyncStatus(syncStatus);
   const connectionBadge = describeConnectionStatus(connectionStatus);
@@ -120,7 +122,14 @@ export function WorkspaceShellLayout({
               </span>
             )}
           </Inline>
-          <SignOutButton logoutUser={logoutUser} />
+          <Inline gap="space-3" align="center">
+            {onInvite === undefined ? null : (
+              <Button type="button" variant="secondary" size="sm" onClick={onInvite}>
+                Invite
+              </Button>
+            )}
+            <SignOutButton logoutUser={logoutUser} />
+          </Inline>
         </Inline>
         {persistenceErrorMessage === null ? null : (
           <Text role="alert" color="color.text.danger">

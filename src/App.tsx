@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { createAuthServices } from './app/config/auth-services';
 import { createElementServices } from './app/config/element-services';
+import { createInvitationServices } from './app/config/invitation-services';
 import { createPresenceServices } from './app/config/presence-services';
 import { createWorkspaceServices } from './app/config/workspace-services';
 import { AppRoutes } from './app/routes/app-routes';
@@ -12,6 +13,7 @@ function App() {
   const [workspaceServices] = useState(createWorkspaceServices);
   const [elementServices] = useState(createElementServices);
   const [presenceServices] = useState(createPresenceServices);
+  const [invitationServices] = useState(createInvitationServices);
 
   return (
     <BrowserRouter>
@@ -28,6 +30,8 @@ function App() {
           realtimeSubscriptionManager={elementServices.realtimeSubscriptionManager}
           generateElementId={elementServices.generateElementId}
           presencePort={presenceServices.presencePort}
+          inviteMember={invitationServices.inviteMember}
+          listPendingInvitations={invitationServices.listPendingInvitations}
         />
       </SessionProvider>
     </BrowserRouter>

@@ -3498,7 +3498,7 @@ Permitir invitar a un colaborador por email creando una **invitación pendiente*
 
 ### TASK-093 — Invitation UI
 
-**Priority:** P0 · **Depends:** TASK-092 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-092 · **Status:** DONE
 
 #### Objetivo
 
@@ -3512,12 +3512,12 @@ Completar **Invitation UI** dejando un resultado verificable y apto para las tar
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Los estados loading/error/empty relevantes son explícitos.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Los estados loading/error/empty relevantes son explícitos.
 
 #### Fuera de alcance
 
@@ -5000,6 +5000,18 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) entidad `Invitation` separada de `Membership` con id y ciclo de vida propios (la membership solo nace al aceptar, TASK-094); (2) email como identidad funcional, normalizado y validado en dominio (sin importar `src/shared`); (3) token de un solo uso persistido **hasheado** y devuelto en claro una única vez, con `issueToken()` inyectado para no meter Web Crypto en Application; (4) expiración derivada, sin estado almacenado ni job; (5) el port incluye anticipadamente `findByTokenHash`/`listPendingByWorkspace`/`updateStatus` para TASK-093/094 (mismo criterio que ADR-0017); (6) autorización del invitador y adapter Firestore diferidos a TASK-095/097 y a la tarea de adapter; (7) sin restringir el rol invitado (se admite `owner`, como el dominio). Documentado en `docs/adr/0018-invitation-model.md`.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-093 (Invitation UI).
+
+## 2026-10-13 — TASK-093
+
+- Resultado: **Invitation UI end-to-end**. Query de Application `createListPendingInvitations` (`src/application/queries/list-pending-invitations.ts`) sobre `InvitationRepository` con `sortPendingInvitations` (createdAt desc, desempate por id) y resultado union `ok | error` con `toAppError`; exportada en `queries/index.ts`.
+- Infrastructure: `createFirebaseInvitationRepository(db)` (`src/infrastructure/firebase/firebase-invitation-repository.ts`) con colección plana `invitations` e id de documento = `invitation.id`; `create` prechequea id duplicado sobre el documento (Firestore sobrescribe) y pendiente duplicada `(workspaceId, email)` vía `listPendingByWorkspace` → `conflict/INVITATION_ALREADY_EXISTS`; `listPendingByWorkspace` filtra `(workspaceId, status='pending')`; `updateStatus` hace `updateDoc` parcial (`status`, `updatedAt`) preservando `createdAt` y rechaza inexistente con `notFound`; errores concretos traducidos con `mapFirebaseError`, invariantes→`validation`. Mapper puro `firebase-invitation-mapper.ts` (sin import del SDK, lee `Date` o `Timestamp`-like vía `toDate()`, valida rol/estado con los validators de dominio) e id dentro del documento. Contrato TASK-092 cumplido.
+- Criptografía en composición: `src/infrastructure/crypto/invitation-token.ts` con `createInvitationTokenIssuer()` (32 bytes aleatorios → token base64url → hash SHA-256 en hex) y `hashInvitationToken(token)` reutilizable por el accept (TASK-094) para comparar en claro con el hash persistido; sin `crypto`/Web Crypto en capas puras (ADR-0018 §4).
+- Composición/wiring: `src/app/config/invitation-services.ts` (`inviteMember` con `generateId: crypto.randomUUID()` y `issueToken`; `listPendingInvitations`), propagado `App.tsx → AppRoutes → WorkspaceShellPage → WorkspaceShellContainer` como props opcionales; el botón **Invite** vive en el header de `WorkspaceShellLayout` y se muestra solo cuando hay servicios de invitación + `localUserId`.
+- Presentation (`src/presentation/features/invitations/`): `InviteMemberForm` (email + rol con `Select` de `@raulrod/ui`, errores de campo vía resultado `invalid-input`, mensaje de error con `describeInviteMemberError`), `InvitationLink` (enlace de un solo uso `/invitations/<token>` con `buildInvitationLink` y `Copy link` vía clipboard), `PendingInvitationsList` (estados loading/error+retry/empty/lista con `Badge` de rol y expiración), e `InviteDialog` que orquesta (fetch al abrir, refresca tras invitar, muestra el enlace una sola vez). Nuevo `invitation-error-messages.ts` con `describeInviteMemberError`/`describePendingInvitationsError`.
+- Tests/quality gates: 1616 tests pasan (131 suites; +54: `list-pending-invitations.test.ts` (7) —sort, ok, vacío, aislamiento por workspace, error traducido—, `firebase-invitation-repository.test.ts` —contrato completo + 7 casos de adapter: persistencia bajo id, duplicado email → conflict sin escribir, `unavailable`→network, `permission-denied`→authorization, `updateStatus` parcial preservando createdAt, `Timestamp`-like, documento corrupto→validation—, `invitation-token.test.ts` (4, env node) —digest determinista, tokens distintos, url-safe y hash coincidente—, `invitation-error-messages.test.ts` (8), `invite-member-form.test.tsx` (4), `pending-invitations-list.test.tsx` (4), `invitation-link.test.tsx` (3), `invite-dialog.test.tsx` (4) y `workspace-shell-container.test.tsx` +2 —sin botón sin servicios, dialog desde el header—). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) TASK-093 asumió también la tarea de adapter y la composición de token ausentes en el backlog (confirmado con el usuario) para dejar el flujo usable; (2) documento de invitación con `id` propio como campo + doc-id = `invitation.id` (a diferencia de membership, la entidad tiene identidad propia, ADR-0018 §2); (3) expiración legible en la lista vía `Intl.DateTimeFormat('en-US', UTC)`, sin formateadores de librería; (4) el enlace comparte la constante `INVITATION_ACCEPT_PATH = '/invitations'` que consumirá TASK-094; (5) `listPendingInvitations` recibe el `workspaceId` como string (patrón `getWorkspace`) y la validación del value object vive en Application. Documentado en `docs/adr/0019-invitation-repository-ui.md`.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-094 (Accept invitation).
 
 ---
 

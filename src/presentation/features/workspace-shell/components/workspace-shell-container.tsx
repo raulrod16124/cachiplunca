@@ -2,10 +2,11 @@ import { Button, Heading, Inline, Skeleton, Stack, Text, VisuallyHidden } from '
 import type { ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import styled from 'styled-components';
-import type { LogoutUser } from '../../../../application/commands';
+import type { InviteMember, LogoutUser } from '../../../../application/commands';
 import type {
   GetWorkspace,
   GetWorkspaceResult,
+  ListPendingInvitations,
   LoadWorkspaceElements,
 } from '../../../../application/queries';
 import {
@@ -40,6 +41,7 @@ import { Presence } from '../../../../domain/collaboration';
 import { Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
 import type { ElementId } from '../../../../domain/shared';
 import { toAppError, type AppError } from '../../../../shared/errors';
+import { InviteDialog } from '../../invitations';
 import { WorkspaceShellLayout } from './workspace-shell-layout';
 import {
   describeCollaborationSyncError,
@@ -66,6 +68,8 @@ export interface WorkspaceShellContainerProps {
   readonly selectionStore?: SelectionStore;
   readonly persistenceDebounceMs?: number;
   readonly persistenceScheduler?: Scheduler;
+  readonly inviteMember?: InviteMember;
+  readonly listPendingInvitations?: ListPendingInvitations;
 }
 
 interface TransformGesture {
@@ -87,8 +91,11 @@ export function WorkspaceShellContainer({
   selectionStore,
   persistenceDebounceMs,
   persistenceScheduler,
+  inviteMember,
+  listPendingInvitations,
 }: WorkspaceShellContainerProps): ReactNode {
   const [status, setStatus] = useState<'loading' | 'notFound' | 'error' | 'success'>('loading');
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [result, setResult] = useState<GetWorkspaceResult | null>(null);
   const [elements, setElements] = useState<readonly Element[]>([]);
   const [elementsStatus, setElementsStatus] = useState<'loading' | 'error' | 'success'>('loading');
@@ -528,35 +535,57 @@ export function WorkspaceShellContainer({
       );
     }
 
+    const invitedBy =
+      inviteMember !== undefined &&
+      listPendingInvitations !== undefined &&
+      localUserId !== undefined
+        ? UserId.create(localUserId)
+        : undefined;
+
     return (
-      <WorkspaceShellLayout
-        workspace={result.workspace}
-        elements={elements}
-        logoutUser={logoutUser}
-        onBack={onBack}
-        canvasViewportStore={canvasViewportStoreRef.current}
-        selectionStore={selectionStoreRef.current}
-        commandHistory={commandHistoryRef.current}
-        onMoveElements={handleMoveElements}
-        onResizeElements={handleResizeElements}
-        onTransformEnd={handleTransformEnd}
-        onDeleteElements={handleDeleteElements}
-        onDuplicateElements={handleDuplicateElements}
-        onPasteElements={handlePasteElements}
-        onUndoElements={handleUndoElements}
-        onRedoElements={handleRedoElements}
-        generateElementId={generateElementId}
-        remoteCursors={remoteCursors}
-        onCursorMove={cursorBroadcaster === null ? undefined : handleCursorMove}
-        syncStatus={syncStatus}
-        connectionStatus={connectionStatus}
-        persistenceErrorMessage={
-          persistenceError === null ? null : describePersistElementsError(persistenceError)
-        }
-        collaborationErrorMessage={
-          collaborationError === null ? null : describeCollaborationSyncError(collaborationError)
-        }
-      />
+      <>
+        <WorkspaceShellLayout
+          workspace={result.workspace}
+          elements={elements}
+          logoutUser={logoutUser}
+          onBack={onBack}
+          canvasViewportStore={canvasViewportStoreRef.current}
+          selectionStore={selectionStoreRef.current}
+          commandHistory={commandHistoryRef.current}
+          onMoveElements={handleMoveElements}
+          onResizeElements={handleResizeElements}
+          onTransformEnd={handleTransformEnd}
+          onDeleteElements={handleDeleteElements}
+          onDuplicateElements={handleDuplicateElements}
+          onPasteElements={handlePasteElements}
+          onUndoElements={handleUndoElements}
+          onRedoElements={handleRedoElements}
+          generateElementId={generateElementId}
+          remoteCursors={remoteCursors}
+          onCursorMove={cursorBroadcaster === null ? undefined : handleCursorMove}
+          syncStatus={syncStatus}
+          connectionStatus={connectionStatus}
+          persistenceErrorMessage={
+            persistenceError === null ? null : describePersistElementsError(persistenceError)
+          }
+          collaborationErrorMessage={
+            collaborationError === null ? null : describeCollaborationSyncError(collaborationError)
+          }
+          onInvite={invitedBy === undefined ? undefined : () => setInviteOpen(true)}
+        />
+        {invitedBy === undefined ||
+        inviteMember === undefined ||
+        listPendingInvitations === undefined ? null : (
+          <InviteDialog
+            open={inviteOpen}
+            onOpenChange={setInviteOpen}
+            workspaceId={workspaceId}
+            invitedBy={invitedBy}
+            inviteMember={inviteMember}
+            listPendingInvitations={listPendingInvitations}
+          />
+        )}
+      </>
     );
   }
 

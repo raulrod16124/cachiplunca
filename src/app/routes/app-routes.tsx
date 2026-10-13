@@ -2,12 +2,14 @@ import type { ReactNode } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import type {
   CreateWorkspaceWithOwner,
+  InviteMember,
   LoginUser,
   LogoutUser,
   RegisterUser,
 } from '../../application/commands';
 import type {
   GetWorkspace,
+  ListPendingInvitations,
   ListWorkspaces,
   LoadWorkspaceElements,
 } from '../../application/queries';
@@ -36,6 +38,8 @@ export interface AppRoutesProps {
   readonly realtimeSubscriptionManager: RealtimeSubscriptionManager;
   readonly generateElementId: () => ElementId;
   readonly presencePort?: PresencePort;
+  readonly inviteMember?: InviteMember;
+  readonly listPendingInvitations?: ListPendingInvitations;
 }
 
 export function AppRoutes({
@@ -50,6 +54,8 @@ export function AppRoutes({
   realtimeSubscriptionManager,
   generateElementId,
   presencePort,
+  inviteMember,
+  listPendingInvitations,
 }: AppRoutesProps): ReactNode {
   return (
     <Routes>
@@ -80,6 +86,8 @@ export function AppRoutes({
               generateElementId={generateElementId}
               logoutUser={logoutUser}
               presencePort={presencePort}
+              inviteMember={inviteMember}
+              listPendingInvitations={listPendingInvitations}
             />
           }
         />

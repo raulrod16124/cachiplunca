@@ -1,5 +1,16 @@
 # Session Log
 
+## 2026-10-13 — TASK-093 Invitation UI
+
+- Resultado: **Invitation UI end-to-end** (alcance confirmado con el usuario: UI + query `listPendingInvitations` + adapter Firestore + composición de token). Query `createListPendingInvitations` en `src/application/queries/list-pending-invitations.ts` sobre el port, con `sortPendingInvitations` (createdAt desc, desempate por id) y resultado union `ok | error` vía `toAppError`; exportada en `queries/index.ts`.
+- Infrastructure: `createFirebaseInvitationRepository(db)` (`firebase-invitation-repository.ts`) con colección `invitations` y doc-id = `invitation.id`; `create` prechequea id duplicado y pendiente duplicada `(workspaceId, email)` vía `listPendingByWorkspace` → `conflict/INVITATION_ALREADY_EXISTS`; `listPendingByWorkspace` filtra `(workspaceId, status='pending')`; `updateStatus` hace `updateDoc` parcial preservando `createdAt` y rechaza inexistente con `notFound`; errores con `mapFirebaseError`. Mapper puro `firebase-invitation-mapper.ts` (lee `Date`/`Timestamp` vía `toDate()`, valida rol/estado con validators de dominio). Contrato TASK-092 cumplido.
+- Criptografía en composición: `src/infrastructure/crypto/invitation-token.ts` — `createInvitationTokenIssuer()` (32 bytes `crypto.getRandomValues` → token base64url → SHA-256 hex) y `hashInvitationToken(token)` reutilizable por el accept de TASK-094; sin Web Crypto en Application/Domain (ADR-0018 §4).
+- Composición/wiring: `src/app/config/invitation-services.ts` (`inviteMember` con `generateId: crypto.randomUUID()` y `issueToken`; `listPendingInvitations`) propagado `App → AppRoutes → WorkspaceShellPage → WorkspaceShellContainer` como props opcionales; botón **Invite** en el header de `WorkspaceShellLayout`, solo con servicios + `localUserId`.
+- Presentation (`src/presentation/features/invitations/`): `InviteMemberForm` (email + rol con `Select`, errores de campo desde `invalid-input`), `InvitationLink` (`/invitations/<token>`, `buildInvitationLink`, `Copy link`), `PendingInvitationsList` (loading/error+retry/empty/lista) e `InviteDialog` (orquesta fetch/refresh/link único). `invitation-error-messages.ts` para mensajes amigables.
+- Tests/quality gates: 1616 tests (131 suites; +54 nuevos). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- ADR-0019 (`docs/adr/0019-invitation-repository-ui.md`): colección/doc-id, semántica de conflict, contrato de hash del token, query en Application, punto de entrada de UI y enlace `/invitations` como contrato para TASK-094.
+- Criterios TASK-093 marcados [x] y `Status: DONE`. Siguiente tarea: TASK-094 (Accept invitation).
+
 ## 2026-10-13 — TASK-089 Membership repository port
 
 - Siguiente tarea del backlog: TASK-089 (dependencia TASK-016 DONE, sin IN PROGRESS ni BLOCKED). Alcance confirmado con el usuario: **incluir `listByUser`** en la superficie del port y tratar el `create` duplicado como **`conflict` AppError** (no upsert).

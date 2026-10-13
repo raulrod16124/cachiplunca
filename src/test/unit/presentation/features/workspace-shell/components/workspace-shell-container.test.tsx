@@ -4,10 +4,15 @@ import { MemoryRouter } from 'react-router-dom';
 import type {
   GetWorkspace,
   GetWorkspaceResult,
+  ListPendingInvitations,
   LoadWorkspaceElements,
   LoadWorkspaceElementsResult,
 } from '../../../../../../application/queries';
-import { createLoadWorkspaceElements as createLoadWorkspaceElementsQuery } from '../../../../../../application/queries';
+import {
+  createListPendingInvitations,
+  createLoadWorkspaceElements as createLoadWorkspaceElementsQuery,
+} from '../../../../../../application/queries';
+import { createInviteMember, type InviteMember } from '../../../../../../application/commands';
 import {
   createElementPersistence,
   createElementPersistenceOrchestrator,
@@ -19,11 +24,19 @@ import type {
   RealtimeSubscriptionManager,
 } from '../../../../../../application/services';
 import { createTextElement } from '../../../../../../domain/element';
-import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../../../domain/shared';
+import {
+  ElementId,
+  InvitationId,
+  Position,
+  Size,
+  UserId,
+  WorkspaceId,
+} from '../../../../../../domain/shared';
 import { Workspace } from '../../../../../../domain/workspace';
 import { createAppError, ERROR_CODES } from '../../../../../../shared/errors';
 import { WorkspaceShellContainer } from '../../../../../../presentation/features/workspace-shell/components/workspace-shell-container';
 import { FakeElementRepository } from '../../../../../fixtures/fake-element-repository';
+import { FakeInvitationRepository } from '../../../../../fixtures/fake-invitation-repository';
 import { FakePresencePort } from '../../../../../fixtures/fake-presence-port';
 import { FakeRealtimePort } from '../../../../../fixtures/fake-realtime-port';
 import { ManualScheduler, flushMicrotasks } from '../../../../../fixtures/manual-scheduler';
@@ -103,6 +116,8 @@ interface RenderOptions {
   readonly presencePort?: FakePresencePort;
   readonly localUserId?: string;
   readonly selectionStore?: ReturnType<typeof createSelectionStore>;
+  readonly inviteMember?: InviteMember;
+  readonly listPendingInvitations?: ListPendingInvitations;
 }
 
 function renderContainer(getWorkspace: GetWorkspace, options: RenderOptions = {}) {
@@ -126,6 +141,8 @@ function renderContainer(getWorkspace: GetWorkspace, options: RenderOptions = {}
         presencePort={options.presencePort}
         localUserId={options.localUserId}
         selectionStore={options.selectionStore}
+        inviteMember={options.inviteMember}
+        listPendingInvitations={options.listPendingInvitations}
       />
     </MemoryRouter>,
   );
@@ -1317,5 +1334,37 @@ describe('WorkspaceShellContainer', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(
       'We could not keep the board in sync. Reconnecting automatically.',
     );
+  });
+
+  it('does not render the invite entry point when no invitation services are wired', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+
+    renderContainer(getWorkspace, { localUserId: 'user-local' });
+
+    await screen.findByRole('application', { name: 'Canvas' });
+    expect(screen.queryByRole('button', { name: 'Invite' })).not.toBeInTheDocument();
+  });
+
+  it('opens the invite dialog from the workspace header', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const repository = new FakeInvitationRepository();
+    let sequence = 0;
+    const inviteMember: InviteMember = createInviteMember({
+      invitationRepository: repository,
+      generateId: () => InvitationId.create(`inv-${(sequence += 1)}`),
+      issueToken: async () => ({ token: 'token-abc', tokenHash: 'hash-abc' }),
+      now: () => new Date('2026-01-01T00:00:00.000Z'),
+    });
+
+    renderContainer(getWorkspace, {
+      localUserId: 'user-local',
+      inviteMember,
+      listPendingInvitations: createListPendingInvitations(repository),
+    });
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Invite' }));
+
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(await screen.findByText('No pending invitations.')).toBeInTheDocument();
   });
 });
