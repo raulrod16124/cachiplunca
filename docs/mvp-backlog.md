@@ -3570,7 +3570,7 @@ Completar **Accept invitation** dejando un resultado verificable y apto para las
 
 ### TASK-095 — Authorization policy
 
-**Priority:** P0 · **Depends:** TASK-016 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-016 · **Status:** DONE
 
 #### Objetivo
 
@@ -3583,10 +3583,10 @@ Definir la política de autorización Owner/Editor/Viewer como lógica explícit
 
 #### Criterios de aceptación
 
-- [ ] La política es testeable sin Firebase.
-- [ ] Viewer no puede modificar elementos ni miembros.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La política es testeable sin Firebase.
+- [x] Viewer no puede modificar elementos ni miembros.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -5012,6 +5012,15 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) TASK-093 asumió también la tarea de adapter y la composición de token ausentes en el backlog (confirmado con el usuario) para dejar el flujo usable; (2) documento de invitación con `id` propio como campo + doc-id = `invitation.id` (a diferencia de membership, la entidad tiene identidad propia, ADR-0018 §2); (3) expiración legible en la lista vía `Intl.DateTimeFormat('en-US', UTC)`, sin formateadores de librería; (4) el enlace comparte la constante `INVITATION_ACCEPT_PATH = '/invitations'` que consumirá TASK-094; (5) `listPendingInvitations` recibe el `workspaceId` como string (patrón `getWorkspace`) y la validación del value object vive en Application. Documentado en `docs/adr/0019-invitation-repository-ui.md`.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-094 (Accept invitation).
+
+## 2026-10-13 — TASK-095
+
+- Resultado: Política de autorización Owner/Editor/Viewer como lógica pura de Domain. Nuevo `src/domain/membership/authorization-policy.ts` con la unión `WorkspaceOperation` (`workspace:view|update|delete`, `element:write`, `member:invite|update-role|remove|leave`), `WORKSPACE_OPERATIONS` (8 operaciones), `PERMISSION_MATRIX: Record<MembershipRole, readonly WorkspaceOperation[]>` como fuente única de verdad y el evaluador puro `can(role, operation): boolean`. Re-exportado en `src/domain/membership/index.ts`. Sin React/Firebase/DOM; la resolución del rol y la traducción a `AppError('authorization', AUTH_FORBIDDEN)` quedan para TASK-096/097.
+- Matriz confirmada con el usuario tras comparar con Figma/Miro: `workspace:update`/`workspace:delete`/`member:update-role`/`member:remove` solo owner; `element:write` y `member:invite` owner+editor (coherente con ADR-0018); `workspace:view` y `member:leave` todos los roles; el viewer nunca escribe.
+- Tests/quality gates: `src/test/unit/domain/membership/authorization-policy.test.ts` con `it.each` sobre las 24 combinaciones rol × operación más los criterios explícitos (viewer bloqueado en `element:write` y `member:*` salvo `leave`; editor invite sí, gestión no; owner todo). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde.
+- Decisiones: (1) la política vive en Domain por ser invariante de negocio pura y consumible por UI y rules; (2) una sola matriz tipada evita duplicar lógica entre entidad, guards y rules; (3) `element:write` agrupa las operaciones de elemento (sin granularidad por tipo en el MVP); (4) se deja como refactor opcional que `Membership.canEdit`/`canView` deleguen en `can(...)`, sin ampliar el alcance. Documentado en `docs/adr/0021-authorization-policy.md`.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-096 (Frontend permission guards).
 
 ---
 
