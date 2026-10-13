@@ -3385,7 +3385,7 @@ Completar **Membership repository port** dejando un resultado verificable y apto
 
 ### TASK-090 — Firestore membership repository
 
-**Priority:** P0 · **Depends:** TASK-089 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-089 · **Status:** DONE
 
 #### Objetivo
 
@@ -3399,11 +3399,11 @@ Completar **Firestore membership repository** dejando un resultado verificable y
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -4971,6 +4971,14 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) el cursor viaja como campo del documento de presencia, reutilizando la suscripción y garantizando que no toca ni bloquea `elements`; (2) emisión con throttle leading+trailing en Application (puro y testeable) para acotar escrituras sin perder la posición final; (3) consumo derivado por un reductor puro + store perezoso, con lifecycle de suscripción compartido; (4) UI de presentación delgada (`useCursorBroadcast` + `RemoteCursorsOverlay`) sin hablar con Firebase; (5) alcance acotado a TASK-084: TTL/heartbeat, interpolación y etiquetas con nombre y la limpieza al desconectar (TASK-085) quedan fuera. Documentado en `docs/adr/0014-remote-cursors.md`.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-085 (Presence cleanup).
+
+## 2026-10-13 — TASK-090
+
+- Resultado: Repository de Membership sobre Firestore. `createFirebaseMembershipRepository(db)` en `src/infrastructure/firebase/firebase-membership-repository.ts` (factory + DI, patrón de ADR-0002) cumple el contrato ya definido en TASK-089. Documento con id compuesto determinista `${workspaceId}_${userId}` (convención de `presence`), de modo que `findByUserAndWorkspace` es un `getDoc` directo (sin índice compuesto) y `listByWorkspace`/`listByUser` son `query(where('workspaceId'|'userId','==',…))`. `create` construye/valida la entidad antes de escribir y prechequea existencia (el `setDoc` de Firestore sobrescribe) → duplicado lanza `conflict`/`MEMBERSHIP_ALREADY_EXISTS`; `updateRole` hace `updateDoc` parcial (`role`, `updatedAt`) preservando `createdAt`; `delete`/`updateRole` sobre membership inexistente lanzan `notFound`/`NOT_FOUND_RESOURCE`. Mapper puro `firebase-membership-mapper.ts` (sin import del SDK; lee `Date` o `Timestamp`-like vía `toDate()`, valida rol con `validateRole`). Errores concretos traducidos con `mapFirebaseError`. Sin composición todavía (el wiring llega con TASK-091+).
+- Tests/quality gates: 1506 tests pasan (118 suites, +21 en `src/test/unit/infrastructure/firebase/firebase-membership-repository.test.ts`: contrato completo de membership vía `describeMembershipRepositoryContract` + 7 casos del adapter —persistencia bajo id determinista `ws-1_user-1` con `Date`, no-escritura con rol inválido, `unavailable`→network, `permission-denied`→authorization sin escribir, `updateRole` parcial preservando `createdAt`, lectura de `Timestamp`-like y documento corrupto→validation—); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente). Smoke manual contra Firebase real pendiente de verificación con `npm run dev`.
+- Decisiones: (1) id compuesto determinista `${workspaceId}_${userId}` en una colección plana `memberships`, elegido con el usuario para evitar índice compuesto en producción y ser coherente con la colección `presence`; (2) el mapper no recibe el id del documento porque la identidad de `Membership` son los campos `(userId, workspaceId)`, no el id persistido; (3) la validación de rol/entidad vive en Domain (`Membership.create`/`updateRole`) y el adapter solo la traduce a `validation`/`VALIDATION_INVALID_INPUT`, igual que el resto de repositorios; (4) el prechequeo de duplicado sigue el patrón ya usado por el workspace repo para `update`/`delete`; (5) sin ADR por reutilizar ADR-0002/0005 y no introducir decisiones arquitectónicas nuevas.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-091 (Create owner membership).
 
 ---
 
