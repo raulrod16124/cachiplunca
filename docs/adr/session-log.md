@@ -1,5 +1,13 @@
 # Session Log
 
+## 2026-10-13 — TASK-087 Remote move/resize
+
+- Siguiente tarea del backlog: TASK-087 (dependencia TASK-078 DONE, sin IN PROGRESS ni BLOCKED). Alcance confirmado con el usuario: **verificar** que `applyRemoteElementChanges` ya entregaba remote move/resize (un `modified` remoto llega con el `Element` completo, incluidos `position` y `size`, y se aplica con el guard LWW de ADR-0010/0013) y **reforzar la cobertura** del caso resize; sin código de producción nuevo.
+- Application (`src/test/unit/application/services/remote-element-updates.test.ts`): helper `buildElement` gana el override `size`; +3 tests puros: resize remoto más nuevo aplica `size` conservando `position`, move+resize combinados aplican ambos, y un resize remoto no estrictamente más nuevo devuelve la **misma referencia** sin tocar el tamaño actual.
+- Presentation (`src/test/unit/presentation/features/workspace-shell/components/workspace-shell-container.test.tsx`): nuevo test de integración con `FakeRealtimePort` que emite `added` (30/40, 120×80) y luego `modified` remoto con move+resize (150/260, 300×200), afirmando `left`/`top`/`width`/`height` en el DOM.
+- Sin cambios de producción: el reducer, el adapter y el wiring del contenedor ya cubrían el comportamiento; no se añaden puertos, adapters ni camino de escritura (ADR-0010 §3). El tratamiento de historial local frente a cambios remotos queda fuera y corresponde a TASK-088.
+- Criterios TASK-087 marcados [x] y `Status: DONE`; `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente). Siguiente tarea: TASK-088 (Local history vs remote changes).
+
 ## 2026-10-12 — TASK-086 Remote create/delete
 
 - Siguiente tarea del backlog: TASK-086 (dependencia TASK-078 DONE, sin IN PROGRESS ni BLOCKED). Alcance confirmado con el usuario: verificar que la cobertura de `applyRemoteElementChanges` (`added`/`removed`, filtrado por `origin`, aislamiento por workspace y guard LWW) ya entregaba **remote create/delete**, añadir poda de selección al borrar un elemento remoto y marcar la tarea DONE.

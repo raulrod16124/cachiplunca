@@ -869,6 +869,54 @@ describe('WorkspaceShellContainer', () => {
     await waitFor(() => expect(screen.queryByTestId('canvas-item-el-1')).not.toBeInTheDocument());
   });
 
+  it('applies a remote move and resize to the canvas', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const { realtimePort } = renderContainer(getWorkspace);
+
+    await screen.findByRole('application', { name: 'Canvas' });
+
+    act(() => {
+      realtimePort.emit({
+        workspaceId: WorkspaceId.create('ws-test'),
+        changes: [{ kind: 'added', element: TEXT_ELEMENT, origin: 'remote' }],
+      });
+    });
+
+    expect(await screen.findByTestId('canvas-item-el-1')).toHaveStyle({
+      left: '30px',
+      top: '40px',
+      width: '120px',
+      height: '80px',
+    });
+
+    const resized = createTextElement({
+      id: ElementId.create('el-1'),
+      workspaceId: WorkspaceId.create('ws-test'),
+      createdBy: UserId.create('user-1'),
+      position: Position.create(150, 260),
+      size: Size.create(300, 200),
+      content: 'Hello',
+      createdAt: new Date('2024-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2024-01-02T00:00:00.000Z'),
+    });
+
+    act(() => {
+      realtimePort.emit({
+        workspaceId: WorkspaceId.create('ws-test'),
+        changes: [{ kind: 'modified', element: resized, origin: 'remote' }],
+      });
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId('canvas-item-el-1')).toHaveStyle({
+        left: '150px',
+        top: '260px',
+        width: '300px',
+        height: '200px',
+      }),
+    );
+  });
+
   it('ignores local-origin echoes from the realtime feed', async () => {
     const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
     const { realtimePort } = renderContainer(getWorkspace);
