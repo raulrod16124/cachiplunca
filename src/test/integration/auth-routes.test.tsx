@@ -7,7 +7,7 @@ import {
   createLoginUser,
   createLogoutUser,
   createRegisterUser,
-  type CreateWorkspace,
+  type CreateWorkspaceWithOwner,
 } from '../../application/commands';
 import { createGetWorkspace } from '../../application/queries';
 import type { AuthPort } from '../../application/ports';
@@ -27,7 +27,7 @@ function LocationProbe(): ReactNode {
 function renderApp(
   authPort: AuthPort,
   initialPath: string,
-  createWorkspace: CreateWorkspace = jest.fn(),
+  createWorkspaceWithOwner: CreateWorkspaceWithOwner = jest.fn(),
 ): ReturnType<typeof render> {
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
@@ -37,7 +37,7 @@ function renderApp(
           loginUser={createLoginUser(authPort)}
           logoutUser={createLogoutUser(authPort)}
           listWorkspaces={jest.fn().mockResolvedValue({ status: 'ok' as const, workspaces: [] })}
-          createWorkspace={createWorkspace}
+          createWorkspaceWithOwner={createWorkspaceWithOwner}
           getWorkspace={createGetWorkspace({
             async list() {
               return [];

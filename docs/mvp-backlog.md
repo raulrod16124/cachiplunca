@@ -3423,25 +3423,26 @@ Completar **Firestore membership repository** dejando un resultado verificable y
 
 ### TASK-091 — Create owner membership
 
-**Priority:** P0 · **Depends:** TASK-090 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-090 · **Status:** DONE
 
 #### Objetivo
 
-Completar **Create owner membership** dejando un resultado verificable y apto para las tareas dependientes.
+Al crear un workspace desde la app, el usuario que lo crea queda registrado como **owner** mediante el `MembershipRepository`, dejando el flujo reproducible y sin workspaces huérfanos.
 
 #### Alcance
 
-- Implementar el comportamiento necesario para **Create owner membership**.
-- Integrarlo con las capas existentes sin romper sus límites.
-- Añadir o actualizar tests relevantes.
+- `createCreateOwnerMembership(membershipRepository)` (`src/application/commands/create-owner-membership.ts`): crea la membership con `role: 'owner'` para `(userId, workspaceId)` y normaliza errores con `toAppError`.
+- `createCreateWorkspaceWithOwner({ workspaceRepository, createOwnerMembership })` (`src/application/commands/create-workspace-with-owner.ts`): compone validación (reusa `validateCreateWorkspaceInput`) + creación del workspace + membership de owner.
+- Compensación best-effort: si falla la membership tras persistir el workspace, se borra el workspace y se devuelve el error original; si el borrado también falla, el error se anota con `details.workspaceRollbackFailed: true`.
+- Wiring: `workspace-services` expone `createWorkspaceWithOwner` (con `createFirebaseWorkspaceRepository` + `createFirebaseMembershipRepository`); `App.tsx`, `app-routes` y `WorkspacesPage` derivan el `ownerId` de la sesión y adaptan el contrato del `CreateWorkspaceDialog` (sin cambios en el dialog).
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito (conflicto de membership y fallo de compensación).
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -4979,6 +4980,14 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) id compuesto determinista `${workspaceId}_${userId}` en una colección plana `memberships`, elegido con el usuario para evitar índice compuesto en producción y ser coherente con la colección `presence`; (2) el mapper no recibe el id del documento porque la identidad de `Membership` son los campos `(userId, workspaceId)`, no el id persistido; (3) la validación de rol/entidad vive en Domain (`Membership.create`/`updateRole`) y el adapter solo la traduce a `validation`/`VALIDATION_INVALID_INPUT`, igual que el resto de repositorios; (4) el prechequeo de duplicado sigue el patrón ya usado por el workspace repo para `update`/`delete`; (5) sin ADR por reutilizar ADR-0002/0005 y no introducir decisiones arquitectónicas nuevas.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-091 (Create owner membership).
+
+## 2026-10-13 — TASK-091
+
+- Resultado: El creador de un workspace queda registrado como **owner**. Nuevo `createCreateOwnerMembership(membershipRepository)` (`src/application/commands/create-owner-membership.ts`): crea la membership `(userId, workspaceId, role: 'owner')` y traduce errores con `toAppError`. Nuevo `createCreateWorkspaceWithOwner({ workspaceRepository, createOwnerMembership })` (`src/application/commands/create-workspace-with-owner.ts`): reusa `validateCreateWorkspaceInput`, crea el workspace y luego la membership de owner. Compensación best-effort: si falla la membership, borra el workspace y devuelve el error original; si el borrado también falla, anota el error con `details.workspaceRollbackFailed: true` y `cause`. Composición en `workspace-services` (`createWorkspaceWithOwner` con workspace + membership repos de Firestore) y wiring en `App.tsx`/`app-routes`/`WorkspacesPage` (el `ownerId` se deriva de `useSession()` con `useMemo` y se adapta al contrato del `CreateWorkspaceDialog`, que no cambia).
+- Tests/quality gates: 1520 tests pasan (120 suites; +14: `create-owner-membership.test.ts` —ok, conflicto, owners independientes, error de red, normalización—, `create-workspace-with-owner.test.ts` —ok con membership, trim/descripción, invalid-input sin tocar repos, fallo de workspace, rollback, rollback fallido anotado, normalización, scoping—, case de membership en `workspace-error-messages.test.ts` y el `create-workspace-flow.test.tsx` actualizado a la composición con assertions de owner). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) la creación del workspace se mantiene como use case independiente (`create-workspace.ts` intacto) y la composición con owner vive en un caso de uso nuevo, evitando acoplar `createWorkspace` a membership y preservando el contrato del `CreateWorkspaceDialog`; (2) compensación best-effort con borrado del workspace ante fallo de membership (acordado con el usuario) para no dejar workspaces sin owner; (3) el fallo de compensación no se silencia: queda observable en `error.details.workspaceRollbackFailed`; (4) `MEMBERSHIP_ALREADY_EXISTS` se mapea a un mensaje explícito en `describeCreateWorkspaceError`; (5) sin ADR por no introducir decisiones arquitectónicas nuevas.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-092 (Invite member use case).
 
 ---
 

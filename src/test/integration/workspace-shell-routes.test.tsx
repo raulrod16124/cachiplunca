@@ -4,7 +4,8 @@ import { MemoryRouter, useLocation } from 'react-router-dom';
 import { SessionProvider } from '../../app/providers/session-provider';
 import { AppRoutes } from '../../app/routes/app-routes';
 import {
-  createCreateWorkspace,
+  createCreateOwnerMembership,
+  createCreateWorkspaceWithOwner,
   createLoginUser,
   createLogoutUser,
   createRegisterUser,
@@ -23,6 +24,7 @@ import {
 import { ElementId } from '../../domain/shared';
 import { FakeAuthPort } from '../fixtures/fake-auth-port';
 import { FakeElementRepository } from '../fixtures/fake-element-repository';
+import { FakeMembershipRepository } from '../fixtures/fake-membership-repository';
 import { FakeRealtimePort } from '../fixtures/fake-realtime-port';
 import { FakeWorkspaceRepository } from '../fixtures/fake-workspace-repository';
 
@@ -49,7 +51,10 @@ async function renderAuthenticatedApp(initialPath = '/workspaces') {
           loginUser={createLoginUser(authPort)}
           logoutUser={createLogoutUser(authPort)}
           listWorkspaces={createListWorkspaces(repository)}
-          createWorkspace={createCreateWorkspace(repository)}
+          createWorkspaceWithOwner={createCreateWorkspaceWithOwner({
+            workspaceRepository: repository,
+            createOwnerMembership: createCreateOwnerMembership(new FakeMembershipRepository()),
+          })}
           getWorkspace={createGetWorkspace(repository)}
           loadWorkspaceElements={createLoadWorkspaceElements(elementRepository)}
           elementPersistenceOrchestrator={createElementPersistenceOrchestrator(

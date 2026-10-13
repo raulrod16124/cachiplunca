@@ -11,6 +11,8 @@ export function describeCreateWorkspaceError(error: AppError): string {
       return 'Your session has expired. Sign in again to continue.';
     case ERROR_CODES.AUTH_FORBIDDEN:
       return 'You do not have permission to create workspaces.';
+    case ERROR_CODES.MEMBERSHIP_ALREADY_EXISTS:
+      return 'You are already a member of this workspace.';
     default:
       return error.message;
   }

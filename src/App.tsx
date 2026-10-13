@@ -21,7 +21,7 @@ function App() {
           loginUser={authServices.loginUser}
           logoutUser={authServices.logoutUser}
           listWorkspaces={workspaceServices.listWorkspaces}
-          createWorkspace={workspaceServices.createWorkspace}
+          createWorkspaceWithOwner={workspaceServices.createWorkspaceWithOwner}
           getWorkspace={workspaceServices.getWorkspace}
           loadWorkspaceElements={elementServices.loadWorkspaceElements}
           elementPersistenceOrchestrator={elementServices.elementPersistenceOrchestrator}

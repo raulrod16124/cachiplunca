@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import type {
-  CreateWorkspace,
+  CreateWorkspaceWithOwner,
   LoginUser,
   LogoutUser,
   RegisterUser,
@@ -29,7 +29,7 @@ export interface AppRoutesProps {
   readonly loginUser: LoginUser;
   readonly logoutUser: LogoutUser;
   readonly listWorkspaces: ListWorkspaces;
-  readonly createWorkspace: CreateWorkspace;
+  readonly createWorkspaceWithOwner: CreateWorkspaceWithOwner;
   readonly getWorkspace: GetWorkspace;
   readonly loadWorkspaceElements: LoadWorkspaceElements;
   readonly elementPersistenceOrchestrator: ElementPersistenceOrchestrator;
@@ -43,7 +43,7 @@ export function AppRoutes({
   loginUser,
   logoutUser,
   listWorkspaces,
-  createWorkspace,
+  createWorkspaceWithOwner,
   getWorkspace,
   loadWorkspaceElements,
   elementPersistenceOrchestrator,
@@ -65,7 +65,7 @@ export function AppRoutes({
             <WorkspacesPage
               logoutUser={logoutUser}
               listWorkspaces={listWorkspaces}
-              createWorkspace={createWorkspace}
+              createWorkspaceWithOwner={createWorkspaceWithOwner}
             />
           }
         />

@@ -35,6 +35,12 @@ describe('describeCreateWorkspaceError', () => {
     );
   });
 
+  it('maps an existing membership conflict to a membership message', () => {
+    const error = createAppError('conflict', ERROR_CODES.MEMBERSHIP_ALREADY_EXISTS, 'raw');
+
+    expect(describeCreateWorkspaceError(error)).toBe('You are already a member of this workspace.');
+  });
+
   it('falls back to the error message for unmapped codes', () => {
     const error = createAppError(
       'unknown',

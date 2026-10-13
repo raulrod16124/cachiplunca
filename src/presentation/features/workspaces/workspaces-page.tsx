@@ -1,9 +1,17 @@
 import { Button, Heading, Inline, Stack, Text } from '@raulrod/ui';
-import { useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import styled from 'styled-components';
 import { useSession } from '../../../app/providers/session-provider';
-import type { CreateWorkspace, LogoutUser } from '../../../application/commands';
+import type {
+  CreateWorkspace,
+  CreateWorkspaceInput,
+  CreateWorkspaceResult,
+  CreateWorkspaceWithOwner,
+  LogoutUser,
+} from '../../../application/commands';
 import type { ListWorkspaces } from '../../../application/queries/list-workspaces';
+import { UserId } from '../../../domain/shared';
+import { createAppError, ERROR_CODES } from '../../../shared/errors';
 import { SignOutButton } from '../auth/sign-out-button';
 import { CreateWorkspaceDialog } from './components/create-workspace-dialog';
 import { WorkspacesListContainer } from './components/workspaces-list-container';
@@ -16,17 +24,33 @@ const Page = styled.main`
 export interface WorkspacesPageProps {
   readonly logoutUser: LogoutUser;
   readonly listWorkspaces: ListWorkspaces;
-  readonly createWorkspace: CreateWorkspace;
+  readonly createWorkspaceWithOwner: CreateWorkspaceWithOwner;
 }
 
 export function WorkspacesPage({
   logoutUser,
   listWorkspaces,
-  createWorkspace,
+  createWorkspaceWithOwner,
 }: WorkspacesPageProps): ReactNode {
   const session = useSession();
   const [createOpen, setCreateOpen] = useState(false);
   const [refreshToken, setRefreshToken] = useState(0);
+
+  const createWorkspace: CreateWorkspace = useMemo(() => {
+    if (session.status !== 'authenticated') {
+      return async (): Promise<CreateWorkspaceResult> => ({
+        status: 'error',
+        error: createAppError(
+          'authorization',
+          ERROR_CODES.AUTH_UNAUTHENTICATED,
+          'Your session has expired. Sign in again to continue.',
+        ),
+      });
+    }
+
+    const ownerId = UserId.create(session.user.uid);
+    return (input: CreateWorkspaceInput) => createWorkspaceWithOwner({ ...input, ownerId });
+  }, [createWorkspaceWithOwner, session]);
 
   const handleCreateWorkspace = () => {
     setCreateOpen(true);

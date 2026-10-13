@@ -3,7 +3,8 @@ import { MemoryRouter } from 'react-router-dom';
 import { SessionProvider } from '../../app/providers/session-provider';
 import { AppRoutes } from '../../app/routes/app-routes';
 import {
-  createCreateWorkspace,
+  createCreateOwnerMembership,
+  createCreateWorkspaceWithOwner,
   createLoginUser,
   createLogoutUser,
   createRegisterUser,
@@ -19,9 +20,10 @@ import {
   createRealtimeSubscriptionManager,
   createSessionStore,
 } from '../../application/services';
-import { ElementId } from '../../domain/shared';
+import { ElementId, UserId } from '../../domain/shared';
 import { FakeAuthPort } from '../fixtures/fake-auth-port';
 import { FakeElementRepository } from '../fixtures/fake-element-repository';
+import { FakeMembershipRepository } from '../fixtures/fake-membership-repository';
 import { FakeRealtimePort } from '../fixtures/fake-realtime-port';
 import { FakeWorkspaceRepository } from '../fixtures/fake-workspace-repository';
 
@@ -32,6 +34,7 @@ async function renderAuthenticatedApp() {
   await authPort.signUp(CREDENTIALS);
 
   const repository = new FakeWorkspaceRepository();
+  const membershipRepository = new FakeMembershipRepository();
   const listWorkspaces = jest.fn(async (): Promise<ListWorkspacesResult> => ({
     status: 'ok',
     workspaces: await repository.list(),
@@ -47,7 +50,10 @@ async function renderAuthenticatedApp() {
           loginUser={createLoginUser(authPort)}
           logoutUser={createLogoutUser(authPort)}
           listWorkspaces={listWorkspacesQuery}
-          createWorkspace={createCreateWorkspace(repository)}
+          createWorkspaceWithOwner={createCreateWorkspaceWithOwner({
+            workspaceRepository: repository,
+            createOwnerMembership: createCreateOwnerMembership(membershipRepository),
+          })}
           getWorkspace={createGetWorkspace(repository)}
           loadWorkspaceElements={createLoadWorkspaceElements(elementRepository)}
           elementPersistenceOrchestrator={createElementPersistenceOrchestrator(
@@ -60,7 +66,7 @@ async function renderAuthenticatedApp() {
     </MemoryRouter>,
   );
 
-  return { ...view, repository, listWorkspaces };
+  return { ...view, repository, membershipRepository, listWorkspaces };
 }
 
 function openCreateDialog(): void {
@@ -70,7 +76,7 @@ function openCreateDialog(): void {
 
 describe('create workspace flow', () => {
   it('creates a workspace from the empty state and shows it in the list', async () => {
-    const { listWorkspaces } = await renderAuthenticatedApp();
+    const { repository, membershipRepository, listWorkspaces } = await renderAuthenticatedApp();
 
     expect(await screen.findByRole('heading', { name: 'No workspaces yet' })).toBeInTheDocument();
     expect(listWorkspaces).toHaveBeenCalledTimes(1);
@@ -89,10 +95,17 @@ describe('create workspace flow', () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     await waitFor(() => expect(listWorkspaces).toHaveBeenCalledTimes(2));
+
+    const [workspace] = await repository.list();
+    const membership = await membershipRepository.findByUserAndWorkspace(
+      UserId.create('fake-uid-1'),
+      workspace.id,
+    );
+    expect(membership?.role).toBe('owner');
   });
 
   it('leaves the list untouched when the dialog is cancelled', async () => {
-    const { repository, listWorkspaces } = await renderAuthenticatedApp();
+    const { repository, membershipRepository, listWorkspaces } = await renderAuthenticatedApp();
 
     expect(await screen.findByRole('heading', { name: 'No workspaces yet' })).toBeInTheDocument();
 
@@ -103,6 +116,9 @@ describe('create workspace flow', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(listWorkspaces).toHaveBeenCalledTimes(1);
     await expect(repository.list()).resolves.toHaveLength(0);
+    await expect(
+      membershipRepository.listByUser(UserId.create('fake-uid-1')),
+    ).resolves.toHaveLength(0);
     expect(screen.getByRole('heading', { name: 'No workspaces yet' })).toBeInTheDocument();
   });
 });

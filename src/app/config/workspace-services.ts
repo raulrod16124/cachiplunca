@@ -1,26 +1,35 @@
-import { createCreateWorkspace, type CreateWorkspace } from '../../application/commands';
+import {
+  createCreateOwnerMembership,
+  createCreateWorkspaceWithOwner,
+  type CreateWorkspaceWithOwner,
+} from '../../application/commands';
 import {
   createGetWorkspace,
   createListWorkspaces,
   type GetWorkspace,
   type ListWorkspaces,
 } from '../../application/queries';
-import type { WorkspaceRepository } from '../../application/ports';
+import type { MembershipRepository, WorkspaceRepository } from '../../application/ports';
+import { createFirebaseMembershipRepository } from '../../infrastructure/firebase/firebase-membership-repository';
 import { createFirebaseWorkspaceRepository } from '../../infrastructure/firebase/firebase-workspace-repository';
 import { getFirebaseFirestore } from '../../infrastructure/firebase/firebase-app';
 
 export interface WorkspaceServices {
   readonly listWorkspaces: ListWorkspaces;
-  readonly createWorkspace: CreateWorkspace;
+  readonly createWorkspaceWithOwner: CreateWorkspaceWithOwner;
   readonly getWorkspace: GetWorkspace;
 }
 
 export function createWorkspaceServices(): WorkspaceServices {
-  const workspaceRepository: WorkspaceRepository =
-    createFirebaseWorkspaceRepository(getFirebaseFirestore());
+  const db = getFirebaseFirestore();
+  const workspaceRepository: WorkspaceRepository = createFirebaseWorkspaceRepository(db);
+  const membershipRepository: MembershipRepository = createFirebaseMembershipRepository(db);
   return {
     listWorkspaces: createListWorkspaces(workspaceRepository),
-    createWorkspace: createCreateWorkspace(workspaceRepository),
+    createWorkspaceWithOwner: createCreateWorkspaceWithOwner({
+      workspaceRepository,
+      createOwnerMembership: createCreateOwnerMembership(membershipRepository),
+    }),
     getWorkspace: createGetWorkspace(workspaceRepository),
   };
 }
