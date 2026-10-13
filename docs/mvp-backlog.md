@@ -3707,7 +3707,7 @@ Completar **Security Rules tests** dejando un resultado verificable y apto para 
 
 ### TASK-099 — Change member role
 
-**Priority:** P0 · **Depends:** TASK-097 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-097 · **Status:** DONE
 
 #### Objetivo
 
@@ -3721,11 +3721,11 @@ Completar **Change member role** dejando un resultado verificable y apto para la
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -5032,6 +5032,14 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) resolver el rol es un caso de uso de Application (Presentation no toca Firestore); (2) la UI consume `can(...)` de Domain sin reimplementar la matriz; (3) `readOnly` desactiva la edición pero conserva navegación/selección/presencia; (4) deny por defecto cuando el servicio está cableado y el rol no se conoce. La autorización efectiva sigue en Firebase Security Rules (TASK-097). Documentado en `docs/adr/0022-frontend-permission-guards.md`.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-097 (Firebase Security Rules).
+
+## 2026-10-13 — TASK-099
+
+- Resultado: Use case de Application **Change member role**, React/Firebase-free. Nuevo `createChangeMemberRole(membershipRepository)` (`src/application/commands/change-member-role.ts`): input con value objects (`workspaceId`, `actorUserId`, `targetUserId`, `role`), devuelve union `ok (membership) | invalid-input (fieldErrors) | error (AppError)`. Resuelve la membership del actor y aplica la autorización con el `can(actor.role, 'member:update-role')` de Domain (solo owner, matriz de ADR-0021); actor sin membership o sin permiso → error `authorization/AUTH_FORBIDDEN` con detalles (no se filtra "no eres miembro"); role inválido → `invalid-input` sin tocar el repo; `updateRole` del repo delega en la entidad `Membership.updateRole` (timestamp de `updatedAt`); errores del repo preservados con `toAppError` (notFound si el target no es miembro). Exportado en `commands/index.ts`. Composición en `workspace-services` (`changeMemberRole` con `createFirebaseMembershipRepository`); sin plumb en UI (el contrato llega a TASK-107 Share dialog).
+- Tests/quality gates: 1694 tests pasan (137 suites, +9 en `src/test/unit/application/commands/change-member-role.test.ts` —owner cambia rol y persiste, promoción a owner, editor/viewer denegados sin llamar al repo, actor no miembro denegado, target inexistente → notFound, role inválido → invalid-input sin tocar el repo, error de red preservado, normalización a unknown—). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase).
+- Decisiones: (1) la autorización vive en el use case (defensa en profundidad) además de las Security Rules de TASK-097; la UI de TASK-107 solo la reflejará con `can(...)`; (2) deny = `AUTH_FORBIDDEN` también para actor sin membership, para no revelar membresías; (3) sin invariante de "último owner": el backlog no lo especifica y se evita scope creep (se revisará en TASK-102/auditoría), acordado con el usuario; (4) sin ADR por reutilizar el patrón establecido en `invite-member`/`accept-invitation` y no introducir decisiones arquitectónicas nuevas.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-100 (Remove member).
 
 ---
 
