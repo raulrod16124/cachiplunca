@@ -3810,7 +3810,7 @@ Completar **Leave workspace** dejando un resultado verificable y apto para las t
 
 ### TASK-102 — Delete workspace authorization
 
-**Priority:** P0 · **Depends:** TASK-097 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-097 · **Status:** DONE
 
 #### Objetivo
 
@@ -3824,11 +3824,11 @@ Completar **Delete workspace authorization** dejando un resultado verificable y 
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -5048,6 +5048,14 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) self-delete de la propia membership, simétrico con remove-member pero sin `targetUserId`; (2) `AUTH_FORBIDDEN` para no-miembro, reutilizando el criterio de TASK-099/100; (3) no se añade UI ni hook, manteniendo el alcance acotado a Application + composición, como TASK-099/100; (4) sin ADR por ser decisión local que sigue el patrón establecido.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-102 (Delete workspace authorization).
+
+## 2026-10-13 — TASK-102
+
+- Resultado: Autorización owner-only en el borrado de workspace como defensa en profundidad (la frontera efectiva ya estaba en `firestore.rules:39`, con tests en TASK-098). `createDeleteWorkspace` pasa a recibir `DeleteWorkspaceDeps { workspaceRepository, membershipRepository }` y `DeleteWorkspaceInput` incorpora `actorUserId`; resuelve la membership del actor con `findByUserAndWorkspace` y aplica el `can(actor.role, 'workspace:delete')` de Domain (ADR-0021). Actor sin membership o sin permiso → `authorization`/`AUTH_FORBIDDEN` con `details` (`workspaceId`, `actorUserId`), sin revelar membresías; `validateDeleteWorkspaceInput` valida `id` y `actorUserId`. Composición en `workspace-services` (`deleteWorkspace` con workspace + membership repos de Firestore). Sin UI (coherente con TASK-099/100/101).
+- Tests/quality gates: 1712 tests pasan (139 suites; `delete-workspace.test.ts` reescrito a 13 casos: owner borra, editor/viewer/no-miembro denegados sin tocar el repositorio, workspace desconocido denegado, invalid-input sin tocar repos, `notFound`/`network` preservados y errores inesperados normalizados). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase).
+- Decisiones: (1) se modificó el comando existente en vez de crear un wrapper, dejando un único camino de borrado (acordado con el usuario); (2) `AUTH_FORBIDDEN` también cuando no existe membership (workspace desconocido), sin filtrar existencia, alineado con TASK-099/100/101; (3) sin invariante de "último owner" ni borrado en cascada de memberships/elements (fuera del alcance del backlog); (4) sin cambios en `firestore.rules` (ya correcta) ni ADR nuevo por reutilizar ADR-0021/0023 y el patrón establecido.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-103 (Design tokens).
 
 ---
 
