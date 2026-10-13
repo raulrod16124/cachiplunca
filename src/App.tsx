@@ -32,6 +32,7 @@ function App() {
           presencePort={presenceServices.presencePort}
           inviteMember={invitationServices.inviteMember}
           listPendingInvitations={invitationServices.listPendingInvitations}
+          acceptInvitation={invitationServices.acceptInvitation}
         />
       </SessionProvider>
     </BrowserRouter>

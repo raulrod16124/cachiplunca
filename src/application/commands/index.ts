@@ -1,3 +1,4 @@
+export * from './accept-invitation';
 export * from './command';
 export * from './create-element';
 export * from './create-owner-membership';

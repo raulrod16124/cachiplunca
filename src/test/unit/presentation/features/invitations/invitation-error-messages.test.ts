@@ -1,8 +1,51 @@
 import {
+  describeAcceptInvitationError,
   describeInviteMemberError,
   describePendingInvitationsError,
 } from '../../../../../presentation/features/invitations/invitation-error-messages';
 import { createAppError, ERROR_CODES } from '../../../../../shared/errors';
+
+describe('describeAcceptInvitationError', () => {
+  it('maps an invalid invitation', () => {
+    const error = createAppError('notFound', ERROR_CODES.INVITATION_INVALID, 'raw');
+
+    expect(describeAcceptInvitationError(error)).toBe(
+      'This invitation link is invalid or has already been used.',
+    );
+  });
+
+  it('maps an expired invitation', () => {
+    const error = createAppError('validation', ERROR_CODES.INVITATION_EXPIRED, 'raw');
+
+    expect(describeAcceptInvitationError(error)).toBe(
+      'This invitation has expired. Ask the workspace owner for a new one.',
+    );
+  });
+
+  it('maps an email mismatch', () => {
+    const error = createAppError('authorization', ERROR_CODES.INVITATION_EMAIL_MISMATCH, 'raw');
+
+    expect(describeAcceptInvitationError(error)).toBe(
+      'This invitation was issued for a different email address. Sign in with the invited email.',
+    );
+  });
+
+  it('maps an existing membership', () => {
+    const error = createAppError('conflict', ERROR_CODES.MEMBERSHIP_ALREADY_EXISTS, 'raw');
+
+    expect(describeAcceptInvitationError(error)).toBe('You already have access to this workspace.');
+  });
+
+  it('falls back to the error message for unmapped codes', () => {
+    const error = createAppError(
+      'unknown',
+      ERROR_CODES.UNKNOWN_UNEXPECTED,
+      'Something else broke.',
+    );
+
+    expect(describeAcceptInvitationError(error)).toBe('Something else broke.');
+  });
+});
 
 describe('describeInviteMemberError', () => {
   it('maps network failures to a connection message', () => {

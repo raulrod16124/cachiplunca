@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import type {
+  AcceptInvitation,
   CreateWorkspaceWithOwner,
   InviteMember,
   LoginUser,
@@ -21,6 +22,7 @@ import type {
 import type { ElementId } from '../../domain/shared';
 import { LoginPage } from '../../presentation/features/auth/login-page';
 import { RegisterPage } from '../../presentation/features/auth/register-page';
+import { AcceptInvitationPage } from '../../presentation/features/invitations';
 import { WorkspaceShellPage } from '../../presentation/features/workspace-shell';
 import { WorkspacesPage } from '../../presentation/features/workspaces/workspaces-page';
 import { RequireAnonymous } from './require-anonymous';
@@ -40,6 +42,7 @@ export interface AppRoutesProps {
   readonly presencePort?: PresencePort;
   readonly inviteMember?: InviteMember;
   readonly listPendingInvitations?: ListPendingInvitations;
+  readonly acceptInvitation?: AcceptInvitation;
 }
 
 export function AppRoutes({
@@ -56,10 +59,17 @@ export function AppRoutes({
   presencePort,
   inviteMember,
   listPendingInvitations,
+  acceptInvitation,
 }: AppRoutesProps): ReactNode {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/register" replace />} />
+      {acceptInvitation !== undefined && (
+        <Route
+          path="/invitations/:token"
+          element={<AcceptInvitationPage acceptInvitation={acceptInvitation} />}
+        />
+      )}
       <Route element={<RequireAnonymous />}>
         <Route path="/login" element={<LoginPage loginUser={loginUser} />} />
         <Route path="/register" element={<RegisterPage registerUser={registerUser} />} />

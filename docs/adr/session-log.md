@@ -1,5 +1,18 @@
 # Session Log
 
+## 2026-10-13 — TASK-094 Accept invitation
+
+- Siguiente tarea del backlog: TASK-094 (dependencia TASK-092 DONE, sin IN PROGRESS). Alcance confirmado con el usuario: **añadir codes nuevos de invitación** y **ruta pública con retorno tras login**.
+- Application: caso de uso `createAcceptInvitation(deps)` (`src/application/commands/accept-invitation.ts`) con deps `invitationRepository`, `membershipRepository`, `hashToken` (inyectado, Web Crypto fuera de Application/Domain) y `now?`. Verificación determinista (hash → `findByTokenHash` → pendiente → no expirada → email coincide), creación de membership con el rol de la invitación y marcado `accepted`. Union `ok | invalid-input | error`; exportado en `commands/index.ts`.
+- Errores aditivos (`src/shared/errors/app-error.ts`): `INVITATION_INVALID` (notFound), `INVITATION_EXPIRED` (validation) e `INVITATION_EMAIL_MISMATCH` (authorization); el conflicto de membership reutiliza `MEMBERSHIP_ALREADY_EXISTS`.
+- Compensación: si `updateStatus` falla tras crear la membership, se borra la membership y se devuelve el error original; si el borrado también falla, `details.membershipRollbackFailed: true` (patrón de TASK-091).
+- Wiring: `invitation-services.ts` añade `acceptInvitation` (`createFirebaseMembershipRepository` + `hashInvitationToken`); `InvitationServices`, `App.tsx` y `AppRoutes` lo propagan.
+- Presentation/routing: `AcceptInvitationPage` (`src/presentation/features/invitations/accept-invitation-page.tsx`) con estados loading/anonymous/accepting/success/error; ruta pública `/invitations/:token` registrada solo con el servicio inyectado. `describeAcceptInvitationError` en `invitation-error-messages.ts`.
+- Retorno tras login: `RequireAnonymous` honra `?redirect=` vía `resolveRedirect` (solo rutas internas, rechaza `//` y absolutas); el CTA anónimo apunta a `/login?redirect=/invitations/:token`.
+- Tests: `accept-invitation.test.ts` (12 casos: éxito, invalid-input sin tocar repos, token desconocido, ya aceptada, expirada, email distinto/vacío, conflicto de membership, rollback + rollback fallido anotado, error inesperado normalizado); `accept-invitation-page.test.tsx` (loading, anónimo, éxito, error); `require-anonymous.test.tsx` (+redirect y `resolveRedirect`); `invitation-error-messages.test.ts` (+`describeAcceptInvitationError`). Total 133 suites / 1640 tests.
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase).
+- ADR-0020 (`docs/adr/0020-accept-invitation.md`): orden verificación→membership→status, compensación, codes aditivos, ruta pública y redirect validado. Criterios TASK-094 marcados [x] y `Status: DONE`. Siguiente tarea: TASK-095 (Authorization policy).
+
 ## 2026-10-13 — TASK-093 Invitation UI
 
 - Resultado: **Invitation UI end-to-end** (alcance confirmado con el usuario: UI + query `listPendingInvitations` + adapter Firestore + composición de token). Query `createListPendingInvitations` en `src/application/queries/list-pending-invitations.ts` sobre el port, con `sortPendingInvitations` (createdAt desc, desempate por id) y resultado union `ok | error` vía `toAppError`; exportada en `queries/index.ts`.
