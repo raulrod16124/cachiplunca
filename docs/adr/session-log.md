@@ -1,5 +1,15 @@
 # Session Log
 
+## 2026-10-13 — TASK-089 Membership repository port
+
+- Siguiente tarea del backlog: TASK-089 (dependencia TASK-016 DONE, sin IN PROGRESS ni BLOCKED). Alcance confirmado con el usuario: **incluir `listByUser`** en la superficie del port y tratar el `create` duplicado como **`conflict` AppError** (no upsert).
+- Application (`src/application/ports/membership-repository.ts`): nuevo port `MembershipRepository` con `create`, `findByUserAndWorkspace`, `listByWorkspace`, `listByUser`, `updateRole` y `delete`, operando con `UserId`/`WorkspaceId` y devolviendo entidades `Membership`. Identidad por clave compuesta (sin `MembershipId`). Exportado en `ports/index.ts`.
+- Errores (`src/shared/errors/app-error.ts`): nuevo code `MEMBERSHIP_ALREADY_EXISTS: 'membership/already-exists'` (kind `conflict`) para `create` duplicado. `findByUserAndWorkspace` devuelve `null`; `updateRole`/`delete` inexistente → `notFound`; invariantes de dominio → `validation`.
+- Fixture (`src/test/fixtures/fake-membership-repository.ts`): `FakeMembershipRepository` con `Map` clave `"<userId>:<workspaceId>"`, construcción vía `Membership.create`/`updateRole` y traducción de errores idéntica a la del futuro adapter (TASK-090).
+- Tests: nuevo contrato reutilizable `src/test/contract/membership-repository-contract.ts` y `src/test/unit/application/ports/fake-membership-repository.test.ts` (16 casos: create+timestamps, find presente/ausente, listByWorkspace, listByUser, updateRole preservando createdAt, delete, duplicado→conflict, inexistente→notFound, rol inválido→validation en create y updateRole, y todo fallo es `AppError`).
+- ADR-0017 (`docs/adr/0017-membership-repository-port.md`): clave compuesta sin id, superficie con `listByUser`, semántica de `conflict` y alternativas descartadas.
+- Criterios TASK-089 marcados [x] y `Status: DONE`. Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` (el aviso de chunk >500 kB es el bundle de Firebase, preexistente). Siguiente tarea: TASK-090 (Firestore membership repository).
+
 ## 2026-10-13 — TASK-088 Local history vs remote changes
 
 - Siguiente tarea del backlog: TASK-088 (dependencias TASK-065 y TASK-078 DONE, sin IN PROGRESS ni BLOCKED). Alcance confirmado con el usuario: **opción A — reconciliación element-level con LWW**, conservando el historial local en vez de invalidarlo ante cambios remotos. CRDT y offline-first siguen fuera.
