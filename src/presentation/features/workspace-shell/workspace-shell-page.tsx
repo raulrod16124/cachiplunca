@@ -4,6 +4,7 @@ import type { PresencePort } from '../../../application/ports';
 import type { InviteMember, LogoutUser } from '../../../application/commands';
 import type {
   GetWorkspace,
+  GetWorkspaceRole,
   ListPendingInvitations,
   LoadWorkspaceElements,
 } from '../../../application/queries';
@@ -25,6 +26,7 @@ export interface WorkspaceShellPageProps {
   readonly presencePort?: PresencePort;
   readonly inviteMember?: InviteMember;
   readonly listPendingInvitations?: ListPendingInvitations;
+  readonly getWorkspaceRole?: GetWorkspaceRole;
 }
 
 export function WorkspaceShellPage({
@@ -37,6 +39,7 @@ export function WorkspaceShellPage({
   presencePort,
   inviteMember,
   listPendingInvitations,
+  getWorkspaceRole,
 }: WorkspaceShellPageProps): ReactNode {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const navigate = useNavigate();
@@ -61,6 +64,7 @@ export function WorkspaceShellPage({
       localUserId={localUserId}
       inviteMember={inviteMember}
       listPendingInvitations={listPendingInvitations}
+      getWorkspaceRole={getWorkspaceRole}
       onBack={() => navigate('/workspaces')}
     />
   );

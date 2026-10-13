@@ -124,6 +124,7 @@ export interface CanvasProps {
   readonly onRedoElements?: (elements: readonly Element[]) => void;
   readonly remoteCursors?: readonly RemoteCursor[];
   readonly onCursorMove?: (position: Position) => void;
+  readonly readOnly?: boolean;
 }
 
 export function Canvas({
@@ -143,6 +144,7 @@ export function Canvas({
   onRedoElements,
   remoteCursors = [],
   onCursorMove,
+  readOnly = false,
 }: CanvasProps): ReactElement {
   const viewport = useSyncExternalStore(store.subscribe, store.getSnapshot);
   const selection = useSyncExternalStore(selectionStore.subscribe, selectionStore.getSnapshot);
@@ -223,6 +225,7 @@ export function Canvas({
     onSelectOnly: handleSelectOnly,
     onTransformEnd,
     spacePressed,
+    disabled: readOnly,
   });
 
   const { isResizing, ref: elementResizeRef } = useElementResize({
@@ -232,6 +235,7 @@ export function Canvas({
     onResizeElements,
     onTransformEnd,
     spacePressed,
+    disabled: readOnly,
   });
 
   const { ref: dragSelectionRef, rect: marqueeRect } = useDragSelection({
@@ -255,6 +259,7 @@ export function Canvas({
     selectedIds: selection.selectedIds,
     onDeleteElements,
     onSelectionCleared: handleClear,
+    disabled: readOnly,
   });
 
   const handleDuplicateElements = useMemo(() => {
@@ -273,6 +278,7 @@ export function Canvas({
     selectedIds: selection.selectedIds,
     generateId,
     onDuplicateElements: handleDuplicateElements,
+    disabled: readOnly,
   });
 
   const handlePasteElements = useMemo(() => {
@@ -291,10 +297,11 @@ export function Canvas({
     selectedIds: selection.selectedIds,
     generateId,
     onPasteElements: handlePasteElements,
+    disabled: readOnly,
   });
 
-  const { ref: elementUndoRef } = useElementUndo({ history, onUndoElements });
-  const { ref: elementRedoRef } = useElementRedo({ history, onRedoElements });
+  const { ref: elementUndoRef } = useElementUndo({ history, onUndoElements, disabled: readOnly });
+  const { ref: elementRedoRef } = useElementRedo({ history, onRedoElements, disabled: readOnly });
 
   const setContainerRef = useCallback(
     (node: HTMLDivElement | null) => {
@@ -347,6 +354,7 @@ export function Canvas({
       ref={setContainerRef}
       role="application"
       aria-label="Canvas"
+      aria-readonly={readOnly}
       aria-keyshortcuts="Escape Control+A Meta+A Delete Control+D Meta+D Control+C Meta+C Control+V Meta+V Control+Z Meta+Z Control+Shift+Z Meta+Shift+Z Control+Y Meta+Y"
       aria-grabbed={isPanning}
       tabIndex={0}

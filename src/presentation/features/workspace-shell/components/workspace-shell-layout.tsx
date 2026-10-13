@@ -63,6 +63,7 @@ export interface WorkspaceShellLayoutProps {
   readonly persistenceErrorMessage: string | null;
   readonly collaborationErrorMessage: string | null;
   readonly onInvite?: () => void;
+  readonly readOnly?: boolean;
 }
 
 export function WorkspaceShellLayout({
@@ -89,6 +90,7 @@ export function WorkspaceShellLayout({
   persistenceErrorMessage,
   collaborationErrorMessage,
   onInvite,
+  readOnly = false,
 }: WorkspaceShellLayoutProps): ReactNode {
   const syncBadge = describeSyncStatus(syncStatus);
   const connectionBadge = describeConnectionStatus(connectionStatus);
@@ -159,6 +161,7 @@ export function WorkspaceShellLayout({
           generateId={generateElementId}
           remoteCursors={remoteCursors}
           onCursorMove={onCursorMove}
+          readOnly={readOnly}
         />
       </CanvasArea>
     </Shell>

@@ -10,6 +10,7 @@ import type {
 } from '../../application/commands';
 import type {
   GetWorkspace,
+  GetWorkspaceRole,
   ListPendingInvitations,
   ListWorkspaces,
   LoadWorkspaceElements,
@@ -43,6 +44,7 @@ export interface AppRoutesProps {
   readonly inviteMember?: InviteMember;
   readonly listPendingInvitations?: ListPendingInvitations;
   readonly acceptInvitation?: AcceptInvitation;
+  readonly getWorkspaceRole?: GetWorkspaceRole;
 }
 
 export function AppRoutes({
@@ -60,6 +62,7 @@ export function AppRoutes({
   inviteMember,
   listPendingInvitations,
   acceptInvitation,
+  getWorkspaceRole,
 }: AppRoutesProps): ReactNode {
   return (
     <Routes>
@@ -98,6 +101,7 @@ export function AppRoutes({
               presencePort={presencePort}
               inviteMember={inviteMember}
               listPendingInvitations={listPendingInvitations}
+              getWorkspaceRole={getWorkspaceRole}
             />
           }
         />

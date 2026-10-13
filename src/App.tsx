@@ -25,6 +25,7 @@ function App() {
           listWorkspaces={workspaceServices.listWorkspaces}
           createWorkspaceWithOwner={workspaceServices.createWorkspaceWithOwner}
           getWorkspace={workspaceServices.getWorkspace}
+          getWorkspaceRole={workspaceServices.getWorkspaceRole}
           loadWorkspaceElements={elementServices.loadWorkspaceElements}
           elementPersistenceOrchestrator={elementServices.elementPersistenceOrchestrator}
           realtimeSubscriptionManager={elementServices.realtimeSubscriptionManager}

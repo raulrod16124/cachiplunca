@@ -4,10 +4,12 @@ import { MemoryRouter } from 'react-router-dom';
 import type {
   GetWorkspace,
   GetWorkspaceResult,
+  GetWorkspaceRole,
   ListPendingInvitations,
   LoadWorkspaceElements,
   LoadWorkspaceElementsResult,
 } from '../../../../../../application/queries';
+import type { MembershipRole } from '../../../../../../domain/membership';
 import {
   createListPendingInvitations,
   createLoadWorkspaceElements as createLoadWorkspaceElementsQuery,
@@ -67,6 +69,12 @@ function createLoadWorkspaceElements(result: LoadWorkspaceElementsResult): LoadW
   return jest.fn().mockResolvedValue(result);
 }
 
+function createGetWorkspaceRole(role: MembershipRole | null): GetWorkspaceRole {
+  return jest
+    .fn()
+    .mockResolvedValue(role === null ? { status: 'notFound' } : { status: 'ok', role });
+}
+
 const LOAD_NO_ELEMENTS = createLoadWorkspaceElements({ status: 'ok', elements: [] });
 
 const NOOP_ORCHESTRATOR: ElementPersistenceOrchestrator = {
@@ -118,12 +126,17 @@ interface RenderOptions {
   readonly selectionStore?: ReturnType<typeof createSelectionStore>;
   readonly inviteMember?: InviteMember;
   readonly listPendingInvitations?: ListPendingInvitations;
+  readonly getWorkspaceRole?: GetWorkspaceRole;
+  readonly role?: MembershipRole | null;
 }
 
 function renderContainer(getWorkspace: GetWorkspace, options: RenderOptions = {}) {
   const realtimePort = options.realtimePort ?? new FakeRealtimePort();
   const realtimeSubscriptionManager =
     options.realtimeSubscriptionManager ?? createRealtimeSubscriptionManager(realtimePort);
+  const getWorkspaceRole =
+    options.getWorkspaceRole ??
+    (options.role === undefined ? undefined : createGetWorkspaceRole(options.role));
 
   const view = render(
     <MemoryRouter>
@@ -143,6 +156,7 @@ function renderContainer(getWorkspace: GetWorkspace, options: RenderOptions = {}
         selectionStore={options.selectionStore}
         inviteMember={options.inviteMember}
         listPendingInvitations={options.listPendingInvitations}
+        getWorkspaceRole={getWorkspaceRole}
       />
     </MemoryRouter>,
   );
@@ -1366,5 +1380,112 @@ describe('WorkspaceShellContainer', () => {
 
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
     expect(await screen.findByText('No pending invitations.')).toBeInTheDocument();
+  });
+
+  it('hides the invite entry point for a viewer', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const repository = new FakeInvitationRepository();
+    const inviteMember = createInviteMember({
+      invitationRepository: repository,
+      generateId: () => InvitationId.create('inv-1'),
+      issueToken: async () => ({ token: 'token-abc', tokenHash: 'hash-abc' }),
+      now: () => new Date('2026-01-01T00:00:00.000Z'),
+    });
+
+    renderContainer(getWorkspace, {
+      localUserId: 'user-local',
+      inviteMember,
+      listPendingInvitations: createListPendingInvitations(repository),
+      role: 'viewer',
+    });
+
+    await screen.findByRole('application', { name: 'Canvas' });
+    expect(screen.queryByRole('button', { name: 'Invite' })).not.toBeInTheDocument();
+  });
+
+  it('keeps the invite entry point available for an editor', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const repository = new FakeInvitationRepository();
+    const inviteMember = createInviteMember({
+      invitationRepository: repository,
+      generateId: () => InvitationId.create('inv-1'),
+      issueToken: async () => ({ token: 'token-abc', tokenHash: 'hash-abc' }),
+      now: () => new Date('2026-01-01T00:00:00.000Z'),
+    });
+
+    renderContainer(getWorkspace, {
+      localUserId: 'user-local',
+      inviteMember,
+      listPendingInvitations: createListPendingInvitations(repository),
+      role: 'editor',
+    });
+
+    expect(await screen.findByRole('button', { name: 'Invite' })).toBeInTheDocument();
+  });
+
+  it('renders a read-only canvas for viewers so elements cannot be deleted', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+
+    renderContainer(getWorkspace, {
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [TEXT_ELEMENT],
+      }),
+      localUserId: 'user-local',
+      role: 'viewer',
+    });
+
+    const canvas = await screen.findByRole('application', { name: 'Canvas' });
+    await screen.findByTestId('canvas-item-el-1');
+    expect(canvas).toHaveAttribute('aria-readonly', 'true');
+
+    fireEvent.keyDown(canvas, { key: 'a', ctrlKey: true });
+    fireEvent.keyDown(canvas, { key: 'Delete' });
+
+    expect(screen.getByTestId('canvas-item-el-1')).toBeInTheDocument();
+  });
+
+  it('marks the canvas editable for owners and lets them delete elements', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+
+    renderContainer(getWorkspace, {
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [TEXT_ELEMENT],
+      }),
+      localUserId: 'user-local',
+      role: 'owner',
+    });
+
+    const canvas = await screen.findByRole('application', { name: 'Canvas' });
+    await screen.findByTestId('canvas-item-el-1');
+    expect(canvas).toHaveAttribute('aria-readonly', 'false');
+
+    fireEvent.keyDown(canvas, { key: 'a', ctrlKey: true });
+    fireEvent.keyDown(canvas, { key: 'Delete' });
+
+    await waitFor(() => expect(screen.queryByTestId('canvas-item-el-1')).not.toBeInTheDocument());
+  });
+
+  it('treats an unknown membership as read-only without the invite entry point', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const repository = new FakeInvitationRepository();
+    const inviteMember = createInviteMember({
+      invitationRepository: repository,
+      generateId: () => InvitationId.create('inv-1'),
+      issueToken: async () => ({ token: 'token-abc', tokenHash: 'hash-abc' }),
+      now: () => new Date('2026-01-01T00:00:00.000Z'),
+    });
+
+    renderContainer(getWorkspace, {
+      localUserId: 'user-local',
+      inviteMember,
+      listPendingInvitations: createListPendingInvitations(repository),
+      role: null,
+    });
+
+    const canvas = await screen.findByRole('application', { name: 'Canvas' });
+    expect(canvas).toHaveAttribute('aria-readonly', 'true');
+    expect(screen.queryByRole('button', { name: 'Invite' })).not.toBeInTheDocument();
   });
 });

@@ -5,8 +5,10 @@ import {
 } from '../../application/commands';
 import {
   createGetWorkspace,
+  createGetWorkspaceRole,
   createListWorkspaces,
   type GetWorkspace,
+  type GetWorkspaceRole,
   type ListWorkspaces,
 } from '../../application/queries';
 import type { MembershipRepository, WorkspaceRepository } from '../../application/ports';
@@ -18,6 +20,7 @@ export interface WorkspaceServices {
   readonly listWorkspaces: ListWorkspaces;
   readonly createWorkspaceWithOwner: CreateWorkspaceWithOwner;
   readonly getWorkspace: GetWorkspace;
+  readonly getWorkspaceRole: GetWorkspaceRole;
 }
 
 export function createWorkspaceServices(): WorkspaceServices {
@@ -31,5 +34,6 @@ export function createWorkspaceServices(): WorkspaceServices {
       createOwnerMembership: createCreateOwnerMembership(membershipRepository),
     }),
     getWorkspace: createGetWorkspace(workspaceRepository),
+    getWorkspaceRole: createGetWorkspaceRole(membershipRepository),
   };
 }

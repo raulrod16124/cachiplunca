@@ -1,5 +1,16 @@
 # Session Log
 
+## 2026-10-13 — TASK-096 Frontend permission guards
+
+- Siguiente tarea del backlog: TASK-096 (dependencia TASK-095 DONE, sin IN PROGRESS). Alcance confirmado con el usuario: **completo** — resolver rol + hook `can()` + gate de **Invite** (`member:invite`) + `readOnly` en el canvas para viewers (`element:write`); restringir la opción `Owner` del formulario de invitación queda fuera (TASK-097/099).
+- Application: `createGetWorkspaceRole(membershipRepository)` (`src/application/queries/get-workspace-role.ts`), union `ok | notFound | error` con `toAppError`, usando `UserId`/`WorkspaceId`; exportado en `queries/index.ts`.
+- Presentation: hook `useWorkspacePermissions(role)` (`src/presentation/hooks/use-workspace-permissions.ts` + `index.ts`) que expone `{ role, can(operation) }` delegando en `can(role, operation)` de Domain; `role` ausente ⇒ deny.
+- Guards/orquestación: `WorkspaceShellContainer` resuelve el rol cuando `getWorkspaceRole` + `localUserId` existen (con gate de carga para evitar flash), oculta **Invite** si `!can('member:invite')` y pasa `readOnly={!can('element:write')}`; `workspace-shell-layout.tsx` y `canvas.tsx` propagan `readOnly` a los hooks de edición (mover/resize/borrar/duplicar/copiar-pegar/undo/redo) y exponen `aria-readonly`, manteniendo pan/zoom/selección/presencia.
+- Wiring: `workspace-services.ts` añade `getWorkspaceRole` (`createFirebaseMembershipRepository`), propagado `App.tsx → AppRoutes → WorkspaceShellPage → WorkspaceShellContainer` como prop opcional. Si no se cablea, no se aplican guards (compatibilidad); con el servicio cableado y rol desconocido/`notFound` ⇒ deny.
+- Tests: `get-workspace-role.test.ts` (ok/notFound/error/id inválido), `use-workspace-permissions.test.tsx` (owner/editor/viewer/undefined) y `workspace-shell-container.test.tsx` +5 (viewer sin Invite, editor con Invite, canvas read-only para viewer, owner editable, rol desconocido read-only). Total 136 suites / 1685 tests.
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase).
+- ADR-0022 (`docs/adr/0022-frontend-permission-guards.md`): rol como caso de uso de Application, UI consume `can()`, deny con servicio cableado, compatibilidad sin cablear y autorización efectiva en Security Rules. Criterios TASK-096 marcados [x] y `Status: DONE`. Siguiente tarea: TASK-097 (Firebase Security Rules).
+
 ## 2026-10-13 — TASK-094 Accept invitation
 
 - Siguiente tarea del backlog: TASK-094 (dependencia TASK-092 DONE, sin IN PROGRESS). Alcance confirmado con el usuario: **añadir codes nuevos de invitación** y **ruta pública con retorno tras login**.

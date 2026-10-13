@@ -3603,7 +3603,7 @@ Definir la política de autorización Owner/Editor/Viewer como lógica explícit
 
 ### TASK-096 — Frontend permission guards
 
-**Priority:** P0 · **Depends:** TASK-095 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-095 · **Status:** DONE
 
 #### Objetivo
 
@@ -3617,11 +3617,11 @@ Completar **Frontend permission guards** dejando un resultado verificable y apto
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -5021,6 +5021,17 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) la política vive en Domain por ser invariante de negocio pura y consumible por UI y rules; (2) una sola matriz tipada evita duplicar lógica entre entidad, guards y rules; (3) `element:write` agrupa las operaciones de elemento (sin granularidad por tipo en el MVP); (4) se deja como refactor opcional que `Membership.canEdit`/`canView` deleguen en `can(...)`, sin ampliar el alcance. Documentado en `docs/adr/0021-authorization-policy.md`.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-096 (Frontend permission guards).
+
+## 2026-10-13 — TASK-096
+
+- Resultado: **Frontend permission guards** end-to-end. Application: caso de uso `createGetWorkspaceRole(membershipRepository)` (`src/application/queries/get-workspace-role.ts`) con union `ok | notFound | error` (`toAppError`), exportado en `queries/index.ts`. Presentation: hook `useWorkspacePermissions(role)` (`src/presentation/hooks/use-workspace-permissions.ts`, + `index.ts`) que expone `{ role, can }` delegando en el `can(role, operation)` de Domain; `role` ausente ⇒ deny.
+- Guards: `WorkspaceShellContainer` resuelve el rol cuando `getWorkspaceRole` + `localUserId` están presentes (con gate de carga), oculta **Invite** si `!can('member:invite')` y pasa `readOnly={!can('element:write')}` al `Canvas`; `workspace-shell-layout.tsx` y `canvas.tsx` lo propagan a los hooks de edición (mover/redimensionar/borrar/duplicar/copiar-pegar/deshacer/rehacer) y exponen `aria-readonly`, conservando pan/zoom/selección/presencia.
+- Wiring: `workspace-services.ts` construye `getWorkspaceRole` (`createFirebaseMembershipRepository`) y se propaga `App.tsx → AppRoutes → WorkspaceShellPage → WorkspaceShellContainer` como prop opcional. Si no se cablea, los guards no se aplican (compatibilidad de composición/tests); con el servicio cableado y rol desconocido/`notFound` ⇒ deny.
+- Tests: `get-workspace-role.test.ts` (ok/notFound/error/id inválido), `use-workspace-permissions.test.tsx` (owner/editor/viewer/undefined) y `workspace-shell-container.test.tsx` +5 (viewer sin Invite, editor con Invite, canvas read-only para viewer, owner editable, rol desconocido read-only). 136 suites / 1685 tests.
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase).
+- Decisiones: (1) resolver el rol es un caso de uso de Application (Presentation no toca Firestore); (2) la UI consume `can(...)` de Domain sin reimplementar la matriz; (3) `readOnly` desactiva la edición pero conserva navegación/selección/presencia; (4) deny por defecto cuando el servicio está cableado y el rol no se conoce. La autorización efectiva sigue en Firebase Security Rules (TASK-097). Documentado en `docs/adr/0022-frontend-permission-guards.md`.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-097 (Firebase Security Rules).
 
 ---
 

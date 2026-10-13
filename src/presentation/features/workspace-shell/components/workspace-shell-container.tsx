@@ -6,6 +6,7 @@ import type { InviteMember, LogoutUser } from '../../../../application/commands'
 import type {
   GetWorkspace,
   GetWorkspaceResult,
+  GetWorkspaceRole,
   ListPendingInvitations,
   LoadWorkspaceElements,
 } from '../../../../application/queries';
@@ -37,8 +38,10 @@ import type {
 } from '../../../../application/services';
 import type { PresencePort, RealtimeConnectionStatus } from '../../../../application/ports';
 import type { Element } from '../../../../domain/element';
+import type { MembershipRole } from '../../../../domain/membership';
 import { Presence } from '../../../../domain/collaboration';
 import { Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
+import { useWorkspacePermissions } from '../../../hooks';
 import type { ElementId } from '../../../../domain/shared';
 import { toAppError, type AppError } from '../../../../shared/errors';
 import { InviteDialog } from '../../invitations';
@@ -70,6 +73,7 @@ export interface WorkspaceShellContainerProps {
   readonly persistenceScheduler?: Scheduler;
   readonly inviteMember?: InviteMember;
   readonly listPendingInvitations?: ListPendingInvitations;
+  readonly getWorkspaceRole?: GetWorkspaceRole;
 }
 
 interface TransformGesture {
@@ -93,9 +97,15 @@ export function WorkspaceShellContainer({
   persistenceScheduler,
   inviteMember,
   listPendingInvitations,
+  getWorkspaceRole,
 }: WorkspaceShellContainerProps): ReactNode {
   const [status, setStatus] = useState<'loading' | 'notFound' | 'error' | 'success'>('loading');
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [role, setRole] = useState<MembershipRole | undefined>(undefined);
+  const [roleStatus, setRoleStatus] = useState<'idle' | 'loading' | 'settled'>(
+    getWorkspaceRole === undefined ? 'idle' : 'loading',
+  );
+  const permissions = useWorkspacePermissions(role);
   const [result, setResult] = useState<GetWorkspaceResult | null>(null);
   const [elements, setElements] = useState<readonly Element[]>([]);
   const [elementsStatus, setElementsStatus] = useState<'loading' | 'error' | 'success'>('loading');
@@ -401,6 +411,38 @@ export function WorkspaceShellContainer({
   }, [fetchWorkspace]);
 
   useEffect(() => {
+    if (getWorkspaceRole === undefined || localUserId === undefined) {
+      setRole(undefined);
+      setRoleStatus('idle');
+      return;
+    }
+
+    let active = true;
+    setRoleStatus('loading');
+
+    void (async () => {
+      try {
+        const response = await getWorkspaceRole(localUserId, workspaceId);
+        if (!active) {
+          return;
+        }
+        setRole(response.status === 'ok' ? response.role : undefined);
+        setRoleStatus('settled');
+      } catch {
+        if (!active) {
+          return;
+        }
+        setRole(undefined);
+        setRoleStatus('settled');
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [getWorkspaceRole, localUserId, workspaceId]);
+
+  useEffect(() => {
     if (status === 'success') {
       void fetchElements();
     }
@@ -499,7 +541,7 @@ export function WorkspaceShellContainer({
   }
 
   if (result?.status === 'ok') {
-    if (elementsStatus === 'loading') {
+    if (elementsStatus === 'loading' || roleStatus === 'loading') {
       return (
         <Container role="status" aria-busy="true">
           <VisuallyHidden>Loading board</VisuallyHidden>
@@ -535,7 +577,12 @@ export function WorkspaceShellContainer({
       );
     }
 
+    const permissionsEnforced = getWorkspaceRole !== undefined;
+    const canElementWrite = !permissionsEnforced || permissions.can('element:write');
+    const canMemberInvite = !permissionsEnforced || permissions.can('member:invite');
+
     const invitedBy =
+      canMemberInvite &&
       inviteMember !== undefined &&
       listPendingInvitations !== undefined &&
       localUserId !== undefined
@@ -571,6 +618,7 @@ export function WorkspaceShellContainer({
           collaborationErrorMessage={
             collaborationError === null ? null : describeCollaborationSyncError(collaborationError)
           }
+          readOnly={!canElementWrite}
           onInvite={invitedBy === undefined ? undefined : () => setInviteOpen(true)}
         />
         {invitedBy === undefined ||
