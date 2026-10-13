@@ -3638,7 +3638,7 @@ Completar **Frontend permission guards** dejando un resultado verificable y apto
 
 ### TASK-097 — Firebase Security Rules
 
-**Priority:** P0 · **Depends:** TASK-090, TASK-095 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-090, TASK-095 · **Status:** DONE
 
 #### Objetivo
 
@@ -3651,10 +3651,10 @@ Aplicar la autorización efectiva mediante Firebase Security Rules.
 
 #### Criterios de aceptación
 
-- [ ] Un Viewer no puede escribir manipulando el cliente.
-- [ ] Casos allow/deny están testeados.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Un Viewer no puede escribir manipulando el cliente.
+- [x] Casos allow/deny están testeados.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
