@@ -2,9 +2,11 @@ import {
   createChangeMemberRole,
   createCreateOwnerMembership,
   createCreateWorkspaceWithOwner,
+  createLeaveWorkspace,
   createRemoveMember,
   type ChangeMemberRole,
   type CreateWorkspaceWithOwner,
+  type LeaveWorkspace,
   type RemoveMember,
 } from '../../application/commands';
 import {
@@ -27,6 +29,7 @@ export interface WorkspaceServices {
   readonly getWorkspaceRole: GetWorkspaceRole;
   readonly changeMemberRole: ChangeMemberRole;
   readonly removeMember: RemoveMember;
+  readonly leaveWorkspace: LeaveWorkspace;
 }
 
 export function createWorkspaceServices(): WorkspaceServices {
@@ -43,5 +46,6 @@ export function createWorkspaceServices(): WorkspaceServices {
     getWorkspaceRole: createGetWorkspaceRole(membershipRepository),
     changeMemberRole: createChangeMemberRole(membershipRepository),
     removeMember: createRemoveMember(membershipRepository),
+    leaveWorkspace: createLeaveWorkspace(membershipRepository),
   };
 }

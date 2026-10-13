@@ -3777,7 +3777,7 @@ Completar **Remove member** dejando un resultado verificable y apto para las tar
 
 ### TASK-101 — Leave workspace
 
-**Priority:** P1 · **Depends:** TASK-097 · **Status:** TODO
+**Priority:** P1 · **Depends:** TASK-097 · **Status:** DONE
 
 #### Objetivo
 
@@ -3791,11 +3791,11 @@ Completar **Leave workspace** dejando un resultado verificable y apto para las t
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -5040,6 +5040,14 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) la autorización vive en el use case (defensa en profundidad) además de las Security Rules de TASK-097; la UI de TASK-107 solo la reflejará con `can(...)`; (2) deny = `AUTH_FORBIDDEN` también para actor sin membership, para no revelar membresías; (3) sin invariante de "último owner": el backlog no lo especifica y se evita scope creep (se revisará en TASK-102/auditoría), acordado con el usuario; (4) sin ADR por reutilizar el patrón establecido en `invite-member`/`accept-invitation` y no introducir decisiones arquitectónicas nuevas.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-100 (Remove member).
+
+## 2026-10-13 — TASK-101
+
+- Resultado: Use case de Application **Leave workspace**, React/Firebase-free. Nuevo `createLeaveWorkspace(membershipRepository)` (`src/application/commands/leave-workspace.ts`): input con value objects (`workspaceId`, `userId`), devuelve union `ok | error (AppError)`. Resuelve la membership propia y aplica `can(role, 'member:leave')` de Domain (permitido a todos los roles, ADR-0021); usuario sin membership o sin permiso → `authorization/AUTH_FORBIDDEN` (sin revelar membresías); `membershipRepository.delete(userId, workspaceId)`; errores del repo preservados con `toAppError`. Exportado en `commands/index.ts` y compuesto en `workspace-services.ts`. Sin UI (la acción de "Leave" se cableará en TASK-107 Share dialog). Sin invariante de "último owner": se mantiene la decisión de TASK-099 y se deja para TASK-102/auditoría, coherente con las Security Rules actuales que permiten el self-delete.
+- Tests/quality gates: 1708 tests pasan (139 suites, +7 en `src/test/unit/application/commands/leave-workspace.test.ts` —owner/editor/viewer pueden salir, no-miembro denegado sin tocar el repo, no afecta membership en otro workspace, error de red preservado, error inesperado normalizado a unknown—). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase).
+- Decisiones: (1) self-delete de la propia membership, simétrico con remove-member pero sin `targetUserId`; (2) `AUTH_FORBIDDEN` para no-miembro, reutilizando el criterio de TASK-099/100; (3) no se añade UI ni hook, manteniendo el alcance acotado a Application + composición, como TASK-099/100; (4) sin ADR por ser decisión local que sigue el patrón establecido.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-102 (Delete workspace authorization).
 
 ---
 

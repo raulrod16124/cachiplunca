@@ -9,6 +9,7 @@ export * from './delete-element';
 export * from './delete-workspace';
 export * from './duplicate-element';
 export * from './invite-member';
+export * from './leave-workspace';
 export * from './login-user';
 export * from './logout-user';
 export * from './move-element';
