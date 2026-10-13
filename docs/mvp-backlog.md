@@ -3309,7 +3309,7 @@ Completar **Remote move/resize** dejando un resultado verificable y apto para la
 
 ### TASK-088 — Local history vs remote changes
 
-**Priority:** P0 · **Depends:** TASK-065, TASK-078 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-065, TASK-078 · **Status:** DONE
 
 #### Objetivo
 
@@ -3325,13 +3325,13 @@ Completar **Local history vs remote changes** dejando un resultado verificable y
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Undo/redo no corrompe el estado ante secuencias válidas.
-- [ ] No se crean listeners duplicados.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Undo/redo no corrompe el estado ante secuencias válidas.
+- [x] No se crean listeners duplicados.
 
 #### Fuera de alcance
 

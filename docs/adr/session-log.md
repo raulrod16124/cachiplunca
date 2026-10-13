@@ -1,5 +1,15 @@
 # Session Log
 
+## 2026-10-13 — TASK-088 Local history vs remote changes
+
+- Siguiente tarea del backlog: TASK-088 (dependencias TASK-065 y TASK-078 DONE, sin IN PROGRESS ni BLOCKED). Alcance confirmado con el usuario: **opción A — reconciliación element-level con LWW**, conservando el historial local en vez de invalidarlo ante cambios remotos. CRDT y offline-first siguen fuera.
+- Application (puro): `src/application/services/optimistic-element-updates.ts` gana `applyElementWindow(current, previous, next)` (avance/redo con `computeElementDelta` + guard `isStrictlyNewer`, no resucita elementos solo-modificados ya ausentes, misma referencia en no-op, orden con `sortElementsForLoad`). El reverso reutiliza `rollbackFailedMutation`.
+- Application (comando): nuevo `src/application/services/element-history.ts` con `createBoardWindowCommand({ readCurrent, previous, next, label })`, un `Command<readonly Element[]>` que reconcilia contra el board vivo (`readCurrent`) en lugar de devolver un snapshot fijo; exportado en `services/index.ts`. `createSnapshotCommand` se mantiene intacto.
+- Presentation: `WorkspaceShellContainer` crea el comando con `readCurrent: () => elementsRef.current` en `commitElements` (delete/duplicate/paste) y `handleTransformEnd`. Undo/redo hooks, handlers y batcher sin cambios; sin tocar el port realtime ni el adapter.
+- Tests: nueva `element-history.test.ts` (+10: applyElementWindow avance/creación/borrado, LWW remoto, no resurrección, no-op por referencia, orden; y `createBoardWindowCommand` apply/undo contra board vivo preservando remoto); `workspace-shell-container.test.tsx` +3 con `FakeRealtimePort` (undo de delete preserva el cambio remoto y mantiene una única suscripción; undo no pisa una versión remota más nueva del mismo id; redo de delete preserva el cambio remoto no relacionado).
+- ADR-0016 (`docs/adr/0016-local-history-vs-remote-changes.md`): ventana con `readCurrent`, avance con LWW reutilizando `rollbackFailedMutation`, alternativas descartadas (invalidar historial, sincronizar base, reconciliar sin ventana) y limitación conocida (redo tras borrado remoto).
+- Criterios TASK-088 marcados [x] y `Status: DONE`. Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente). Siguiente tarea: TASK-089 (Membership repository port).
+
 ## 2026-10-13 — TASK-087 Remote move/resize
 
 - Siguiente tarea del backlog: TASK-087 (dependencia TASK-078 DONE, sin IN PROGRESS ni BLOCKED). Alcance confirmado con el usuario: **verificar** que `applyRemoteElementChanges` ya entregaba remote move/resize (un `modified` remoto llega con el `Element` completo, incluidos `position` y `size`, y se aplica con el guard LWW de ADR-0010/0013) y **reforzar la cobertura** del caso resize; sin código de producción nuevo.

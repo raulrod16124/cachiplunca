@@ -19,4 +19,5 @@ export * from './remote-cursors-store';
 export * from './cursor-broadcaster';
 export * from './remote-element-updates';
 export * from './optimistic-element-updates';
+export * from './element-history';
 export * from './element-conflict-resolution';

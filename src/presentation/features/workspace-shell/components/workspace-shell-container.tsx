@@ -2,7 +2,7 @@ import { Button, Heading, Inline, Skeleton, Stack, Text, VisuallyHidden } from '
 import type { ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import styled from 'styled-components';
-import { createSnapshotCommand, type LogoutUser } from '../../../../application/commands';
+import type { LogoutUser } from '../../../../application/commands';
 import type {
   GetWorkspace,
   GetWorkspaceResult,
@@ -10,6 +10,7 @@ import type {
 } from '../../../../application/queries';
 import {
   applyRemoteElementChanges,
+  createBoardWindowCommand,
   createCanvasViewportStore,
   createCommandHistory,
   createCursorBroadcaster,
@@ -248,7 +249,12 @@ export function WorkspaceShellContainer({
       }
 
       const result = commandHistoryRef.current.execute(
-        createSnapshotCommand(previous, next, label),
+        createBoardWindowCommand({
+          readCurrent: () => elementsRef.current,
+          previous,
+          next,
+          label,
+        }),
       );
 
       if (result.status === 'error') {
@@ -299,7 +305,12 @@ export function WorkspaceShellContainer({
 
     transformGestureRef.current = null;
     commandHistoryRef.current.execute(
-      createSnapshotCommand(gesture.base, elementsRef.current, gesture.label),
+      createBoardWindowCommand({
+        readCurrent: () => elementsRef.current,
+        previous: gesture.base,
+        next: elementsRef.current,
+        label: gesture.label,
+      }),
     );
     void persistenceBatcher.flush();
   }, [persistenceBatcher]);

@@ -950,6 +950,155 @@ describe('WorkspaceShellContainer', () => {
     await waitFor(() => expect(selectionStore.getSnapshot().selectedIds).toEqual([]));
   });
 
+  it('keeps remote changes when undoing a local delete', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const repository = new FakeElementRepository();
+    await repository.save(TEXT_ELEMENT);
+    const orchestrator = createElementPersistenceOrchestrator(createElementPersistence(repository));
+    const { realtimePort } = renderContainer(getWorkspace, {
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [TEXT_ELEMENT],
+      }),
+      elementPersistenceOrchestrator: orchestrator,
+    });
+
+    const canvas = await screen.findByRole('application', { name: 'Canvas' });
+    await screen.findByTestId('canvas-item-el-1');
+
+    fireEvent.keyDown(canvas, { key: 'a', ctrlKey: true });
+    fireEvent.keyDown(canvas, { key: 'Delete' });
+    await waitFor(() => expect(screen.queryByTestId('canvas-item-el-1')).not.toBeInTheDocument());
+
+    const remote = createTextElement({
+      id: ElementId.create('remote-1'),
+      workspaceId: WorkspaceId.create('ws-test'),
+      createdBy: UserId.create('user-2'),
+      position: Position.create(200, 300),
+      size: Size.create(120, 80),
+      content: 'Remote',
+      createdAt: new Date('2024-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2024-01-02T00:00:00.000Z'),
+    });
+
+    act(() => {
+      realtimePort.emit({
+        workspaceId: WorkspaceId.create('ws-test'),
+        changes: [{ kind: 'added', element: remote, origin: 'remote' }],
+      });
+    });
+
+    await screen.findByTestId('canvas-item-remote-1');
+
+    fireEvent.keyDown(canvas, { key: 'z', ctrlKey: true });
+
+    await waitFor(() => expect(screen.getByTestId('canvas-item-el-1')).toBeInTheDocument());
+    expect(screen.getByTestId('canvas-item-remote-1')).toHaveStyle({
+      left: '200px',
+      top: '300px',
+    });
+    expect(realtimePort.activeSubscriptionCount(WorkspaceId.create('ws-test'))).toBe(1);
+  });
+
+  it('does not overwrite a newer remote version of an element when undoing a delete', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const repository = new FakeElementRepository();
+    await repository.save(TEXT_ELEMENT);
+    const orchestrator = createElementPersistenceOrchestrator(createElementPersistence(repository));
+    const { realtimePort } = renderContainer(getWorkspace, {
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [TEXT_ELEMENT],
+      }),
+      elementPersistenceOrchestrator: orchestrator,
+    });
+
+    const canvas = await screen.findByRole('application', { name: 'Canvas' });
+    await screen.findByTestId('canvas-item-el-1');
+
+    fireEvent.keyDown(canvas, { key: 'a', ctrlKey: true });
+    fireEvent.keyDown(canvas, { key: 'Delete' });
+    await waitFor(() => expect(screen.queryByTestId('canvas-item-el-1')).not.toBeInTheDocument());
+
+    const recreated = createTextElement({
+      id: ElementId.create('el-1'),
+      workspaceId: WorkspaceId.create('ws-test'),
+      createdBy: UserId.create('user-2'),
+      position: Position.create(200, 300),
+      size: Size.create(120, 80),
+      content: 'Recreated remotely',
+      createdAt: new Date('2024-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2024-02-01T00:00:00.000Z'),
+    });
+
+    act(() => {
+      realtimePort.emit({
+        workspaceId: WorkspaceId.create('ws-test'),
+        changes: [{ kind: 'added', element: recreated, origin: 'remote' }],
+      });
+    });
+
+    await screen.findByTestId('canvas-item-el-1');
+
+    fireEvent.keyDown(canvas, { key: 'z', ctrlKey: true });
+
+    await waitFor(() =>
+      expect(screen.getByTestId('canvas-item-el-1')).toHaveStyle({
+        left: '200px',
+        top: '300px',
+      }),
+    );
+  });
+
+  it('keeps remote changes when redoing a local delete', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const repository = new FakeElementRepository();
+    await repository.save(TEXT_ELEMENT);
+    const orchestrator = createElementPersistenceOrchestrator(createElementPersistence(repository));
+    const { realtimePort } = renderContainer(getWorkspace, {
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [TEXT_ELEMENT],
+      }),
+      elementPersistenceOrchestrator: orchestrator,
+    });
+
+    const canvas = await screen.findByRole('application', { name: 'Canvas' });
+    await screen.findByTestId('canvas-item-el-1');
+
+    fireEvent.keyDown(canvas, { key: 'a', ctrlKey: true });
+    fireEvent.keyDown(canvas, { key: 'Delete' });
+    await waitFor(() => expect(screen.queryByTestId('canvas-item-el-1')).not.toBeInTheDocument());
+
+    fireEvent.keyDown(canvas, { key: 'z', ctrlKey: true });
+    await screen.findByTestId('canvas-item-el-1');
+
+    const remote = createTextElement({
+      id: ElementId.create('remote-1'),
+      workspaceId: WorkspaceId.create('ws-test'),
+      createdBy: UserId.create('user-2'),
+      position: Position.create(200, 300),
+      size: Size.create(120, 80),
+      content: 'Remote',
+      createdAt: new Date('2024-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2024-01-02T00:00:00.000Z'),
+    });
+
+    act(() => {
+      realtimePort.emit({
+        workspaceId: WorkspaceId.create('ws-test'),
+        changes: [{ kind: 'added', element: remote, origin: 'remote' }],
+      });
+    });
+
+    await screen.findByTestId('canvas-item-remote-1');
+
+    fireEvent.keyDown(canvas, { key: 'z', ctrlKey: true, shiftKey: true });
+
+    await waitFor(() => expect(screen.queryByTestId('canvas-item-el-1')).not.toBeInTheDocument());
+    expect(screen.getByTestId('canvas-item-remote-1')).toBeInTheDocument();
+  });
+
   it('keeps a single realtime subscription per workspace and releases it on unmount', async () => {
     const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
     const { realtimePort, unmount } = renderContainer(getWorkspace);
