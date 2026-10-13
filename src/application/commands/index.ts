@@ -6,6 +6,7 @@ export * from './create-workspace-with-owner';
 export * from './delete-element';
 export * from './delete-workspace';
 export * from './duplicate-element';
+export * from './invite-member';
 export * from './login-user';
 export * from './logout-user';
 export * from './move-element';

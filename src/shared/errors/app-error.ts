@@ -17,6 +17,7 @@ export const ERROR_CODES = {
   AUTH_FORBIDDEN: 'auth/forbidden',
   AUTH_EMAIL_ALREADY_IN_USE: 'auth/email-already-in-use',
   AUTH_INVALID_CREDENTIALS: 'auth/invalid-credentials',
+  INVITATION_ALREADY_EXISTS: 'invitation/already-exists',
   MEMBERSHIP_ALREADY_EXISTS: 'membership/already-exists',
   NOT_FOUND_RESOURCE: 'not-found/resource',
   NETWORK_REQUEST_FAILED: 'network/request-failed',

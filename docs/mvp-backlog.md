@@ -3459,28 +3459,29 @@ Al crear un workspace desde la app, el usuario que lo crea queda registrado como
 
 ### TASK-092 — Invite member use case
 
-**Priority:** P0 · **Depends:** TASK-090 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-090 · **Status:** DONE
 
 #### Objetivo
 
-Completar **Invite member use case** dejando un resultado verificable y apto para las tareas dependientes.
+Permitir invitar a un colaborador por email creando una **invitación pendiente** desacoplada de la membership, con token de un solo uso persistido hasheado, sin conceder acceso hasta su aceptación (TASK-094).
 
 #### Alcance
 
-- Implementar el comportamiento necesario para **Invite member use case**.
-- Integrarlo con las capas existentes sin romper sus límites.
-- Añadir o actualizar tests relevantes.
-- Definir entradas y salidas del caso de uso.
-- Cubrir reglas de negocio con tests unitarios.
+- Dominio `Invitation` (`src/domain/invitation/`) + `InvitationStatus` (`pending`/`accepted`/`revoked`) + `InvitationId` (`src/domain/shared/value-objects/invitation-id.ts`). Normaliza y valida el email, valida rol/token/timestamps, deriva la expiración (`isExpired`) y expone transiciones inmutables `accept`/`revoke`.
+- Port `InvitationRepository` (`src/application/ports/invitation-repository.ts`): `create`, `findByTokenHash`, `listPendingByWorkspace`, `updateStatus`. `create` rechaza con `conflict/INVITATION_ALREADY_EXISTS` ante invitación pendiente duplicada o id repetido; `updateStatus` rechaza con `notFound` sobre inexistente.
+- Code `INVITATION_ALREADY_EXISTS: 'invitation/already-exists'` (kind `conflict`) en `src/shared/errors/app-error.ts`.
+- Use case `createInviteMember(deps)` (`src/application/commands/invite-member.ts`): valida email/rol, construye la entidad con `generateId`/`now`/`ttlMs` (TTL por defecto 7 días) y token vía `issueToken()` inyectado; persiste solo `tokenHash` y devuelve el token en claro una sola vez.
+- `FakeInvitationRepository` + contrato ejecutable (`src/test/fixtures/fake-invitation-repository.ts`, `src/test/contract/invitation-repository-contract.ts`) y tests unitarios de dominio y caso de uso.
+- ADR nuevo: `docs/adr/0018-invitation-model.md`.
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Puede probarse con ports fake sin Firebase.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Puede probarse con ports fake sin Firebase.
 
 #### Fuera de alcance
 
@@ -4988,6 +4989,17 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) la creación del workspace se mantiene como use case independiente (`create-workspace.ts` intacto) y la composición con owner vive en un caso de uso nuevo, evitando acoplar `createWorkspace` a membership y preservando el contrato del `CreateWorkspaceDialog`; (2) compensación best-effort con borrado del workspace ante fallo de membership (acordado con el usuario) para no dejar workspaces sin owner; (3) el fallo de compensación no se silencia: queda observable en `error.details.workspaceRollbackFailed`; (4) `MEMBERSHIP_ALREADY_EXISTS` se mapea a un mensaje explícito en `describeCreateWorkspaceError`; (5) sin ADR por no introducir decisiones arquitectónicas nuevas.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-092 (Invite member use case).
+
+## 2026-10-13 — TASK-092
+
+- Resultado: Modelo de **invitación pendiente**. Dominio `src/domain/invitation/` con `InvitationStatus` (`pending`/`accepted`/`revoked`), entidad `Invitation` (`id`, `workspaceId`, `email`, `role`, `tokenHash`, `status`, `invitedBy`, `expiresAt`, timestamps) y `InvitationId` en `src/domain/shared/value-objects/invitation-id.ts`; normaliza/valida el email, valida rol/token/timestamps, deriva la expiración con `isExpired(now)` y expone transiciones inmutables `accept`/`revoke` (solo desde `pending`).
+- Port `InvitationRepository` (`create`, `findByTokenHash`, `listPendingByWorkspace`, `updateStatus`): `create` rechaza con `conflict/INVITATION_ALREADY_EXISTS` ante pendiente duplicada `(workspaceId, email)` o id repetido; `updateStatus` rechaza con `notFound` sobre inexistente. Nuevo code `INVITATION_ALREADY_EXISTS: 'invitation/already-exists'` (kind `conflict`).
+- Use case `createInviteMember({ invitationRepository, generateId, issueToken, now?, ttlMs? })` (`src/application/commands/invite-member.ts`): valida email/rol (reusa `isValidEmail`/`isValidRole`), calcula `expiresAt` con TTL por defecto `INVITATION_TTL_MS` (7 días), obtiene `{ token, tokenHash }` mediante `issueToken()` inyectado (la criptografía queda en composición), persiste solo `tokenHash` y devuelve el token en claro una sola vez. Errores de invariantes→`validation`; errores del repo con `toAppError` (preserva conflict/network, normaliza inesperados a `unknown`).
+- `FakeInvitationRepository` + contrato ejecutable (`src/test/fixtures/fake-invitation-repository.ts`, `src/test/contract/invitation-repository-contract.ts`) como especificación del futuro adapter Firestore. ADR nuevo `docs/adr/0018-invitation-model.md`.
+- Tests/quality gates: 1562 tests pasan (123 suites; +42 en `invitation.test.ts` —invariantes de dominio y transiciones—, `invite-member.test.ts` —ok/token, no persistir el token en claro, TTL custom, invalid-input sin tocar el repo, conflicto, independencia por workspace/email, preservación de red, normalización a unknown— y `fake-invitation-repository.test.ts` —contrato completo—). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) entidad `Invitation` separada de `Membership` con id y ciclo de vida propios (la membership solo nace al aceptar, TASK-094); (2) email como identidad funcional, normalizado y validado en dominio (sin importar `src/shared`); (3) token de un solo uso persistido **hasheado** y devuelto en claro una única vez, con `issueToken()` inyectado para no meter Web Crypto en Application; (4) expiración derivada, sin estado almacenado ni job; (5) el port incluye anticipadamente `findByTokenHash`/`listPendingByWorkspace`/`updateStatus` para TASK-093/094 (mismo criterio que ADR-0017); (6) autorización del invitador y adapter Firestore diferidos a TASK-095/097 y a la tarea de adapter; (7) sin restringir el rol invitado (se admite `owner`, como el dominio). Documentado en `docs/adr/0018-invitation-model.md`.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-093 (Invitation UI).
 
 ---
 

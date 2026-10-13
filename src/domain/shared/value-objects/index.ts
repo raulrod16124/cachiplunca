@@ -1,6 +1,7 @@
 export * from './bounds';
 export * from './element-id';
 export * from './grid';
+export * from './invitation-id';
 export * from './position';
 export * from './size';
 export * from './transform';
