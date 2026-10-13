@@ -25,13 +25,13 @@ const Shell = styled.div`
 `;
 
 const Header = styled.header`
-  border-bottom: 1px solid var(--rr-color-border-default, #e2e8f0);
-  padding: 12px 24px;
+  border-bottom: 1px solid ${({ theme }) => theme.color.border.default};
+  padding: ${({ theme }) => `${theme.space[3]} ${theme.space[6]}`};
 `;
 
 const CanvasArea = styled.main`
   flex: 1 1 auto;
-  background: var(--rr-color-background-default, #f8fafc);
+  background: ${({ theme }) => theme.canvas.surface};
   position: relative;
   overflow: hidden;
 `;

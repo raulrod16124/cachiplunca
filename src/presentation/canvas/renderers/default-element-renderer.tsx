@@ -6,10 +6,10 @@ const Box = styled.div`
   position: absolute;
   inset: 0;
   box-sizing: border-box;
-  border: 1px solid var(--rr-color-border-default, #cbd5e1);
-  border-radius: 4px;
-  background: var(--rr-color-background-default, #ffffff);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  border: 1px solid ${({ theme }) => theme.canvas.elementBorder};
+  border-radius: ${({ theme }) => theme.radius.sm};
+  background: ${({ theme }) => theme.canvas.surface};
+  box-shadow: ${({ theme }) => theme.shadow.sm};
   cursor: pointer;
 `;
 

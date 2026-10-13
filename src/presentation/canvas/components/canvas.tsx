@@ -42,7 +42,7 @@ const CanvasContainer = styled.div`
   outline: none;
 
   &:focus-visible {
-    outline: 2px solid var(--rr-color-accent-default, #2563eb);
+    outline: 2px solid ${({ theme }) => theme.color.focusRing};
     outline-offset: -2px;
   }
 
@@ -70,8 +70,8 @@ const CanvasContainer = styled.div`
 const Marquee = styled.div`
   position: absolute;
   pointer-events: none;
-  border: 1px solid var(--rr-color-accent-default, #2563eb);
-  background-color: rgba(37, 99, 235, 0.08);
+  border: 1px solid ${({ theme }) => theme.canvas.selection};
+  background-color: ${({ theme }) => theme.canvas.selectionFill};
 `;
 
 const World = styled.div`
@@ -86,8 +86,8 @@ const GridLayer = styled.div`
   inset: 0;
   pointer-events: none;
   background-image:
-    linear-gradient(to right, var(--rr-color-border-subtle, #e2e8f0) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--rr-color-border-subtle, #e2e8f0) 1px, transparent 1px);
+    linear-gradient(to right, ${({ theme }) => theme.canvas.grid} 1px, transparent 1px),
+    linear-gradient(to bottom, ${({ theme }) => theme.canvas.grid} 1px, transparent 1px);
   opacity: 0.5;
 `;
 
@@ -98,8 +98,8 @@ const Hint = styled.div`
   transform: translate(-50%, -50%);
   text-align: center;
   pointer-events: none;
-  color: var(--rr-color-text-muted, #64748b);
-  font-size: 14px;
+  color: ${({ theme }) => theme.canvas.hintText};
+  font-size: ${({ theme }) => theme.font.size.sm};
 `;
 
 const CANVAS_GRID = Grid.default();

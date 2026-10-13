@@ -9,8 +9,8 @@ const Content = styled.div`
   box-sizing: border-box;
   padding: 8px;
   overflow: hidden;
-  color: var(--rr-color-text-default, #0f172a);
-  font-size: var(--rr-font-size-200, 14px);
+  color: ${({ theme }) => theme.color.text.primary};
+  font-size: ${({ theme }) => theme.font.size.sm};
   line-height: 1.4;
   white-space: pre-wrap;
   word-break: break-word;

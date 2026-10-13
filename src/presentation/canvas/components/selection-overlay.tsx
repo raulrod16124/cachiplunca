@@ -3,13 +3,10 @@ import styled from 'styled-components';
 import type { ResizeHandleAnchor, SelectableItem } from '../../../application/services';
 import type { Bounds } from '../../../domain/shared';
 
-const ACCENT = 'var(--rr-color-accent-default, #2563eb)';
-const SURFACE = 'var(--rr-color-background-default, #ffffff)';
-
 const Overlay = styled.div`
   position: absolute;
   box-sizing: border-box;
-  border: 1.5px solid ${ACCENT};
+  border: 1.5px solid ${({ theme }) => theme.canvas.selection};
   pointer-events: none;
 `;
 
@@ -18,9 +15,9 @@ const Handle = styled.span`
   width: 8px;
   height: 8px;
   box-sizing: border-box;
-  border: 1.5px solid ${ACCENT};
+  border: 1.5px solid ${({ theme }) => theme.canvas.selection};
   border-radius: 2px;
-  background: ${SURFACE};
+  background: ${({ theme }) => theme.canvas.handleFill};
   pointer-events: auto;
 `;
 

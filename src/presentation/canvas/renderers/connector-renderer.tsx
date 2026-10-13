@@ -3,7 +3,6 @@ import styled from 'styled-components';
 import { isConnectorElement } from '../../../domain/element';
 import type { ElementRendererProps } from './element-renderer';
 
-const STROKE_COLOR = 'var(--rr-color-border-strong, #6b7684)';
 const STROKE_WIDTH = 2;
 const ARROW_SIZE = 8;
 
@@ -14,6 +13,7 @@ const Content = styled.svg`
   height: 100%;
   overflow: visible;
   cursor: pointer;
+  color: ${({ theme }) => theme.canvas.elementBorderStrong};
 `;
 
 function toMarkerId(elementId: string): string {
@@ -50,7 +50,7 @@ export function ConnectorRenderer({ element }: ElementRendererProps): ReactEleme
         >
           <path
             d={`M0,0 L${ARROW_SIZE},${ARROW_SIZE / 2} L0,${ARROW_SIZE} Z`}
-            fill={STROKE_COLOR}
+            fill="currentColor"
           />
         </marker>
       </defs>
@@ -60,7 +60,7 @@ export function ConnectorRenderer({ element }: ElementRendererProps): ReactEleme
         y1="2%"
         x2="98%"
         y2="98%"
-        stroke={STROKE_COLOR}
+        stroke="currentColor"
         strokeWidth={STROKE_WIDTH}
         markerEnd={`url(#${markerId})`}
       />

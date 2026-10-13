@@ -3845,7 +3845,7 @@ Completar **Delete workspace authorization** dejando un resultado verificable y 
 
 ### TASK-103 — Design tokens
 
-**Priority:** P0 · **Depends:** TASK-003 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-003 · **Status:** DONE
 
 #### Objetivo
 
@@ -3859,11 +3859,11 @@ Completar **Design tokens** dejando un resultado verificable y apto para las tar
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -5056,6 +5056,16 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) se modificó el comando existente en vez de crear un wrapper, dejando un único camino de borrado (acordado con el usuario); (2) `AUTH_FORBIDDEN` también cuando no existe membership (workspace desconocido), sin filtrar existencia, alineado con TASK-099/100/101; (3) sin invariante de "último owner" ni borrado en cascada de memberships/elements (fuera del alcance del backlog); (4) sin cambios en `firestore.rules` (ya correcta) ni ADR nuevo por reutilizar ADR-0021/0023 y el patrón establecido.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-103 (Design tokens).
+
+## 2026-10-13 — TASK-103
+
+- Resultado: **Capa de design tokens de Presentation**. Nuevo `src/presentation/styles/` con `tokens.ts` (`cssVarName`/`token` que traducen cualquier key de `@raulrod/tokens` a su custom property `--rr-*`, `TokenKey`), `theme.ts` (`appTheme` con roles semánticos —color, font, space, radius, shadow, motion, z— y alias `canvas.*` para grid/selección/stroke, todo resuelto a `var(--rr-*)`; `AppTheme`; augmentación `DefaultTheme` de styled-components) y `app-theme-provider.tsx` (`AppThemeProvider` = `ThemeProvider` de styled-components). Barrel `index.ts`.
+- Integración: `AppThemeProvider` envuelve el árbol en `App.tsx` (raíz). Se migraron **todas** las 14 hojas con styled-components que referenciaban tokens (canvas y overlays, los 7 renderers, element-view sin tokens, workspaces-list, pending-invitations-list, workspace-shell-layout) a `props.theme`, eliminando los nombres inválidos que caían a fallback (p. ej. `--rr-color-text-default`/`-subtle`, `--rr-color-accent-default`, `--rr-color-link-default`, `--rr-font-size-100/200`, `--rr-radius-100`) y mapeando a roles reales (text.primary/muted, border.primary, link.text, font.size.sm/2xs, radius.sm). El connector usa `color: theme.canvas.elementBorderStrong` + `stroke/fill="currentColor"` para no introducir hooks post-return.
+- Tests: infraestructura compartida — `jest.config.cjs` mapea `@testing-library/react` a `src/test/setup/render-with-theme.tsx`, que reexporta la librería real (alias `@testing-library/react-real`) y aplica `AppThemeProvider` como `wrapper` en `render` (soporta `rerender` y compone con un `wrapper` del test); declaration `testing-library-real.d.ts`. Tests nuevos: `tokens.test.ts` (mapeo de keys), `theme.test.ts` (todo `var(--rr-*)` del theme existe en primitives/semantic de `@raulrod/tokens`; sin nombres legacy) y `app-theme-provider.test.tsx` (los descendientes reciben el tema vía `useTheme`).
+- Quality gates: 142 suites / 1719 tests en verde (+3 suites: tokens/theme/provider). `npm run lint`, `npm run format:check`, `npx tsc -b`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase).
+- Decisiones: (1) el mecanismo es `ThemeProvider` de styled-components con valores que son referencias `var(--rr-*)`, de modo que light/dark lo resuelven las custom properties upstream sin recalcular en JS (acordado con el usuario); (2) alcance = capa base + migrar los usos existentes, sin tocar tokens de componentes ni px de layout que no eran tokens; (3) los alias `canvas.*` reutilizan roles semánticos en vez de inventar tokens de canvas; (4) el render de tests inyecta el tema globalmente vía alias de módulo en Jest, evitando tocar cada test y cubriendo `rerender`. Sin ADR por tratarse de una decisión de capa de Presentation ya implícita en la arquitectura (dependencia de UI en Presentation).
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-104 (Core UI components).
 
 ---
 

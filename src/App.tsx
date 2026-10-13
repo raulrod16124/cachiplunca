@@ -7,6 +7,7 @@ import { createPresenceServices } from './app/config/presence-services';
 import { createWorkspaceServices } from './app/config/workspace-services';
 import { AppRoutes } from './app/routes/app-routes';
 import { SessionProvider } from './app/providers/session-provider';
+import { AppThemeProvider } from './presentation/styles';
 
 function App() {
   const [authServices] = useState(createAuthServices);
@@ -16,27 +17,29 @@ function App() {
   const [invitationServices] = useState(createInvitationServices);
 
   return (
-    <BrowserRouter>
-      <SessionProvider store={authServices.sessionStore}>
-        <AppRoutes
-          registerUser={authServices.registerUser}
-          loginUser={authServices.loginUser}
-          logoutUser={authServices.logoutUser}
-          listWorkspaces={workspaceServices.listWorkspaces}
-          createWorkspaceWithOwner={workspaceServices.createWorkspaceWithOwner}
-          getWorkspace={workspaceServices.getWorkspace}
-          getWorkspaceRole={workspaceServices.getWorkspaceRole}
-          loadWorkspaceElements={elementServices.loadWorkspaceElements}
-          elementPersistenceOrchestrator={elementServices.elementPersistenceOrchestrator}
-          realtimeSubscriptionManager={elementServices.realtimeSubscriptionManager}
-          generateElementId={elementServices.generateElementId}
-          presencePort={presenceServices.presencePort}
-          inviteMember={invitationServices.inviteMember}
-          listPendingInvitations={invitationServices.listPendingInvitations}
-          acceptInvitation={invitationServices.acceptInvitation}
-        />
-      </SessionProvider>
-    </BrowserRouter>
+    <AppThemeProvider>
+      <BrowserRouter>
+        <SessionProvider store={authServices.sessionStore}>
+          <AppRoutes
+            registerUser={authServices.registerUser}
+            loginUser={authServices.loginUser}
+            logoutUser={authServices.logoutUser}
+            listWorkspaces={workspaceServices.listWorkspaces}
+            createWorkspaceWithOwner={workspaceServices.createWorkspaceWithOwner}
+            getWorkspace={workspaceServices.getWorkspace}
+            getWorkspaceRole={workspaceServices.getWorkspaceRole}
+            loadWorkspaceElements={elementServices.loadWorkspaceElements}
+            elementPersistenceOrchestrator={elementServices.elementPersistenceOrchestrator}
+            realtimeSubscriptionManager={elementServices.realtimeSubscriptionManager}
+            generateElementId={elementServices.generateElementId}
+            presencePort={presenceServices.presencePort}
+            inviteMember={invitationServices.inviteMember}
+            listPendingInvitations={invitationServices.listPendingInvitations}
+            acceptInvitation={invitationServices.acceptInvitation}
+          />
+        </SessionProvider>
+      </BrowserRouter>
+    </AppThemeProvider>
   );
 }
 

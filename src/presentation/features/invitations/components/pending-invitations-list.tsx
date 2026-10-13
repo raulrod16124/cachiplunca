@@ -18,7 +18,7 @@ const List = styled.ul`
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--rr-space-2, 8px);
+  gap: ${({ theme }) => theme.space[2]};
 `;
 
 const DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {

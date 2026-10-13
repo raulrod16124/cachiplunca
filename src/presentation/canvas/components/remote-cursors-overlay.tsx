@@ -32,7 +32,7 @@ const Label = styled.span`
   font-size: 11px;
   line-height: 16px;
   white-space: nowrap;
-  color: #ffffff;
+  color: ${({ theme }) => theme.color.text.inverse};
 `;
 
 function colorFromUserId(userId: string): string {

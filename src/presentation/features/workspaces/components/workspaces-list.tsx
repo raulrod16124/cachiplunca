@@ -5,7 +5,7 @@ import type { Workspace } from '../../../../domain/workspace';
 
 const ListGrid = styled.div`
   display: grid;
-  gap: 16px;
+  gap: ${({ theme }) => theme.space[4]};
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 `;
 
@@ -15,10 +15,10 @@ const CardContent = styled(Stack)`
 `;
 
 const CardShell = styled.div`
-  background: var(--rr-color-background-surface, #fff);
-  border: 1px solid var(--rr-color-border-default, #e2e8f0);
-  border-radius: var(--rr-radius-md, 8px);
-  padding: 16px;
+  background: ${({ theme }) => theme.color.background.surface};
+  border: 1px solid ${({ theme }) => theme.color.border.default};
+  border-radius: ${({ theme }) => theme.radius.md};
+  padding: ${({ theme }) => theme.space[4]};
   display: flex;
   flex-direction: column;
 `;
