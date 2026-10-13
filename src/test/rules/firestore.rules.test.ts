@@ -18,15 +18,33 @@ import {
 } from 'firebase/firestore';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import {
+  can,
+  WORKSPACE_OPERATIONS,
+  type WorkspaceOperation,
+} from '../../domain/membership/authorization-policy';
+import type { MembershipRole } from '../../domain/membership/role';
 
 const PROJECT_ID = 'demo-cachiplunca';
 const RULES_PATH = resolve(__dirname, '../../../firestore.rules');
 
-const OWNER_UID = 'owner-user';
-const EDITOR_UID = 'editor-user';
-const VIEWER_UID = 'viewer-user';
+const ROLES: readonly MembershipRole[] = ['owner', 'editor', 'viewer'];
+
+// Each role has a deterministic uid so the matrix test can derive the actor and
+// its membership id from the role under test.
+const ROLE_UIDS: Readonly<Record<MembershipRole, string>> = {
+  owner: 'owner-user',
+  editor: 'editor-user',
+  viewer: 'viewer-user',
+};
+
+const OTHER_ROLE_UIDS = ROLES.map((role) => ROLE_UIDS[role]);
+
+const VICTIM_UID = 'victim-user';
 const OUTSIDER_UID = 'outsider-user';
+const INVITEE_UID = 'invitee-user';
 const INVITEE_EMAIL = 'invitee@example.com';
+const OTHER_EMAIL = 'other@example.com';
 
 const WS1 = 'ws1';
 const WS2 = 'ws2';
@@ -37,15 +55,15 @@ function workspaceData(name = 'Workspace') {
   return { name, description: null, createdAt: now, updatedAt: now };
 }
 
-function membershipData(userId: string, role: string) {
-  return { userId, workspaceId: WS1, role, createdAt: now, updatedAt: now };
+function membershipData(workspaceId: string, userId: string, role: string) {
+  return { userId, workspaceId, role, createdAt: now, updatedAt: now };
 }
 
-function elementData(createdBy: string, id = 'e1') {
+function elementData(workspaceId: string, createdBy: string, id: string) {
   return {
     type: 'text',
     id,
-    workspaceId: WS1,
+    workspaceId,
     position: { x: 0, y: 0 },
     size: { width: 120, height: 40 },
     rotation: 0,
@@ -56,12 +74,32 @@ function elementData(createdBy: string, id = 'e1') {
   };
 }
 
-function presenceData(userId: string) {
+function presenceData(workspaceId: string, userId: string) {
   return {
-    workspaceId: WS1,
+    workspaceId,
     userId,
     lastSeenAt: now,
     cursor: { x: 1, y: 2 },
+  };
+}
+
+function invitationData(
+  workspaceId: string,
+  invitedBy: string,
+  status = 'pending',
+  email = INVITEE_EMAIL,
+) {
+  return {
+    id: `inv-${email}`,
+    workspaceId,
+    email,
+    role: 'editor',
+    tokenHash: '0a'.repeat(32),
+    status,
+    invitedBy,
+    expiresAt: new Date('2026-10-20T00:00:00.000Z'),
+    createdAt: now,
+    updatedAt: now,
   };
 }
 
@@ -84,17 +122,32 @@ beforeEach(async () => {
     const db = ctx.firestore();
     await setDoc(doc(db, 'workspaces', WS1), workspaceData());
     await setDoc(doc(db, 'workspaces', WS2), workspaceData('Second'));
-    await setDoc(doc(db, 'memberships', `${WS1}_${OWNER_UID}`), membershipData(OWNER_UID, 'owner'));
     await setDoc(
-      doc(db, 'memberships', `${WS1}_${EDITOR_UID}`),
-      membershipData(EDITOR_UID, 'editor'),
+      doc(db, 'memberships', `${WS1}_${ROLE_UIDS.owner}`),
+      membershipData(WS1, ROLE_UIDS.owner, 'owner'),
     );
     await setDoc(
-      doc(db, 'memberships', `${WS1}_${VIEWER_UID}`),
-      membershipData(VIEWER_UID, 'viewer'),
+      doc(db, 'memberships', `${WS1}_${ROLE_UIDS.editor}`),
+      membershipData(WS1, ROLE_UIDS.editor, 'editor'),
     );
-    await setDoc(doc(db, 'elements', 'e1'), elementData(OWNER_UID));
-    await setDoc(doc(db, 'presence', `${WS1}_${VIEWER_UID}`), presenceData(VIEWER_UID));
+    await setDoc(
+      doc(db, 'memberships', `${WS1}_${ROLE_UIDS.viewer}`),
+      membershipData(WS1, ROLE_UIDS.viewer, 'viewer'),
+    );
+    await setDoc(
+      doc(db, 'memberships', `${WS1}_${VICTIM_UID}`),
+      membershipData(WS1, VICTIM_UID, 'viewer'),
+    );
+    await setDoc(doc(db, 'elements', 'e1'), elementData(WS1, ROLE_UIDS.owner, 'e1'));
+    await setDoc(doc(db, 'elements', 'e2'), elementData(WS2, ROLE_UIDS.owner, 'e2'));
+    await setDoc(
+      doc(db, 'presence', `${WS1}_${ROLE_UIDS.viewer}`),
+      presenceData(WS1, ROLE_UIDS.viewer),
+    );
+    await setDoc(
+      doc(db, 'invitations', 'inv1'),
+      invitationData(WS1, ROLE_UIDS.owner, 'pending', INVITEE_EMAIL),
+    );
   });
 });
 
@@ -106,199 +159,411 @@ function dbOf(uid: string) {
   return testEnv.authenticatedContext(uid).firestore();
 }
 
-function invitedDb() {
-  return testEnv.authenticatedContext('invitee-user', { email: INVITEE_EMAIL }).firestore();
+function dbWithEmail(uid: string, email: string) {
+  return testEnv.authenticatedContext(uid, { email }).firestore();
 }
 
 function unauthed(): RulesTestContext {
   return testEnv.unauthenticatedContext();
 }
 
+// Representation of each permission operation as a concrete Firestore action,
+// used by the parity test to assert `rules === PERMISSION_MATRIX` (ADR-0021).
+type RulesFirestore = ReturnType<RulesTestContext['firestore']>;
+
+function operationAction(
+  op: WorkspaceOperation,
+  uid: string,
+): (db: RulesFirestore) => Promise<unknown> {
+  switch (op) {
+    case 'workspace:view':
+      return (db) => getDoc(doc(db, 'workspaces', WS1));
+    case 'workspace:update':
+      return (db) => updateDoc(doc(db, 'workspaces', WS1), { name: 'Updated' });
+    case 'workspace:delete':
+      return (db) => deleteDoc(doc(db, 'workspaces', WS1));
+    case 'element:write':
+      return (db) => setDoc(doc(db, 'elements', `el-${uid}`), elementData(WS1, uid, `el-${uid}`));
+    case 'member:invite':
+      return (db) => setDoc(doc(db, 'invitations', `inv-${uid}`), invitationData(WS1, uid));
+    case 'member:update-role':
+      return (db) =>
+        updateDoc(doc(db, 'memberships', `${WS1}_${VICTIM_UID}`), {
+          role: 'editor',
+          updatedAt: now,
+        });
+    case 'member:remove':
+      return (db) => deleteDoc(doc(db, 'memberships', `${WS1}_${VICTIM_UID}`));
+    case 'member:leave':
+      return (db) => deleteDoc(doc(db, 'memberships', `${WS1}_${uid}`));
+  }
+}
+
+describe('firestore.rules — parity with PERMISSION_MATRIX (ADR-0021)', () => {
+  const combos = ROLES.flatMap((role) => WORKSPACE_OPERATIONS.map((op) => ({ role, op })));
+
+  it.each(combos)('can($role, $op) matches the rules', async ({ role, op }) => {
+    const uid = ROLE_UIDS[role];
+    const expected = can(role, op);
+    const assertion = expected ? assertSucceeds : assertFails;
+
+    await assertion(operationAction(op, uid)(dbOf(uid)));
+  });
+});
+
 describe('firestore.rules — elements', () => {
   test('owner and editor can create an element', async () => {
-    for (const uid of [OWNER_UID, EDITOR_UID]) {
+    for (const uid of [ROLE_UIDS.owner, ROLE_UIDS.editor]) {
       await assertSucceeds(
-        setDoc(doc(dbOf(uid), 'elements', 'created'), elementData(uid, 'created')),
+        setDoc(
+          doc(dbOf(uid), 'elements', `created-${uid}`),
+          elementData(WS1, uid, `created-${uid}`),
+        ),
       );
     }
   });
 
   test('a viewer, outsider or anonymous user cannot create an element', async () => {
     await assertFails(
-      setDoc(doc(dbOf(VIEWER_UID), 'elements', 'created'), elementData(VIEWER_UID, 'created')),
-    );
-    await assertFails(
-      setDoc(doc(dbOf(OUTSIDER_UID), 'elements', 'created'), elementData(OUTSIDER_UID, 'created')),
+      setDoc(
+        doc(dbOf(ROLE_UIDS.viewer), 'elements', 'created-viewer'),
+        elementData(WS1, ROLE_UIDS.viewer, 'created-viewer'),
+      ),
     );
     await assertFails(
       setDoc(
-        doc(unauthed().firestore(), 'elements', 'created'),
-        elementData(OUTSIDER_UID, 'created'),
+        doc(dbOf(OUTSIDER_UID), 'elements', 'created-outsider'),
+        elementData(WS1, OUTSIDER_UID, 'created-outsider'),
+      ),
+    );
+    await assertFails(
+      setDoc(
+        doc(unauthed().firestore(), 'elements', 'created-anon'),
+        elementData(WS1, OUTSIDER_UID, 'created-anon'),
       ),
     );
   });
 
   test('a create cannot spoof another user in createdBy', async () => {
     await assertFails(
-      setDoc(doc(dbOf(EDITOR_UID), 'elements', 'spoofed'), elementData(OWNER_UID, 'spoofed')),
+      setDoc(
+        doc(dbOf(ROLE_UIDS.editor), 'elements', 'spoofed'),
+        elementData(WS1, ROLE_UIDS.owner, 'spoofed'),
+      ),
+    );
+  });
+
+  test('a user without membership cannot create an element in another workspace', async () => {
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.owner), 'elements', 'cross-ws'),
+        elementData(WS2, ROLE_UIDS.owner, 'cross-ws'),
+      ),
     );
   });
 
   test('owner and editor can update an element', async () => {
-    for (const uid of [OWNER_UID, EDITOR_UID]) {
+    for (const uid of [ROLE_UIDS.owner, ROLE_UIDS.editor]) {
       await assertSucceeds(updateDoc(doc(dbOf(uid), 'elements', 'e1'), { updatedAt: now }));
     }
+  });
+
+  test('a viewer, outsider or anonymous user cannot update an element', async () => {
+    await assertFails(updateDoc(doc(dbOf(ROLE_UIDS.viewer), 'elements', 'e1'), { updatedAt: now }));
+    await assertFails(updateDoc(doc(dbOf(OUTSIDER_UID), 'elements', 'e1'), { updatedAt: now }));
+    await assertFails(updateDoc(doc(unauthed().firestore(), 'elements', 'e1'), { updatedAt: now }));
+  });
+
+  test('an update cannot change the workspaceId of an element', async () => {
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'elements', 'e1'), { workspaceId: WS2, updatedAt: now }),
+    );
+  });
+
+  test('an owner cannot update an element of a workspace they are not a member of', async () => {
+    await assertFails(updateDoc(doc(dbOf(ROLE_UIDS.owner), 'elements', 'e2'), { updatedAt: now }));
   });
 
   test('owner and editor can delete an element', async () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await setDoc(
         doc(ctx.firestore(), 'elements', 'del-owner'),
-        elementData(OWNER_UID, 'del-owner'),
+        elementData(WS1, ROLE_UIDS.owner, 'del-owner'),
       );
       await setDoc(
         doc(ctx.firestore(), 'elements', 'del-editor'),
-        elementData(OWNER_UID, 'del-editor'),
+        elementData(WS1, ROLE_UIDS.owner, 'del-editor'),
       );
     });
-    await assertSucceeds(deleteDoc(doc(dbOf(OWNER_UID), 'elements', 'del-owner')));
-    await assertSucceeds(deleteDoc(doc(dbOf(EDITOR_UID), 'elements', 'del-editor')));
+    await assertSucceeds(deleteDoc(doc(dbOf(ROLE_UIDS.owner), 'elements', 'del-owner')));
+    await assertSucceeds(deleteDoc(doc(dbOf(ROLE_UIDS.editor), 'elements', 'del-editor')));
   });
 
-  test('a viewer cannot update or delete an element', async () => {
-    await assertFails(updateDoc(doc(dbOf(VIEWER_UID), 'elements', 'e1'), { updatedAt: now }));
-    await assertFails(deleteDoc(doc(dbOf(VIEWER_UID), 'elements', 'e1')));
+  test('a viewer, outsider or anonymous user cannot delete an element', async () => {
+    await assertFails(deleteDoc(doc(dbOf(ROLE_UIDS.viewer), 'elements', 'e1')));
+    await assertFails(deleteDoc(doc(dbOf(OUTSIDER_UID), 'elements', 'e1')));
+    await assertFails(deleteDoc(doc(unauthed().firestore(), 'elements', 'e1')));
   });
 
-  test('an update cannot change the workspaceId of an element', async () => {
-    await assertFails(
-      updateDoc(doc(dbOf(OWNER_UID), 'elements', 'e1'), { workspaceId: WS2, updatedAt: now }),
-    );
-  });
-
-  test('members can read an element; outsiders and anonymous cannot', async () => {
-    for (const uid of [OWNER_UID, EDITOR_UID, VIEWER_UID]) {
+  test('members can read an element; outsiders, other workspaces and anonymous cannot', async () => {
+    for (const uid of OTHER_ROLE_UIDS) {
       await assertSucceeds(getDoc(doc(dbOf(uid), 'elements', 'e1')));
     }
     await assertFails(getDoc(doc(dbOf(OUTSIDER_UID), 'elements', 'e1')));
+    await assertFails(getDoc(doc(dbOf(ROLE_UIDS.owner), 'elements', 'e2')));
     await assertFails(getDoc(doc(unauthed().firestore(), 'elements', 'e1')));
   });
 });
 
 describe('firestore.rules — workspaces', () => {
-  test('any authenticated user can create a workspace; anonymous cannot', async () => {
-    await assertSucceeds(setDoc(doc(dbOf(EDITOR_UID), 'workspaces', 'new'), workspaceData()));
-    await assertFails(setDoc(doc(unauthed().firestore(), 'workspaces', 'new'), workspaceData()));
+  test('any authenticated user can read or create a workspace; anonymous cannot', async () => {
+    for (const uid of [...OTHER_ROLE_UIDS, OUTSIDER_UID]) {
+      await assertSucceeds(getDoc(doc(dbOf(uid), 'workspaces', WS1)));
+      await assertSucceeds(setDoc(doc(dbOf(uid), 'workspaces', `new-${uid}`), workspaceData()));
+    }
+    await assertFails(getDoc(doc(unauthed().firestore(), 'workspaces', WS1)));
+    await assertFails(
+      setDoc(doc(unauthed().firestore(), 'workspaces', 'new-anon'), workspaceData()),
+    );
   });
 
-  test('only the owner can update or delete a workspace', async () => {
-    await assertSucceeds(updateDoc(doc(dbOf(OWNER_UID), 'workspaces', WS1), { name: 'Renamed' }));
-    await assertFails(updateDoc(doc(dbOf(VIEWER_UID), 'workspaces', WS1), { name: 'Renamed' }));
-    await assertFails(deleteDoc(doc(dbOf(EDITOR_UID), 'workspaces', WS1)));
-    await assertSucceeds(deleteDoc(doc(dbOf(OWNER_UID), 'workspaces', WS1)));
+  test('only the owner can update a workspace', async () => {
+    await assertSucceeds(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', WS1), { name: 'Renamed' }),
+    );
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.editor), 'workspaces', WS1), { name: 'Renamed' }),
+    );
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.viewer), 'workspaces', WS1), { name: 'Renamed' }),
+    );
+    await assertFails(updateDoc(doc(dbOf(OUTSIDER_UID), 'workspaces', WS1), { name: 'Renamed' }));
+    await assertFails(
+      updateDoc(doc(unauthed().firestore(), 'workspaces', WS1), { name: 'Renamed' }),
+    );
+  });
+
+  test('only the owner can delete a workspace', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'workspaces', 'del-editor'), workspaceData());
+      await setDoc(doc(ctx.firestore(), 'workspaces', 'del-viewer'), workspaceData());
+      await setDoc(doc(ctx.firestore(), 'workspaces', 'del-outsider'), workspaceData());
+      await setDoc(doc(ctx.firestore(), 'workspaces', 'del-anon'), workspaceData());
+    });
+    await assertSucceeds(deleteDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', WS1)));
+    await assertFails(deleteDoc(doc(dbOf(ROLE_UIDS.editor), 'workspaces', 'del-editor')));
+    await assertFails(deleteDoc(doc(dbOf(ROLE_UIDS.viewer), 'workspaces', 'del-viewer')));
+    await assertFails(deleteDoc(doc(dbOf(OUTSIDER_UID), 'workspaces', 'del-outsider')));
+    await assertFails(deleteDoc(doc(unauthed().firestore(), 'workspaces', 'del-anon')));
   });
 });
 
 describe('firestore.rules — memberships', () => {
-  test('only the owner can change a role or remove another member', async () => {
-    const target = doc(dbOf(OWNER_UID), 'memberships', `${WS1}_${VIEWER_UID}`);
-    await assertSucceeds(updateDoc(target, { role: 'editor', updatedAt: now }));
-    await assertFails(
-      updateDoc(doc(dbOf(EDITOR_UID), 'memberships', `${WS1}_${VIEWER_UID}`), {
-        role: 'editor',
-        updatedAt: now,
-      }),
-    );
-    await assertSucceeds(deleteDoc(target));
-    await assertFails(deleteDoc(doc(dbOf(VIEWER_UID), 'memberships', `${WS1}_${EDITOR_UID}`)));
+  test('a user can read their own membership', async () => {
+    for (const uid of OTHER_ROLE_UIDS) {
+      await assertSucceeds(getDoc(doc(dbOf(uid), 'memberships', `${WS1}_${uid}`)));
+    }
   });
 
-  test('a member can leave (delete their own membership)', async () => {
-    await assertSucceeds(deleteDoc(doc(dbOf(VIEWER_UID), 'memberships', `${WS1}_${VIEWER_UID}`)));
-  });
-
-  test('an owner role change cannot rewrite the membership identity', async () => {
-    await assertFails(
-      updateDoc(doc(dbOf(OWNER_UID), 'memberships', `${WS1}_${VIEWER_UID}`), {
-        userId: EDITOR_UID,
-        updatedAt: now,
-      }),
-    );
-  });
-
-  test('a user can read their own membership and members can read the roster', async () => {
-    await assertSucceeds(getDoc(doc(dbOf(VIEWER_UID), 'memberships', `${WS1}_${VIEWER_UID}`)));
+  test('members can read the roster of their workspace', async () => {
     await assertSucceeds(
-      getDocs(query(collection(dbOf(OWNER_UID), 'memberships'), where('workspaceId', '==', WS1))),
+      getDocs(
+        query(collection(dbOf(ROLE_UIDS.owner), 'memberships'), where('workspaceId', '==', WS1)),
+      ),
     );
+  });
+
+  test('an outsider or anonymous user cannot read memberships', async () => {
+    await assertFails(getDoc(doc(dbOf(OUTSIDER_UID), 'memberships', `${WS1}_${ROLE_UIDS.viewer}`)));
     await assertFails(
       getDocs(
         query(collection(dbOf(OUTSIDER_UID), 'memberships'), where('workspaceId', '==', WS1)),
       ),
     );
+    await assertFails(
+      getDoc(doc(unauthed().firestore(), 'memberships', `${WS1}_${ROLE_UIDS.viewer}`)),
+    );
   });
 
   test('reading a non-existent membership returns null instead of denying', async () => {
-    const snapshot = await getDoc(doc(dbOf(OWNER_UID), 'memberships', `${WS1}_${OUTSIDER_UID}`));
+    const snapshot = await getDoc(
+      doc(dbOf(ROLE_UIDS.owner), 'memberships', `${WS1}_${OUTSIDER_UID}`),
+    );
     expect(snapshot.exists()).toBe(false);
   });
 
   test('self-create of a membership is allowed (accept-invitation limitation)', async () => {
-    const db = dbOf(VIEWER_UID);
     await assertSucceeds(
-      setDoc(doc(db, 'memberships', `${WS2}_${VIEWER_UID}`), {
-        ...membershipData(VIEWER_UID, 'editor'),
-        workspaceId: WS2,
+      setDoc(
+        doc(dbOf(ROLE_UIDS.viewer), 'memberships', `${WS2}_${ROLE_UIDS.viewer}`),
+        membershipData(WS2, ROLE_UIDS.viewer, 'editor'),
+      ),
+    );
+  });
+
+  test('an owner can add another member', async () => {
+    await assertSucceeds(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.owner), 'memberships', `${WS1}_${OUTSIDER_UID}`),
+        membershipData(WS1, OUTSIDER_UID, 'viewer'),
+      ),
+    );
+  });
+
+  test('an editor or viewer cannot add another member or spoof a userId', async () => {
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.editor), 'memberships', `${WS1}_${OUTSIDER_UID}`),
+        membershipData(WS1, OUTSIDER_UID, 'viewer'),
+      ),
+    );
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.viewer), 'memberships', `${WS1}_${OUTSIDER_UID}`),
+        membershipData(WS1, OUTSIDER_UID, 'viewer'),
+      ),
+    );
+  });
+
+  test('an anonymous user cannot create a membership', async () => {
+    await assertFails(
+      setDoc(
+        doc(unauthed().firestore(), 'memberships', `${WS1}_${OUTSIDER_UID}`),
+        membershipData(WS1, OUTSIDER_UID, 'viewer'),
+      ),
+    );
+  });
+
+  test('only the owner can change a role', async () => {
+    await assertSucceeds(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'memberships', `${WS1}_${VICTIM_UID}`), {
+        role: 'editor',
+        updatedAt: now,
       }),
+    );
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.editor), 'memberships', `${WS1}_${VICTIM_UID}`), {
+        role: 'editor',
+        updatedAt: now,
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.viewer), 'memberships', `${WS1}_${VICTIM_UID}`), {
+        role: 'editor',
+        updatedAt: now,
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(dbOf(OUTSIDER_UID), 'memberships', `${WS1}_${VICTIM_UID}`), {
+        role: 'editor',
+        updatedAt: now,
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(unauthed().firestore(), 'memberships', `${WS1}_${VICTIM_UID}`), {
+        role: 'editor',
+        updatedAt: now,
+      }),
+    );
+  });
+
+  test('an owner role change cannot rewrite the membership identity', async () => {
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'memberships', `${WS1}_${VICTIM_UID}`), {
+        userId: ROLE_UIDS.editor,
+        updatedAt: now,
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'memberships', `${WS1}_${VICTIM_UID}`), {
+        workspaceId: WS2,
+        updatedAt: now,
+      }),
+    );
+  });
+
+  test('only the owner can remove another member', async () => {
+    await assertFails(
+      deleteDoc(doc(dbOf(ROLE_UIDS.editor), 'memberships', `${WS1}_${VICTIM_UID}`)),
+    );
+    await assertFails(
+      deleteDoc(doc(dbOf(ROLE_UIDS.viewer), 'memberships', `${WS1}_${VICTIM_UID}`)),
+    );
+    await assertFails(deleteDoc(doc(dbOf(OUTSIDER_UID), 'memberships', `${WS1}_${VICTIM_UID}`)));
+    await assertSucceeds(
+      deleteDoc(doc(dbOf(ROLE_UIDS.owner), 'memberships', `${WS1}_${VICTIM_UID}`)),
+    );
+  });
+
+  test('a member can leave but cannot remove another member nor be anonymous', async () => {
+    for (const uid of OTHER_ROLE_UIDS) {
+      await assertSucceeds(deleteDoc(doc(dbOf(uid), 'memberships', `${WS1}_${uid}`)));
+    }
+    await assertFails(
+      deleteDoc(doc(unauthed().firestore(), 'memberships', `${WS1}_${ROLE_UIDS.viewer}`)),
     );
   });
 });
 
 describe('firestore.rules — invitations', () => {
-  function invitationData(workspaceId = WS1, status = 'pending') {
-    return {
-      id: 'inv1',
-      workspaceId,
-      email: INVITEE_EMAIL,
-      role: 'editor',
-      tokenHash: '0a'.repeat(32),
-      status,
-      invitedBy: OWNER_UID,
-      expiresAt: new Date('2026-10-20T00:00:00.000Z'),
-      createdAt: now,
-      updatedAt: now,
-    };
-  }
-
-  beforeEach(async () => {
-    await testEnv.withSecurityRulesDisabled(async (ctx) => {
-      await setDoc(doc(ctx.firestore(), 'invitations', 'inv1'), invitationData());
-    });
+  test('any authenticated user can read an invitation; anonymous cannot', async () => {
+    for (const uid of [...OTHER_ROLE_UIDS, OUTSIDER_UID]) {
+      await assertSucceeds(getDoc(doc(dbOf(uid), 'invitations', 'inv1')));
+    }
+    await assertFails(getDoc(doc(unauthed().firestore(), 'invitations', 'inv1')));
   });
 
-  test('owner and editor can invite; a viewer cannot', async () => {
-    for (const uid of [OWNER_UID, EDITOR_UID]) {
-      await assertSucceeds(setDoc(doc(dbOf(uid), 'invitations', 'inv2'), invitationData(WS1)));
+  test('owner and editor can invite; a viewer or anonymous user cannot', async () => {
+    for (const uid of [ROLE_UIDS.owner, ROLE_UIDS.editor]) {
+      await assertSucceeds(
+        setDoc(doc(dbOf(uid), 'invitations', `inv-${uid}`), invitationData(WS1, uid)),
+      );
     }
-    await assertFails(setDoc(doc(dbOf(VIEWER_UID), 'invitations', 'inv2'), invitationData(WS1)));
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.viewer), 'invitations', 'inv-viewer'),
+        invitationData(WS1, ROLE_UIDS.viewer),
+      ),
+    );
+    await assertFails(
+      setDoc(
+        doc(unauthed().firestore(), 'invitations', 'inv-anon'),
+        invitationData(WS1, ROLE_UIDS.owner),
+      ),
+    );
   });
 
   test('an invitation flags invitedBy === auth.uid', async () => {
     await assertFails(
-      setDoc(doc(dbOf(EDITOR_UID), 'invitations', 'inv2'), {
-        ...invitationData(WS1),
-        invitedBy: OWNER_UID,
+      setDoc(doc(dbOf(ROLE_UIDS.editor), 'invitations', 'inv-spoofed'), {
+        ...invitationData(WS1, ROLE_UIDS.owner),
+        invitedBy: ROLE_UIDS.owner,
       }),
     );
   });
 
-  test('the invitee whose email matches can accept a pending invitation', async () => {
+  test('an owner or editor can update an invitation', async () => {
     await assertSucceeds(
-      updateDoc(doc(invitedDb(), 'invitations', 'inv1'), { status: 'accepted', updatedAt: now }),
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'invitations', 'inv1'), {
+        status: 'revoked',
+        updatedAt: now,
+      }),
+    );
+    await assertSucceeds(
+      updateDoc(doc(dbOf(ROLE_UIDS.editor), 'invitations', 'inv1'), {
+        status: 'revoked',
+        updatedAt: now,
+      }),
     );
   });
 
-  test('a pending invitation cannot be accepted by someone else or tampered with', async () => {
+  test('a viewer, outsider or anonymous user cannot update an invitation', async () => {
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.viewer), 'invitations', 'inv1'), {
+        status: 'revoked',
+        updatedAt: now,
+      }),
+    );
     await assertFails(
       updateDoc(doc(dbOf(OUTSIDER_UID), 'invitations', 'inv1'), {
         status: 'accepted',
@@ -306,7 +571,34 @@ describe('firestore.rules — invitations', () => {
       }),
     );
     await assertFails(
-      updateDoc(doc(invitedDb(), 'invitations', 'inv1'), {
+      updateDoc(doc(unauthed().firestore(), 'invitations', 'inv1'), {
+        status: 'accepted',
+        updatedAt: now,
+      }),
+    );
+  });
+
+  test('the invitee whose email matches can accept a pending invitation', async () => {
+    await assertSucceeds(
+      updateDoc(doc(dbWithEmail(INVITEE_UID, INVITEE_EMAIL), 'invitations', 'inv1'), {
+        status: 'accepted',
+        updatedAt: now,
+      }),
+    );
+  });
+
+  test('a pending invitation cannot be accepted by a non-matching email', async () => {
+    await assertFails(
+      updateDoc(doc(dbWithEmail('other-user', OTHER_EMAIL), 'invitations', 'inv1'), {
+        status: 'accepted',
+        updatedAt: now,
+      }),
+    );
+  });
+
+  test('the invitee cannot tamper with fields other than status/updatedAt', async () => {
+    await assertFails(
+      updateDoc(doc(dbWithEmail(INVITEE_UID, INVITEE_EMAIL), 'invitations', 'inv1'), {
         role: 'owner',
         status: 'accepted',
         updatedAt: now,
@@ -314,9 +606,28 @@ describe('firestore.rules — invitations', () => {
     );
   });
 
-  test('an owner or editor can accept/revoke an invitation', async () => {
-    await assertSucceeds(
-      updateDoc(doc(dbOf(OWNER_UID), 'invitations', 'inv1'), { status: 'revoked', updatedAt: now }),
+  test('the invitee cannot accept an invitation that is not pending', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), 'invitations', 'inv-revoked'),
+        invitationData(WS1, ROLE_UIDS.owner, 'revoked'),
+      );
+      await setDoc(
+        doc(ctx.firestore(), 'invitations', 'inv-accepted'),
+        invitationData(WS1, ROLE_UIDS.owner, 'accepted'),
+      );
+    });
+    await assertFails(
+      updateDoc(doc(dbWithEmail(INVITEE_UID, INVITEE_EMAIL), 'invitations', 'inv-revoked'), {
+        status: 'accepted',
+        updatedAt: now,
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(dbWithEmail(INVITEE_UID, INVITEE_EMAIL), 'invitations', 'inv-accepted'), {
+        status: 'accepted',
+        updatedAt: now,
+      }),
     );
   });
 });
@@ -324,19 +635,52 @@ describe('firestore.rules — invitations', () => {
 describe('firestore.rules — presence', () => {
   test('a member can announce and withdraw their own presence', async () => {
     await assertSucceeds(
-      setDoc(doc(dbOf(VIEWER_UID), 'presence', `${WS1}_${VIEWER_UID}`), presenceData(VIEWER_UID)),
+      setDoc(
+        doc(dbOf(ROLE_UIDS.viewer), 'presence', `${WS1}_${ROLE_UIDS.viewer}`),
+        presenceData(WS1, ROLE_UIDS.viewer),
+      ),
     );
-    await assertSucceeds(deleteDoc(doc(dbOf(VIEWER_UID), 'presence', `${WS1}_${VIEWER_UID}`)));
+    await assertSucceeds(
+      deleteDoc(doc(dbOf(ROLE_UIDS.viewer), 'presence', `${WS1}_${ROLE_UIDS.viewer}`)),
+    );
   });
 
   test('a user can only write their own presence', async () => {
     await assertFails(
-      setDoc(doc(dbOf(OUTSIDER_UID), 'presence', `${WS1}_${VIEWER_UID}`), presenceData(VIEWER_UID)),
+      setDoc(
+        doc(dbOf(ROLE_UIDS.viewer), 'presence', `${WS1}_${ROLE_UIDS.owner}`),
+        presenceData(WS1, ROLE_UIDS.owner),
+      ),
     );
   });
 
-  test('members can read presence; outsiders cannot', async () => {
-    await assertSucceeds(getDoc(doc(dbOf(VIEWER_UID), 'presence', `${WS1}_${VIEWER_UID}`)));
-    await assertFails(getDoc(doc(dbOf(OUTSIDER_UID), 'presence', `${WS1}_${VIEWER_UID}`)));
+  test('a non-member cannot write presence in a workspace', async () => {
+    await assertFails(
+      setDoc(
+        doc(dbOf(OUTSIDER_UID), 'presence', `${WS1}_${OUTSIDER_UID}`),
+        presenceData(WS1, OUTSIDER_UID),
+      ),
+    );
+  });
+
+  test('a member cannot delete or update another user presence', async () => {
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'presence', `${WS1}_${ROLE_UIDS.viewer}`), {
+        lastSeenAt: now,
+      }),
+    );
+    await assertFails(
+      deleteDoc(doc(dbOf(ROLE_UIDS.owner), 'presence', `${WS1}_${ROLE_UIDS.viewer}`)),
+    );
+  });
+
+  test('members can read presence; outsiders and anonymous cannot', async () => {
+    await assertSucceeds(
+      getDoc(doc(dbOf(ROLE_UIDS.viewer), 'presence', `${WS1}_${ROLE_UIDS.viewer}`)),
+    );
+    await assertFails(getDoc(doc(dbOf(OUTSIDER_UID), 'presence', `${WS1}_${ROLE_UIDS.viewer}`)));
+    await assertFails(
+      getDoc(doc(unauthed().firestore(), 'presence', `${WS1}_${ROLE_UIDS.viewer}`)),
+    );
   });
 });

@@ -1,5 +1,13 @@
 # Session Log
 
+## 2026-10-13 — TASK-098 Security Rules tests
+
+- Siguiente tarea del backlog: TASK-098 (dependencia TASK-097 DONE, sin IN PROGRESS ni BLOCKED). Alcance confirmado con el usuario: **suite exhaustiva allow/deny por recurso + test de paridad `PERMISSION_MATRIX` ↔ reglas**; sin cambiar `firestore.rules` salvo defecto revelado.
+- Tests: `src/test/rules/firestore.rules.test.ts` pasa de 24 casos baseline a **64 casos**. Se añadió un bloque **parity with PERMISSION_MATRIX** con `it.each` sobre las 24 combinaciones rol × operación de `WORKSPACE_OPERATIONS`/`can` (importadas del dominio), mapeando cada operación a una acción Firestore representativa y afirmando `allow === can(role, op)`. Casos explícitos ampliados: `workspaces` read/create anónimo; `memberships` add-a-otro por editor/viewer, spoof de `userId`, create anónimo, identidad inmutable (`userId`/`workspaceId`), remove de otro por editor/viewer/anónimo; `elements` create/update/delete por outsider y anónimo, spoof de `createdBy`, aislamiento cross-workspace (WS2 sin membership) y lectura de otro workspace; `invitations` update por viewer/outsider/anónimo, lectura anónima, email no coincidente y aceptar invitación no-`pending`; `presence` delete/update ajeno, write sin membership y lectura anónima.
+- Las reglas no requirieron cambios: la suite confirma la paridad con ADR-0021 y las limitaciones MVP documentadas (read global de `workspaces`/`invitations`, self-join de `memberships`), que se afirman explícitamente como comportamiento actual.
+- Quality gates: `npm run test:rules` → **64/64** con el emulador (Java 17; aviso no bloqueante de `firebase-tools` v14); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` (136 suites / 1685 tests) y `npm run build` en verde (aviso preexistente de chunk >500 kB, bundle de Firebase). `npm test` sigue ignorando `src/test/rules`.
+- Criterios TASK-098 marcados [x] y `Status: DONE`. Sin ADR nuevo: TASK-098 amplía la política ya documentada en ADR-0023 (no introduce decisiones arquitectónicas). Siguiente tarea: TASK-099 (Change member role).
+
 ## 2026-10-13 — TASK-097 Firebase Security Rules
 
 - Siguiente tarea del backlog: TASK-097 (dependencias TASK-090 y TASK-095 DONE, sin IN PROGRESS ni BLOCKED). Alcance confirmado con el usuario: **harness de reglas + casos allow/deny baseline en esta tarea** (suite exhaustiva → TASK-098), permitir **self-create de membership** al aceptar invitaciones y **read de workspaces a cualquier autenticado**, documentando ambas limitaciones.
