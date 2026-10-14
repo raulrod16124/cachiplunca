@@ -128,6 +128,18 @@ describe('Canvas', () => {
     ).toBeInTheDocument();
   });
 
+  it('shows an empty board state when there are no elements', () => {
+    renderCanvas([]);
+
+    expect(screen.getByRole('heading', { name: 'This board is empty' })).toBeInTheDocument();
+  });
+
+  it('hides the empty board state once the board has elements', () => {
+    renderCanvas([FIRST_ITEM]);
+
+    expect(screen.queryByRole('heading', { name: 'This board is empty' })).not.toBeInTheDocument();
+  });
+
   it('exposes the canvas as a focusable region with keyboard shortcuts', () => {
     renderCanvas();
 

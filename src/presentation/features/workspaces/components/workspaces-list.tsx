@@ -1,7 +1,10 @@
-import { Button, Heading, Inline, Skeleton, Stack, Text, VisuallyHidden } from '@raulrod/ui';
+import { Button, Heading, Skeleton, Stack, Text } from '@raulrod/ui';
 import type { ReactNode } from 'react';
 import styled from 'styled-components';
 import type { Workspace } from '../../../../domain/workspace';
+import { EmptyState } from '../../../components/empty-state';
+import { ErrorState } from '../../../components/error-state';
+import { LoadingState } from '../../../components/loading-state';
 
 const ListGrid = styled.div`
   display: grid;
@@ -51,35 +54,31 @@ export function WorkspacesList({
 }: WorkspacesListProps): ReactNode {
   if (status === 'loading' || status === 'idle') {
     return (
-      <ListGrid role="status" aria-busy="true">
-        <VisuallyHidden>Loading workspaces</VisuallyHidden>
-        {Array.from({ length: 6 }).map((_, index) => (
-          <CardShell key={`workspace-skeleton-${index}`}>
-            <Stack gap="space-3">
-              <Skeleton data-testid="skeleton" style={{ height: '20px', width: '70%' }} />
-              <Skeleton data-testid="skeleton" style={{ height: '16px', width: '50%' }} />
-              <Skeleton data-testid="skeleton" style={{ height: '16px', width: '40%' }} />
-            </Stack>
-          </CardShell>
-        ))}
-      </ListGrid>
+      <LoadingState label="Loading workspaces">
+        <ListGrid>
+          {Array.from({ length: 6 }).map((_, index) => (
+            <CardShell key={`workspace-skeleton-${index}`}>
+              <Stack gap="space-3">
+                <Skeleton data-testid="skeleton" style={{ height: '20px', width: '70%' }} />
+                <Skeleton data-testid="skeleton" style={{ height: '16px', width: '50%' }} />
+                <Skeleton data-testid="skeleton" style={{ height: '16px', width: '40%' }} />
+              </Stack>
+            </CardShell>
+          ))}
+        </ListGrid>
+      </LoadingState>
     );
   }
 
   if (status === 'error') {
     return (
-      <CardShell role="alert" aria-live="polite">
-        <Stack gap="space-3" align="start">
-          <Heading as="h2">Something went wrong</Heading>
-          <Text color="color.text.muted">
-            {errorMessage ?? 'We could not load your workspaces. Please try again.'}
-          </Text>
-          <Inline gap="space-2">
-            <Button type="button" variant="primary" onClick={onRetry}>
-              Retry
-            </Button>
-          </Inline>
-        </Stack>
+      <CardShell>
+        <ErrorState
+          title="Something went wrong"
+          description={errorMessage ?? 'We could not load your workspaces. Please try again.'}
+          actionLabel="Retry"
+          onAction={onRetry}
+        />
       </CardShell>
     );
   }
@@ -87,17 +86,12 @@ export function WorkspacesList({
   if (workspaces.length === 0) {
     return (
       <CardShell>
-        <Stack gap="space-4" justify="center">
-          <Stack gap="space-2">
-            <Heading as="h2">No workspaces yet</Heading>
-            <Text color="color.text.muted">
-              Create your first workspace to start organizing ideas together.
-            </Text>
-          </Stack>
-          <Button type="button" variant="primary" onClick={onCreate}>
-            Create workspace
-          </Button>
-        </Stack>
+        <EmptyState
+          title="No workspaces yet"
+          description="Create your first workspace to start organizing ideas together."
+          actionLabel="Create workspace"
+          onAction={onCreate}
+        />
       </CardShell>
     );
   }

@@ -1,4 +1,5 @@
-import { Button, Inline, Stack, Text } from '@raulrod/ui';
+import { Button, Heading, Inline, Stack, Text } from '@raulrod/ui';
+import type { HeadingLevel } from '@raulrod/ui';
 import type { ReactNode } from 'react';
 
 export interface EmptyStateProps {
@@ -7,6 +8,7 @@ export interface EmptyStateProps {
   actionLabel?: string;
   onAction?: () => void;
   icon?: ReactNode;
+  titleAs?: HeadingLevel;
 }
 
 export function EmptyState({
@@ -15,12 +17,13 @@ export function EmptyState({
   actionLabel,
   onAction,
   icon,
+  titleAs = 'h2',
 }: EmptyStateProps): ReactNode {
   return (
     <Stack gap="space-3" role="status" aria-live="polite" align="center" justify="center">
       {icon ? <Inline>{icon}</Inline> : null}
       <Stack gap="space-1" align="center">
-        <Text weight="font.weight.semibold">{title}</Text>
+        <Heading as={titleAs}>{title}</Heading>
         {description ? <Text color="color.text.muted">{description}</Text> : null}
       </Stack>
       {actionLabel && onAction ? (

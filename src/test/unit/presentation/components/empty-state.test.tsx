@@ -29,4 +29,11 @@ describe('EmptyState', () => {
     render(<EmptyState icon={<span>📋</span>} />);
     expect(screen.getByText('📋')).toBeInTheDocument();
   });
+
+  it('renders the title as a heading at the requested level', () => {
+    render(<EmptyState title="No workspaces yet" titleAs="h1" />);
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'No workspaces yet' }),
+    ).toBeInTheDocument();
+  });
 });

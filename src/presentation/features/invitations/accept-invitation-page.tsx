@@ -5,6 +5,8 @@ import { useSession } from '../../../app/providers/session-provider';
 import type { AcceptInvitation, AcceptInvitationResult } from '../../../application/commands';
 import { UserId } from '../../../domain/shared';
 import { createAppError, ERROR_CODES } from '../../../shared/errors';
+import { ErrorState } from '../../components/error-state';
+import { LoadingState } from '../../components/loading-state';
 import { SessionLoading } from '../../components/session-loading';
 import { AuthLayout } from '../auth/auth-layout';
 import { describeAcceptInvitationError } from './invitation-error-messages';
@@ -87,11 +89,7 @@ export function AcceptInvitationPage({ acceptInvitation }: AcceptInvitationPageP
   if (result === null) {
     return (
       <AuthLayout>
-        <Inline gap="space-2" align="center" justify="center">
-          <Text role="status" color="color.text.muted">
-            Accepting invitation…
-          </Text>
-        </Inline>
+        <LoadingState message="Accepting invitation…" />
       </AuthLayout>
     );
   }
@@ -129,17 +127,13 @@ export function AcceptInvitationPage({ acceptInvitation }: AcceptInvitationPageP
 
   return (
     <AuthLayout>
-      <Stack gap="space-4">
-        <Stack gap="space-2">
-          <Heading as="h1">We could not accept the invitation</Heading>
-          <Text role="alert" color="color.text.danger">
-            {describeAcceptInvitationError(error)}
-          </Text>
-        </Stack>
-        <Button type="button" variant="secondary" onClick={() => navigate('/workspaces')}>
-          Back to your workspaces
-        </Button>
-      </Stack>
+      <ErrorState
+        title="We could not accept the invitation"
+        titleAs="h1"
+        description={describeAcceptInvitationError(error)}
+        actionLabel="Back to your workspaces"
+        onAction={() => navigate('/workspaces')}
+      />
     </AuthLayout>
   );
 }

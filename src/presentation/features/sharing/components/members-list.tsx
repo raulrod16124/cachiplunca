@@ -1,17 +1,10 @@
-import {
-  Avatar,
-  Badge,
-  Button,
-  Inline,
-  Select,
-  Skeleton,
-  Stack,
-  Text,
-  VisuallyHidden,
-} from '@raulrod/ui';
+import { Avatar, Badge, Button, Inline, Select, Skeleton, Stack, Text } from '@raulrod/ui';
 import type { ReactNode } from 'react';
 import styled from 'styled-components';
 import type { Membership, MembershipRole } from '../../../../domain/membership';
+import { EmptyState } from '../../../components/empty-state';
+import { ErrorState } from '../../../components/error-state';
+import { LoadingState } from '../../../components/loading-state';
 
 export type MembersStatus = 'loading' | 'error' | 'ready';
 
@@ -71,29 +64,28 @@ export function MembersList({
 }: MembersListProps): ReactNode {
   if (status === 'loading') {
     return (
-      <Stack gap="space-2" role="status" aria-busy="true">
-        <VisuallyHidden>Loading members</VisuallyHidden>
-        <Skeleton style={{ height: '40px', width: '70%' }} />
-        <Skeleton style={{ height: '40px', width: '60%' }} />
-      </Stack>
+      <LoadingState label="Loading members">
+        <Stack gap="space-2">
+          <Skeleton style={{ height: '40px', width: '70%' }} />
+          <Skeleton style={{ height: '40px', width: '60%' }} />
+        </Stack>
+      </LoadingState>
     );
   }
 
   if (status === 'error') {
     return (
-      <Stack gap="space-3" role="alert" aria-live="polite">
-        <Text color="color.text.danger">{errorMessage ?? 'Something went wrong.'}</Text>
-        <Inline>
-          <Button type="button" variant="secondary" onClick={onRetry}>
-            Retry
-          </Button>
-        </Inline>
-      </Stack>
+      <ErrorState
+        title="Could not load members"
+        description={errorMessage ?? 'Something went wrong.'}
+        actionLabel="Retry"
+        onAction={onRetry}
+      />
     );
   }
 
   if (members.length === 0) {
-    return <Text color="color.text.muted">No members yet.</Text>;
+    return <EmptyState title="No members yet." titleAs="h3" />;
   }
 
   return (

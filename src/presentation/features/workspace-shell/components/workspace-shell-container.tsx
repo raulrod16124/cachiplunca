@@ -1,4 +1,4 @@
-import { Button, Heading, Inline, Skeleton, Stack, Text, VisuallyHidden } from '@raulrod/ui';
+import { Skeleton, Stack } from '@raulrod/ui';
 import type { ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import styled from 'styled-components';
@@ -67,6 +67,9 @@ import { Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
 import { useWorkspacePermissions } from '../../../hooks';
 import type { ElementId } from '../../../../domain/shared';
 import { toAppError, type AppError } from '../../../../shared/errors';
+import { EmptyState } from '../../../components/empty-state';
+import { ErrorState } from '../../../components/error-state';
+import { LoadingState } from '../../../components/loading-state';
 import { ShareDialog } from '../../sharing';
 import { WorkspaceShellLayout } from './workspace-shell-layout';
 import {
@@ -612,12 +615,13 @@ export function WorkspaceShellContainer({
 
   if (status === 'loading') {
     return (
-      <Container role="status" aria-busy="true">
-        <VisuallyHidden>Loading workspace</VisuallyHidden>
-        <Stack gap="space-4">
-          <Skeleton style={{ height: '32px', width: '40%' }} />
-          <Skeleton style={{ height: '400px', width: '100%' }} />
-        </Stack>
+      <Container>
+        <LoadingState label="Loading workspace">
+          <Stack gap="space-4">
+            <Skeleton style={{ height: '32px', width: '40%' }} />
+            <Skeleton style={{ height: '400px', width: '100%' }} />
+          </Stack>
+        </LoadingState>
       </Container>
     );
   }
@@ -625,17 +629,13 @@ export function WorkspaceShellContainer({
   if (status === 'notFound') {
     return (
       <Container>
-        <Stack gap="space-4">
-          <Heading as="h1">Workspace not found</Heading>
-          <Text color="color.text.muted">
-            The workspace you are looking for does not exist or you do not have access to it.
-          </Text>
-          <Inline gap="space-2">
-            <Button type="button" variant="primary" onClick={onBack}>
-              Back to workspaces
-            </Button>
-          </Inline>
-        </Stack>
+        <EmptyState
+          title="Workspace not found"
+          titleAs="h1"
+          description="The workspace you are looking for does not exist or you do not have access to it."
+          actionLabel="Back to workspaces"
+          onAction={onBack}
+        />
       </Container>
     );
   }
@@ -647,19 +647,16 @@ export function WorkspaceShellContainer({
         : 'Something went wrong.';
 
     return (
-      <Container role="alert" aria-live="polite">
-        <Stack gap="space-4">
-          <Heading as="h1">Could not load workspace</Heading>
-          <Text color="color.text.muted">{errorMessage}</Text>
-          <Inline gap="space-2">
-            <Button type="button" variant="primary" onClick={fetchWorkspace}>
-              Retry
-            </Button>
-            <Button type="button" variant="outline" onClick={onBack}>
-              Back to workspaces
-            </Button>
-          </Inline>
-        </Stack>
+      <Container>
+        <ErrorState
+          title="Could not load workspace"
+          titleAs="h1"
+          description={errorMessage}
+          actionLabel="Retry"
+          onAction={fetchWorkspace}
+          secondaryActionLabel="Back to workspaces"
+          onSecondaryAction={onBack}
+        />
       </Container>
     );
   }
@@ -667,12 +664,13 @@ export function WorkspaceShellContainer({
   if (result?.status === 'ok') {
     if (elementsStatus === 'loading' || roleStatus === 'loading') {
       return (
-        <Container role="status" aria-busy="true">
-          <VisuallyHidden>Loading board</VisuallyHidden>
-          <Stack gap="space-4">
-            <Skeleton style={{ height: '32px', width: '40%' }} />
-            <Skeleton style={{ height: '400px', width: '100%' }} />
-          </Stack>
+        <Container>
+          <LoadingState label="Loading board">
+            <Stack gap="space-4">
+              <Skeleton style={{ height: '32px', width: '40%' }} />
+              <Skeleton style={{ height: '400px', width: '100%' }} />
+            </Stack>
+          </LoadingState>
         </Container>
       );
     }
@@ -684,19 +682,16 @@ export function WorkspaceShellContainer({
           : describeLoadWorkspaceElementsError(elementsError);
 
       return (
-        <Container role="alert" aria-live="polite">
-          <Stack gap="space-4">
-            <Heading as="h1">Could not load board</Heading>
-            <Text color="color.text.muted">{errorMessage}</Text>
-            <Inline gap="space-2">
-              <Button type="button" variant="primary" onClick={fetchElements}>
-                Retry
-              </Button>
-              <Button type="button" variant="outline" onClick={onBack}>
-                Back to workspaces
-              </Button>
-            </Inline>
-          </Stack>
+        <Container>
+          <ErrorState
+            title="Could not load board"
+            titleAs="h1"
+            description={errorMessage}
+            actionLabel="Retry"
+            onAction={fetchElements}
+            secondaryActionLabel="Back to workspaces"
+            onSecondaryAction={onBack}
+          />
         </Container>
       );
     }

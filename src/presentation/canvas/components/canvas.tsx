@@ -31,6 +31,7 @@ import { useSpacePressed } from '../hooks/use-space-pressed';
 import { useZoom } from '../hooks/use-zoom';
 import { ElementView } from '../renderers';
 import type { ElementRendererRegistry } from '../renderers';
+import { EmptyState } from '../../components/empty-state';
 import { CanvasToolbar } from './canvas-toolbar';
 import { RemoteCursorsOverlay } from './remote-cursors-overlay';
 import { SelectionOverlay } from './selection-overlay';
@@ -103,11 +104,15 @@ const Hint = styled.div`
   transform: translate(-50%, -50%);
   text-align: center;
   pointer-events: none;
+  max-width: 480px;
   color: ${({ theme }) => theme.canvas.hintText};
   font-size: ${({ theme }) => theme.font.size.sm};
 `;
 
 const CANVAS_GRID = Grid.default();
+
+const CANVAS_SHORTCUTS =
+  'Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo';
 
 export interface CanvasProps {
   readonly store: CanvasViewportStore;
@@ -456,12 +461,9 @@ export function Canvas({
           />
         ))}
         <SelectionOverlay items={selectedItems} />
-        {items.length === 0 ? (
+        {elements.length === 0 ? (
           <Hint>
-            Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear ·
-            Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C
-            to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or
-            Ctrl/Cmd + Y to redo
+            <EmptyState title="This board is empty" titleAs="h2" description={CANVAS_SHORTCUTS} />
           </Hint>
         ) : null}
       </World>

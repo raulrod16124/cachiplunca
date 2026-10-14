@@ -34,6 +34,13 @@ describe('WorkspacesList', () => {
     expect(screen.getAllByTestId(/skeleton/i).length).toBeGreaterThan(0);
   });
 
+  it('exposes an accessible busy status while loading', () => {
+    render(<WorkspacesList status="loading" workspaces={[]} {...baseProps} />);
+
+    expect(screen.getByRole('status')).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByRole('status')).toHaveTextContent('Loading workspaces');
+  });
+
   it('renders error state with retry', async () => {
     const user = userEvent.setup();
     render(

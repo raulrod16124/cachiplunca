@@ -1,7 +1,10 @@
-import { Badge, Button, Inline, Skeleton, Stack, Text, VisuallyHidden } from '@raulrod/ui';
+import { Badge, Inline, Skeleton, Stack, Text } from '@raulrod/ui';
 import type { ReactNode } from 'react';
 import styled from 'styled-components';
 import type { Invitation } from '../../../../domain/invitation';
+import { EmptyState } from '../../../components/empty-state';
+import { ErrorState } from '../../../components/error-state';
+import { LoadingState } from '../../../components/loading-state';
 
 export type PendingInvitationsStatus = 'loading' | 'error' | 'ready';
 
@@ -36,29 +39,28 @@ export function PendingInvitationsList({
 }: PendingInvitationsListProps): ReactNode {
   if (status === 'loading') {
     return (
-      <Stack gap="space-2" role="status" aria-busy="true">
-        <VisuallyHidden>Loading pending invitations</VisuallyHidden>
-        <Skeleton style={{ height: '24px', width: '60%' }} />
-        <Skeleton style={{ height: '24px', width: '50%' }} />
-      </Stack>
+      <LoadingState label="Loading pending invitations">
+        <Stack gap="space-2">
+          <Skeleton style={{ height: '24px', width: '60%' }} />
+          <Skeleton style={{ height: '24px', width: '50%' }} />
+        </Stack>
+      </LoadingState>
     );
   }
 
   if (status === 'error') {
     return (
-      <Stack gap="space-3" role="alert" aria-live="polite">
-        <Text color="color.text.danger">{errorMessage ?? 'Something went wrong.'}</Text>
-        <Inline>
-          <Button type="button" variant="secondary" onClick={onRetry}>
-            Retry
-          </Button>
-        </Inline>
-      </Stack>
+      <ErrorState
+        title="Could not load invitations"
+        description={errorMessage ?? 'Something went wrong.'}
+        actionLabel="Retry"
+        onAction={onRetry}
+      />
     );
   }
 
   if (invitations.length === 0) {
-    return <Text color="color.text.muted">No pending invitations.</Text>;
+    return <EmptyState title="No pending invitations." titleAs="h3" />;
   }
 
   return (

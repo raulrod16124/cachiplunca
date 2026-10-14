@@ -31,4 +31,26 @@ describe('ErrorState', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
+
+  it('renders a secondary action', () => {
+    const onSecondaryAction = jest.fn();
+    render(
+      <ErrorState
+        title="Could not load"
+        actionLabel="Retry"
+        onAction={jest.fn()}
+        secondaryActionLabel="Go back"
+        onSecondaryAction={onSecondaryAction}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Go back' }));
+    expect(onSecondaryAction).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders the title as a heading at the requested level', () => {
+    render(<ErrorState title="Could not load workspace" titleAs="h1" />);
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Could not load workspace' }),
+    ).toBeInTheDocument();
+  });
 });

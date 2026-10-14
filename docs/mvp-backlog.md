@@ -4021,7 +4021,7 @@ Completar **Share dialog** dejando un resultado verificable y apto para las tare
 
 ### TASK-108 — Loading/error/empty states
 
-**Priority:** P0 · **Depends:** TASK-104 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-104 · **Status:** DONE
 
 #### Objetivo
 
@@ -4035,11 +4035,12 @@ Completar **Loading/error/empty states** dejando un resultado verificable y apto
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Los estados loading/error/empty relevantes son explícitos.
 
 #### Fuera de alcance
 
@@ -5094,6 +5095,15 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) una sola superficie "Share" (invitar + miembros) en vez de dos diálogos; (2) identidad de miembro = `userId` truncado (últimos 8) + `Avatar`, reutilizando el criterio de la presencia y evitando un directorio de usuarios inexistente; (3) el fetch de miembros vive en `ShareDialog` (refresco tras rol/eliminar) y el contenedor solo compone; (4) el miembro actual no puede cambiarse rol ni eliminarse desde la lista — sus acciones van por "Leave workspace"; (5) Share visible a todos los miembros (viewer incluido) con acciones internas gateadas por permiso; (6) sin invariante de "último owner" (se mantiene la decisión de TASK-099/100/101). ADR-0024 documenta la decisión.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-108 (Loading/error/empty states).
+
+## 2026-10-14 — TASK-108
+
+- Resultado: **Estados loading/error/empty consolidados** en Presentation sobre los componentes compartidos de TASK-104, que hasta ahora solo existían con sus tests y sin uso en features. `LoadingState` gana `label` (texto `VisuallyHidden` para lectores de pantalla) y `children` (indicador con forma de contenido, p. ej. skeletons), manteniendo `role="status" aria-live="polite" aria-busy="true"`; `ErrorState` gana `secondaryActionLabel`/`onSecondaryAction` (acción secundaria outline) y `titleAs` para el nivel de heading; `EmptyState` gana `titleAs`. Los tres renderizan el título con `Heading` (jerarquía correcta por defecto, `h2`). Migrados todos los estados inline duplicados: `WorkspacesList` (grid de skeletons + error + empty sobre `CardShell`), `PendingInvitationsList`, `MembersList`, `WorkspaceShellContainer` (loading workspace, notFound, error, loading board y error board con Retry + Back) y `AcceptInvitationPage` (aceptando + error). Además el `Canvas` muestra un `EmptyState` explícito ("This board is empty") con los atajos cuando el tablero no tiene elementos, sustituyendo el hint de texto plano.
+- A11y: se unifican semánticas —carga `role="status"` + `aria-busy`, errores `role="alert"`, vacíos `role="status"`— eliminando el markup inconsistente previo (p. ej. `ErrorState` usaba `Text` y `WorkspacesList` usaba `Heading` para el mismo concepto).
+- Tests/quality gates: 158 suites / 1831 tests en verde (+9 tests: `loading-state` label/children/busy, `error-state` acción secundaria y `titleAs`, `empty-state` `titleAs`, `workspaces-list` busy status y 2 casos de tablero vacío en `canvas.test.tsx`). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase). Smoke manual con `npm run dev` pendiente.
+- Decisiones: (1) consolidar sobre los componentes compartidos de TASK-104 (elegido por el usuario) en vez de solo auditar huecos; (2) extensiones mínimas y justificadas (`label`/`children` en `LoadingState`, acción secundaria y `titleAs` en `ErrorState`/`EmptyState`) sin abstracciones especulativas; (3) título como `Heading` con `titleAs` para respetar `h1` en páginas y `h2`/`h3` en paneles; (4) cambios solo en Presentation —Domain/Application/Infrastructure intactos—; (5) empty board explícito pedido por el usuario, reutilizando `EmptyState` dentro del overlay del canvas; (6) sin ADR por ser decisiones locales de Presentation sobre patrones ya documentados.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-109 (Keyboard navigation).
 
 ---
 
