@@ -20,4 +20,14 @@ describe('Spinner', () => {
     rerender(<Spinner size="md" />);
     expect(screen.getByRole('status')).toBeInTheDocument();
   });
+
+  it('disables the animation under prefers-reduced-motion: reduce', () => {
+    render(<Spinner />);
+    const styles = [...document.head.querySelectorAll('style')]
+      .map((style) => style.textContent ?? '')
+      .join('');
+
+    expect(styles).toContain('@media (prefers-reduced-motion: reduce)');
+    expect(styles).toContain('animation-name:var(--rr-motion-behavior-reduced)');
+  });
 });

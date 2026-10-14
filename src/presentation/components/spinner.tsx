@@ -1,5 +1,6 @@
 import styled, { keyframes } from 'styled-components';
 import type { ReactNode } from 'react';
+import { respectReducedMotion } from '../styles/preferences';
 
 const spin = keyframes`
   0% { transform: rotate(0deg); }
@@ -14,6 +15,7 @@ const SpinnerRing = styled.div`
   border-right-color: ${({ theme }) => theme.color.action.primary.background};
   border-radius: 9999px;
   animation: ${spin} 0.8s linear infinite;
+  ${respectReducedMotion}
 `;
 
 export interface SpinnerProps {

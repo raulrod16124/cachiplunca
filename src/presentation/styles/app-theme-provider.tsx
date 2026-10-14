@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { ThemeProvider } from 'styled-components';
 import { appTheme } from './theme';
+import { GlobalStyles } from './global-styles';
 
 export interface AppThemeProviderProps {
   readonly children: ReactNode;
@@ -12,5 +13,10 @@ export interface AppThemeProviderProps {
  * the shared `@testing-library/react` render wrapper.
  */
 export function AppThemeProvider({ children }: AppThemeProviderProps): ReactNode {
-  return <ThemeProvider theme={appTheme}>{children}</ThemeProvider>;
+  return (
+    <ThemeProvider theme={appTheme}>
+      <GlobalStyles />
+      {children}
+    </ThemeProvider>
+  );
 }

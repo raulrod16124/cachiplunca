@@ -4181,7 +4181,7 @@ Definir una estrategia de accesibilidad específica para el canvas.
 
 ### TASK-112 — Reduced motion / contrast
 
-**Priority:** P1 · **Depends:** TASK-103 · **Status:** TODO
+**Priority:** P1 · **Depends:** TASK-103 · **Status:** DONE
 
 #### Objetivo
 
@@ -4195,11 +4195,11 @@ Completar **Reduced motion / contrast** dejando un resultado verificable y apto 
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -5148,6 +5148,15 @@ Añadir una entrada breve por sesión.
 - ADR-0025 (`docs/adr/0025-canvas-accessibility-strategy.md`): modelo de aplicación + activedescendant, rol/nombre por elemento, contenido visual `aria-hidden`, resumen del tablero y cobertura de teclado por controles existentes, con alternativas descartadas.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-112 (Reduced motion / contrast).
+
+## 2026-10-14 — TASK-112
+
+- Resultado: **Reduced motion / contrast** implementado en Presentation, sin tocar Domain/Application/Infrastructure. Nuevo `src/presentation/styles/preferences.ts` (React-free): `REDUCED_MOTION_QUERY`, `REDUCED_MOTION_BEHAVIOR` (`token('motion.behavior.reduced')` → `var(--rr-motion-behavior-reduced)`) y el fragmento `respectReducedMotion` que, bajo `@media (prefers-reduced-motion: reduce)`, fija `animation-name` al token reducido (contrato RRU-024 de `@raulrod/ui`). Se aplica a la única animación propia (`spinner.tsx`), que ahora se detiene con la preferencia del sistema. Nuevo `src/presentation/styles/global-styles.tsx`: componente `GlobalStyles` que inyecta en `<head>` (via `precedence` de React 19) el tratamiento `@media (prefers-contrast: more)`, remapeando las custom properties `--rr-color-border-default → --rr-color-border-strong` y `--rr-color-text-muted → --rr-color-text-primary` en `:root`, cubriendo app y `@raulrod/ui` sin duplicar reglas; montado en `AppThemeProvider`. Todo exportado por el barrel `styles/index.ts`.
+- Contraste (auditoría): nuevo `src/test/unit/presentation/styles/contrast.test.ts` con la tabla de todos los pares fg/bg que pinta la app (texto y no-texto) y verificación WCAG 2.1 AA en light y dark con `contrastRatio`/`requiredContrast` de `@raulrod/tokens` sobre los valores semánticos. No apareció ninguna violación, así que no hubo cambios visuales.
+- Tests/quality gates: 166 suites / 1912 tests en verde (+3 suites / +15: `contrast.test.ts` —11 pares—, `preferences.test.ts` —2: query y token—, `global-styles.test.tsx` —1: remaps de `prefers-contrast: more`— y `spinner.test.tsx` —+1: `animation-name` reducido bajo `prefers-reduced-motion`—). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase). Smoke manual con preferencias del SO pendiente (no ejecutable desde el agente).
+- Decisiones: (1) alcance acordado con el usuario = reduced motion "helper + Spinner" y contraste "ambos" (auditoría WCAG + `prefers-contrast`); (2) el helper de movimiento reutiliza el token reducido de `@raulrod/tokens` en vez de reimplementar la detección, igual que `@raulrod/ui`; (3) la auditoría de contraste es numérica (`contrastRatio`/`requiredContrast`) en lugar de ceñirse a la tabla `AUTHORIZED_PAIRS`, para no marcar pares válidos fuera de tabla y aun así blindar AA en ambos temas; (4) el tratamiento de alto contraste remapea tokens en `:root` (una sola fuente de verdad, cubre librería y app) en vez de reglas por componente; (5) `GlobalStyles` se implementa como elemento `<style>` con `precedence` de React 19 porque `createGlobalStyle` no inyecta bajo el build CJS/jsdom de tests; así el comportamiento es idéntico en app y test; (6) sin ADR por ser decisiones locales de Presentation sobre patrones ya documentados.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-113 (Canvas performance baseline).
 
 ---
 
