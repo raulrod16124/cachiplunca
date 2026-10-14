@@ -1509,4 +1509,95 @@ describe('WorkspaceShellContainer', () => {
     expect(canvas).toHaveAttribute('aria-readonly', 'true');
     expect(screen.queryByRole('button', { name: 'Invite' })).not.toBeInTheDocument();
   });
+
+  it('creates a text element from the toolbar at the viewport center', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const user = userEvent.setup();
+
+    renderContainer(getWorkspace, { localUserId: 'user-local' });
+
+    await screen.findByRole('application', { name: 'Canvas' });
+    await user.click(screen.getByRole('button', { name: 'Add text' }));
+
+    const created = await screen.findByTestId('canvas-item-generated-1');
+    expect(created).toHaveAttribute('data-element-type', 'text');
+    expect(created).toHaveStyle({
+      left: '320px',
+      top: '280px',
+      width: '160px',
+      height: '40px',
+    });
+  });
+
+  it('persists a created element and restores the board when undoing it', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const repository = new FakeElementRepository();
+    const orchestrator = createElementPersistenceOrchestrator(createElementPersistence(repository));
+    const user = userEvent.setup();
+
+    renderContainer(getWorkspace, {
+      localUserId: 'user-local',
+      elementPersistenceOrchestrator: orchestrator,
+    });
+
+    await screen.findByRole('application', { name: 'Canvas' });
+    await user.click(screen.getByRole('button', { name: 'Add text' }));
+
+    await waitFor(async () => {
+      const stored = await repository.listByWorkspace(WorkspaceId.create('ws-test'));
+      expect(stored).toHaveLength(1);
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Undo' }));
+
+    await waitFor(async () => {
+      const stored = await repository.listByWorkspace(WorkspaceId.create('ws-test'));
+      expect(stored).toHaveLength(0);
+    });
+  });
+
+  it('creates a connector between two selected elements', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const second = createTextElement({
+      id: ElementId.create('el-2'),
+      workspaceId: WorkspaceId.create('ws-test'),
+      createdBy: UserId.create('user-1'),
+      position: Position.create(200, 200),
+      size: Size.create(120, 80),
+      content: 'Second',
+      createdAt: new Date('2024-01-01T00:00:00.000Z'),
+    });
+    const user = userEvent.setup();
+
+    renderContainer(getWorkspace, {
+      localUserId: 'user-local',
+      selectionStore: createSelectionStore(['el-1', 'el-2']),
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [TEXT_ELEMENT, second],
+      }),
+    });
+
+    await screen.findByTestId('canvas-item-el-1');
+    await screen.findByTestId('canvas-item-el-2');
+    await user.click(screen.getByRole('button', { name: 'Connect selected elements' }));
+
+    const connector = await screen.findByTestId('canvas-item-generated-1');
+    expect(connector).toHaveAttribute('data-element-type', 'connector');
+    expect(connector).toHaveStyle({
+      left: '30px',
+      top: '40px',
+      width: '290px',
+      height: '240px',
+    });
+  });
+
+  it('disables element creation without a signed-in user', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+
+    renderContainer(getWorkspace);
+
+    await screen.findByRole('application', { name: 'Canvas' });
+    expect(screen.getByRole('button', { name: 'Add text' })).toBeDisabled();
+  });
 });

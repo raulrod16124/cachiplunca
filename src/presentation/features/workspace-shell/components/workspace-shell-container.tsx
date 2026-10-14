@@ -2,7 +2,12 @@ import { Button, Heading, Inline, Skeleton, Stack, Text, VisuallyHidden } from '
 import type { ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import styled from 'styled-components';
-import type { InviteMember, LogoutUser } from '../../../../application/commands';
+import {
+  createCreateElement,
+  type CreateElementInput,
+  type InviteMember,
+  type LogoutUser,
+} from '../../../../application/commands';
 import type {
   GetWorkspace,
   GetWorkspaceResult,
@@ -12,6 +17,9 @@ import type {
 } from '../../../../application/queries';
 import {
   applyRemoteElementChanges,
+  buildConnectorCreateInput,
+  buildElementCreateInput,
+  connectorEndpoints,
   createBoardWindowCommand,
   createCanvasViewportStore,
   createCommandHistory,
@@ -22,8 +30,11 @@ import {
   createRemoteCursorsStore,
   createSelectionStore,
   createSharedPresencePort,
+  defaultElementSize,
+  elementContentBounds,
   EMPTY_CONNECTED_USERS_STORE,
   EMPTY_REMOTE_CURSORS_STORE,
+  resolveElementCreatePosition,
   rollbackFailedMutation,
 } from '../../../../application/services';
 import type {
@@ -45,7 +56,7 @@ import type {
   PresencePort,
   RealtimeConnectionStatus,
 } from '../../../../application/ports';
-import type { Element } from '../../../../domain/element';
+import type { Element, ElementType } from '../../../../domain/element';
 import type { MembershipRole } from '../../../../domain/membership';
 import { Presence } from '../../../../domain/collaboration';
 import { Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
@@ -56,6 +67,7 @@ import { InviteDialog } from '../../invitations';
 import { WorkspaceShellLayout } from './workspace-shell-layout';
 import {
   describeCollaborationSyncError,
+  describeCreateElementError,
   describeGetWorkspaceError,
   describeLoadWorkspaceElementsError,
   describePersistElementsError,
@@ -122,6 +134,7 @@ export function WorkspaceShellContainer({
   const [elementsError, setElementsError] = useState<AppError | null>(null);
   const [persistenceError, setPersistenceError] = useState<AppError | null>(null);
   const [collaborationError, setCollaborationError] = useState<AppError | null>(null);
+  const [creationError, setCreationError] = useState<AppError | null>(null);
   const [syncStatus, setSyncStatus] = useState<PersistenceSyncStatus>('idle');
   const elementsRef = useRef<readonly Element[]>([]);
   const canvasViewportStoreRef = useRef<CanvasViewportStore>(
@@ -311,6 +324,77 @@ export function WorkspaceShellContainer({
       void persistenceBatcher.flush();
     },
     [applyElements, persistenceBatcher],
+  );
+
+  const createElement = useMemo(
+    () => createCreateElement({ generateId: generateElementId }),
+    [generateElementId],
+  );
+
+  const handleCreateElement = useCallback(
+    (type: ElementType): void => {
+      if (localUserId === undefined) {
+        return;
+      }
+
+      const workspace = WorkspaceId.create(workspaceId);
+      const createdBy = UserId.create(localUserId);
+      let input: CreateElementInput;
+
+      if (type === 'connector') {
+        const endpoints = connectorEndpoints(selectionStoreRef.current.getSnapshot().selectedIds);
+
+        if (endpoints === null) {
+          return;
+        }
+
+        const [sourceId, targetId] = endpoints;
+        const source = elementsRef.current.find((element) => element.id.value === sourceId);
+        const target = elementsRef.current.find((element) => element.id.value === targetId);
+
+        if (source === undefined || target === undefined) {
+          return;
+        }
+
+        const bounds = elementContentBounds([source, target]);
+
+        if (bounds === null) {
+          return;
+        }
+
+        input = buildConnectorCreateInput(source.id, target.id, {
+          workspaceId: workspace,
+          createdBy,
+          position: bounds.position,
+          size: bounds.size,
+        });
+      } else {
+        const size = defaultElementSize(type);
+        const position = resolveElementCreatePosition(
+          canvasViewportStoreRef.current.getSnapshot(),
+          size,
+        );
+
+        input = buildElementCreateInput(type, {
+          workspaceId: workspace,
+          createdBy,
+          position,
+          size,
+        });
+      }
+
+      const result = createElement(input);
+
+      if (result.status === 'error') {
+        setCreationError(result.error);
+        return;
+      }
+
+      setCreationError(null);
+      commitElements([...elementsRef.current, result.element], `Create ${type}`);
+      selectionStoreRef.current.select(result.element.id.value);
+    },
+    [localUserId, workspaceId, createElement, commitElements],
   );
 
   const handleMoveElements = useCallback(
@@ -608,6 +692,7 @@ export function WorkspaceShellContainer({
     const permissionsEnforced = getWorkspaceRole !== undefined;
     const canElementWrite = !permissionsEnforced || permissions.can('element:write');
     const canMemberInvite = !permissionsEnforced || permissions.can('member:invite');
+    const canCreateElement = canElementWrite && localUserId !== undefined;
 
     const invitedBy =
       canMemberInvite &&
@@ -638,6 +723,7 @@ export function WorkspaceShellContainer({
           onPasteElements={handlePasteElements}
           onUndoElements={handleUndoElements}
           onRedoElements={handleRedoElements}
+          onCreateElement={canCreateElement ? handleCreateElement : undefined}
           generateElementId={generateElementId}
           remoteCursors={remoteCursors}
           onCursorMove={cursorBroadcaster === null ? undefined : handleCursorMove}
@@ -648,6 +734,9 @@ export function WorkspaceShellContainer({
           }
           collaborationErrorMessage={
             collaborationError === null ? null : describeCollaborationSyncError(collaborationError)
+          }
+          creationErrorMessage={
+            creationError === null ? null : describeCreateElementError(creationError)
           }
           readOnly={!canElementWrite}
           onInvite={invitedBy === undefined ? undefined : () => setInviteOpen(true)}

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import styled from 'styled-components';
 import type { Workspace } from '../../../../domain/workspace';
-import type { Element } from '../../../../domain/element';
+import type { Element, ElementType } from '../../../../domain/element';
 import type { ElementId, Position } from '../../../../domain/shared';
 import type { MembershipRole } from '../../../../domain/membership';
 import type { Presence } from '../../../../domain/collaboration';
@@ -51,6 +51,7 @@ export interface WorkspaceShellLayoutProps {
   readonly onPasteElements: (elements: readonly Element[], pastedIds: readonly string[]) => void;
   readonly onUndoElements: (elements: readonly Element[]) => void;
   readonly onRedoElements: (elements: readonly Element[]) => void;
+  readonly onCreateElement?: (type: ElementType) => void;
   readonly generateElementId: () => ElementId;
   readonly remoteCursors: readonly RemoteCursor[];
   readonly connectedUsers: readonly Presence[];
@@ -59,6 +60,7 @@ export interface WorkspaceShellLayoutProps {
   readonly connectionStatus: RealtimeConnectionStatus;
   readonly persistenceErrorMessage: string | null;
   readonly collaborationErrorMessage: string | null;
+  readonly creationErrorMessage: string | null;
   readonly onInvite?: () => void;
   readonly readOnly?: boolean;
 }
@@ -81,6 +83,7 @@ export function WorkspaceShellLayout({
   onPasteElements,
   onUndoElements,
   onRedoElements,
+  onCreateElement,
   generateElementId,
   remoteCursors,
   connectedUsers,
@@ -89,6 +92,7 @@ export function WorkspaceShellLayout({
   connectionStatus,
   persistenceErrorMessage,
   collaborationErrorMessage,
+  creationErrorMessage,
   onInvite,
   readOnly = false,
 }: WorkspaceShellLayoutProps): ReactNode {
@@ -106,6 +110,7 @@ export function WorkspaceShellLayout({
         onInvite={onInvite}
         persistenceErrorMessage={persistenceErrorMessage}
         collaborationErrorMessage={collaborationErrorMessage}
+        creationErrorMessage={creationErrorMessage}
       />
       <CanvasArea>
         <Canvas
@@ -121,6 +126,7 @@ export function WorkspaceShellLayout({
           onPasteElements={onPasteElements}
           onUndoElements={onUndoElements}
           onRedoElements={onRedoElements}
+          onCreateElement={onCreateElement}
           generateId={generateElementId}
           remoteCursors={remoteCursors}
           onCursorMove={onCursorMove}

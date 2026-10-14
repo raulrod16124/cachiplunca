@@ -46,6 +46,7 @@ describe('WorkspaceTopBar', () => {
         logoutUser={LOGOUT_USER}
         persistenceErrorMessage={null}
         collaborationErrorMessage={null}
+        creationErrorMessage={null}
       />,
     );
 
@@ -67,6 +68,7 @@ describe('WorkspaceTopBar', () => {
         logoutUser={LOGOUT_USER}
         persistenceErrorMessage={null}
         collaborationErrorMessage={null}
+        creationErrorMessage={null}
       />,
     );
 
@@ -87,6 +89,7 @@ describe('WorkspaceTopBar', () => {
         logoutUser={LOGOUT_USER}
         persistenceErrorMessage={null}
         collaborationErrorMessage={null}
+        creationErrorMessage={null}
       />,
     );
 
@@ -107,6 +110,7 @@ describe('WorkspaceTopBar', () => {
         logoutUser={LOGOUT_USER}
         persistenceErrorMessage={null}
         collaborationErrorMessage={null}
+        creationErrorMessage={null}
       />,
     );
 
@@ -128,6 +132,7 @@ describe('WorkspaceTopBar', () => {
         onInvite={onInvite}
         persistenceErrorMessage={null}
         collaborationErrorMessage={null}
+        creationErrorMessage={null}
       />,
     );
 
@@ -147,6 +152,7 @@ describe('WorkspaceTopBar', () => {
         logoutUser={LOGOUT_USER}
         persistenceErrorMessage={null}
         collaborationErrorMessage={null}
+        creationErrorMessage={null}
       />,
     );
 
@@ -166,6 +172,7 @@ describe('WorkspaceTopBar', () => {
         logoutUser={LOGOUT_USER}
         persistenceErrorMessage="Not saved."
         collaborationErrorMessage="Out of sync."
+        creationErrorMessage={null}
       />,
     );
 
@@ -187,6 +194,7 @@ describe('WorkspaceTopBar', () => {
         logoutUser={LOGOUT_USER}
         persistenceErrorMessage={null}
         collaborationErrorMessage={null}
+        creationErrorMessage={null}
       />,
     );
 

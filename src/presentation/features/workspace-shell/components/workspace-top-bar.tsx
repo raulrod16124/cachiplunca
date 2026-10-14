@@ -55,6 +55,7 @@ export interface WorkspaceTopBarProps {
   readonly onInvite?: () => void;
   readonly persistenceErrorMessage: string | null;
   readonly collaborationErrorMessage: string | null;
+  readonly creationErrorMessage: string | null;
 }
 
 export function WorkspaceTopBar({
@@ -69,6 +70,7 @@ export function WorkspaceTopBar({
   onInvite,
   persistenceErrorMessage,
   collaborationErrorMessage,
+  creationErrorMessage,
 }: WorkspaceTopBarProps): ReactNode {
   const syncBadge = describeSyncStatus(syncStatus);
   const connectionBadge = describeConnectionStatus(connectionStatus);
@@ -134,6 +136,11 @@ export function WorkspaceTopBar({
       {collaborationErrorMessage === null ? null : (
         <Text role="alert" color="color.text.danger">
           {collaborationErrorMessage}
+        </Text>
+      )}
+      {creationErrorMessage === null ? null : (
+        <Text role="alert" color="color.text.danger">
+          {creationErrorMessage}
         </Text>
       )}
     </Header>

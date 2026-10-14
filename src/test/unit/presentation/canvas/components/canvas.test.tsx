@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Position, ElementId, Size, UserId, WorkspaceId } from '../../../../../domain/shared';
 import { createTextElement } from '../../../../../domain/element';
-import type { Element } from '../../../../../domain/element';
+import type { Element, ElementType } from '../../../../../domain/element';
 import {
   createCanvasViewportStore,
   createCommandHistory,
@@ -1102,6 +1102,113 @@ describe('Canvas', () => {
       await userEvent.setup().keyboard('{Control>}{Shift>}z{/Shift}{/Control}');
 
       expect(onRedoElements).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('toolbar', () => {
+    interface ToolbarCanvasOptions {
+      readonly elements?: readonly Element[];
+      readonly onCreateElement?: (type: ElementType) => void;
+      readonly history?: CommandHistory<readonly Element[]>;
+      readonly onUndoElements?: (elements: readonly Element[]) => void;
+      readonly onRedoElements?: (elements: readonly Element[]) => void;
+      readonly onDeleteElements?: (elements: readonly Element[]) => void;
+    }
+
+    function renderToolbarCanvas(options: ToolbarCanvasOptions = {}) {
+      const store = createCanvasViewportStore(Size.create(800, 600));
+      const selectionStore = createSelectionStore();
+
+      render(
+        <Canvas
+          store={store}
+          selectionStore={selectionStore}
+          elements={options.elements}
+          onCreateElement={options.onCreateElement}
+          history={options.history}
+          onUndoElements={options.onUndoElements}
+          onRedoElements={options.onRedoElements}
+          onDeleteElements={options.onDeleteElements}
+        />,
+      );
+
+      return { store, selectionStore };
+    }
+
+    it('requests the creation of the clicked element type', async () => {
+      const onCreateElement = jest.fn();
+      renderToolbarCanvas({ onCreateElement });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByRole('button', { name: 'Add note' }));
+
+      expect(onCreateElement).toHaveBeenCalledWith('note');
+    });
+
+    it('enables the connector button only with two selected elements', async () => {
+      const onCreateElement = jest.fn();
+      const { selectionStore } = renderToolbarCanvas({
+        elements: [FIRST_ITEM, SECOND_ITEM],
+        onCreateElement,
+      });
+      const user = userEvent.setup();
+      const connector = screen.getByRole('button', { name: 'Connect selected elements' });
+
+      expect(connector).toBeDisabled();
+
+      act(() => {
+        selectionStore.selectMany(['first', 'second']);
+      });
+
+      expect(connector).toBeEnabled();
+
+      await user.click(connector);
+
+      expect(onCreateElement).toHaveBeenCalledWith('connector');
+    });
+
+    it('undoes the last command through the toolbar button', async () => {
+      const onUndoElements = jest.fn();
+      const history = historyWithRecordedCommand([FIRST_ITEM], [FIRST_ITEM, SECOND_ITEM]);
+      renderToolbarCanvas({
+        elements: [FIRST_ITEM, SECOND_ITEM],
+        history,
+        onUndoElements,
+      });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByRole('button', { name: 'Undo' }));
+
+      expect(onUndoElements).toHaveBeenCalledWith([FIRST_ITEM]);
+    });
+
+    it('deletes the selection and clears it through the toolbar button', async () => {
+      const onDeleteElements = jest.fn();
+      const { selectionStore } = renderToolbarCanvas({
+        elements: [FIRST_ITEM, SECOND_ITEM],
+        onDeleteElements,
+      });
+      const user = userEvent.setup();
+
+      act(() => {
+        selectionStore.selectMany(['first']);
+      });
+
+      await user.click(screen.getByRole('button', { name: 'Delete selection' }));
+
+      expect(onDeleteElements).toHaveBeenCalledWith([SECOND_ITEM]);
+      expect(selectionStore.getSnapshot().selectedIds).toEqual([]);
+    });
+
+    it('fits the viewport to the board content', async () => {
+      const { store } = renderToolbarCanvas({ elements: [FIRST_ITEM, SECOND_ITEM] });
+      const user = userEvent.setup();
+
+      expect(store.getSnapshot().transform.scale).toBe(1);
+
+      await user.click(screen.getByRole('button', { name: 'Fit view' }));
+
+      expect(store.getSnapshot().transform.scale).not.toBe(1);
     });
   });
 });

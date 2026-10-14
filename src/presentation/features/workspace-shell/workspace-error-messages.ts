@@ -60,3 +60,16 @@ export function describePersistElementsError(error: AppError): string {
       return 'We could not save your latest changes.';
   }
 }
+
+export function describeCreateElementError(error: AppError): string {
+  switch (error.code) {
+    case ERROR_CODES.VALIDATION_INVALID_INPUT:
+      return 'We could not add that element. Check the details and try again.';
+    case ERROR_CODES.AUTH_UNAUTHENTICATED:
+      return 'Your session has expired. Sign in again to keep editing.';
+    case ERROR_CODES.AUTH_FORBIDDEN:
+      return 'You do not have permission to edit this board.';
+    default:
+      return 'We could not add that element. Please try again.';
+  }
+}

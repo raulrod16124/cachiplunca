@@ -3892,12 +3892,12 @@ Completar **Core UI components** dejando un resultado verificable y apto para la
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Los estados loading/error/empty relevantes son explícitos.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Los estados loading/error/empty relevantes son explícitos.
 
 #### Fuera de alcance
 
@@ -3948,7 +3948,7 @@ Completar **Workspace top bar** dejando un resultado verificable y apto para las
 
 ### TASK-106 — Canvas toolbar
 
-**Priority:** P0 · **Depends:** TASK-104 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-104 · **Status:** DONE
 
 #### Objetivo
 
@@ -3963,13 +3963,13 @@ Completar **Canvas toolbar** dejando un resultado verificable y apto para las ta
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
-- [ ] Los estados loading/error/empty relevantes son explícitos.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] Los estados loading/error/empty relevantes son explícitos.
 
 #### Fuera de alcance
 
@@ -5076,6 +5076,15 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) el top bar queda como componente de Presentation puro y testable por props; el layout solo compone; (2) la cuenta se resuelve con `Avatar` + `DropdownMenu` sobre `@raulrod/ui` (sin wrapper propio más allá del trigger estilado), sustituyendo el botón plano en el shell pero conservando `SignOutButton` en la lista de workspaces; (3) `role`/permisos se hacen visibles en el header como `Badge`, sin duplicar la lógica de `useWorkspacePermissions` (el contenedor sigue decidiendo); (4) la presencia del top bar reutiliza el `ConnectedUsersStore` ya existente y la suscripción de presencia se comparte con `createSharedPresencePort` para cumplir "sin listeners duplicados" (el store sigue scopeado a un workspace y con una única `subscribe` real); (5) alcance acotado a TASK-105: el Share dialog es TASK-107, así que el top bar expone el `Invite` existente como acción de compartir y no introduce UI muerta; (6) sin ADR por ser decisiones locales de Presentation/composición sobre patrones ya documentados.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-106 (Canvas toolbar).
+
+## 2026-10-14 — TASK-106
+
+- Resultado: **Canvas toolbar** funcional en Presentation. Nuevo componente puro `src/presentation/canvas/components/canvas-toolbar.tsx` (`role="toolbar"` horizontal, `data-testid="canvas-toolbar"`) montado como overlay del `Canvas`, con grupos: creación de elementos (text, note, task, frame, link, connector) vía `ToolbarButton` + `Tooltip` e iconos de `@raulrod/icons`; historial (undo/redo); y vista/edición (fit view, delete selection). Todos los botones tienen `aria-label`; los de creación se deshabilitan sin permiso o sin usuario, el de connector solo con exactamente dos elementos seleccionados, undo/redo según `CommandHistory.canUndo()/canRedo()` y delete sin selección. El `Canvas` gana la prop opcional `onCreateElement(type)`, calcula undo/redo/delete/fit con las primitivas ya existentes (`history`, `deleteElements`, `elementContentBounds`, `store.fit`) y delega la creación al contenedor.
+- Creación real (Application + composición): nuevo `src/application/services/element-creation.ts` (puro y testeable) con `ELEMENT_DEFAULT_SIZES`/`defaultElementSize`, `resolveElementCreatePosition(viewport, size)` (centra el elemento en el centro del viewport en coordenadas de mundo), `elementContentBounds(elements)` (union de bounds, base de fit view y del connector), `connectorEndpoints(selectedIds)` (exige 2) y los builders `buildElementCreateInput` (text/note/task/frame/link con defaults) y `buildConnectorCreateInput`. `WorkspaceShellContainer` compone `createCreateElement` con `generateElementId` y `handleCreateElement`: crea en el centro del viewport con tamaño por tipo, o un connector entre los dos seleccionados con el bounds union; hace `commitElements([...elements, nuevo], 'Create <type>')` (mismo camino de historial/persistencia/undo-redo) y autoselecciona el elemento. Errores de validación explícitos: nuevo `describeCreateElementError` y banner `creationErrorMessage` propagado por `WorkspaceShellLayout` → `WorkspaceTopBar` (`role="alert"`). El layout ya no conoce persistencia; `Canvas` mantiene la interacción desacoplada.
+- Tests/quality gates: 154 suites / 1786 tests en verde (+2 suites / +34: `element-creation.test.ts` —defaults, posición con pan/zoom, bounds, endpoints y builders—; `canvas-toolbar.test.tsx` —creación, connector, undo/redo, delete, fit—; y casos nuevos en `canvas.test.tsx` —toolbar: creación, connector con 2 seleccionados, undo, delete+clear, fit— y `workspace-shell-container.test.tsx` —crear text en el centro, persistir+undo, connector entre 2 seleccionados, creación deshabilitada sin usuario—). `npm run lint`, `npm run format:check`, `npx tsc -b --force`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase). Smoke manual con `npm run dev` pendiente (no se crean usuarios reales desde el agente).
+- Decisiones: (1) toolbar de **click-to-create** en el centro del viewport (sin "modo herramienta" persistente), acordado con el usuario, para no introducir estado de interacción nuevo; (2) la lógica pura de creación vive en Application (`element-creation`) y el cableado/estado en el contenedor, respetando Clean/Hexagonal y evitando meter dominio en Presentation; (3) el connector se crea desde la selección (exactamente 2), con posición/tamaño = bounds union, en vez de crear un elemento huérfano; (4) "Fit view" se añade a la toolbar y se mantiene "Reset view" en `ViewportControls` (no se duplica); (5) la creación usa `generateElementId` como única fuente de ids y reutiliza `commitElements` para historial/persistencia/undo-redo, sin un camino paralelo; (6) errores de validación de creación con mensaje propio y explícito; (7) sin ADR por ser decisiones locales de Presentation/composición sobre patrones ya documentados.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-107 (Share dialog).
 
 ---
 

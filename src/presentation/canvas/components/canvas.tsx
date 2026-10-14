@@ -2,7 +2,7 @@ import type { ReactElement } from 'react';
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
 import styled from 'styled-components';
 import { Grid, type Position } from '../../../domain/shared';
-import type { Element } from '../../../domain/element';
+import type { Element, ElementType } from '../../../domain/element';
 import type { ElementId } from '../../../domain/shared';
 import type {
   CanvasViewportStore,
@@ -10,7 +10,11 @@ import type {
   RemoteCursor,
   SelectionStore,
 } from '../../../application/services';
-import { toSelectableItems } from '../../../application/services';
+import {
+  deleteElements,
+  elementContentBounds,
+  toSelectableItems,
+} from '../../../application/services';
 import { useCursorBroadcast } from '../hooks/use-cursor-broadcast';
 import { useDragSelection } from '../hooks/use-drag-selection';
 import { useElementCopyPaste } from '../hooks/use-element-copy-paste';
@@ -27,6 +31,7 @@ import { useSpacePressed } from '../hooks/use-space-pressed';
 import { useZoom } from '../hooks/use-zoom';
 import { ElementView } from '../renderers';
 import type { ElementRendererRegistry } from '../renderers';
+import { CanvasToolbar } from './canvas-toolbar';
 import { RemoteCursorsOverlay } from './remote-cursors-overlay';
 import { SelectionOverlay } from './selection-overlay';
 import { ViewportControls } from './viewport-controls';
@@ -122,6 +127,7 @@ export interface CanvasProps {
   readonly history?: CommandHistory<readonly Element[]>;
   readonly onUndoElements?: (elements: readonly Element[]) => void;
   readonly onRedoElements?: (elements: readonly Element[]) => void;
+  readonly onCreateElement?: (type: ElementType) => void;
   readonly remoteCursors?: readonly RemoteCursor[];
   readonly onCursorMove?: (position: Position) => void;
   readonly readOnly?: boolean;
@@ -142,6 +148,7 @@ export function Canvas({
   history,
   onUndoElements,
   onRedoElements,
+  onCreateElement,
   remoteCursors = [],
   onCursorMove,
   readOnly = false,
@@ -303,6 +310,60 @@ export function Canvas({
   const { ref: elementUndoRef } = useElementUndo({ history, onUndoElements, disabled: readOnly });
   const { ref: elementRedoRef } = useElementRedo({ history, onRedoElements, disabled: readOnly });
 
+  const handleToolbarUndo = useCallback((): void => {
+    if (history === undefined || !history.canUndo()) {
+      return;
+    }
+
+    const result = history.undo();
+
+    if (result.status === 'error') {
+      return;
+    }
+
+    onUndoElements?.(result.state);
+  }, [history, onUndoElements]);
+
+  const handleToolbarRedo = useCallback((): void => {
+    if (history === undefined || !history.canRedo()) {
+      return;
+    }
+
+    const result = history.redo();
+
+    if (result.status === 'error') {
+      return;
+    }
+
+    onRedoElements?.(result.state);
+  }, [history, onRedoElements]);
+
+  const handleToolbarDelete = useCallback((): void => {
+    if (selection.selectedIds.length === 0) {
+      return;
+    }
+
+    const result = deleteElements(elements, selection.selectedIds);
+
+    if (result.status === 'error') {
+      return;
+    }
+
+    onDeleteElements?.(result.elements);
+    handleClear();
+  }, [elements, selection.selectedIds, onDeleteElements, handleClear]);
+
+  const handleFitView = useCallback((): void => {
+    store.fit(elementContentBounds(elements));
+  }, [store, elements]);
+
+  const handleCreateElement = useCallback(
+    (type: ElementType): void => {
+      onCreateElement?.(type);
+    },
+    [onCreateElement],
+  );
+
   const setContainerRef = useCallback(
     (node: HTMLDivElement | null) => {
       panRef.current = node;
@@ -348,6 +409,14 @@ export function Canvas({
     () => items.filter((item) => selectedIdSet.has(item.id)),
     [items, selectedIdSet],
   );
+
+  const canCreateElement = !readOnly && onCreateElement !== undefined;
+  const canUndo =
+    !readOnly && history !== undefined && onUndoElements !== undefined && history.canUndo();
+  const canRedo =
+    !readOnly && history !== undefined && onRedoElements !== undefined && history.canRedo();
+  const hasSelection = !readOnly && selection.selectedIds.length > 0;
+  const canCreateConnector = canCreateElement && selection.selectedIds.length === 2;
 
   return (
     <CanvasContainer
@@ -397,6 +466,18 @@ export function Canvas({
         ) : null}
       </World>
       <RemoteCursorsOverlay cursors={remoteCursors} viewport={viewport} />
+      <CanvasToolbar
+        onCreateElement={handleCreateElement}
+        onUndo={handleToolbarUndo}
+        onRedo={handleToolbarRedo}
+        onDeleteSelection={handleToolbarDelete}
+        onFitView={handleFitView}
+        canCreate={canCreateElement}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        hasSelection={hasSelection}
+        canCreateConnector={canCreateConnector}
+      />
       {marqueeRect !== null ? (
         <Marquee
           data-testid="drag-selection-rect"
