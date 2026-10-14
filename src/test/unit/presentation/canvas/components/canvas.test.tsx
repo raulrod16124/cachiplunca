@@ -151,6 +151,28 @@ describe('Canvas', () => {
     );
   });
 
+  it('describes the board to assistive technology', () => {
+    renderCanvas([FIRST_ITEM]);
+
+    const canvas = screen.getByRole('application', { name: 'Canvas' });
+    expect(canvas).toHaveAttribute('aria-describedby', 'canvas-board-summary');
+    expect(screen.getByTestId('canvas-board-summary')).toHaveTextContent(
+      'Board with 1 element: 1 text.',
+    );
+  });
+
+  it('summarizes an empty board', () => {
+    renderCanvas([]);
+
+    expect(screen.getByTestId('canvas-board-summary')).toHaveTextContent('This board is empty.');
+  });
+
+  it('exposes each element with an accessible name', () => {
+    renderCanvas([FIRST_ITEM]);
+
+    expect(screen.getByRole('group', { name: 'Text: hello' })).toBeInTheDocument();
+  });
+
   it('renders an infinite grid aligned to the world origin', () => {
     renderCanvas();
 

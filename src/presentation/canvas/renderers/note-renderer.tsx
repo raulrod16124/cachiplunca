@@ -28,6 +28,7 @@ export function NoteRenderer({ element }: ElementRendererProps): ReactElement | 
     <Content
       data-element-content="true"
       data-element-type="note"
+      aria-hidden="true"
       style={element.color === undefined ? undefined : { backgroundColor: element.color }}
     >
       {element.content}

@@ -1,3 +1,4 @@
+import { VisuallyHidden } from '@raulrod/ui';
 import type { ReactElement } from 'react';
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
 import styled from 'styled-components';
@@ -15,6 +16,7 @@ import {
   elementContentBounds,
   toSelectableItems,
 } from '../../../application/services';
+import { describeBoard, describeElement } from '../accessibility';
 import { useCanvasNavigation } from '../hooks/use-canvas-navigation';
 import { useCanvasFocus } from '../hooks/use-canvas-focus';
 import { useCursorBroadcast } from '../hooks/use-cursor-broadcast';
@@ -113,6 +115,8 @@ const Hint = styled.div`
 
 const CANVAS_GRID = Grid.default();
 
+const BOARD_SUMMARY_ID = 'canvas-board-summary';
+
 const CANVAS_SHORTCUTS =
   'Arrow keys to move selection · Shift + Arrow to extend selection · Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo';
 
@@ -179,6 +183,7 @@ export function Canvas({
   });
 
   const items = useMemo(() => toSelectableItems(elements), [elements]);
+  const boardSummary = useMemo(() => describeBoard(elements), [elements]);
 
   const handleSelect = useCallback(
     (id: string, additive: boolean) => {
@@ -454,6 +459,7 @@ export function Canvas({
       ref={setContainerRef}
       role="application"
       aria-label="Canvas"
+      aria-describedby={BOARD_SUMMARY_ID}
       aria-readonly={readOnly}
       aria-activedescendant={activeId === null ? undefined : `element-${activeId}`}
       aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Escape Control+A Meta+A Delete Control+D Meta+D Control+C Meta+C Control+V Meta+V Control+Z Meta+Z Control+Shift+Z Meta+Shift+Z Control+Y Meta+Y"
@@ -467,6 +473,9 @@ export function Canvas({
       data-resizing={isResizing}
       data-scale={transform.scale}
     >
+      <VisuallyHidden id={BOARD_SUMMARY_ID} data-testid="canvas-board-summary">
+        {boardSummary}
+      </VisuallyHidden>
       <GridLayer
         data-testid="canvas-grid"
         style={{
@@ -486,6 +495,7 @@ export function Canvas({
             element={element}
             selected={selectedIdSet.has(element.id.value)}
             renderers={renderers}
+            ariaLabel={describeElement(element, elements)}
           />
         ))}
         <SelectionOverlay items={selectedItems} />

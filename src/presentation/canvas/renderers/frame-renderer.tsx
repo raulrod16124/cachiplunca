@@ -33,7 +33,7 @@ export function FrameRenderer({ element }: ElementRendererProps): ReactElement |
   }
 
   return (
-    <Content data-element-content="true" data-element-type="frame">
+    <Content data-element-content="true" data-element-type="frame" aria-hidden="true">
       <Header data-frame-title="true">{element.title}</Header>
     </Content>
   );

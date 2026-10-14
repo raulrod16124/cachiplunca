@@ -44,6 +44,24 @@ describe('ElementView', () => {
     expect(screen.getByTestId('canvas-item-elem-1')).toHaveAttribute('data-selected', 'true');
   });
 
+  it('exposes an accessible role and name derived from the element', () => {
+    render(<ElementView element={createElement()} selected={false} />);
+
+    expect(screen.getByRole('group', { name: 'Text: hello' })).toBeInTheDocument();
+  });
+
+  it('marks the selected element as current for assistive technology', () => {
+    render(<ElementView element={createElement()} selected />);
+
+    expect(screen.getByTestId('canvas-item-elem-1')).toHaveAttribute('aria-current', 'true');
+  });
+
+  it('prefers an explicit accessible name when provided', () => {
+    render(<ElementView element={createElement()} selected={false} ariaLabel="Custom label" />);
+
+    expect(screen.getByRole('group', { name: 'Custom label' })).toBeInTheDocument();
+  });
+
   it('uses the default renderer as fallback', () => {
     render(<ElementView element={createElement()} selected={false} />);
 

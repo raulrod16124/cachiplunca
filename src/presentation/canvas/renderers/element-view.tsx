@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react';
 import styled from 'styled-components';
 import type { Element } from '../../../domain/element';
+import { describeElement } from '../accessibility';
 import { resolveElementRenderer } from './resolve-element-renderer';
 import type { ElementRendererRegistry } from './element-renderer';
 
@@ -15,14 +16,23 @@ export interface ElementViewProps {
   readonly element: Element;
   readonly selected: boolean;
   readonly renderers?: ElementRendererRegistry;
+  readonly ariaLabel?: string;
 }
 
-export function ElementView({ element, selected, renderers }: ElementViewProps): ReactElement {
+export function ElementView({
+  element,
+  selected,
+  renderers,
+  ariaLabel,
+}: ElementViewProps): ReactElement {
   const Renderer = resolveElementRenderer(renderers, element.type);
 
   return (
     <Wrapper
       id={`element-${element.id.value}`}
+      role="group"
+      aria-label={ariaLabel ?? describeElement(element)}
+      aria-current={selected ? 'true' : undefined}
       data-selectable="true"
       data-selected={selected}
       data-element-type={element.type}

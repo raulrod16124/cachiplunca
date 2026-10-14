@@ -14,5 +14,5 @@ const Box = styled.div`
 `;
 
 export function DefaultElementRenderer({ element }: ElementRendererProps): ReactElement {
-  return <Box data-element-fallback="true" data-element-type={element.type} />;
+  return <Box data-element-fallback="true" data-element-type={element.type} aria-hidden="true" />;
 }

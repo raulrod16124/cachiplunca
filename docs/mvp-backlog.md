@@ -4143,7 +4143,7 @@ Completar **Focus management** dejando un resultado verificable y apto para las 
 
 ### TASK-111 — Canvas accessibility strategy
 
-**Priority:** P0 · **Depends:** TASK-050 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-050 · **Status:** DONE
 
 #### Objetivo
 
@@ -4158,13 +4158,13 @@ Definir una estrategia de accesibilidad específica para el canvas.
 
 #### Criterios de aceptación
 
-- [ ] Las operaciones principales no dependen exclusivamente del puntero.
-- [ ] La estrategia queda documentada.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
-- [ ] Los estados loading/error/empty relevantes son explícitos.
-- [ ] La interacción principal es navegable con teclado y mantiene foco predecible.
+- [x] Las operaciones principales no dependen exclusivamente del puntero.
+- [x] La estrategia queda documentada.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] Los estados loading/error/empty relevantes son explícitos.
+- [x] La interacción principal es navegable con teclado y mantiene foco predecible.
 
 #### Fuera de alcance
 
@@ -5138,6 +5138,16 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) alcance "completo" acordado con el usuario = foco del canvas + roving de la toolbar + tests de trap/restauración de diálogos, sin reimplementar lo que ya hace `@raulrod/ui`; (2) el roving tabindex vive en un hook **compartido** en `src/presentation/hooks` (reutilizable por futuras barras), no dentro del canvas; (3) las flechas de la toolbar hacen `stopPropagation` porque la toolbar está **dentro** del contenedor del canvas, de modo que `use-canvas-navigation` no reciba el evento (y un test lo verifica explícitamente); (4) la recuperación de foco al deshabilitarse el control activo se cubre por dos vías (evento `focusout` en navegador real y re-sincronización en re-render) para mantener el tope de tabulación siempre válido; (5) sin ADR por ser decisiones locales de Presentation sobre patrones de interacción ya documentados. Nombres/roles accesibles por elemento quedan para TASK-111.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-111 (Canvas accessibility strategy).
+
+## 2026-10-14 — TASK-111
+
+- Resultado: **Canvas accessibility strategy** completa, cerrando lo diferido por TASK-109/110 (nombres/roles accesibles por elemento). Nueva utilidad pura y React-free `src/presentation/canvas/accessibility/describe-element.ts` + barrel `index.ts` (exportado en `src/presentation/canvas/index.ts`): `describeElement(element, elements?)` produce nombres legibles por tipo (`Text: …`, `Note: …`, `Task: <título>, <estado>[, due <fecha>]`, `Frame: …`, `Link: …`, `Connector from … to …`), normaliza espacios, trunca contenido largo (`CONTENT_MAX_LENGTH = 80`) y resuelve los extremos del connector a la etiqueta del elemento referenciado cuando se le pasa el tablero; `describeBoard(elements)` genera un resumen escalable por tipo (`Board with N elements: …`; `This board is empty.`).
+- Presentation: `element-view.tsx` pasa a `role="group"` con `aria-label` (prop `ariaLabel` opcional que sobreescribe) y expone la selección con `aria-current="true"`; el contenedor referencia cada elemento por `aria-activedescendant`. Los renderers (`text`/`note`/`task`/`frame`/`link`/`default`) marcan su contenido visual con `aria-hidden="true"` (los connectors ya lo hacían) para que AT use el nombre conciso del grupo y no relea el contenido. `canvas.tsx` añade `VisuallyHidden` (`@raulrod/ui`) con `id="canvas-board-summary"` y `aria-describedby` en el `role="application"`, más el `aria-label` por elemento calculado con `describeElement(element, elements)`. Se reutiliza la navegación/teclado de TASK-109/110 y los controles de vista accesibles (`Fit view`, `Reset view`, zoom %), sin atajos nuevos.
+- Tests/quality gates: 163 suites / 1897 tests en verde (+1 suite / +15: `describe-element.test.ts` —9: por tipo, due, contenido vacío, truncado, connectors con ids sin tablero y resueltos con tablero, resumen vacío/por tipo/singular—, `element-view.test.tsx` —3: rol+nombre, `aria-current` en seleccionado, `ariaLabel` explícito— y `canvas.test.tsx` —3: resumen del tablero + `aria-describedby`, resumen vacío y nombre accesible por elemento—). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase). Smoke manual con lector de pantalla real pendiente (no ejecutable desde el agente).
+- Decisiones: (1) el canvas sigue como `role="application"` con `aria-activedescendant`, sin `listbox`/`grid` (no encajan con la multiselección/foco real); (2) cada elemento es `role="group"` con nombre explícito y `aria-current` para la selección (`aria-selected` no aplica a `group`); (3) el naming vive en Presentation por ser texto de UI y se implementa como función pura testeable sin DOM; (4) el contenido visual es decorativo para AT (`aria-hidden`), evitando doble anuncio; (5) alternativa textual mínima del tablero vía `aria-describedby` (no `aria-live`, para no generar ruido); (6) sin atajos nuevos — alcance acordado (nudge/zoom por teclado quedan fuera). ADR-0025 documenta la estrategia.
+- ADR-0025 (`docs/adr/0025-canvas-accessibility-strategy.md`): modelo de aplicación + activedescendant, rol/nombre por elemento, contenido visual `aria-hidden`, resumen del tablero y cobertura de teclado por controles existentes, con alternativas descartadas.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-112 (Reduced motion / contrast).
 
 ---
 
