@@ -4214,7 +4214,7 @@ Completar **Reduced motion / contrast** dejando un resultado verificable y apto 
 
 ### TASK-113 — Canvas performance baseline
 
-**Priority:** P0 · **Depends:** TASK-057 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-057 · **Status:** DONE
 
 #### Objetivo
 
@@ -4228,11 +4228,11 @@ Medir una línea base de rendimiento del canvas antes de optimizar.
 
 #### Criterios de aceptación
 
-- [ ] Existe método reproducible y registro de métricas.
-- [ ] Las optimizaciones posteriores se justifican con datos.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] Existe método reproducible y registro de métricas.
+- [x] Las optimizaciones posteriores se justifican con datos.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -5157,6 +5157,20 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) alcance acordado con el usuario = reduced motion "helper + Spinner" y contraste "ambos" (auditoría WCAG + `prefers-contrast`); (2) el helper de movimiento reutiliza el token reducido de `@raulrod/tokens` en vez de reimplementar la detección, igual que `@raulrod/ui`; (3) la auditoría de contraste es numérica (`contrastRatio`/`requiredContrast`) en lugar de ceñirse a la tabla `AUTHORIZED_PAIRS`, para no marcar pares válidos fuera de tabla y aun así blindar AA en ambos temas; (4) el tratamiento de alto contraste remapea tokens en `:root` (una sola fuente de verdad, cubre librería y app) en vez de reglas por componente; (5) `GlobalStyles` se implementa como elemento `<style>` con `precedence` de React 19 porque `createGlobalStyle` no inyecta bajo el build CJS/jsdom de tests; así el comportamiento es idéntico en app y test; (6) sin ADR por ser decisiones locales de Presentation sobre patrones ya documentados.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-113 (Canvas performance baseline).
+
+## 2026-10-14 — TASK-113
+
+- Resultado: **Canvas performance baseline** completa, sin tocar código de producción (TASK-114 optimiza, TASK-115 añade umbrales). Doble capa de medición acordada con el usuario: (1) suite Jest reproducible en jsdom y (2) harness manual de navegador para métricas reales de layout/paint/FPS.
+- Tooling de test (fuera de producción): `src/test/fixtures/generate-elements.ts` (tablero determinista por semilla con los seis tipos), `src/test/perf/measure.ts` (utilidades puras: `summarize`/`percentile`/`median`/`measure`/`measureSamples`/`heapUsedBytes`/formato), `src/test/perf/report.ts` (entorno + `writePerfReport`, Node-only) y `src/test/perf/canvas.perf.test.tsx` (28 tests: algoritmos del hot path + `mount`/`pan`/`zoom`/`selection`/`heap` a 100/1.000/5.000/10.000). Harness de navegador `perf.html` + `src/test/perf/browser/main.tsx` (monta el `<Canvas>` real, mide frames con rAF, `performance.memory` y permite copiar/descargar JSON).
+- Config/scripts: nuevo `jest.perf.config.cjs` (extiende el principal; `roots: src/test/perf`, timeout 120 s) + `tsconfig.perf.json` (proyecto Node/DOM con `types: jest,node,vite/client`, referenciado en `tsconfig.json`; `tsconfig.app.json` excluye `src/test/perf`). Scripts `npm run perf` (`node --expose-gc … jest --config jest.perf.config.cjs --runInBand`) y `npm run perf:dev` (`vite --open /perf.html`). `jest.config.cjs` ignora `src/test/perf` para que `npm test` no pague el coste.
+- Registro versionado: `docs/performance/canvas-baseline.json` (regenerable con `PERF_WRITE=1 npm run perf`) y `docs/performance/canvas-baseline.md` (método, entorno Apple M2 Max/Node v23.6.0, tablas por tamaño, hallazgos y limitaciones).
+- Hallazgos (para TASK-114): la **interacción no escala linealmente** — a 10.000 elementos `pan` ~398 ms, `zoom` ~470 ms, `selection` ~407 ms, `mount` ~755 ms (a 100: 4–17 ms) — porque cada cambio de viewport/selección re-renderiza todos los `ElementView` y recalcula `items`/`allIds`/`selectedItems`/`aria-label`; los **algoritmos puros sí son lineales y baratos** (`toSelectableItems` 2,7 ms y `elementContentBounds` 4,5 ms a 10.000); la **memoria crece ~lineal** (~26 KB/elemento: ~9 / ~32 / ~136 / ~262 MB).
+- Interacción desacoplada de persistencia: los escenarios usan solo `createCanvasViewportStore`/`createSelectionStore` y callbacks en memoria; `expect` verifica que `items`, bounds y selección representan posición/tamaño/estado tras cada escenario.
+- Tests/quality gates: `npm test` 168 suites / 1935 tests en verde (+2 suites / +23: `measure.test.ts` —15— y `generate-elements.test.ts` —8—); `npm run perf` → 28/28 en verde a los cuatro tamaños; `npm run lint`, `npm run format:check`, `npx tsc -b` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase). `perf.html` no entra en `npm run build`.
+- Decisiones: (1) medición en dos capas (jsdom reproducible + navegador manual) porque jsdom no pinta; (2) tooling vivo en `src/test` y aislado por config propia, con `--expose-gc` para una memoria fiable; (3) registro versionado = JSON + markdown, sin cifras de navegador (dependen del host); (4) sin cambios de producción — `perf.html` no forma parte del build; (5) ADR-0026 documenta el método y las alternativas descartadas.
+- ADR-0026 (`docs/adr/0026-canvas-performance-baseline.md`): doble capa, escenarios/métricas, registro versionado, aislamiento del tooling y "medir antes de optimizar".
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-114 (Rendering optimization).
 
 ---
 

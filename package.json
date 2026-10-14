@@ -12,7 +12,9 @@
     "format:check": "prettier --check .",
     "lint:fix": "oxlint --fix",
     "test": "jest --runInBand",
-    "test:rules": "firebase emulators:exec --only firestore --project demo-cachiplunca \"jest --config jest.rules.config.cjs\""
+    "test:rules": "firebase emulators:exec --only firestore --project demo-cachiplunca \"jest --config jest.rules.config.cjs\"",
+    "perf": "node --expose-gc ./node_modules/jest/bin/jest.js --config jest.perf.config.cjs --runInBand",
+    "perf:dev": "vite --open /perf.html"
   },
   "dependencies": {
     "@raulrod/tokens": "^1.0.0",
