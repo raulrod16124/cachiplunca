@@ -50,6 +50,7 @@ export function WorkspaceShellPage({
   }
 
   const localUserId = session.status === 'authenticated' ? session.user.uid : undefined;
+  const currentUser = session.status === 'authenticated' ? session.user : null;
 
   return (
     <WorkspaceShellContainer
@@ -60,6 +61,7 @@ export function WorkspaceShellPage({
       realtimeSubscriptionManager={realtimeSubscriptionManager}
       generateElementId={generateElementId}
       logoutUser={logoutUser}
+      currentUser={currentUser}
       presencePort={presencePort}
       localUserId={localUserId}
       inviteMember={inviteMember}

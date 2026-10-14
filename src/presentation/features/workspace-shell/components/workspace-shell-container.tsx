@@ -15,17 +15,21 @@ import {
   createBoardWindowCommand,
   createCanvasViewportStore,
   createCommandHistory,
+  createConnectedUsersStore,
   createCursorBroadcaster,
   createElementPersistenceBatcher,
   createRealtimeConnectionStore,
   createRemoteCursorsStore,
   createSelectionStore,
+  createSharedPresencePort,
+  EMPTY_CONNECTED_USERS_STORE,
   EMPTY_REMOTE_CURSORS_STORE,
   rollbackFailedMutation,
 } from '../../../../application/services';
 import type {
   CanvasViewportStore,
   CommandHistory,
+  ConnectedUsersStore,
   CursorBroadcaster,
   ElementPersistenceBatcher,
   ElementPersistenceOrchestrator,
@@ -36,7 +40,11 @@ import type {
   Scheduler,
   SelectionStore,
 } from '../../../../application/services';
-import type { PresencePort, RealtimeConnectionStatus } from '../../../../application/ports';
+import type {
+  AuthUser,
+  PresencePort,
+  RealtimeConnectionStatus,
+} from '../../../../application/ports';
 import type { Element } from '../../../../domain/element';
 import type { MembershipRole } from '../../../../domain/membership';
 import { Presence } from '../../../../domain/collaboration';
@@ -66,6 +74,7 @@ export interface WorkspaceShellContainerProps {
   readonly generateElementId: () => ElementId;
   readonly logoutUser: LogoutUser;
   readonly onBack: () => void;
+  readonly currentUser?: AuthUser | null;
   readonly presencePort?: PresencePort;
   readonly localUserId?: string;
   readonly selectionStore?: SelectionStore;
@@ -90,6 +99,7 @@ export function WorkspaceShellContainer({
   generateElementId,
   logoutUser,
   onBack,
+  currentUser = null,
   presencePort,
   localUserId,
   selectionStore,
@@ -129,30 +139,48 @@ export function WorkspaceShellContainer({
   );
   const persistenceBatcherRef = useRef<ElementPersistenceBatcher | null>(null);
 
+  const sharedPresencePort = useMemo(
+    () => (presencePort === undefined ? undefined : createSharedPresencePort(presencePort)),
+    [presencePort],
+  );
+
   const remoteCursorsStore = useMemo<RemoteCursorsStore>(() => {
-    if (presencePort === undefined || localUserId === undefined) {
+    if (sharedPresencePort === undefined || localUserId === undefined) {
       return EMPTY_REMOTE_CURSORS_STORE;
     }
 
     return createRemoteCursorsStore(
-      presencePort,
+      sharedPresencePort,
       WorkspaceId.create(workspaceId),
       UserId.create(localUserId),
     );
-  }, [presencePort, localUserId, workspaceId]);
+  }, [sharedPresencePort, localUserId, workspaceId]);
 
   const remoteCursors = useSyncExternalStore(
     remoteCursorsStore.subscribe,
     remoteCursorsStore.getSnapshot,
   ).cursors;
 
+  const connectedUsersStore = useMemo<ConnectedUsersStore>(() => {
+    if (sharedPresencePort === undefined) {
+      return EMPTY_CONNECTED_USERS_STORE;
+    }
+
+    return createConnectedUsersStore(sharedPresencePort, WorkspaceId.create(workspaceId));
+  }, [sharedPresencePort, workspaceId]);
+
+  const connectedUsers = useSyncExternalStore(
+    connectedUsersStore.subscribe,
+    connectedUsersStore.getSnapshot,
+  ).users.filter((presence) => presence.userId.value !== localUserId);
+
   const cursorBroadcaster = useMemo<CursorBroadcaster | null>(() => {
-    if (presencePort === undefined || localUserId === undefined) {
+    if (sharedPresencePort === undefined || localUserId === undefined) {
       return null;
     }
 
     return createCursorBroadcaster({
-      presencePort,
+      presencePort: sharedPresencePort,
       basePresence: Presence.create({
         userId: UserId.create(localUserId),
         workspaceId: WorkspaceId.create(workspaceId),
@@ -594,6 +622,9 @@ export function WorkspaceShellContainer({
         <WorkspaceShellLayout
           workspace={result.workspace}
           elements={elements}
+          role={role}
+          currentUser={currentUser}
+          connectedUsers={connectedUsers}
           logoutUser={logoutUser}
           onBack={onBack}
           canvasViewportStore={canvasViewportStoreRef.current}

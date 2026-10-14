@@ -16,6 +16,11 @@ export interface ConnectedUsersStore {
 
 const EMPTY_SNAPSHOT: ConnectedUsersSnapshot = { users: [], error: null };
 
+export const EMPTY_CONNECTED_USERS_STORE: ConnectedUsersStore = {
+  getSnapshot: () => EMPTY_SNAPSHOT,
+  subscribe: () => () => undefined,
+};
+
 function sortUsers(users: readonly Presence[]): readonly Presence[] {
   return [...users].sort((a, b) => a.userId.value.localeCompare(b.userId.value));
 }

@@ -26,6 +26,7 @@ import type {
   RealtimeSubscriptionManager,
 } from '../../../../../../application/services';
 import { createTextElement } from '../../../../../../domain/element';
+import { Presence } from '../../../../../../domain/collaboration';
 import {
   ElementId,
   InvitationId,
@@ -206,7 +207,7 @@ describe('WorkspaceShellContainer', () => {
 
     expect(await screen.findByRole('heading', { name: 'Roadmap Q4' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Back to workspaces' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open account menu' })).toBeInTheDocument();
     expect(screen.getByRole('application', { name: 'Canvas' })).toBeInTheDocument();
     expect(getWorkspace).toHaveBeenCalledWith('ws-test');
   });
@@ -1348,6 +1349,26 @@ describe('WorkspaceShellContainer', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(
       'We could not keep the board in sync. Reconnecting automatically.',
     );
+  });
+
+  it('shows other connected collaborators in the workspace top bar', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const presencePort = new FakePresencePort();
+    const workspaceId = WorkspaceId.create('ws-test');
+
+    renderContainer(getWorkspace, { presencePort, localUserId: 'user-local' });
+
+    await screen.findByRole('application', { name: 'Canvas' });
+
+    await act(async () => {
+      await presencePort.announce(
+        Presence.create({ userId: UserId.create('user-remote'), workspaceId }),
+      );
+      await flushMicrotasks();
+    });
+
+    expect(screen.getByTestId('connected-users')).toBeInTheDocument();
+    expect(screen.getByText('1 connected')).toBeInTheDocument();
   });
 
   it('does not render the invite entry point when no invitation services are wired', async () => {

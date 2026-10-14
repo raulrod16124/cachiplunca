@@ -16,6 +16,7 @@ export * from './realtime-subscription-manager';
 export * from './realtime-connection-store';
 export * from './connected-users-store';
 export * from './remote-cursors-store';
+export * from './shared-presence-port';
 export * from './cursor-broadcaster';
 export * from './remote-element-updates';
 export * from './optimistic-element-updates';

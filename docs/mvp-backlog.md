@@ -3878,7 +3878,7 @@ Completar **Design tokens** dejando un resultado verificable y apto para las tar
 
 ### TASK-104 — Core UI components
 
-**Priority:** P0 · **Depends:** TASK-103 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-103 · **Status:** DONE
 
 #### Objetivo
 
@@ -3913,7 +3913,7 @@ Completar **Core UI components** dejando un resultado verificable y apto para la
 
 ### TASK-105 — Workspace top bar
 
-**Priority:** P0 · **Depends:** TASK-104 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-104 · **Status:** DONE
 
 #### Objetivo
 
@@ -5066,6 +5066,16 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) el mecanismo es `ThemeProvider` de styled-components con valores que son referencias `var(--rr-*)`, de modo que light/dark lo resuelven las custom properties upstream sin recalcular en JS (acordado con el usuario); (2) alcance = capa base + migrar los usos existentes, sin tocar tokens de componentes ni px de layout que no eran tokens; (3) los alias `canvas.*` reutilizan roles semánticos en vez de inventar tokens de canvas; (4) el render de tests inyecta el tema globalmente vía alias de módulo en Jest, evitando tocar cada test y cubriendo `rerender`. Sin ADR por tratarse de una decisión de capa de Presentation ya implícita en la arquitectura (dependencia de UI en Presentation).
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-104 (Core UI components).
+
+## 2026-10-14 — TASK-105
+
+- Resultado: **Workspace top bar** en su propio componente de Presentation, `src/presentation/features/workspace-shell/components/workspace-top-bar.tsx` (header landmark), extraído del inline que vivía en `workspace-shell-layout.tsx`. Izquierda: back con `ArrowLeft`, `Heading as="h1"` con el nombre del workspace, `Badge` de rol (Owner/Editor/Viewer, solo cuando hay membership), y `Badge` de sync/conexión dentro de `role="status" aria-live="polite"` reutilizando `describeSyncStatus`/`describeConnectionStatus`. Derecha: resumen de presencia (`Avatar` apilados de los colaboradores conectados + contador `N connected` en `role="status"`, oculto si no hay nadie), botón `Invite` condicional (`onInvite`) y menú de cuenta. Banners de error de persistencia/colaboración como `role="alert"`. Props `readonly`. `workspace-shell-layout.tsx` delega en el top bar y ya no conoce `SignOutButton`.
+- Menú de cuenta: nuevo `src/presentation/features/auth/account-menu.tsx` (`Avatar` como trigger + `DropdownMenu` de `@raulrod/ui` con identidad displayName/email y acción **Sign out**), y hook `src/presentation/features/auth/use-sign-out.ts` que extrae la lógica de logout de `SignOutButton` (guard anti-reentrada por ref, `describeLoginError`, estado `signingOut`/`signOutError`); `SignOutButton` se refactoriza para consumirlo sin cambiar su comportamiento (sigue en `workspaces-page`).
+- Composición: `WorkspaceShellPage` deriva `currentUser` de `useSession()` y lo pasa por `WorkspaceShellContainer` (nueva prop opcional `currentUser`); el contenedor compone el `ConnectedUsersStore` (TASK-083) con `useSyncExternalStore`, filtra el usuario local y pasa `connectedUsers`/`role`/`currentUser` al layout. Para no abrir listeners duplicados de presencia, nuevo decorador `src/application/services/shared-presence-port.ts` (`createSharedPresencePort`) que multiplexa **una única** `subscribe` del `PresencePort` por workspace entre los consumidores (remote cursors + connected users), con fan-out de eventos/errores/conexión, teardown al último unsubscribe e idempotencia; `announce`/`withdraw` pasan directos. El contenedor construye el puerto compartido con `useMemo` y lo inyecta en ambos stores y en el `CursorBroadcaster`. `EMPTY_CONNECTED_USERS_STORE` añadido para el caso sin `presencePort`.
+- Tests/quality gates: 152 suites / 1752 tests en verde (+4 suites / +13: `shared-presence-port.test.ts` —5, `workspace-top-bar.test.tsx` —7, `account-menu.test.tsx` —3, más la assertion de cuenta en `workspace-shell-container.test.tsx`—). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase). Smoke manual con `npm run dev` pendiente (no se crean usuarios reales desde el agente).
+- Decisiones: (1) el top bar queda como componente de Presentation puro y testable por props; el layout solo compone; (2) la cuenta se resuelve con `Avatar` + `DropdownMenu` sobre `@raulrod/ui` (sin wrapper propio más allá del trigger estilado), sustituyendo el botón plano en el shell pero conservando `SignOutButton` en la lista de workspaces; (3) `role`/permisos se hacen visibles en el header como `Badge`, sin duplicar la lógica de `useWorkspacePermissions` (el contenedor sigue decidiendo); (4) la presencia del top bar reutiliza el `ConnectedUsersStore` ya existente y la suscripción de presencia se comparte con `createSharedPresencePort` para cumplir "sin listeners duplicados" (el store sigue scopeado a un workspace y con una única `subscribe` real); (5) alcance acotado a TASK-105: el Share dialog es TASK-107, así que el top bar expone el `Invite` existente como acción de compartir y no introduce UI muerta; (6) sin ADR por ser decisiones locales de Presentation/composición sobre patrones ya documentados.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-106 (Canvas toolbar).
 
 ---
 
