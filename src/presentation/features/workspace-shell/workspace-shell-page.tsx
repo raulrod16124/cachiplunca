@@ -1,11 +1,18 @@
 import type { ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { PresencePort } from '../../../application/ports';
-import type { InviteMember, LogoutUser } from '../../../application/commands';
+import type {
+  ChangeMemberRole,
+  InviteMember,
+  LeaveWorkspace,
+  LogoutUser,
+  RemoveMember,
+} from '../../../application/commands';
 import type {
   GetWorkspace,
   GetWorkspaceRole,
   ListPendingInvitations,
+  ListWorkspaceMembers,
   LoadWorkspaceElements,
 } from '../../../application/queries';
 import type {
@@ -27,6 +34,10 @@ export interface WorkspaceShellPageProps {
   readonly inviteMember?: InviteMember;
   readonly listPendingInvitations?: ListPendingInvitations;
   readonly getWorkspaceRole?: GetWorkspaceRole;
+  readonly listWorkspaceMembers?: ListWorkspaceMembers;
+  readonly changeMemberRole?: ChangeMemberRole;
+  readonly removeMember?: RemoveMember;
+  readonly leaveWorkspace?: LeaveWorkspace;
 }
 
 export function WorkspaceShellPage({
@@ -40,6 +51,10 @@ export function WorkspaceShellPage({
   inviteMember,
   listPendingInvitations,
   getWorkspaceRole,
+  listWorkspaceMembers,
+  changeMemberRole,
+  removeMember,
+  leaveWorkspace,
 }: WorkspaceShellPageProps): ReactNode {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const navigate = useNavigate();
@@ -67,6 +82,10 @@ export function WorkspaceShellPage({
       inviteMember={inviteMember}
       listPendingInvitations={listPendingInvitations}
       getWorkspaceRole={getWorkspaceRole}
+      listWorkspaceMembers={listWorkspaceMembers}
+      changeMemberRole={changeMemberRole}
+      removeMember={removeMember}
+      leaveWorkspace={leaveWorkspace}
       onBack={() => navigate('/workspaces')}
     />
   );

@@ -14,9 +14,11 @@ import {
 import {
   createGetWorkspace,
   createGetWorkspaceRole,
+  createListWorkspaceMembers,
   createListWorkspaces,
   type GetWorkspace,
   type GetWorkspaceRole,
+  type ListWorkspaceMembers,
   type ListWorkspaces,
 } from '../../application/queries';
 import type { MembershipRepository, WorkspaceRepository } from '../../application/ports';
@@ -33,6 +35,7 @@ export interface WorkspaceServices {
   readonly changeMemberRole: ChangeMemberRole;
   readonly removeMember: RemoveMember;
   readonly leaveWorkspace: LeaveWorkspace;
+  readonly listWorkspaceMembers: ListWorkspaceMembers;
 }
 
 export function createWorkspaceServices(): WorkspaceServices {
@@ -51,5 +54,6 @@ export function createWorkspaceServices(): WorkspaceServices {
     changeMemberRole: createChangeMemberRole(membershipRepository),
     removeMember: createRemoveMember(membershipRepository),
     leaveWorkspace: createLeaveWorkspace(membershipRepository),
+    listWorkspaceMembers: createListWorkspaceMembers(membershipRepository),
   };
 }

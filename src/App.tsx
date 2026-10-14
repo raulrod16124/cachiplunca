@@ -36,6 +36,10 @@ function App() {
             inviteMember={invitationServices.inviteMember}
             listPendingInvitations={invitationServices.listPendingInvitations}
             acceptInvitation={invitationServices.acceptInvitation}
+            listWorkspaceMembers={workspaceServices.listWorkspaceMembers}
+            changeMemberRole={workspaceServices.changeMemberRole}
+            removeMember={workspaceServices.removeMember}
+            leaveWorkspace={workspaceServices.leaveWorkspace}
           />
         </SessionProvider>
       </BrowserRouter>

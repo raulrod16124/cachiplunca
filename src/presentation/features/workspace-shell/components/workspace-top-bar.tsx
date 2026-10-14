@@ -52,7 +52,7 @@ export interface WorkspaceTopBarProps {
   readonly connectedUsers: readonly Presence[];
   readonly currentUser: AuthUser | null;
   readonly logoutUser: LogoutUser;
-  readonly onInvite?: () => void;
+  readonly onShare?: () => void;
   readonly persistenceErrorMessage: string | null;
   readonly collaborationErrorMessage: string | null;
   readonly creationErrorMessage: string | null;
@@ -67,7 +67,7 @@ export function WorkspaceTopBar({
   connectedUsers,
   currentUser,
   logoutUser,
-  onInvite,
+  onShare,
   persistenceErrorMessage,
   collaborationErrorMessage,
   creationErrorMessage,
@@ -120,9 +120,9 @@ export function WorkspaceTopBar({
               </Text>
             </Inline>
           )}
-          {onInvite === undefined ? null : (
-            <Button type="button" variant="secondary" size="sm" onClick={onInvite}>
-              Invite
+          {onShare === undefined ? null : (
+            <Button type="button" variant="secondary" size="sm" onClick={onShare}>
+              Share
             </Button>
           )}
           <AccountMenu currentUser={currentUser} logoutUser={logoutUser} />

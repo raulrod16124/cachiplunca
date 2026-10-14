@@ -6,15 +6,26 @@ import type {
   GetWorkspaceResult,
   GetWorkspaceRole,
   ListPendingInvitations,
+  ListWorkspaceMembers,
   LoadWorkspaceElements,
   LoadWorkspaceElementsResult,
 } from '../../../../../../application/queries';
 import type { MembershipRole } from '../../../../../../domain/membership';
 import {
   createListPendingInvitations,
+  createListWorkspaceMembers,
   createLoadWorkspaceElements as createLoadWorkspaceElementsQuery,
 } from '../../../../../../application/queries';
-import { createInviteMember, type InviteMember } from '../../../../../../application/commands';
+import {
+  createChangeMemberRole,
+  createInviteMember,
+  createLeaveWorkspace,
+  createRemoveMember,
+  type ChangeMemberRole,
+  type InviteMember,
+  type LeaveWorkspace,
+  type RemoveMember,
+} from '../../../../../../application/commands';
 import {
   createElementPersistence,
   createElementPersistenceOrchestrator,
@@ -40,6 +51,7 @@ import { createAppError, ERROR_CODES } from '../../../../../../shared/errors';
 import { WorkspaceShellContainer } from '../../../../../../presentation/features/workspace-shell/components/workspace-shell-container';
 import { FakeElementRepository } from '../../../../../fixtures/fake-element-repository';
 import { FakeInvitationRepository } from '../../../../../fixtures/fake-invitation-repository';
+import { FakeMembershipRepository } from '../../../../../fixtures/fake-membership-repository';
 import { FakePresencePort } from '../../../../../fixtures/fake-presence-port';
 import { FakeRealtimePort } from '../../../../../fixtures/fake-realtime-port';
 import { ManualScheduler, flushMicrotasks } from '../../../../../fixtures/manual-scheduler';
@@ -87,6 +99,18 @@ function sequentialElementIds(): () => ElementId {
   return () => ElementId.create(`generated-${++counter}`);
 }
 
+async function seedMembership(
+  repository: FakeMembershipRepository,
+  userId: string,
+  role: MembershipRole,
+): Promise<void> {
+  await repository.create({
+    userId: UserId.create(userId),
+    workspaceId: WorkspaceId.create('ws-test'),
+    role,
+  });
+}
+
 interface Deferred {
   readonly promise: Promise<void>;
   readonly resolve: () => void;
@@ -129,6 +153,10 @@ interface RenderOptions {
   readonly listPendingInvitations?: ListPendingInvitations;
   readonly getWorkspaceRole?: GetWorkspaceRole;
   readonly role?: MembershipRole | null;
+  readonly listWorkspaceMembers?: ListWorkspaceMembers;
+  readonly changeMemberRole?: ChangeMemberRole;
+  readonly removeMember?: RemoveMember;
+  readonly leaveWorkspace?: LeaveWorkspace;
 }
 
 function renderContainer(getWorkspace: GetWorkspace, options: RenderOptions = {}) {
@@ -158,6 +186,10 @@ function renderContainer(getWorkspace: GetWorkspace, options: RenderOptions = {}
         inviteMember={options.inviteMember}
         listPendingInvitations={options.listPendingInvitations}
         getWorkspaceRole={getWorkspaceRole}
+        listWorkspaceMembers={options.listWorkspaceMembers}
+        changeMemberRole={options.changeMemberRole}
+        removeMember={options.removeMember}
+        leaveWorkspace={options.leaveWorkspace}
       />
     </MemoryRouter>,
   );
@@ -1371,21 +1403,34 @@ describe('WorkspaceShellContainer', () => {
     expect(screen.getByText('1 connected')).toBeInTheDocument();
   });
 
-  it('does not render the invite entry point when no invitation services are wired', async () => {
-    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
-
-    renderContainer(getWorkspace, { localUserId: 'user-local' });
-
-    await screen.findByRole('application', { name: 'Canvas' });
-    expect(screen.queryByRole('button', { name: 'Invite' })).not.toBeInTheDocument();
-  });
-
-  it('opens the invite dialog from the workspace header', async () => {
+  it('does not render the share entry point when no share services are wired', async () => {
     const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
     const repository = new FakeInvitationRepository();
+    const inviteMember = createInviteMember({
+      invitationRepository: repository,
+      generateId: () => InvitationId.create('inv-1'),
+      issueToken: async () => ({ token: 'token-abc', tokenHash: 'hash-abc' }),
+      now: () => new Date('2026-01-01T00:00:00.000Z'),
+    });
+
+    renderContainer(getWorkspace, {
+      localUserId: 'user-local',
+      inviteMember,
+      listPendingInvitations: createListPendingInvitations(repository),
+    });
+
+    await screen.findByRole('application', { name: 'Canvas' });
+    expect(screen.queryByRole('button', { name: 'Share' })).not.toBeInTheDocument();
+  });
+
+  it('opens the share dialog from the workspace header', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const invitationRepository = new FakeInvitationRepository();
+    const membershipRepository = new FakeMembershipRepository();
+    await seedMembership(membershipRepository, 'user-local', 'owner');
     let sequence = 0;
     const inviteMember: InviteMember = createInviteMember({
-      invitationRepository: repository,
+      invitationRepository,
       generateId: () => InvitationId.create(`inv-${(sequence += 1)}`),
       issueToken: async () => ({ token: 'token-abc', tokenHash: 'hash-abc' }),
       now: () => new Date('2026-01-01T00:00:00.000Z'),
@@ -1394,20 +1439,26 @@ describe('WorkspaceShellContainer', () => {
     renderContainer(getWorkspace, {
       localUserId: 'user-local',
       inviteMember,
-      listPendingInvitations: createListPendingInvitations(repository),
+      listPendingInvitations: createListPendingInvitations(invitationRepository),
+      listWorkspaceMembers: createListWorkspaceMembers(membershipRepository),
+      leaveWorkspace: createLeaveWorkspace(membershipRepository),
+      changeMemberRole: createChangeMemberRole(membershipRepository),
+      removeMember: createRemoveMember(membershipRepository),
     });
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Invite' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Share' }));
 
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
     expect(await screen.findByText('No pending invitations.')).toBeInTheDocument();
   });
 
-  it('hides the invite entry point for a viewer', async () => {
+  it('shows the share entry point to viewers and hides the invite tab', async () => {
     const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
-    const repository = new FakeInvitationRepository();
+    const invitationRepository = new FakeInvitationRepository();
+    const membershipRepository = new FakeMembershipRepository();
+    await seedMembership(membershipRepository, 'user-local', 'viewer');
     const inviteMember = createInviteMember({
-      invitationRepository: repository,
+      invitationRepository,
       generateId: () => InvitationId.create('inv-1'),
       issueToken: async () => ({ token: 'token-abc', tokenHash: 'hash-abc' }),
       now: () => new Date('2026-01-01T00:00:00.000Z'),
@@ -1416,19 +1467,26 @@ describe('WorkspaceShellContainer', () => {
     renderContainer(getWorkspace, {
       localUserId: 'user-local',
       inviteMember,
-      listPendingInvitations: createListPendingInvitations(repository),
+      listPendingInvitations: createListPendingInvitations(invitationRepository),
+      listWorkspaceMembers: createListWorkspaceMembers(membershipRepository),
+      leaveWorkspace: createLeaveWorkspace(membershipRepository),
       role: 'viewer',
     });
 
-    await screen.findByRole('application', { name: 'Canvas' });
-    expect(screen.queryByRole('button', { name: 'Invite' })).not.toBeInTheDocument();
+    fireEvent.click(await screen.findByRole('button', { name: 'Share' }));
+
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Members' })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Invite' })).not.toBeInTheDocument();
   });
 
-  it('keeps the invite entry point available for an editor', async () => {
+  it('keeps the invite tab available for an editor', async () => {
     const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
-    const repository = new FakeInvitationRepository();
+    const invitationRepository = new FakeInvitationRepository();
+    const membershipRepository = new FakeMembershipRepository();
+    await seedMembership(membershipRepository, 'user-local', 'editor');
     const inviteMember = createInviteMember({
-      invitationRepository: repository,
+      invitationRepository,
       generateId: () => InvitationId.create('inv-1'),
       issueToken: async () => ({ token: 'token-abc', tokenHash: 'hash-abc' }),
       now: () => new Date('2026-01-01T00:00:00.000Z'),
@@ -1437,11 +1495,15 @@ describe('WorkspaceShellContainer', () => {
     renderContainer(getWorkspace, {
       localUserId: 'user-local',
       inviteMember,
-      listPendingInvitations: createListPendingInvitations(repository),
+      listPendingInvitations: createListPendingInvitations(invitationRepository),
+      listWorkspaceMembers: createListWorkspaceMembers(membershipRepository),
+      leaveWorkspace: createLeaveWorkspace(membershipRepository),
       role: 'editor',
     });
 
-    expect(await screen.findByRole('button', { name: 'Invite' })).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole('button', { name: 'Share' }));
+
+    expect(await screen.findByRole('tab', { name: 'Invite' })).toBeInTheDocument();
   });
 
   it('renders a read-only canvas for viewers so elements cannot be deleted', async () => {
@@ -1488,26 +1550,20 @@ describe('WorkspaceShellContainer', () => {
     await waitFor(() => expect(screen.queryByTestId('canvas-item-el-1')).not.toBeInTheDocument());
   });
 
-  it('treats an unknown membership as read-only without the invite entry point', async () => {
+  it('treats an unknown membership as read-only without the share entry point', async () => {
     const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
-    const repository = new FakeInvitationRepository();
-    const inviteMember = createInviteMember({
-      invitationRepository: repository,
-      generateId: () => InvitationId.create('inv-1'),
-      issueToken: async () => ({ token: 'token-abc', tokenHash: 'hash-abc' }),
-      now: () => new Date('2026-01-01T00:00:00.000Z'),
-    });
+    const membershipRepository = new FakeMembershipRepository();
 
     renderContainer(getWorkspace, {
       localUserId: 'user-local',
-      inviteMember,
-      listPendingInvitations: createListPendingInvitations(repository),
+      listWorkspaceMembers: createListWorkspaceMembers(membershipRepository),
+      leaveWorkspace: createLeaveWorkspace(membershipRepository),
       role: null,
     });
 
     const canvas = await screen.findByRole('application', { name: 'Canvas' });
     expect(canvas).toHaveAttribute('aria-readonly', 'true');
-    expect(screen.queryByRole('button', { name: 'Invite' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Share' })).not.toBeInTheDocument();
   });
 
   it('creates a text element from the toolbar at the viewport center', async () => {

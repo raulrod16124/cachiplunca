@@ -1,6 +1,5 @@
 export { AcceptInvitationPage, type AcceptInvitationPageProps } from './accept-invitation-page';
-export { InviteDialog } from './components/invite-dialog';
-export type { InviteDialogProps } from './components/invite-dialog';
+export { InvitePanel, type InvitePanelProps } from './components/invite-panel';
 export {
   InviteMemberForm,
   type InviteMemberFormProps,

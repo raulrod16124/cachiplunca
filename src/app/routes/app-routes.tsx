@@ -2,16 +2,20 @@ import type { ReactNode } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import type {
   AcceptInvitation,
+  ChangeMemberRole,
   CreateWorkspaceWithOwner,
   InviteMember,
+  LeaveWorkspace,
   LoginUser,
   LogoutUser,
   RegisterUser,
+  RemoveMember,
 } from '../../application/commands';
 import type {
   GetWorkspace,
   GetWorkspaceRole,
   ListPendingInvitations,
+  ListWorkspaceMembers,
   ListWorkspaces,
   LoadWorkspaceElements,
 } from '../../application/queries';
@@ -45,6 +49,10 @@ export interface AppRoutesProps {
   readonly listPendingInvitations?: ListPendingInvitations;
   readonly acceptInvitation?: AcceptInvitation;
   readonly getWorkspaceRole?: GetWorkspaceRole;
+  readonly listWorkspaceMembers?: ListWorkspaceMembers;
+  readonly changeMemberRole?: ChangeMemberRole;
+  readonly removeMember?: RemoveMember;
+  readonly leaveWorkspace?: LeaveWorkspace;
 }
 
 export function AppRoutes({
@@ -63,6 +71,10 @@ export function AppRoutes({
   listPendingInvitations,
   acceptInvitation,
   getWorkspaceRole,
+  listWorkspaceMembers,
+  changeMemberRole,
+  removeMember,
+  leaveWorkspace,
 }: AppRoutesProps): ReactNode {
   return (
     <Routes>
@@ -102,6 +114,10 @@ export function AppRoutes({
               inviteMember={inviteMember}
               listPendingInvitations={listPendingInvitations}
               getWorkspaceRole={getWorkspaceRole}
+              listWorkspaceMembers={listWorkspaceMembers}
+              changeMemberRole={changeMemberRole}
+              removeMember={removeMember}
+              leaveWorkspace={leaveWorkspace}
             />
           }
         />

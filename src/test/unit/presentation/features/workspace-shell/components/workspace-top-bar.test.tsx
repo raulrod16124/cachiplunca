@@ -117,8 +117,8 @@ describe('WorkspaceTopBar', () => {
     expect(screen.queryByTestId('connected-users')).not.toBeInTheDocument();
   });
 
-  it('shows the invite action only when a handler is provided', () => {
-    const onInvite = jest.fn();
+  it('shows the share action only when a handler is provided', () => {
+    const onShare = jest.fn();
     const { unmount } = render(
       <WorkspaceTopBar
         workspace={WORKSPACE}
@@ -129,15 +129,15 @@ describe('WorkspaceTopBar', () => {
         connectedUsers={[]}
         currentUser={CURRENT_USER}
         logoutUser={LOGOUT_USER}
-        onInvite={onInvite}
+        onShare={onShare}
         persistenceErrorMessage={null}
         collaborationErrorMessage={null}
         creationErrorMessage={null}
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Invite' }));
-    expect(onInvite).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Share' }));
+    expect(onShare).toHaveBeenCalledTimes(1);
     unmount();
 
     render(
@@ -156,7 +156,7 @@ describe('WorkspaceTopBar', () => {
       />,
     );
 
-    expect(screen.queryByRole('button', { name: 'Invite' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Share' })).not.toBeInTheDocument();
   });
 
   it('announces persistence and collaboration errors', () => {

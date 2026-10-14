@@ -9,7 +9,7 @@ import {
   type ListPendingInvitations,
 } from '../../../../../../application/queries';
 import { InvitationId, UserId } from '../../../../../../domain/shared';
-import { InviteDialog } from '../../../../../../presentation/features/invitations/components/invite-dialog';
+import { InvitePanel } from '../../../../../../presentation/features/invitations/components/invite-panel';
 import { createAppError, ERROR_CODES } from '../../../../../../shared/errors';
 import { FakeInvitationRepository } from '../../../../../fixtures/fake-invitation-repository';
 
@@ -26,33 +26,42 @@ function buildInviteMember(repository: FakeInvitationRepository): InviteMember {
   });
 }
 
-function renderDialog(listPendingInvitations: ListPendingInvitations, inviteMember: InviteMember) {
-  const onOpenChange = jest.fn();
+function renderPanel(
+  listPendingInvitations: ListPendingInvitations,
+  inviteMember: InviteMember,
+  active = true,
+) {
   render(
-    <InviteDialog
-      open
-      onOpenChange={onOpenChange}
+    <InvitePanel
+      active={active}
       workspaceId={WORKSPACE_ID}
       invitedBy={INVITED_BY}
       inviteMember={inviteMember}
       listPendingInvitations={listPendingInvitations}
     />,
   );
-  return { onOpenChange };
 }
 
-describe('InviteDialog', () => {
-  it('loads and shows the empty pending state when opened', async () => {
+describe('InvitePanel', () => {
+  it('loads and shows the empty pending state when active', async () => {
     const repository = new FakeInvitationRepository();
-    renderDialog(createListPendingInvitations(repository), buildInviteMember(repository));
+    renderPanel(createListPendingInvitations(repository), buildInviteMember(repository));
 
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(await screen.findByText('No pending invitations.')).toBeInTheDocument();
+  });
+
+  it('does not load pending invitations while inactive', () => {
+    const repository = new FakeInvitationRepository();
+    const listPendingInvitations = jest.fn(createListPendingInvitations(repository));
+
+    renderPanel(listPendingInvitations, buildInviteMember(repository), false);
+
+    expect(listPendingInvitations).not.toHaveBeenCalled();
   });
 
   it('invites a member, reveals the one-time link and refreshes the pending list', async () => {
     const repository = new FakeInvitationRepository();
-    renderDialog(createListPendingInvitations(repository), buildInviteMember(repository));
+    renderPanel(createListPendingInvitations(repository), buildInviteMember(repository));
     await screen.findByText('No pending invitations.');
 
     fireEvent.change(screen.getByLabelText('Email'), {
@@ -77,20 +86,20 @@ describe('InviteDialog', () => {
       ),
     });
 
-    renderDialog(listPendingInvitations, buildInviteMember(repository));
+    renderPanel(listPendingInvitations, buildInviteMember(repository));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'We could not reach the server. Check your connection and try again.',
     );
   });
 
-  it('keeps the dialog open when the invite fails', async () => {
+  it('keeps the form usable and surfaces the error when the invite fails', async () => {
     const repository = new FakeInvitationRepository();
     const inviteMember: InviteMember = async (): Promise<InviteMemberResult> => ({
       status: 'error',
       error: createAppError('authorization', ERROR_CODES.AUTH_FORBIDDEN, 'raw'),
     });
-    renderDialog(createListPendingInvitations(repository), inviteMember);
+    renderPanel(createListPendingInvitations(repository), inviteMember);
 
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'a@example.com' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send invitation' }));
@@ -98,6 +107,6 @@ describe('InviteDialog', () => {
     expect(
       await screen.findByText('You do not have permission to invite members to this workspace.'),
     ).toBeInTheDocument();
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Send invitation' })).toBeInTheDocument();
   });
 });

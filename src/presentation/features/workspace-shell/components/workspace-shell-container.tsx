@@ -4,15 +4,19 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import styled from 'styled-components';
 import {
   createCreateElement,
+  type ChangeMemberRole,
   type CreateElementInput,
   type InviteMember,
+  type LeaveWorkspace,
   type LogoutUser,
+  type RemoveMember,
 } from '../../../../application/commands';
 import type {
   GetWorkspace,
   GetWorkspaceResult,
   GetWorkspaceRole,
   ListPendingInvitations,
+  ListWorkspaceMembers,
   LoadWorkspaceElements,
 } from '../../../../application/queries';
 import {
@@ -63,7 +67,7 @@ import { Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
 import { useWorkspacePermissions } from '../../../hooks';
 import type { ElementId } from '../../../../domain/shared';
 import { toAppError, type AppError } from '../../../../shared/errors';
-import { InviteDialog } from '../../invitations';
+import { ShareDialog } from '../../sharing';
 import { WorkspaceShellLayout } from './workspace-shell-layout';
 import {
   describeCollaborationSyncError,
@@ -95,6 +99,10 @@ export interface WorkspaceShellContainerProps {
   readonly inviteMember?: InviteMember;
   readonly listPendingInvitations?: ListPendingInvitations;
   readonly getWorkspaceRole?: GetWorkspaceRole;
+  readonly listWorkspaceMembers?: ListWorkspaceMembers;
+  readonly changeMemberRole?: ChangeMemberRole;
+  readonly removeMember?: RemoveMember;
+  readonly leaveWorkspace?: LeaveWorkspace;
 }
 
 interface TransformGesture {
@@ -120,9 +128,13 @@ export function WorkspaceShellContainer({
   inviteMember,
   listPendingInvitations,
   getWorkspaceRole,
+  listWorkspaceMembers,
+  changeMemberRole,
+  removeMember,
+  leaveWorkspace,
 }: WorkspaceShellContainerProps): ReactNode {
   const [status, setStatus] = useState<'loading' | 'notFound' | 'error' | 'success'>('loading');
-  const [inviteOpen, setInviteOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [role, setRole] = useState<MembershipRole | undefined>(undefined);
   const [roleStatus, setRoleStatus] = useState<'idle' | 'loading' | 'settled'>(
     getWorkspaceRole === undefined ? 'idle' : 'loading',
@@ -692,15 +704,16 @@ export function WorkspaceShellContainer({
     const permissionsEnforced = getWorkspaceRole !== undefined;
     const canElementWrite = !permissionsEnforced || permissions.can('element:write');
     const canMemberInvite = !permissionsEnforced || permissions.can('member:invite');
+    const canMemberUpdateRole = !permissionsEnforced || permissions.can('member:update-role');
+    const canMemberRemove = !permissionsEnforced || permissions.can('member:remove');
+    const canMemberLeave = !permissionsEnforced || permissions.can('member:leave');
     const canCreateElement = canElementWrite && localUserId !== undefined;
 
-    const invitedBy =
-      canMemberInvite &&
-      inviteMember !== undefined &&
-      listPendingInvitations !== undefined &&
-      localUserId !== undefined
-        ? UserId.create(localUserId)
-        : undefined;
+    const canShare =
+      localUserId !== undefined &&
+      listWorkspaceMembers !== undefined &&
+      leaveWorkspace !== undefined &&
+      (!permissionsEnforced || role !== undefined);
 
     return (
       <>
@@ -739,20 +752,27 @@ export function WorkspaceShellContainer({
             creationError === null ? null : describeCreateElementError(creationError)
           }
           readOnly={!canElementWrite}
-          onInvite={invitedBy === undefined ? undefined : () => setInviteOpen(true)}
+          onShare={canShare ? () => setShareOpen(true) : undefined}
         />
-        {invitedBy === undefined ||
-        inviteMember === undefined ||
-        listPendingInvitations === undefined ? null : (
-          <InviteDialog
-            open={inviteOpen}
-            onOpenChange={setInviteOpen}
+        {canShare ? (
+          <ShareDialog
+            open={shareOpen}
+            onOpenChange={setShareOpen}
             workspaceId={workspaceId}
-            invitedBy={invitedBy}
+            currentUserId={localUserId}
+            canInvite={canMemberInvite}
+            canChangeRole={canMemberUpdateRole}
+            canRemove={canMemberRemove}
+            canLeave={canMemberLeave}
+            listWorkspaceMembers={listWorkspaceMembers}
+            leaveWorkspace={leaveWorkspace}
+            changeMemberRole={changeMemberRole}
+            removeMember={removeMember}
             inviteMember={inviteMember}
             listPendingInvitations={listPendingInvitations}
+            onLeft={onBack}
           />
-        )}
+        ) : null}
       </>
     );
   }

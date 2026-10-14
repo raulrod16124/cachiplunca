@@ -1,12 +1,4 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  Heading,
-  Stack,
-} from '@raulrod/ui';
+import { Heading, Stack } from '@raulrod/ui';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import type { InviteMember } from '../../../../application/commands';
 import type { ListPendingInvitations } from '../../../../application/queries';
@@ -18,23 +10,21 @@ import { InvitationLink } from './invitation-link';
 import { InviteMemberForm, type InvitedMemberResult } from './invite-member-form';
 import { PendingInvitationsList, type PendingInvitationsStatus } from './pending-invitations-list';
 
-export interface InviteDialogProps {
-  readonly open: boolean;
-  readonly onOpenChange: (open: boolean) => void;
+export interface InvitePanelProps {
+  readonly active: boolean;
   readonly workspaceId: string;
   readonly invitedBy: UserId;
   readonly inviteMember: InviteMember;
   readonly listPendingInvitations: ListPendingInvitations;
 }
 
-export function InviteDialog({
-  open,
-  onOpenChange,
+export function InvitePanel({
+  active,
   workspaceId,
   invitedBy,
   inviteMember,
   listPendingInvitations,
-}: InviteDialogProps): ReactNode {
+}: InvitePanelProps): ReactNode {
   const [token, setToken] = useState<string | null>(null);
   const [status, setStatus] = useState<PendingInvitationsStatus>('loading');
   const [invitations, setInvitations] = useState<readonly Invitation[]>([]);
@@ -59,12 +49,11 @@ export function InviteDialog({
   }, [listPendingInvitations, workspaceId]);
 
   useEffect(() => {
-    if (!open) {
+    if (!active) {
       return;
     }
-    setToken(null);
     void fetchPending();
-  }, [open, fetchPending]);
+  }, [active, fetchPending]);
 
   const handleInvited = useCallback(
     (result: InvitedMemberResult): void => {
@@ -75,31 +64,23 @@ export function InviteDialog({
   );
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Invite people</DialogTitle>
-          <DialogDescription>Invite a collaborator to this workspace by email.</DialogDescription>
-        </DialogHeader>
-        <Stack gap="space-6">
-          <InviteMemberForm
-            workspaceId={workspaceId}
-            invitedBy={invitedBy}
-            inviteMember={inviteMember}
-            onInvited={handleInvited}
-          />
-          {token !== null && <InvitationLink token={token} />}
-          <Stack gap="space-3">
-            <Heading as="h2">Pending invitations</Heading>
-            <PendingInvitationsList
-              status={status}
-              invitations={invitations}
-              errorMessage={errorMessage}
-              onRetry={() => void fetchPending()}
-            />
-          </Stack>
-        </Stack>
-      </DialogContent>
-    </Dialog>
+    <Stack gap="space-6">
+      <InviteMemberForm
+        workspaceId={workspaceId}
+        invitedBy={invitedBy}
+        inviteMember={inviteMember}
+        onInvited={handleInvited}
+      />
+      {token !== null && <InvitationLink token={token} />}
+      <Stack gap="space-3">
+        <Heading as="h3">Pending invitations</Heading>
+        <PendingInvitationsList
+          status={status}
+          invitations={invitations}
+          errorMessage={errorMessage}
+          onRetry={() => void fetchPending()}
+        />
+      </Stack>
+    </Stack>
   );
 }

@@ -61,7 +61,7 @@ export interface WorkspaceShellLayoutProps {
   readonly persistenceErrorMessage: string | null;
   readonly collaborationErrorMessage: string | null;
   readonly creationErrorMessage: string | null;
-  readonly onInvite?: () => void;
+  readonly onShare?: () => void;
   readonly readOnly?: boolean;
 }
 
@@ -93,7 +93,7 @@ export function WorkspaceShellLayout({
   persistenceErrorMessage,
   collaborationErrorMessage,
   creationErrorMessage,
-  onInvite,
+  onShare,
   readOnly = false,
 }: WorkspaceShellLayoutProps): ReactNode {
   return (
@@ -107,7 +107,7 @@ export function WorkspaceShellLayout({
         connectedUsers={connectedUsers}
         currentUser={currentUser}
         logoutUser={logoutUser}
-        onInvite={onInvite}
+        onShare={onShare}
         persistenceErrorMessage={persistenceErrorMessage}
         collaborationErrorMessage={collaborationErrorMessage}
         creationErrorMessage={creationErrorMessage}

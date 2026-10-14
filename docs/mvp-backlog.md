@@ -3986,7 +3986,7 @@ Completar **Canvas toolbar** dejando un resultado verificable y apto para las ta
 
 ### TASK-107 — Share dialog
 
-**Priority:** P0 · **Depends:** TASK-104, TASK-093 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-104, TASK-093 · **Status:** DONE
 
 #### Objetivo
 
@@ -4000,12 +4000,12 @@ Completar **Share dialog** dejando un resultado verificable y apto para las tare
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Los estados loading/error/empty relevantes son explícitos.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Los estados loading/error/empty relevantes son explícitos.
 
 #### Fuera de alcance
 
@@ -5085,6 +5085,15 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) toolbar de **click-to-create** en el centro del viewport (sin "modo herramienta" persistente), acordado con el usuario, para no introducir estado de interacción nuevo; (2) la lógica pura de creación vive en Application (`element-creation`) y el cableado/estado en el contenedor, respetando Clean/Hexagonal y evitando meter dominio en Presentation; (3) el connector se crea desde la selección (exactamente 2), con posición/tamaño = bounds union, en vez de crear un elemento huérfano; (4) "Fit view" se añade a la toolbar y se mantiene "Reset view" en `ViewportControls` (no se duplica); (5) la creación usa `generateElementId` como única fuente de ids y reutiliza `commitElements` para historial/persistencia/undo-redo, sin un camino paralelo; (6) errores de validación de creación con mensaje propio y explícito; (7) sin ADR por ser decisiones locales de Presentation/composición sobre patrones ya documentados.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-107 (Share dialog).
+
+## 2026-10-14 — TASK-107
+
+- Resultado: **Share dialog** end-to-end (invitar + gestionar quién tiene acceso). Application: nueva query `createListWorkspaceMembers(membershipRepository)` (`src/application/queries/list-workspace-members.ts`), union `ok (members) | error (AppError)` con orden determinista `sortWorkspaceMembers` (owner → editor → viewer, desempate por `userId` asc); exportada en `queries/index.ts` y compuesta en `workspace-services.ts`. Presentation: nueva feature `src/presentation/features/sharing/` con `ShareDialog` (`Dialog` + `Tabs` "Invite"/"People", fetch de miembros al abrir, refresco tras mutación, `onLeft` al salir, estados loading/error+retry/empty), `MembersList` (Avatar + `userId` truncado a 8, badge "You", `Select` de rol, Remove y Leave condicionados) y `share-error-messages.ts`; el antiguo `InviteDialog` se degrada a `InvitePanel` (`active`) y se reutiliza dentro de la pestaña Invite (sustituye a `invite-dialog.tsx`).
+- Wiring: `App.tsx → AppRoutes → WorkspaceShellPage → WorkspaceShellContainer` propagan `listWorkspaceMembers`, `changeMemberRole`, `removeMember`, `leaveWorkspace` (props opcionales, junto a `inviteMember`/`listPendingInvitations`); el top bar renombra `onInvite`→`onShare` (botón **Share** visible a todos los miembros; dentro, las acciones se gatean con `can(...)`). `canShare` exige `localUserId` + servicios + rol resuelto cuando los guards están cableados.
+- Tests/quality gates: 158 suites / 1822 tests en verde (+4 suites: `list-workspace-members.test.ts`, `members-list.test.tsx`, `share-dialog.test.tsx`, `share-error-messages.test.ts`; `invite-dialog.test.tsx` migrado a `invite-panel.test.tsx`; `workspace-top-bar.test.tsx` y `workspace-shell-container.test.tsx` actualizados — Share sin servicios, apertura desde el header, viewer con Share pero sin pestaña Invite, editor con pestaña Invite, membership desconocida sin Share). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase). Smoke manual con `npm run dev` pendiente (no se crean usuarios reales desde el agente).
+- Decisiones: (1) una sola superficie "Share" (invitar + miembros) en vez de dos diálogos; (2) identidad de miembro = `userId` truncado (últimos 8) + `Avatar`, reutilizando el criterio de la presencia y evitando un directorio de usuarios inexistente; (3) el fetch de miembros vive en `ShareDialog` (refresco tras rol/eliminar) y el contenedor solo compone; (4) el miembro actual no puede cambiarse rol ni eliminarse desde la lista — sus acciones van por "Leave workspace"; (5) Share visible a todos los miembros (viewer incluido) con acciones internas gateadas por permiso; (6) sin invariante de "último owner" (se mantiene la decisión de TASK-099/100/101). ADR-0024 documenta la decisión.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-108 (Loading/error/empty states).
 
 ---
 
