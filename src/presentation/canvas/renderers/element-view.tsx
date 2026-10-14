@@ -22,6 +22,7 @@ export function ElementView({ element, selected, renderers }: ElementViewProps):
 
   return (
     <Wrapper
+      id={`element-${element.id.value}`}
       data-selectable="true"
       data-selected={selected}
       data-element-type={element.type}

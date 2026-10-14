@@ -123,7 +123,7 @@ describe('Canvas', () => {
     expect(screen.getByRole('application', { name: 'Canvas' })).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo',
+        'Arrow keys to move selection · Shift + Arrow to extend selection · Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo',
       ),
     ).toBeInTheDocument();
   });
@@ -147,7 +147,7 @@ describe('Canvas', () => {
     expect(canvas).toHaveAttribute('tabindex', '0');
     expect(canvas).toHaveAttribute(
       'aria-keyshortcuts',
-      'Escape Control+A Meta+A Delete Control+D Meta+D Control+C Meta+C Control+V Meta+V Control+Z Meta+Z Control+Shift+Z Meta+Shift+Z Control+Y Meta+Y',
+      'ArrowUp ArrowDown ArrowLeft ArrowRight Escape Control+A Meta+A Delete Control+D Meta+D Control+C Meta+C Control+V Meta+V Control+Z Meta+Z Control+Shift+Z Meta+Shift+Z Control+Y Meta+Y',
     );
   });
 
@@ -532,6 +532,59 @@ describe('Canvas', () => {
         selectionStore.select('first');
       });
       await user.keyboard('{Escape}');
+
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['first']);
+    });
+  });
+
+  describe('keyboard navigation', () => {
+    it('selects the first item on the first arrow when focused', async () => {
+      const { selectionStore } = renderCanvas([FIRST_ITEM, SECOND_ITEM]);
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const user = userEvent.setup();
+
+      canvas.focus();
+      await user.keyboard('{ArrowRight}');
+
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['first']);
+      expect(canvas).toHaveAttribute('data-active-id', 'first');
+      expect(canvas).toHaveAttribute('aria-activedescendant', 'element-first');
+    });
+
+    it('moves the selection to the neighbour in the direction', async () => {
+      const { selectionStore } = renderCanvas([FIRST_ITEM, SECOND_ITEM]);
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const user = userEvent.setup();
+
+      canvas.focus();
+      await user.keyboard('{ArrowRight}{ArrowRight}');
+
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['second']);
+      expect(canvas).toHaveAttribute('aria-activedescendant', 'element-second');
+      expect(screen.getByTestId('canvas-item-second')).toHaveAttribute('data-selected', 'true');
+    });
+
+    it('extends the selection with shift', async () => {
+      const { selectionStore } = renderCanvas([FIRST_ITEM, SECOND_ITEM]);
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const user = userEvent.setup();
+
+      canvas.focus();
+      await user.keyboard('{ArrowRight}');
+      await user.keyboard('{Shift>}{ArrowRight}{/Shift}');
+
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['first', 'second']);
+      expect(canvas).toHaveAttribute('aria-activedescendant', 'element-second');
+    });
+
+    it('ignores navigation when not focused', async () => {
+      const { selectionStore } = renderCanvas([FIRST_ITEM, SECOND_ITEM]);
+      const user = userEvent.setup();
+
+      act(() => {
+        selectionStore.select('first');
+      });
+      await user.keyboard('{ArrowRight}');
 
       expect(selectionStore.getSnapshot().selectedIds).toEqual(['first']);
     });

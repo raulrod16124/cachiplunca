@@ -4055,7 +4055,7 @@ Completar **Loading/error/empty states** dejando un resultado verificable y apto
 
 ### TASK-109 — Keyboard navigation
 
-**Priority:** P0 · **Depends:** TASK-062 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-062 · **Status:** DONE
 
 #### Objetivo
 
@@ -4067,15 +4067,23 @@ Completar **Keyboard navigation** dejando un resultado verificable y apto para l
 - Integrarlo con las capas existentes sin romper sus límites.
 - Añadir o actualizar tests relevantes.
 
+#### Implementación
+
+- `src/application/services/canvas-navigation.ts`: `resolveNavigationKey` (normaliza flechas + `Shift`) y `findNextSelectable` (navegación espacial por proyección de centros, con desempate determinista).
+- `src/presentation/canvas/hooks/use-canvas-navigation.ts`: listener de teclado sobre el contenedor, estado efímero `activeId` sincronizado con la selección, ignora editables y repeticiones.
+- `src/presentation/canvas/components/canvas.tsx`: expone `aria-activedescendant`, `data-active-id`, amplía `aria-keyshortcuts` y el hint con las flechas.
+- `src/presentation/canvas/renderers/element-view.tsx`: `id="element-<id>"` estable para `aria-activedescendant`.
+- Sin ancla o ancla inválida selecciona el primer ítem; sin candidato no navega.
+
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Los estados loading/error/empty relevantes son explícitos.
-- [ ] La interacción principal es navegable con teclado y mantiene foco predecible.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Los estados loading/error/empty relevantes son explícitos.
+- [x] La interacción principal es navegable con teclado y mantiene foco predecible.
 
 #### Fuera de alcance
 
@@ -5104,6 +5112,15 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) consolidar sobre los componentes compartidos de TASK-104 (elegido por el usuario) en vez de solo auditar huecos; (2) extensiones mínimas y justificadas (`label`/`children` en `LoadingState`, acción secundaria y `titleAs` en `ErrorState`/`EmptyState`) sin abstracciones especulativas; (3) título como `Heading` con `titleAs` para respetar `h1` en páginas y `h2`/`h3` en paneles; (4) cambios solo en Presentation —Domain/Application/Infrastructure intactos—; (5) empty board explícito pedido por el usuario, reutilizando `EmptyState` dentro del overlay del canvas; (6) sin ADR por ser decisiones locales de Presentation sobre patrones ya documentados.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-109 (Keyboard navigation).
+
+## 2026-10-14 — TASK-109
+
+- Resultado: **Keyboard navigation** espacial en el canvas, con foco predecible y `aria-activedescendant`. Application: nuevo `src/application/services/canvas-navigation.ts` (`resolveNavigationKey` normaliza las cuatro flechas + `Shift` como aditivo, ignora `Ctrl`/`Meta`/`Alt`; `findNextSelectable(items, currentId, direction)` proyecta los centros sobre el eje de la dirección, exige candidato con proyección primaria `> 0.001`, puntúa `primary + secondary * 2` y desempata por secundario → primario → orden de entrada; sin ancla o ancla desconocida devuelve el primer ítem, sin candidato `null`), reutilizando `SelectableItem` de `canvas-hit-test`; exportado en `services/index.ts`.
+- Presentation: nuevo `src/presentation/canvas/hooks/use-canvas-navigation.ts` (listener `keydown` en el contenedor, estado efímero `activeId` vía refs sincronizado con la selección externa —si el activo no está seleccionado toma el último seleccionado—, ignora `event.repeat` y targets editables, `preventDefault()` solo cuando la tecla se resuelve y emite `onNavigate(id, additive)`). Cableado en `canvas.tsx`: `handleNavigate` → `selectionStore.select`/`addMany`, `aria-activedescendant="element-<id>"`, `data-active-id`, `aria-keyshortcuts` y hint ampliados con las flechas, `canvasNavigationRef` fusionado en `setContainerRef` y `disabled={readOnly}`. `element-view.tsx` añade `id="element-<id>"` estable.
+- Tests/quality gates: 160 suites / 1858 tests en verde (+2 suites / +27: `canvas-navigation.test.ts` —11: resolución de teclas y búsqueda espacial con vector/alineación/desempate/fallback—, `use-canvas-navigation.test.tsx` —12: navegación, extensión con Shift, id activo, editables, modificadores, `disabled`, `preventDefault`, repeat y cleanup—, y 4 de integración en `canvas.test.tsx` —selección inicial, movimiento, extensión con Shift e inerte sin foco—; actualizadas las assertions de hint y `aria-keyshortcuts`). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase). Smoke manual con `npm run dev` pendiente (no se crean usuarios reales desde el agente).
+- Decisiones: (1) alcance = navegación espacial + `aria-activedescendant`; el focus trap/roving tabindex/restauración quedan en TASK-110, acordado con el usuario; (2) `Shift + flecha` extiende la multiselección (confirmado con el usuario); (3) el resolver vive en Application (puro y testeable sin DOM) y el listener en Presentation, manteniendo los límites de capas; (4) el ancla de navegación es efímera en el hook y se sincroniza con la selección externa, sin introducir estado en el store; (5) `resolveSelectionKeyCommand` no cambia —las flechas siguen devolviendo `null`— evitando regresión; (6) sin ADR por ser una decisión local de interacción sobre patrones documentados. Nombres/roles accesibles por elemento quedan para TASK-111.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-110 (Focus management).
 
 ---
 

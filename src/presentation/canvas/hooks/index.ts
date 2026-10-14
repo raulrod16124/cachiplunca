@@ -33,6 +33,11 @@ export type { UseElementUndoOptions, UseElementUndoResult } from './use-element-
 export { useElementRedo } from './use-element-redo';
 export type { UseElementRedoOptions, UseElementRedoResult } from './use-element-redo';
 export { useSpacePressed } from './use-space-pressed';
+export { useCanvasNavigation } from './use-canvas-navigation';
+export type {
+  UseCanvasNavigationOptions,
+  UseCanvasNavigationResult,
+} from './use-canvas-navigation';
 export { useSelectionKeyboard } from './use-selection-keyboard';
 export type {
   UseSelectionKeyboardOptions,

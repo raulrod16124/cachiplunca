@@ -15,6 +15,7 @@ import {
   elementContentBounds,
   toSelectableItems,
 } from '../../../application/services';
+import { useCanvasNavigation } from '../hooks/use-canvas-navigation';
 import { useCursorBroadcast } from '../hooks/use-cursor-broadcast';
 import { useDragSelection } from '../hooks/use-drag-selection';
 import { useElementCopyPaste } from '../hooks/use-element-copy-paste';
@@ -112,7 +113,7 @@ const Hint = styled.div`
 const CANVAS_GRID = Grid.default();
 
 const CANVAS_SHORTCUTS =
-  'Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo';
+  'Arrow keys to move selection · Shift + Arrow to extend selection · Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo';
 
 export interface CanvasProps {
   readonly store: CanvasViewportStore;
@@ -223,6 +224,18 @@ export function Canvas({
     selectionStore.clear();
   }, [selectionStore]);
 
+  const handleNavigate = useCallback(
+    (id: string, additive: boolean) => {
+      if (additive) {
+        selectionStore.addMany([id]);
+        return;
+      }
+
+      selectionStore.select(id);
+    },
+    [selectionStore],
+  );
+
   const { ref: selectionRef } = useSelection({
     items,
     viewport,
@@ -264,6 +277,13 @@ export function Canvas({
     allIds,
     onClear: handleClear,
     onSelectAll: handleSelectAll,
+  });
+
+  const { activeId, ref: canvasNavigationRef } = useCanvasNavigation({
+    items,
+    selectedIds: selection.selectedIds,
+    onNavigate: handleNavigate,
+    disabled: readOnly,
   });
 
   const { ref: elementDeleteRef } = useElementDelete({
@@ -376,6 +396,7 @@ export function Canvas({
       selectionRef.current = node;
       dragSelectionRef.current = node;
       selectionKeyboardRef.current = node;
+      canvasNavigationRef.current = node;
       elementMoveRef.current = node;
       elementResizeRef.current = node;
       elementDeleteRef.current = node;
@@ -391,6 +412,7 @@ export function Canvas({
       selectionRef,
       dragSelectionRef,
       selectionKeyboardRef,
+      canvasNavigationRef,
       elementMoveRef,
       elementResizeRef,
       elementDeleteRef,
@@ -429,9 +451,11 @@ export function Canvas({
       role="application"
       aria-label="Canvas"
       aria-readonly={readOnly}
-      aria-keyshortcuts="Escape Control+A Meta+A Delete Control+D Meta+D Control+C Meta+C Control+V Meta+V Control+Z Meta+Z Control+Shift+Z Meta+Shift+Z Control+Y Meta+Y"
+      aria-activedescendant={activeId === null ? undefined : `element-${activeId}`}
+      aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Escape Control+A Meta+A Delete Control+D Meta+D Control+C Meta+C Control+V Meta+V Control+Z Meta+Z Control+Shift+Z Meta+Shift+Z Control+Y Meta+Y"
       aria-grabbed={isPanning}
       tabIndex={0}
+      data-active-id={activeId ?? undefined}
       data-panning={isPanning}
       data-pan-key={spacePressed}
       data-selecting={marqueeRect !== null}
