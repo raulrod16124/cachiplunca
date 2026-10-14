@@ -1275,5 +1275,40 @@ describe('Canvas', () => {
 
       expect(store.getSnapshot().transform.scale).not.toBe(1);
     });
+
+    it('navigates toolbar controls without changing the canvas selection', async () => {
+      const { selectionStore } = renderToolbarCanvas({
+        elements: [FIRST_ITEM, SECOND_ITEM],
+        onCreateElement: jest.fn(),
+      });
+      const user = userEvent.setup();
+
+      act(() => screen.getByRole('button', { name: 'Add text' }).focus());
+      await user.keyboard('{ArrowRight}');
+
+      expect(screen.getByRole('button', { name: 'Add note' })).toHaveFocus();
+      expect(selectionStore.getSnapshot().selectedIds).toEqual([]);
+      expect(screen.queryByTestId('selection-overlay')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('focus management', () => {
+    it('focuses the canvas when pressing on an empty area', () => {
+      renderCanvas([FIRST_ITEM, SECOND_ITEM]);
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      fireEvent.pointerDown(canvas, { button: 0 });
+
+      expect(canvas).toHaveFocus();
+    });
+
+    it('does not focus the canvas when pressing a toolbar control', () => {
+      renderCanvas([FIRST_ITEM, SECOND_ITEM]);
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      fireEvent.pointerDown(screen.getByRole('button', { name: 'Fit view' }), { button: 0 });
+
+      expect(canvas).not.toHaveFocus();
+    });
   });
 });

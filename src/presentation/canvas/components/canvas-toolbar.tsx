@@ -15,6 +15,7 @@ import type { ReactElement, ReactNode } from 'react';
 import styled from 'styled-components';
 import type { ElementType } from '../../../domain/element';
 import { ToolbarButton } from '../../components';
+import { useRovingFocus } from '../../hooks';
 
 const ICON_SIZE = 16;
 
@@ -112,8 +113,11 @@ export function CanvasToolbar({
   hasSelection = false,
   canCreateConnector = false,
 }: CanvasToolbarProps): ReactElement {
+  const { ref } = useRovingFocus<HTMLDivElement>();
+
   return (
     <Bar
+      ref={ref}
       role="toolbar"
       aria-label="Canvas toolbar"
       aria-orientation="horizontal"

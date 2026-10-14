@@ -16,6 +16,7 @@ import {
   toSelectableItems,
 } from '../../../application/services';
 import { useCanvasNavigation } from '../hooks/use-canvas-navigation';
+import { useCanvasFocus } from '../hooks/use-canvas-focus';
 import { useCursorBroadcast } from '../hooks/use-cursor-broadcast';
 import { useDragSelection } from '../hooks/use-drag-selection';
 import { useElementCopyPaste } from '../hooks/use-element-copy-paste';
@@ -164,6 +165,7 @@ export function Canvas({
   const spacePressed = useSpacePressed();
   const { isPanning, ref: panRef } = usePan({ onPan: store.pan, spacePressed });
   const { ref: zoomRef } = useZoom({ onZoom: store.zoom });
+  const { ref: canvasFocusRef } = useCanvasFocus();
   const handleCursorMove = useCallback(
     (position: Position) => {
       onCursorMove?.(position);
@@ -405,6 +407,7 @@ export function Canvas({
       elementUndoRef.current = node;
       elementRedoRef.current = node;
       cursorBroadcastRef.current = node;
+      canvasFocusRef.current = node;
     },
     [
       panRef,
@@ -421,6 +424,7 @@ export function Canvas({
       elementUndoRef,
       elementRedoRef,
       cursorBroadcastRef,
+      canvasFocusRef,
     ],
   );
 

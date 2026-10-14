@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { act, fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ComponentProps } from 'react';
 import { render } from '../../../../setup/render-with-theme';
@@ -123,5 +123,44 @@ describe('CanvasToolbar', () => {
     await user.click(screen.getByRole('button', { name: 'Fit view' }));
 
     expect(onFitView).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps a single tab stop and moves focus with arrows', async () => {
+    const user = userEvent.setup();
+    renderToolbar();
+
+    const addText = screen.getByRole('button', { name: 'Add text' });
+    const addNote = screen.getByRole('button', { name: 'Add note' });
+
+    expect(addText).toHaveAttribute('tabindex', '0');
+    expect(addNote).toHaveAttribute('tabindex', '-1');
+
+    act(() => addText.focus());
+    await user.keyboard('{ArrowRight}');
+
+    expect(addNote).toHaveFocus();
+    expect(addNote).toHaveAttribute('tabindex', '0');
+  });
+
+  it('places the tab stop on the first enabled control when creation is unavailable', () => {
+    renderToolbar({ canCreate: false });
+
+    expect(screen.getByRole('button', { name: 'Fit view' })).toHaveAttribute('tabindex', '0');
+    expect(screen.getByRole('button', { name: 'Add text' })).toBeDisabled();
+  });
+
+  it('does not let handled keys escape the toolbar', () => {
+    renderToolbar();
+
+    const onDocumentKeyDown = jest.fn();
+    document.addEventListener('keydown', onDocumentKeyDown);
+
+    const addText = screen.getByRole('button', { name: 'Add text' });
+    act(() => addText.focus());
+    fireEvent.keyDown(addText, { key: 'ArrowRight' });
+
+    document.removeEventListener('keydown', onDocumentKeyDown);
+
+    expect(onDocumentKeyDown).not.toHaveBeenCalled();
   });
 });

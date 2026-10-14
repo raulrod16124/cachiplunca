@@ -4099,7 +4099,7 @@ Completar **Keyboard navigation** dejando un resultado verificable y apto para l
 
 ### TASK-110 — Focus management
 
-**Priority:** P0 · **Depends:** TASK-104 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-104 · **Status:** DONE
 
 #### Objetivo
 
@@ -4111,15 +4111,23 @@ Completar **Focus management** dejando un resultado verificable y apto para las 
 - Integrarlo con las capas existentes sin romper sus límites.
 - Añadir o actualizar tests relevantes.
 
+#### Implementación
+
+- `src/presentation/canvas/hooks/use-canvas-focus.ts`: listener `pointerdown` sobre el contenedor del canvas que mueve el foco al lienzo (`focus({ preventScroll: true })`) salvo que el objetivo sea interactivo (`button, a, input, textarea, select, [contenteditable="true"], [role="button"]`) o ya esté enfocado; `disabled` respeta el modo solo lectura.
+- `src/presentation/hooks/use-roving-focus.ts`: hook compartido de **roving tabindex** para barras de herramientas. Un único `tabIndex=0` (primer control habilitado), el resto `-1`; flechas/`Home`/`End` por orientación (`horizontal`/`vertical`/`both`), ignora deshabilitados (`disabled`/`aria-disabled`), hace `preventDefault` + `stopPropagation` (las flechas no escapan al canvas), mantiene el índice en `focusin`, re-sincroniza el tope de tabulación en cada render (`useLayoutEffect`) y recupera el foco al siguiente control habilitado si el control activo se deshabilita.
+- `src/presentation/canvas/components/canvas-toolbar.tsx`: la `role="toolbar"` usa `useRovingFocus` (orientación `both` para consumir flechas verticales y horizontales).
+- `src/presentation/canvas/components/canvas.tsx`: `canvasFocusRef` fusionado en `setContainerRef`.
+- Reutiliza sin reimplementar el focus-trap, la restauración de foco y el dismiss (Escape/backdrop) que ya aporta `Dialog.Content` de `@raulrod/ui`; la barra de herramienta, `DropdownMenu`, `Popover`, `Select` y `Tabs` ya tenían su propio roving/focus-return.
+
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Los estados loading/error/empty relevantes son explícitos.
-- [ ] La interacción principal es navegable con teclado y mantiene foco predecible.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Los estados loading/error/empty relevantes son explícitos.
+- [x] La interacción principal es navegable con teclado y mantiene foco predecible.
 
 #### Fuera de alcance
 
@@ -5121,6 +5129,15 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) alcance = navegación espacial + `aria-activedescendant`; el focus trap/roving tabindex/restauración quedan en TASK-110, acordado con el usuario; (2) `Shift + flecha` extiende la multiselección (confirmado con el usuario); (3) el resolver vive en Application (puro y testeable sin DOM) y el listener en Presentation, manteniendo los límites de capas; (4) el ancla de navegación es efímera en el hook y se sincroniza con la selección externa, sin introducir estado en el store; (5) `resolveSelectionKeyCommand` no cambia —las flechas siguen devolviendo `null`— evitando regresión; (6) sin ADR por ser una decisión local de interacción sobre patrones documentados. Nombres/roles accesibles por elemento quedan para TASK-111.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-110 (Focus management).
+
+## 2026-10-14 — TASK-110
+
+- Resultado: **Focus management** completo, cerrando lo diferido por TASK-109 (focus trap / roving tabindex / restauración). Presentation: nuevo hook compartido `src/presentation/hooks/use-roving-focus.ts` (roving tabindex reutilizable: un único `tabIndex=0` en el primer control habilitado, resto `-1`; flechas + `Home`/`End` con orientación `horizontal`/`vertical`/`both`; ignora `disabled`/`aria-disabled`; `preventDefault`+`stopPropagation` para que las flechas no escapen al canvas; índice sincronizado en `focusin`; re-sincroniza el tope de tabulación en cada render con `useLayoutEffect`; recupera el foco al siguiente control habilitado si el activo se deshabilita, por `focusout` real o por re-render cuando el foco salió del contenedor) y nuevo hook `src/presentation/canvas/hooks/use-canvas-focus.ts` (al `pointerdown` sobre el lienzo mueve el foco a `role="application"` salvo objetivo interactivo o ya enfocado; `disabled` en solo lectura).
+- Integración: `canvas-toolbar.tsx` aplica `useRovingFocus` a la `role="toolbar"` (orientación `both`); `canvas.tsx` fusiona `canvasFocusRef` en `setContainerRef`; ambos hooks exportados en sus barrels. Se **reutiliza sin reimplementar** el focus-trap, la restauración de foco y el dismiss (Escape/backdrop) que ya aporta `Dialog.Content` de `@raulrod/ui` (la toolbar y el botón **Share** son de App, el `Dialog` es de la librería), y el roving/focus-return preexistente de `DropdownMenu`/`Popover`/`Select`/`Tabs`.
+- Tests/quality gates: 162 suites / 1882 tests en verde (+2 suites / +24: `use-roving-focus.test.tsx` —9: tope único, flechas, wrap, Home/End, orientación, `stopPropagation`, retención al deshabilitarse y `disabled`—, `use-canvas-focus.test.tsx` —4: foco en zona no interactiva, no roba foco a controles, `disabled`, cleanup—, más `canvas-toolbar.test.tsx` —3: tope único + flechas, primer control habilitado sin creación, teclas no escapan—, `canvas.test.tsx` —3: foco al pulsar zona vacía, no roba foco en control, flechas de la toolbar no cambian la selección— y `create-workspace-dialog.test.tsx`/`share-dialog.test.tsx` —2+2: foco inicial en el panel y cierre con Escape— y `workspace-shell-container.test.tsx` —1: restaurar foco al botón **Share**—). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase). Smoke manual con `npm run dev` pendiente (no se crean usuarios reales desde el agente).
+- Decisiones: (1) alcance "completo" acordado con el usuario = foco del canvas + roving de la toolbar + tests de trap/restauración de diálogos, sin reimplementar lo que ya hace `@raulrod/ui`; (2) el roving tabindex vive en un hook **compartido** en `src/presentation/hooks` (reutilizable por futuras barras), no dentro del canvas; (3) las flechas de la toolbar hacen `stopPropagation` porque la toolbar está **dentro** del contenedor del canvas, de modo que `use-canvas-navigation` no reciba el evento (y un test lo verifica explícitamente); (4) la recuperación de foco al deshabilitarse el control activo se cubre por dos vías (evento `focusout` en navegador real y re-sincronización en re-render) para mantener el tope de tabulación siempre válido; (5) sin ADR por ser decisiones locales de Presentation sobre patrones de interacción ya documentados. Nombres/roles accesibles por elemento quedan para TASK-111.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-111 (Canvas accessibility strategy).
 
 ---
 

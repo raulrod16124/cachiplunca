@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import {
   createCreateWorkspace,
   type CreateWorkspace,
@@ -144,6 +145,25 @@ describe('CreateWorkspaceDialog', () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(createWorkspace).not.toHaveBeenCalled();
     expect(onCreated).not.toHaveBeenCalled();
+  });
+
+  it('moves focus into the dialog when it opens', () => {
+    const repository = new FakeWorkspaceRepository();
+    const createWorkspace = jest.fn(createCreateWorkspace(repository));
+    renderDialog(createWorkspace);
+
+    expect(screen.getByRole('dialog')).toHaveFocus();
+  });
+
+  it('closes on Escape', async () => {
+    const repository = new FakeWorkspaceRepository();
+    const createWorkspace = jest.fn(createCreateWorkspace(repository));
+    const { onOpenChange } = renderDialog(createWorkspace);
+    const user = userEvent.setup();
+
+    await user.keyboard('{Escape}');
+
+    expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
   it('resets the fields when reopened', () => {

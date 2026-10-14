@@ -43,3 +43,5 @@ export type {
   UseSelectionKeyboardOptions,
   UseSelectionKeyboardResult,
 } from './use-selection-keyboard';
+export { useCanvasFocus } from './use-canvas-focus';
+export type { UseCanvasFocusOptions, UseCanvasFocusResult } from './use-canvas-focus';

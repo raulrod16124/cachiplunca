@@ -1452,6 +1452,39 @@ describe('WorkspaceShellContainer', () => {
     expect(await screen.findByText('No pending invitations.')).toBeInTheDocument();
   });
 
+  it('returns focus to the Share entry point when the dialog closes', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const invitationRepository = new FakeInvitationRepository();
+    const membershipRepository = new FakeMembershipRepository();
+    await seedMembership(membershipRepository, 'user-local', 'owner');
+    const inviteMember: InviteMember = createInviteMember({
+      invitationRepository,
+      generateId: () => InvitationId.create('inv-1'),
+      issueToken: async () => ({ token: 'token-abc', tokenHash: 'hash-abc' }),
+      now: () => new Date('2026-01-01T00:00:00.000Z'),
+    });
+
+    renderContainer(getWorkspace, {
+      localUserId: 'user-local',
+      inviteMember,
+      listPendingInvitations: createListPendingInvitations(invitationRepository),
+      listWorkspaceMembers: createListWorkspaceMembers(membershipRepository),
+      leaveWorkspace: createLeaveWorkspace(membershipRepository),
+      changeMemberRole: createChangeMemberRole(membershipRepository),
+      removeMember: createRemoveMember(membershipRepository),
+    });
+
+    const user = userEvent.setup();
+    const shareButton = await screen.findByRole('button', { name: 'Share' });
+    await user.click(shareButton);
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(shareButton).toHaveFocus();
+  });
+
   it('shows the share entry point to viewers and hides the invite tab', async () => {
     const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
     const invitationRepository = new FakeInvitationRepository();

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import {
   createChangeMemberRole,
   createInviteMember,
@@ -77,6 +78,26 @@ describe('ShareDialog', () => {
 
     expect(await screen.findByText('user-b')).toBeInTheDocument();
     expect(screen.getByText('You')).toBeInTheDocument();
+  });
+
+  it('moves focus into the dialog when it opens', async () => {
+    const repository = new FakeMembershipRepository();
+    await seed(repository, CURRENT_USER_ID, 'owner');
+
+    renderDialog(repository);
+
+    expect(await screen.findByRole('dialog')).toHaveFocus();
+  });
+
+  it('closes on Escape', async () => {
+    const repository = new FakeMembershipRepository();
+    await seed(repository, CURRENT_USER_ID, 'owner');
+    const { onOpenChange } = renderDialog(repository);
+    const user = userEvent.setup();
+
+    await user.keyboard('{Escape}');
+
+    expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
   it('shows an error state when members cannot be loaded', async () => {
