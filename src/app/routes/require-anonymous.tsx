@@ -5,7 +5,12 @@ import { useSession } from '../providers/session-provider';
 
 export function resolveRedirect(search: string): string | null {
   const redirect = new URLSearchParams(search).get('redirect');
-  if (redirect === null || !redirect.startsWith('/') || redirect.startsWith('//')) {
+  if (
+    redirect === null ||
+    !redirect.startsWith('/') ||
+    redirect.startsWith('//') ||
+    redirect.includes('\\')
+  ) {
     return null;
   }
   return redirect;

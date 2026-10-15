@@ -4490,7 +4490,7 @@ Completar **Error handling audit** dejando un resultado verificable y apto para 
 
 ### TASK-120 — Security audit
 
-**Priority:** P0 · **Depends:** TASK-098 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-098 · **Status:** DONE
 
 #### Objetivo
 
@@ -4504,12 +4504,12 @@ Completar **Security audit** dejando un resultado verificable y apto para las ta
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Los hallazgos quedan clasificados por severidad y con acción concreta.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Los hallazgos quedan clasificados por severidad y con acción concreta.
 
 #### Fuera de alcance
 
@@ -4629,7 +4629,7 @@ Completar **MVP documentation** dejando un resultado verificable y apto para las
 
 ### TASK-124 — Final MVP validation
 
-**Priority:** P0 · **Depends:** TASK-119, TASK-120, TASK-122, TASK-123 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-119, TASK-120, TASK-122, TASK-123, TASK-126 · **Status:** TODO
 
 #### Objetivo
 
@@ -4661,6 +4661,107 @@ Ejecutar la validación final del MVP y confirmar que es entregable.
 - Application depende de ports, no de implementaciones concretas.
 - Infrastructure contiene adapters concretos.
 - Presentation concentra React, UI y composición de dependencias.
+
+### TASK-125 — Error Boundary global
+
+**Priority:** P1 · **Depends:** TASK-116 · **Status:** TODO
+
+#### Objetivo
+
+Evitar que un error de render no controlado deje la aplicación en blanco, ofreciendo un fallback recuperable y capturando errores globales.
+
+#### Alcance
+
+- `ErrorBoundary` en el root con fallback recuperable.
+- Handlers globales `window.error` y `window.unhandledrejection`.
+- Tests relevantes del fallback y de la recuperación.
+
+#### Criterios de aceptación
+
+- [ ] Un error de render muestra un fallback en lugar de una pantalla en blanco.
+- [ ] Los errores globales quedan capturados sin romper la app.
+- [ ] Los tests relevantes pasan sin regresiones.
+- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+
+#### Fuera de alcance
+
+- No ampliar el alcance más allá de lo descrito en esta tarea.
+- No introducir telemetría ni servicios externos.
+
+#### Constraints técnicos
+
+- Domain no importa React, Firebase, styled-components, `@raulrod/ui` ni APIs del navegador.
+- Application depende de ports, no de implementaciones concretas.
+- Presentation concentra React, UI y composición de dependencias.
+
+### TASK-126 — Cerrar escalada por self-join de membership
+
+**Priority:** P0 · **Depends:** TASK-098, TASK-094 · **Status:** TODO
+
+#### Objetivo
+
+Impedir que un usuario autenticado pueda auto-asignarse un rol (incluido `owner`) en cualquier workspace mediante `memberships.create`, manteniendo la aceptación legítima de invitaciones.
+
+#### Alcance
+
+- Anclar la creación de membership a una invitación válida (email, workspace, rol, estado `pending`) o a la propiedad del workspace en la ruta de creación.
+- Acotar el rol otorgable en invitaciones según el rol del actor (solo `owner` concede `owner`).
+- Actualizar dominio/puertos/adaptadores y `firestore.rules` de forma coherente.
+- Tests de reglas e integración que reproduzcan y cierren la escalada.
+
+#### Criterios de aceptación
+
+- [ ] Un autenticado sin invitación válida no puede crear una membership con rol elevado.
+- [ ] Aceptar una invitación válida sigue funcionando con el rol de la invitación.
+- [ ] Un editor no puede otorgar el rol `owner`.
+- [ ] Los tests relevantes pasan sin regresiones.
+- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+
+#### Fuera de alcance
+
+- No ampliar el alcance más allá de lo descrito en esta tarea.
+- No confiar exclusivamente en guards del frontend.
+
+#### Constraints técnicos
+
+- Domain no importa React, Firebase, styled-components, `@raulrod/ui` ni APIs del navegador.
+- Application depende de ports, no de implementaciones concretas.
+- Infrastructure contiene adapters concretos.
+- La autorización efectiva debe existir en backend/rules; la UI solo refleja permisos.
+- Requiere ADR por el cambio de modelo de autorización.
+
+### TASK-127 — Acotar lecturas globales y verificación de email
+
+**Priority:** P1 · **Depends:** TASK-098 · **Status:** TODO
+
+#### Objetivo
+
+Reducir la exposición de datos de `workspaces`/`invitations` a los miembros y endurecer el accept con email verificado.
+
+#### Alcance
+
+- Acotar `workspaces.read` e `invitations.read` a membership, con los índices necesarios.
+- Exigir `email_verified` en el accept de invitación e introducir (o documentar) el flujo de verificación.
+- Tests de reglas correspondientes.
+
+#### Criterios de aceptación
+
+- [ ] Un autenticado no puede enumerar workspaces/invitaciones de los que no es miembro.
+- [ ] El accept solo procede con email verificado.
+- [ ] Los tests relevantes pasan sin regresiones.
+- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+
+#### Fuera de alcance
+
+- No ampliar el alcance más allá de lo descrito en esta tarea.
+- No confiar exclusivamente en guards del frontend.
+
+#### Constraints técnicos
+
+- Domain no importa React, Firebase, styled-components, `@raulrod/ui` ni APIs del navegador.
+- Application depende de ports, no de implementaciones concretas.
+- Infrastructure contiene adapters concretos.
+- La autorización efectiva debe existir en backend/rules; la UI solo refleja permisos.
 
 ---
 

@@ -81,6 +81,7 @@ describe('RequireAnonymous', () => {
 describe('resolveRedirect', () => {
   it('accepts internal paths', () => {
     expect(resolveRedirect('?redirect=/invitations/token-1')).toBe('/invitations/token-1');
+    expect(resolveRedirect('?redirect=/invitations/token%2F1')).toBe('/invitations/token/1');
   });
 
   it('rejects missing, external and protocol-relative targets', () => {
@@ -88,5 +89,11 @@ describe('resolveRedirect', () => {
     expect(resolveRedirect('?redirect=https://evil.test')).toBeNull();
     expect(resolveRedirect('?redirect=//evil.test')).toBeNull();
     expect(resolveRedirect('?redirect=relative')).toBeNull();
+  });
+
+  it('rejects backslash targets that browsers normalize into protocol-relative URLs', () => {
+    expect(resolveRedirect('?redirect=/\\evil.test')).toBeNull();
+    expect(resolveRedirect('?redirect=/%5Cevil.test')).toBeNull();
+    expect(resolveRedirect('?redirect=/workspaces\\..\\evil.test')).toBeNull();
   });
 });

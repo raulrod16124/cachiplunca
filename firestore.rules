@@ -75,7 +75,8 @@ service cloud.firestore {
       allow create: if hasRole(request.resource.data.workspaceId, ['owner', 'editor'])
         && request.resource.data.createdBy == request.auth.uid;
       allow update: if hasRole(resource.data.workspaceId, ['owner', 'editor'])
-        && request.resource.data.workspaceId == resource.data.workspaceId;
+        && request.resource.data.workspaceId == resource.data.workspaceId
+        && request.resource.data.createdBy == resource.data.createdBy;
       allow delete: if hasRole(resource.data.workspaceId, ['owner', 'editor']);
     }
 
@@ -89,7 +90,13 @@ service cloud.firestore {
         hasRole(request.resource.data.workspaceId, ['owner', 'editor']) &&
         request.resource.data.invitedBy == request.auth.uid;
       allow update: if signedIn() && (
-        hasRole(resource.data.workspaceId, ['owner', 'editor']) ||
+        (
+          hasRole(resource.data.workspaceId, ['owner', 'editor']) &&
+          request.resource.data.workspaceId == resource.data.workspaceId &&
+          request.resource.data.invitedBy == resource.data.invitedBy &&
+          request.resource.data.createdAt == resource.data.createdAt &&
+          request.resource.data.tokenHash == resource.data.tokenHash
+        ) ||
         (
           resource.data.email == request.auth.token.email &&
           resource.data.status == 'pending' &&

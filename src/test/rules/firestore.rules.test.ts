@@ -280,6 +280,24 @@ describe('firestore.rules — elements', () => {
     );
   });
 
+  test('an update cannot rewrite who created an element', async () => {
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.editor), 'elements', 'e1'), {
+        createdBy: ROLE_UIDS.viewer,
+        updatedAt: now,
+      }),
+    );
+  });
+
+  test('an editor can update an element created by someone else without touching createdBy', async () => {
+    await assertSucceeds(
+      updateDoc(doc(dbOf(ROLE_UIDS.editor), 'elements', 'e1'), {
+        content: 'Edited by editor',
+        updatedAt: now,
+      }),
+    );
+  });
+
   test('an owner cannot update an element of a workspace they are not a member of', async () => {
     await assertFails(updateDoc(doc(dbOf(ROLE_UIDS.owner), 'elements', 'e2'), { updatedAt: now }));
   });
@@ -573,6 +591,44 @@ describe('firestore.rules — invitations', () => {
     await assertFails(
       updateDoc(doc(unauthed().firestore(), 'invitations', 'inv1'), {
         status: 'accepted',
+        updatedAt: now,
+      }),
+    );
+  });
+
+  test('an owner cannot turn their invitation into an invitation of another workspace', async () => {
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'invitations', 'inv1'), {
+        workspaceId: WS2,
+        email: 'attacker@example.com',
+        role: 'owner',
+        updatedAt: now,
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.editor), 'invitations', 'inv1'), {
+        workspaceId: WS2,
+        updatedAt: now,
+      }),
+    );
+  });
+
+  test('an owner cannot rewrite the identity fields of an invitation in their own workspace', async () => {
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'invitations', 'inv1'), {
+        tokenHash: 'ff'.repeat(32),
+        updatedAt: now,
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'invitations', 'inv1'), {
+        invitedBy: ROLE_UIDS.editor,
+        updatedAt: now,
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'invitations', 'inv1'), {
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
         updatedAt: now,
       }),
     );
