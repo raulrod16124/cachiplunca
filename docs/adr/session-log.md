@@ -1,5 +1,16 @@
 # Session Log
 
+## 2026-10-15 — TASK-122 Architecture audit
+
+- Siguiente tarea del backlog: TASK-122 (primera TODO con dependencias DONE —TASK-116 DONE—, sin IN PROGRESS). Alcance acordado con el usuario: **auditoría + gate automatizado de fronteras + fixes menores in-place**, informe en `docs/audits/architecture-audit.md`.
+- Método: inventario de imports relativos por capa sobre los 218 ficheros `.ts`/`.tsx` de producción, imports de paquetes externos por capa, búsqueda de APIs de navegador en domain/application/shared, revisión de barriles y contraste con ADR-0002/0004.
+- Controles en verde desde el inicio: domain/application/shared sin React/Firebase/styled/`@raulrod`/DOM/`node:*`; application sin `infrastructure` ni `firebase`; infrastructure solo hacia application/domain/shared; presentation sin Firebase/Infrastructure; ningún código de producción importa `src/test`; barriles limpios.
+- Hallazgos: **A1 (Medium, corregido)** Presentation importaba `app/providers/session-provider` en 3 páginas (inversión de composición); **A2 (Medium, corregido)** fronteras solo documentales, sin gate; **A3 (Low, corregido)** `tsconfig.app.json` sin `node` en `types`; **A4/A5 (Low, aceptados)** infrastructure importa `IssuedInvitationToken` desde `application/commands` (misma capa, dirección válida) y `App.tsx`/`main.tsx` tratados como capa `app`.
+- Correcciones: `SessionProvider`/`useSession` movidos a `src/presentation/providers/` (11 puntos de import actualizados: 3 páginas, `App.tsx`, 2 guards, 5 tests; `src/app/providers/` eliminado); nuevo gate `src/test/unit/architecture/layer-boundaries.test.ts` (4 aserciones: grafo de imports, paquetes por capa con `node:*` universal, APIs de navegador, `src/test` inaccesible) verificado en rojo con 2 canarios; `"node"` añadido a `types` en `tsconfig.app.json`.
+- ADR-0030 (`docs/adr/0030-architecture-boundaries.md`): gate como test de Jest (heredable por CI/TASK-129) frente a script externo o dependency-cruiser, contexto de sesión en Presentation, alcance de tipos `node` compensado por la prohibición de `node:*` en producción, aceptación de A4. ADR-0002 ampliado con nota de actualización que supersede su ubicación del proveedor.
+- Backlog: TASK-122 → DONE (criterios [x]). Informe con hallazgos clasificados por severidad y acción concreta en `docs/audits/architecture-audit.md`.
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` (**176 suites / 1985 tests**, +1 suite y +4 tests del gate), `npm run build` y `npm run test:rules` (**68/68** con emulador) en verde. Siguiente tarea ejecutable por protocolo: TASK-123 (MVP documentation, P1, dependencia TASK-122 ahora DONE), que es la primera TODO en orden de documento con dependencias resueltas.
+
 ## 2026-10-15 — TASK-121 Dependency audit
 
 - Siguiente tarea del backlog: TASK-121 (primera TODO con dependencias DONE —TASK-116 DONE—, sin IN PROGRESS; confirmado en la entrada previa de este log). Alcance acordado con el usuario: **auditoría de dependencias + fixes seguros sin nueva funcionalidad**, informe en `docs/audits/dependency-audit.md`, ADR para la resolución forzada y **alta de hallazgos como tareas** en el backlog.

@@ -1,7 +1,7 @@
 import { Button, Heading, Inline, Stack, Text } from '@raulrod/ui';
 import { useMemo, useState, type ReactNode } from 'react';
 import styled from 'styled-components';
-import { useSession } from '../../../app/providers/session-provider';
+import { useSession } from '../../providers/session-provider';
 import type {
   CreateWorkspace,
   CreateWorkspaceInput,

@@ -4563,7 +4563,7 @@ Auditar el estado de las dependencias del MVP, aplicar las correcciones seguras 
 
 ### TASK-122 — Architecture audit
 
-**Priority:** P0 · **Depends:** TASK-116 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-116 · **Status:** DONE
 
 #### Objetivo
 
@@ -4577,11 +4577,11 @@ Auditar que la implementación respeta Clean Architecture y Hexagonal Architectu
 
 #### Criterios de aceptación
 
-- [ ] No quedan dependencias prohibidas sin justificación.
-- [ ] Excepciones relevantes tienen ADR.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Los hallazgos quedan clasificados por severidad y con acción concreta.
+- [x] No quedan dependencias prohibidas sin justificación.
+- [x] Excepciones relevantes tienen ADR.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Los hallazgos quedan clasificados por severidad y con acción concreta.
 
 #### Fuera de alcance
 

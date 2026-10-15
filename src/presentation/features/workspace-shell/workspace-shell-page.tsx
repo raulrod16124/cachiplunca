@@ -20,7 +20,7 @@ import type {
   RealtimeSubscriptionManager,
 } from '../../../application/services';
 import type { ElementId } from '../../../domain/shared';
-import { useSession } from '../../../app/providers/session-provider';
+import { useSession } from '../../providers/session-provider';
 import { WorkspaceShellContainer } from './components/workspace-shell-container';
 
 export interface WorkspaceShellPageProps {

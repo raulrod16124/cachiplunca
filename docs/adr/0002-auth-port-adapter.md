@@ -38,3 +38,7 @@ El tri-anticipado en el punto 3 se implementó como `createSessionStore(authPort
 - `SessionState` es una unión discriminada `loading | authenticated | anonymous` vive en Application, de modo que TASK-014 (auth guards) pueda evaluarla sin React.
 - El store se suscribe al puerto de forma perezosa (con el primer subscriber) y libera la suscripción con el último; conserva el último snapshot resuelto al remontar para evitar flicker de `loading` bajo `<StrictMode>`.
 - `getSnapshot()` devuelve siempre la misma referencia mientras el estado no cambie (requisito de `useSyncExternalStore`); Presentation lo consume mediante `SessionProvider`/`useSession` en `src/app/providers/`.
+
+## Actualización (TASK-122)
+
+`SessionProvider`/`useSession` se movieron a `src/presentation/providers/` para eliminar la dependencia Presentation → `app/` (ver ADR-0030 y `docs/audits/architecture-audit.md`, hallazgo A1). El store, el puerto y el contrato de este ADR no cambian.

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { SessionProvider } from '../../../../../app/providers/session-provider';
+import { SessionProvider } from '../../../../../presentation/providers/session-provider';
 import type { AcceptInvitation } from '../../../../../application/commands';
 import { createSessionStore } from '../../../../../application/services';
 import type { AuthPort } from '../../../../../application/ports';

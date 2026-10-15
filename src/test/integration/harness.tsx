@@ -1,7 +1,7 @@
 import { render, type RenderResult } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
-import { SessionProvider } from '../../app/providers/session-provider';
+import { SessionProvider } from '../../presentation/providers/session-provider';
 import { AppRoutes, type AppRoutesProps } from '../../app/routes/app-routes';
 import {
   createAcceptInvitation,

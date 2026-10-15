@@ -6,7 +6,7 @@ import { createInvitationServices } from './app/config/invitation-services';
 import { createPresenceServices } from './app/config/presence-services';
 import { createWorkspaceServices } from './app/config/workspace-services';
 import { AppRoutes } from './app/routes/app-routes';
-import { SessionProvider } from './app/providers/session-provider';
+import { SessionProvider } from './presentation/providers/session-provider';
 import { AppThemeProvider } from './presentation/styles';
 
 function App() {

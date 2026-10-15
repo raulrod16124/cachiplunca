@@ -1,7 +1,7 @@
 import { Button, Heading, Inline, Stack, Text } from '@raulrod/ui';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useSession } from '../../../app/providers/session-provider';
+import { useSession } from '../../providers/session-provider';
 import type { AcceptInvitation, AcceptInvitationResult } from '../../../application/commands';
 import { UserId } from '../../../domain/shared';
 import { createAppError, ERROR_CODES } from '../../../shared/errors';
