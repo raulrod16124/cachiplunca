@@ -4,9 +4,11 @@ import { MemoryRouter, useLocation } from 'react-router-dom';
 import { SessionProvider } from '../../app/providers/session-provider';
 import { AppRoutes, type AppRoutesProps } from '../../app/routes/app-routes';
 import {
+  createAcceptInvitation,
   createChangeMemberRole,
   createCreateOwnerMembership,
   createCreateWorkspaceWithOwner,
+  createInviteMember,
   createLeaveWorkspace,
   createLoginUser,
   createLogoutUser,
@@ -16,6 +18,7 @@ import {
 import {
   createGetWorkspace,
   createGetWorkspaceRole,
+  createListPendingInvitations,
   createListWorkspaceMembers,
   createListWorkspaces,
   createLoadWorkspaceElements,
@@ -35,6 +38,9 @@ import { FakeMembershipRepository } from '../fixtures/fake-membership-repository
 import { FakePresencePort } from '../fixtures/fake-presence-port';
 import { FakeRealtimePort } from '../fixtures/fake-realtime-port';
 import { FakeWorkspaceRepository } from '../fixtures/fake-workspace-repository';
+import { FakeInvitationRepository } from '../fixtures/fake-invitation-repository';
+import { hashInvitationToken } from '../../infrastructure/crypto/invitation-token';
+import { InvitationId } from '../../domain/shared';
 
 export const DEFAULT_CREDENTIALS: AuthCredentials = {
   email: 'user@example.com',
@@ -81,6 +87,7 @@ export interface AppHarness {
   readonly elementRepository: FakeElementRepository;
   readonly realtimePort: FakeRealtimePort;
   readonly presencePort: FakePresencePort;
+  readonly invitationRepository: FakeInvitationRepository;
   readonly services: AppRoutesProps;
   readonly currentUser: AuthUser | null;
   register(credentials?: AuthCredentials): Promise<AuthUser>;
@@ -100,6 +107,7 @@ export function createAppHarness(): AppHarness {
   const elementRepository = new FakeElementRepository();
   const realtimePort = new FakeRealtimePort();
   const presencePort = new FakePresencePort();
+  const invitationRepository = new FakeInvitationRepository();
 
   let elementSequence = 0;
   let currentUser: AuthUser | null = null;
@@ -123,6 +131,20 @@ export function createAppHarness(): AppHarness {
     changeMemberRole: createChangeMemberRole(membershipRepository),
     removeMember: createRemoveMember(membershipRepository),
     leaveWorkspace: createLeaveWorkspace(membershipRepository),
+    inviteMember: createInviteMember({
+      invitationRepository,
+      generateId: () => InvitationId.create(`inv-${++elementSequence}`),
+      issueToken: async () => ({
+        token: `token-${elementSequence}`,
+        tokenHash: `hash-${elementSequence}`,
+      }),
+    }),
+    listPendingInvitations: createListPendingInvitations(invitationRepository),
+    acceptInvitation: createAcceptInvitation({
+      invitationRepository,
+      membershipRepository,
+      hashToken: hashInvitationToken,
+    }),
     loadWorkspaceElements: createLoadWorkspaceElements(elementRepository),
     elementPersistenceOrchestrator: createElementPersistenceOrchestrator(
       createElementPersistence(elementRepository),
@@ -139,6 +161,7 @@ export function createAppHarness(): AppHarness {
     elementRepository,
     realtimePort,
     presencePort,
+    invitationRepository,
     services,
     get currentUser(): AuthUser | null {
       return currentUser;
