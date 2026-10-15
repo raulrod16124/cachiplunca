@@ -6,7 +6,7 @@ import {
 import type { PersistElementMutationResult } from '../../../../application/services';
 import { createTextElement, type Element } from '../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
-import { createAppError, ERROR_CODES } from '../../../../shared/errors';
+import { createAppError, ERROR_CODES, type AppError } from '../../../../shared/errors';
 import { ManualScheduler, flushMicrotasks } from '../../../fixtures/manual-scheduler';
 
 function buildTextElement(id: string, x: number): Element {
@@ -278,6 +278,39 @@ describe('createElementPersistenceBatcher', () => {
 
       expect(orchestrator.persistDelta).toHaveBeenCalledTimes(2);
       expect(onMutationFailed).toHaveBeenCalledTimes(1);
+    });
+
+    it('normalizes an unexpected orchestrator rejection instead of poisoning the queue', async () => {
+      const scheduler = new ManualScheduler();
+      const orchestrator: ElementPersistenceOrchestrator = {
+        persistDelta: jest.fn().mockRejectedValueOnce(new Error('boom')).mockResolvedValue(OK),
+      };
+      let capturedError: AppError | undefined;
+      const onMutationFailed = jest.fn((_mutation, error: AppError) => {
+        capturedError = error;
+      });
+      const onStatusChange = jest.fn();
+      const batcher = createElementPersistenceBatcher({
+        orchestrator,
+        onMutationFailed,
+        onStatusChange,
+        scheduler,
+      });
+
+      batcher.schedule([buildTextElement('el-1', 0)], [buildTextElement('el-1', 10)]);
+      scheduler.run();
+      await flushMicrotasks();
+
+      expect(onStatusChange).toHaveBeenLastCalledWith('error');
+      expect(onMutationFailed).toHaveBeenCalledTimes(1);
+      expect(capturedError?.kind).toBe('unknown');
+
+      batcher.schedule([buildTextElement('el-1', 10)], [buildTextElement('el-1', 20)]);
+      scheduler.run();
+      await flushMicrotasks();
+
+      expect(orchestrator.persistDelta).toHaveBeenCalledTimes(2);
+      expect(onStatusChange).toHaveBeenLastCalledWith('saved');
     });
   });
 

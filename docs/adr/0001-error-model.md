@@ -36,3 +36,9 @@ No existía ningún código de errores ni tests ejecutables en el repositorio.
 - Añadir un nuevo proveedor implica un mapper nuevo en Infrastructure, sin tocar Application.
 - Se añadió configuración mínima de Jest (`jest.config.cjs` + `tsconfig.jest.json` con ts-jest) como prerequisito para cumplir los criterios de tests de la tarea; era un gap pendiente de TASK-004.
 - `tsconfig.app.json` incluye `jest` en `types` para que `tsc -b` también type-checkee los tests.
+
+## Nota de clarificación (TASK-119 — Error handling audit, 2026-10-15)
+
+La auditoría de errores confirmó que `toAppError` conserva `Error.message` al envolver un error no-`AppError` (§5) y que los helpers de Presentation caen a `error.message` por defecto. Es una **convención deliberada y cubierta por tests**: el mensaje se asume ya saneado por la capa que traduce.
+
+Queda **abierto** decidir si un `AppError` de `kind: 'unknown'` debe sanearse en el boundary de Presentation o en `toAppError`. Cambiarlo afecta a módulos compartidos y a varias suites, por lo que requiere su propia tarea y, si procede, una ADR específica. Detalle de hallazgos en `docs/audits/error-handling-audit.md`.

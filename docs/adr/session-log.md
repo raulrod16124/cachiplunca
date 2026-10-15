@@ -1,5 +1,16 @@
 # Session Log
 
+## 2026-10-15 — TASK-119 Error handling audit
+
+- Siguiente tarea del backlog: TASK-119 (dependencia TASK-116 DONE, sin IN PROGRESS). Alcance acordado con el usuario: **auditoría + fixes de hallazgos críticos/altos sin nueva funcionalidad**, informe en `docs/audits/error-handling-audit.md` (nuevo directorio `docs/audits/`) y **reabrir TASK-120/121/122/123 a TODO** (estaban DONE sin artefacto verificable: sin commits, docs ni entrada en este log).
+- Auditoría estática capa por capa (Domain/Application/Infrastructure/Presentation/entrypoint). Controles verificados: todos los repositorios Firebase envuelven sus llamadas en `withMappedErrors`; auth/realtime/presence traducen en `try/catch` y `onError`; `AppError` exhaustivo; ports devuelven uniones; sin `console.*` en producción.
+- Hallazgos clasificados por severidad en `docs/audits/error-handling-audit.md`: **F1 (High, abierto)** sin Error Boundary global ni handlers `error`/`unhandledrejection` → tarea de seguimiento (nueva UI, fuera de alcance); **F2 (Medium, parcial)** `unknown` puede mostrar `error.message` crudo; **F3 (Medium, abierto)** normalizadores duplicados (`toValidationError` x4, `toCollaborationError` x2); **F4/F5 (Low, aceptados)**; **F6/F7 (corregidos)**.
+- Fixes aplicados: (F2a) `describeListWorkspacesError` en `workspace-error-messages.ts` y `workspaces-list-container.tsx` deja de renderizar `error.message` directo; (F6) `element-persistence-batcher.ts` normaliza un `throw` inesperado del orchestrator a `AppError` vía `resolvePersistResult` para no envenenar la cadena de persistencia; (F7) regla `no-console: error` en `.oxlintrc.json` (off en `src/test/**`).
+- Tests: +1 en `element-persistence-batcher.test.ts` (rechazo inesperado → `onMutationFailed` con `kind: 'unknown'`, estado `error` y la siguiente schedule vuelve a persistir); tests nuevos de `describeListWorkspacesError` y actualizados los de `workspaces-list-container` (dejan de esperar el mensaje crudo). Total: 175 suites / 1979 tests en verde.
+- **Reversión consciente:** se probó hacer que `toAppError` no conservara `Error.message` (raíz del leak F2), pero rompía 17 tests de Application/Presentation que **afirman deliberadamente** esa convención ("maps a repository failure to an AppError instead of leaking the raw error"). Se revirtió: el saneo de `unknown` en el boundary queda como decisión abierta documentada en ADR-0001 (nota de clarificación) y en la auditoría, no como cambio de esta tarea.
+- Sin ADR nuevo; se añadió una **nota de clarificación a ADR-0001** con la pregunta abierta. Backlog: TASK-119 → DONE (criterios [x]); TASK-120/121/122/123 → TODO (TASK-124 sigue bloqueada al depender de 120/122/123).
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde. Siguiente tarea ejecutable: TASK-120 (Security audit).
+
 ## 2026-10-15 — TASK-115 Performance regression test
 
 - Siguiente tarea del backlog: TASK-115 (dependencia TASK-114 DONE, sin IN PROGRESS ni BLOCKED). Alcance y umbrales confirmados con el usuario: estrategia **híbrida** (guard estructural determinista + presupuestos de tiempo) y umbrales **absolutos con holgura amplia** (fallar solo ante regresiones catastróficas).

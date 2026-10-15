@@ -59,7 +59,9 @@ describe('WorkspacesListContainer', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeInTheDocument();
-      expect(screen.getByText('Network failed')).toBeInTheDocument();
+      expect(
+        screen.getByText('We could not load your workspaces. Please try again.'),
+      ).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole('button', { name: /retry/i }));
@@ -92,7 +94,10 @@ describe('WorkspacesListContainer', () => {
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeInTheDocument();
     });
-    expect(screen.getByText(/backend exploded/i)).toBeInTheDocument();
+    expect(
+      screen.getByText('We could not load your workspaces. Please try again.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/backend exploded/i)).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /retry/i }));
     expect(listWorkspaces).toHaveBeenCalledTimes(2);

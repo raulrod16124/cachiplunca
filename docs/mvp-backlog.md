@@ -4455,7 +4455,7 @@ Completar **Permission integration tests** dejando un resultado verificable y ap
 
 ### TASK-119 — Error handling audit
 
-**Priority:** P0 · **Depends:** TASK-116 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-116 · **Status:** DONE
 
 #### Objetivo
 
@@ -4469,12 +4469,12 @@ Completar **Error handling audit** dejando un resultado verificable y apto para 
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Los hallazgos quedan clasificados por severidad y con acción concreta.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Los hallazgos quedan clasificados por severidad y con acción concreta.
 
 #### Fuera de alcance
 
@@ -4490,7 +4490,7 @@ Completar **Error handling audit** dejando un resultado verificable y apto para 
 
 ### TASK-120 — Security audit
 
-**Priority:** P0 · **Depends:** TASK-098 · **Status:** DONE
+**Priority:** P0 · **Depends:** TASK-098 · **Status:** TODO
 
 #### Objetivo
 
@@ -4527,7 +4527,7 @@ Completar **Security audit** dejando un resultado verificable y apto para las ta
 
 ### TASK-121 — Dependency audit
 
-**Priority:** P1 · **Depends:** TASK-116 · **Status:** DONE
+**Priority:** P1 · **Depends:** TASK-116 · **Status:** TODO
 
 #### Objetivo
 
@@ -4562,7 +4562,7 @@ Completar **Dependency audit** dejando un resultado verificable y apto para las 
 
 ### TASK-122 — Architecture audit
 
-**Priority:** P0 · **Depends:** TASK-116 · **Status:** DONE
+**Priority:** P0 · **Depends:** TASK-116 · **Status:** TODO
 
 #### Objetivo
 
@@ -4596,7 +4596,7 @@ Auditar que la implementación respeta Clean Architecture y Hexagonal Architectu
 
 ### TASK-123 — MVP documentation
 
-**Priority:** P1 · **Depends:** TASK-122 · **Status:** DONE
+**Priority:** P1 · **Depends:** TASK-122 · **Status:** TODO
 
 #### Objetivo
 
