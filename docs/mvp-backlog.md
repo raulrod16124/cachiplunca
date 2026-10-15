@@ -4419,7 +4419,7 @@ Completar **Collaboration integration test** dejando un resultado verificable y 
 
 ### TASK-118 — Permission integration tests
 
-**Priority:** P0 · **Depends:** TASK-098 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-098 · **Status:** DONE
 
 #### Objetivo
 
@@ -4490,7 +4490,7 @@ Completar **Error handling audit** dejando un resultado verificable y apto para 
 
 ### TASK-120 — Security audit
 
-**Priority:** P0 · **Depends:** TASK-098 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-098 · **Status:** DONE
 
 #### Objetivo
 
@@ -4527,7 +4527,7 @@ Completar **Security audit** dejando un resultado verificable y apto para las ta
 
 ### TASK-121 — Dependency audit
 
-**Priority:** P1 · **Depends:** TASK-116 · **Status:** TODO
+**Priority:** P1 · **Depends:** TASK-116 · **Status:** DONE
 
 #### Objetivo
 
@@ -4562,7 +4562,7 @@ Completar **Dependency audit** dejando un resultado verificable y apto para las 
 
 ### TASK-122 — Architecture audit
 
-**Priority:** P0 · **Depends:** TASK-116 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-116 · **Status:** DONE
 
 #### Objetivo
 
@@ -4596,7 +4596,7 @@ Auditar que la implementación respeta Clean Architecture y Hexagonal Architectu
 
 ### TASK-123 — MVP documentation
 
-**Priority:** P1 · **Depends:** TASK-122 · **Status:** TODO
+**Priority:** P1 · **Depends:** TASK-122 · **Status:** DONE
 
 #### Objetivo
 
@@ -5208,7 +5208,7 @@ Añadir una entrada breve por sesión.
 - Tests/quality gates: `npm test` 174 suites / 1965 tests en verde (+1 suite / +5 tests: `collaboration.test.tsx`), sin regresiones; `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npx tsc -b` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase).
 - Decisiones: (1) no modificar `harness.tsx` — solo agregar test; (2) archivo dedicado `collaboration.test.tsx` (no tocar `critical-journey.test.tsx`); (3) peers modelados vía eventos directos de los fakes (como en `critical-journey`), sin renderizar dos `AppRoutes`; (4) evitar duplicación de pruebas de history-vs-remote ya cubiertas en TASK-116/088 — el enfoque es presencia/realtime/reconexión/aislamiento.
 - Bloqueos: ninguno.
-- Siguiente tarea: TASK-118 (Permission integration tests).
+- Siguiente tarea: TASK-119 (Permission integration tests).
 
 ---
 
