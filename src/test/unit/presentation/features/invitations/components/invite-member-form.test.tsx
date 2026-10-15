@@ -6,15 +6,23 @@ import {
   type InvitedMemberResult,
 } from '../../../../../../presentation/features/invitations/components/invite-member-form';
 import { FakeInvitationRepository } from '../../../../../fixtures/fake-invitation-repository';
+import { FakeMembershipRepository } from '../../../../../fixtures/fake-membership-repository';
 
 const WORKSPACE_ID = 'ws-1';
 const INVITED_BY = UserId.create('user-1');
 
-function buildHarness() {
+async function buildHarness() {
   const repository = new FakeInvitationRepository();
+  const membershipRepository = new FakeMembershipRepository();
+  await membershipRepository.create({
+    userId: INVITED_BY,
+    workspaceId: WorkspaceId.create(WORKSPACE_ID),
+    role: 'owner',
+  });
   let sequence = 0;
   const inviteMember = createInviteMember({
     invitationRepository: repository,
+    membershipRepository,
     generateId: () => InvitationId.create(`inv-${(sequence += 1)}`),
     issueToken: async () => ({ token: 'token-abc', tokenHash: 'hash-abc' }),
     now: () => new Date('2026-01-01T00:00:00.000Z'),
@@ -43,7 +51,7 @@ function submit(): void {
 
 describe('InviteMemberForm', () => {
   it('invites the email with the default editor role and reports the one-time token', async () => {
-    const { repository, onInvited } = buildHarness();
+    const { repository, onInvited } = await buildHarness();
 
     fillEmail('Newcomer@Example.com');
     submit();
@@ -59,7 +67,7 @@ describe('InviteMemberForm', () => {
   });
 
   it('shows a field error for an invalid email without inviting', async () => {
-    const { repository, onInvited } = buildHarness();
+    const { repository, onInvited } = await buildHarness();
 
     fillEmail('not-an-email');
     submit();
@@ -73,7 +81,7 @@ describe('InviteMemberForm', () => {
   });
 
   it('invites with the chosen role', async () => {
-    const { repository } = buildHarness();
+    const { repository } = await buildHarness();
 
     fireEvent.click(screen.getByRole('combobox', { name: 'Role' }));
     fireEvent.click(await screen.findByRole('option', { name: 'Viewer' }));
@@ -88,7 +96,7 @@ describe('InviteMemberForm', () => {
   });
 
   it('shows a friendly conflict message when a pending invitation already exists', async () => {
-    const { repository, onInvited } = buildHarness();
+    const { repository, onInvited } = await buildHarness();
     fillEmail('duplicate@example.com');
     submit();
     await waitFor(() => expect(onInvited).toHaveBeenCalledTimes(1));

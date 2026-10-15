@@ -8,13 +8,16 @@ import type {
   ListWorkspacesResult,
 } from '../../../../../../application/queries/list-workspaces';
 import { Workspace } from '../../../../../../domain/workspace';
-import { WorkspaceId } from '../../../../../../domain/shared';
+import { UserId, WorkspaceId } from '../../../../../../domain/shared';
 import { createAppError, ERROR_CODES } from '../../../../../../shared/errors';
+
+const CREATED_BY = UserId.create('user-1');
 
 function createWorkspace(name: string): Workspace {
   return Workspace.create({
     id: WorkspaceId.create(`ws-${name}`),
     name,
+    createdBy: CREATED_BY,
   });
 }
 

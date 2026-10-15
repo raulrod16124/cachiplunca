@@ -1,8 +1,9 @@
-import type { WorkspaceId } from '../../domain/shared';
+import type { UserId, WorkspaceId } from '../../domain/shared';
 import type { Workspace } from '../../domain/workspace';
 
 export interface WorkspaceCreateInput {
   readonly name: string;
+  readonly createdBy: UserId;
   readonly description?: string | null;
 }
 

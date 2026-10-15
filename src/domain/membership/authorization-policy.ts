@@ -27,6 +27,16 @@ export const PERMISSION_MATRIX: Readonly<Record<MembershipRole, readonly Workspa
   viewer: ['workspace:view', 'member:leave'],
 };
 
+export const GRANTABLE_ROLES: Readonly<Record<MembershipRole, readonly MembershipRole[]>> = {
+  owner: ['owner', 'editor', 'viewer'],
+  editor: ['editor', 'viewer'],
+  viewer: [],
+};
+
 export function can(role: MembershipRole, operation: WorkspaceOperation): boolean {
   return PERMISSION_MATRIX[role].includes(operation);
+}
+
+export function canGrantRole(actorRole: MembershipRole, grantedRole: MembershipRole): boolean {
+  return GRANTABLE_ROLES[actorRole].includes(grantedRole);
 }

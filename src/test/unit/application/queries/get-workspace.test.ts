@@ -1,11 +1,14 @@
 import { createGetWorkspace } from '../../../../application/queries';
+import { UserId } from '../../../../domain/shared';
 import { Workspace } from '../../../../domain/workspace';
 import { FakeWorkspaceRepository } from '../../../fixtures/fake-workspace-repository';
+
+const CREATED_BY = UserId.create('user-1');
 
 describe('createGetWorkspace', () => {
   it('returns the workspace when it exists', async () => {
     const repository = new FakeWorkspaceRepository();
-    const created = await repository.create({ name: 'Marketing plan' });
+    const created = await repository.create({ createdBy: CREATED_BY, name: 'Marketing plan' });
 
     const getWorkspace = createGetWorkspace(repository);
     const result = await getWorkspace(created.id.value);
@@ -53,7 +56,8 @@ describe('Workspace entity reuse in get-workspace', () => {
   it('preserves workspace invariants returned from the repository', async () => {
     const repository = new FakeWorkspaceRepository();
     const created = Workspace.create({
-      id: (await repository.create({ name: 'placeholder' })).id,
+      createdBy: CREATED_BY,
+      id: (await repository.create({ createdBy: CREATED_BY, name: 'placeholder' })).id,
       name: 'Roadmap',
       description: 'Q4 goals',
     });

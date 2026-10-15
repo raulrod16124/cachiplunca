@@ -63,6 +63,7 @@ describe('createAcceptInvitation', () => {
     const { invitations, memberships, deps } = setup();
     const invitation = seedInvitation();
     await invitations.create(invitation);
+    const createSpy = jest.spyOn(memberships, 'create');
     const acceptInvitation = createAcceptInvitation(deps);
 
     const result = await acceptInvitation({
@@ -82,6 +83,14 @@ describe('createAcceptInvitation', () => {
     expect(membership?.role).toBe('editor');
     const stored = await invitations.findByTokenHash('hash-token-1');
     expect(stored?.status).toBe('accepted');
+    expect(createSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: INVITEE,
+        workspaceId: WORKSPACE,
+        role: 'editor',
+        invitationId: invitation.id,
+      }),
+    );
   });
 
   it('returns invalid-input without touching the repositories for a missing token', async () => {

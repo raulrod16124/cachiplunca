@@ -4697,7 +4697,7 @@ Evitar que un error de render no controlado deje la aplicación en blanco, ofrec
 
 ### TASK-126 — Cerrar escalada por self-join de membership
 
-**Priority:** P0 · **Depends:** TASK-098, TASK-094 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-098, TASK-094 · **Status:** DONE
 
 #### Objetivo
 
@@ -4712,11 +4712,11 @@ Impedir que un usuario autenticado pueda auto-asignarse un rol (incluido `owner`
 
 #### Criterios de aceptación
 
-- [ ] Un autenticado sin invitación válida no puede crear una membership con rol elevado.
-- [ ] Aceptar una invitación válida sigue funcionando con el rol de la invitación.
-- [ ] Un editor no puede otorgar el rol `owner`.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Un autenticado sin invitación válida no puede crear una membership con rol elevado.
+- [x] Aceptar una invitación válida sigue funcionando con el rol de la invitación.
+- [x] Un editor no puede otorgar el rol `owner`.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 

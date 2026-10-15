@@ -2,11 +2,14 @@ import {
   fromWorkspaceDocument,
   toWorkspaceDocument,
 } from '../../../../infrastructure/firebase/firebase-workspace-mapper';
-import { WorkspaceId } from '../../../../domain/shared';
+import { UserId, WorkspaceId } from '../../../../domain/shared';
 import { Workspace } from '../../../../domain/workspace';
+
+const CREATED_BY = UserId.create('user-1');
 
 function makeWorkspace(): Workspace {
   return Workspace.create({
+    createdBy: CREATED_BY,
     id: WorkspaceId.create('ws-1'),
     name: 'Product roadmap',
     description: 'notes',
@@ -22,6 +25,7 @@ describe('firebase-workspace-mapper', () => {
 
       expect(toWorkspaceDocument(workspace)).toEqual({
         name: 'Product roadmap',
+        createdBy: 'user-1',
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         updatedAt: new Date('2026-01-02T00:00:00.000Z'),
         description: 'notes',
@@ -29,7 +33,11 @@ describe('firebase-workspace-mapper', () => {
     });
 
     it('serializes a null description', () => {
-      const workspace = Workspace.create({ id: WorkspaceId.create('ws-2'), name: 'No notes' });
+      const workspace = Workspace.create({
+        createdBy: CREATED_BY,
+        id: WorkspaceId.create('ws-2'),
+        name: 'No notes',
+      });
 
       expect(toWorkspaceDocument(workspace).description).toBeNull();
     });
@@ -44,6 +52,7 @@ describe('firebase-workspace-mapper', () => {
       expect(rebuilt).toBeInstanceOf(Workspace);
       expect(rebuilt.id.equals(workspace.id)).toBe(true);
       expect(rebuilt.name).toBe(workspace.name);
+      expect(rebuilt.createdBy.equals(workspace.createdBy)).toBe(true);
       expect(rebuilt.description).toBe(workspace.description);
       expect(rebuilt.createdAt.getTime()).toBe(workspace.createdAt.getTime());
       expect(rebuilt.updatedAt.getTime()).toBe(workspace.updatedAt.getTime());
@@ -55,6 +64,7 @@ describe('firebase-workspace-mapper', () => {
 
       const workspace = fromWorkspaceDocument('ws-3', {
         name: 'From timestamp',
+        createdBy: CREATED_BY.value,
         description: null,
         createdAt: { toDate: () => createdAt },
         updatedAt: { toDate: () => updatedAt },
@@ -67,6 +77,7 @@ describe('firebase-workspace-mapper', () => {
     it('normalizes a missing description to null', () => {
       const workspace = fromWorkspaceDocument('ws-4', {
         name: 'Untyped description',
+        createdBy: CREATED_BY.value,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -88,11 +99,16 @@ describe('firebase-workspace-mapper', () => {
 
     it('rejects a missing or non-string name', () => {
       expect(() =>
-        fromWorkspaceDocument('ws-6', { createdAt: new Date(), updatedAt: new Date() }),
+        fromWorkspaceDocument('ws-6', {
+          createdBy: CREATED_BY.value,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }),
       ).toThrow('Workspace document field "name" must be a string');
       expect(() =>
         fromWorkspaceDocument('ws-6', {
           name: 42,
+          createdBy: CREATED_BY.value,
           createdAt: new Date(),
           updatedAt: new Date(),
         }),
@@ -100,12 +116,16 @@ describe('firebase-workspace-mapper', () => {
     });
 
     it('rejects a missing or malformed date field', () => {
-      expect(() => fromWorkspaceDocument('ws-7', { name: 'No dates' })).toThrow(
-        'Workspace document field "createdAt" must be a Date or Timestamp',
-      );
+      expect(() =>
+        fromWorkspaceDocument('ws-7', {
+          name: 'No dates',
+          createdBy: CREATED_BY.value,
+        }),
+      ).toThrow('Workspace document field "createdAt" must be a Date or Timestamp');
       expect(() =>
         fromWorkspaceDocument('ws-7', {
           name: 'Bad date',
+          createdBy: CREATED_BY.value,
           createdAt: '2026-01-01',
           updatedAt: new Date(),
         }),
@@ -113,6 +133,7 @@ describe('firebase-workspace-mapper', () => {
       expect(() =>
         fromWorkspaceDocument('ws-7', {
           name: 'Invalid date',
+          createdBy: CREATED_BY.value,
           createdAt: new Date('not a date'),
           updatedAt: new Date(),
         }),
@@ -123,6 +144,7 @@ describe('firebase-workspace-mapper', () => {
       expect(() =>
         fromWorkspaceDocument('ws-8', {
           name: 'Bad description',
+          createdBy: CREATED_BY.value,
           description: 7,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -134,6 +156,7 @@ describe('firebase-workspace-mapper', () => {
       expect(() =>
         fromWorkspaceDocument('   ', {
           name: 'No id',
+          createdBy: CREATED_BY.value,
           createdAt: new Date(),
           updatedAt: new Date(),
         }),
@@ -144,6 +167,7 @@ describe('firebase-workspace-mapper', () => {
       expect(() =>
         fromWorkspaceDocument('ws-9', {
           name: 'Reversed timestamps',
+          createdBy: CREATED_BY.value,
           createdAt: new Date('2026-01-02T00:00:00.000Z'),
           updatedAt: new Date('2026-01-01T00:00:00.000Z'),
         }),

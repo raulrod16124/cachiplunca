@@ -40,6 +40,7 @@ export function createFirebaseWorkspaceRepository(db: Firestore): WorkspaceRepos
         Workspace.create({
           id: WorkspaceId.create(reference.id),
           name: input.name,
+          createdBy: input.createdBy,
           description: input.description,
         }),
       );

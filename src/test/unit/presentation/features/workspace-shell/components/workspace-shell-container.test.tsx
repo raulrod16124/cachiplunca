@@ -56,9 +56,12 @@ import { FakePresencePort } from '../../../../../fixtures/fake-presence-port';
 import { FakeRealtimePort } from '../../../../../fixtures/fake-realtime-port';
 import { ManualScheduler, flushMicrotasks } from '../../../../../fixtures/manual-scheduler';
 
+const CREATED_BY = UserId.create('user-1');
+
 const WORKSPACE = Workspace.create({
   id: WorkspaceId.create('ws-test'),
   name: 'Roadmap Q4',
+  createdBy: CREATED_BY,
 });
 
 const TEXT_ELEMENT = createTextElement({
@@ -1408,6 +1411,7 @@ describe('WorkspaceShellContainer', () => {
     const repository = new FakeInvitationRepository();
     const inviteMember = createInviteMember({
       invitationRepository: repository,
+      membershipRepository: new FakeMembershipRepository(),
       generateId: () => InvitationId.create('inv-1'),
       issueToken: async () => ({ token: 'token-abc', tokenHash: 'hash-abc' }),
       now: () => new Date('2026-01-01T00:00:00.000Z'),
@@ -1431,6 +1435,7 @@ describe('WorkspaceShellContainer', () => {
     let sequence = 0;
     const inviteMember: InviteMember = createInviteMember({
       invitationRepository,
+      membershipRepository,
       generateId: () => InvitationId.create(`inv-${(sequence += 1)}`),
       issueToken: async () => ({ token: 'token-abc', tokenHash: 'hash-abc' }),
       now: () => new Date('2026-01-01T00:00:00.000Z'),
@@ -1459,6 +1464,7 @@ describe('WorkspaceShellContainer', () => {
     await seedMembership(membershipRepository, 'user-local', 'owner');
     const inviteMember: InviteMember = createInviteMember({
       invitationRepository,
+      membershipRepository,
       generateId: () => InvitationId.create('inv-1'),
       issueToken: async () => ({ token: 'token-abc', tokenHash: 'hash-abc' }),
       now: () => new Date('2026-01-01T00:00:00.000Z'),
@@ -1492,6 +1498,7 @@ describe('WorkspaceShellContainer', () => {
     await seedMembership(membershipRepository, 'user-local', 'viewer');
     const inviteMember = createInviteMember({
       invitationRepository,
+      membershipRepository,
       generateId: () => InvitationId.create('inv-1'),
       issueToken: async () => ({ token: 'token-abc', tokenHash: 'hash-abc' }),
       now: () => new Date('2026-01-01T00:00:00.000Z'),
@@ -1520,6 +1527,7 @@ describe('WorkspaceShellContainer', () => {
     await seedMembership(membershipRepository, 'user-local', 'editor');
     const inviteMember = createInviteMember({
       invitationRepository,
+      membershipRepository,
       generateId: () => InvitationId.create('inv-1'),
       issueToken: async () => ({ token: 'token-abc', tokenHash: 'hash-abc' }),
       now: () => new Date('2026-01-01T00:00:00.000Z'),

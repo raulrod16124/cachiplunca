@@ -51,7 +51,9 @@ export function createFirebaseMembershipRepository(db: Firestore): MembershipRep
         throw conflictError(input.userId, input.workspaceId);
       }
 
-      await withMappedErrors(() => setDoc(reference, toMembershipDocument(membership)));
+      await withMappedErrors(() =>
+        setDoc(reference, toMembershipDocument(membership, input.invitationId)),
+      );
       return membership;
     },
 

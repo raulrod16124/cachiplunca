@@ -38,6 +38,7 @@ export function createCreateWorkspaceWithOwner(
     try {
       workspace = await deps.workspaceRepository.create({
         name: input.name.trim(),
+        createdBy: input.ownerId,
         description: input.description,
       });
     } catch (error) {

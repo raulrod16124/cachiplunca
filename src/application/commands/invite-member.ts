@@ -1,9 +1,9 @@
 import { Invitation } from '../../domain/invitation';
-import { isValidRole, type MembershipRole } from '../../domain/membership';
+import { canGrantRole, isValidRole, type MembershipRole } from '../../domain/membership';
 import type { InvitationId, UserId, WorkspaceId } from '../../domain/shared';
-import { toAppError, type AppError } from '../../shared/errors';
+import { createAppError, ERROR_CODES, toAppError, type AppError } from '../../shared/errors';
 import { isValidEmail } from '../../shared/utils';
-import type { InvitationRepository } from '../ports';
+import type { InvitationRepository, MembershipRepository } from '../ports';
 import { toValidationAppError } from './to-validation-app-error';
 
 export const INVITATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -26,6 +26,7 @@ export interface IssuedInvitationToken {
 
 export interface InviteMemberDeps {
   readonly invitationRepository: InvitationRepository;
+  readonly membershipRepository: MembershipRepository;
   readonly generateId: () => InvitationId;
   readonly issueToken: () => Promise<IssuedInvitationToken>;
   readonly now?: () => Date;
@@ -63,6 +64,14 @@ export function createInviteMember(deps: InviteMemberDeps): InviteMember {
       return { status: 'invalid-input', fieldErrors };
     }
 
+    const actorMembership = await deps.membershipRepository.findByUserAndWorkspace(
+      input.invitedBy,
+      input.workspaceId,
+    );
+    if (actorMembership === null || !canGrantRole(actorMembership.role, input.role)) {
+      return { status: 'error', error: forbiddenToGrantRoleError() };
+    }
+
     const createdAt = deps.now?.() ?? new Date();
     const expiresAt = new Date(createdAt.getTime() + (deps.ttlMs ?? INVITATION_TTL_MS));
 
@@ -92,4 +101,12 @@ export function createInviteMember(deps: InviteMemberDeps): InviteMember {
       return { status: 'error', error: toAppError(error) };
     }
   };
+}
+
+function forbiddenToGrantRoleError(): AppError {
+  return createAppError(
+    'authorization',
+    ERROR_CODES.AUTH_FORBIDDEN,
+    'You do not have permission to invite a member with this role.',
+  );
 }

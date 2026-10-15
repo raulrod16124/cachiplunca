@@ -51,12 +51,22 @@ const WS2 = 'ws2';
 
 const now = new Date('2026-10-13T00:00:00.000Z');
 
-function workspaceData(name = 'Workspace') {
-  return { name, description: null, createdAt: now, updatedAt: now };
+function workspaceData(name = 'Workspace', createdBy = ROLE_UIDS.owner) {
+  return { name, description: null, createdBy, createdAt: now, updatedAt: now };
 }
 
-function membershipData(workspaceId: string, userId: string, role: string) {
-  return { userId, workspaceId, role, createdAt: now, updatedAt: now };
+function membershipData(workspaceId: string, userId: string, role: string, invitationId?: string) {
+  const data: Record<string, unknown> = {
+    userId,
+    workspaceId,
+    role,
+    createdAt: now,
+    updatedAt: now,
+  };
+  if (invitationId !== undefined) {
+    data.invitationId = invitationId;
+  }
+  return data;
 }
 
 function elementData(workspaceId: string, createdBy: string, id: string) {
@@ -88,12 +98,14 @@ function invitationData(
   invitedBy: string,
   status = 'pending',
   email = INVITEE_EMAIL,
+  role: MembershipRole = 'editor',
+  id = `inv-${email}`,
 ) {
   return {
-    id: `inv-${email}`,
+    id,
     workspaceId,
     email,
-    role: 'editor',
+    role,
     tokenHash: '0a'.repeat(32),
     status,
     invitedBy,
@@ -120,8 +132,8 @@ beforeEach(async () => {
   await testEnv.clearFirestore();
   await testEnv.withSecurityRulesDisabled(async (ctx) => {
     const db = ctx.firestore();
-    await setDoc(doc(db, 'workspaces', WS1), workspaceData());
-    await setDoc(doc(db, 'workspaces', WS2), workspaceData('Second'));
+    await setDoc(doc(db, 'workspaces', WS1), workspaceData('Workspace', ROLE_UIDS.owner));
+    await setDoc(doc(db, 'workspaces', WS2), workspaceData('Second', ROLE_UIDS.viewer));
     await setDoc(
       doc(db, 'memberships', `${WS1}_${ROLE_UIDS.owner}`),
       membershipData(WS1, ROLE_UIDS.owner, 'owner'),
@@ -337,11 +349,22 @@ describe('firestore.rules — workspaces', () => {
   test('any authenticated user can read or create a workspace; anonymous cannot', async () => {
     for (const uid of [...OTHER_ROLE_UIDS, OUTSIDER_UID]) {
       await assertSucceeds(getDoc(doc(dbOf(uid), 'workspaces', WS1)));
-      await assertSucceeds(setDoc(doc(dbOf(uid), 'workspaces', `new-${uid}`), workspaceData()));
+      await assertSucceeds(
+        setDoc(doc(dbOf(uid), 'workspaces', `new-${uid}`), workspaceData('New', uid)),
+      );
     }
     await assertFails(getDoc(doc(unauthed().firestore(), 'workspaces', WS1)));
     await assertFails(
-      setDoc(doc(unauthed().firestore(), 'workspaces', 'new-anon'), workspaceData()),
+      setDoc(doc(unauthed().firestore(), 'workspaces', 'new-anon'), workspaceData('New', 'anon')),
+    );
+  });
+
+  test('a workspace create must set createdBy to the authenticated user', async () => {
+    await assertFails(
+      setDoc(
+        doc(dbOf(OUTSIDER_UID), 'workspaces', 'bad-owner'),
+        workspaceData('Bad', ROLE_UIDS.owner),
+      ),
     );
   });
 
@@ -410,8 +433,8 @@ describe('firestore.rules — memberships', () => {
     expect(snapshot.exists()).toBe(false);
   });
 
-  test('self-create of a membership is allowed (accept-invitation limitation)', async () => {
-    await assertSucceeds(
+  test('self-create of a membership is denied without a valid invitation', async () => {
+    await assertFails(
       setDoc(
         doc(dbOf(ROLE_UIDS.viewer), 'memberships', `${WS2}_${ROLE_UIDS.viewer}`),
         membershipData(WS2, ROLE_UIDS.viewer, 'editor'),
@@ -419,8 +442,111 @@ describe('firestore.rules — memberships', () => {
     );
   });
 
-  test('an owner can add another member', async () => {
+  test('the workspace creator can create their own owner membership', async () => {
     await assertSucceeds(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.viewer), 'memberships', `${WS2}_${ROLE_UIDS.viewer}`),
+        membershipData(WS2, ROLE_UIDS.viewer, 'owner'),
+      ),
+    );
+  });
+
+  test('self-create with a matching pending invitation succeeds', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), 'invitations', 'inv-valid'),
+        invitationData(WS1, ROLE_UIDS.owner, 'pending', INVITEE_EMAIL, 'editor', 'inv-valid'),
+      );
+    });
+
+    await assertSucceeds(
+      setDoc(
+        doc(dbWithEmail(INVITEE_UID, INVITEE_EMAIL), 'memberships', `${WS1}_${INVITEE_UID}`),
+        membershipData(WS1, INVITEE_UID, 'editor', 'inv-valid'),
+      ),
+    );
+  });
+
+  test('self-create fails when the invitation role does not match', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), 'invitations', 'inv-role-mismatch'),
+        invitationData(
+          WS1,
+          ROLE_UIDS.owner,
+          'pending',
+          INVITEE_EMAIL,
+          'editor',
+          'inv-role-mismatch',
+        ),
+      );
+    });
+
+    await assertFails(
+      setDoc(
+        doc(dbWithEmail(INVITEE_UID, INVITEE_EMAIL), 'memberships', `${WS1}_${INVITEE_UID}`),
+        membershipData(WS1, INVITEE_UID, 'owner', 'inv-role-mismatch'),
+      ),
+    );
+  });
+
+  test('self-create fails when the invitation email does not match', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), 'invitations', 'inv-email-mismatch'),
+        invitationData(
+          WS1,
+          ROLE_UIDS.owner,
+          'pending',
+          INVITEE_EMAIL,
+          'editor',
+          'inv-email-mismatch',
+        ),
+      );
+    });
+
+    await assertFails(
+      setDoc(
+        doc(dbWithEmail(INVITEE_UID, OTHER_EMAIL), 'memberships', `${WS1}_${INVITEE_UID}`),
+        membershipData(WS1, INVITEE_UID, 'editor', 'inv-email-mismatch'),
+      ),
+    );
+  });
+
+  test('self-create fails when the invitation is expired', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'invitations', 'inv-expired'), {
+        ...invitationData(WS1, ROLE_UIDS.owner, 'pending', INVITEE_EMAIL, 'editor', 'inv-expired'),
+        expiresAt: new Date('2026-01-01T00:00:00.000Z'),
+      });
+    });
+
+    await assertFails(
+      setDoc(
+        doc(dbWithEmail(INVITEE_UID, INVITEE_EMAIL), 'memberships', `${WS1}_${INVITEE_UID}`),
+        membershipData(WS1, INVITEE_UID, 'editor', 'inv-expired'),
+      ),
+    );
+  });
+
+  test('self-create fails when the invitation is not pending', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), 'invitations', 'inv-accepted'),
+        invitationData(WS1, ROLE_UIDS.owner, 'accepted', INVITEE_EMAIL, 'editor', 'inv-accepted'),
+      );
+    });
+
+    await assertFails(
+      setDoc(
+        doc(dbWithEmail(INVITEE_UID, INVITEE_EMAIL), 'memberships', `${WS1}_${INVITEE_UID}`),
+        membershipData(WS1, INVITEE_UID, 'editor', 'inv-accepted'),
+      ),
+    );
+  });
+
+  test('an owner cannot add another member directly; memberships require an invitation', async () => {
+    await assertFails(
       setDoc(
         doc(dbOf(ROLE_UIDS.owner), 'memberships', `${WS1}_${OUTSIDER_UID}`),
         membershipData(WS1, OUTSIDER_UID, 'viewer'),
@@ -547,6 +673,31 @@ describe('firestore.rules — invitations', () => {
       setDoc(
         doc(unauthed().firestore(), 'invitations', 'inv-anon'),
         invitationData(WS1, ROLE_UIDS.owner),
+      ),
+    );
+  });
+
+  test('an owner can invite with owner role', async () => {
+    await assertSucceeds(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.owner), 'invitations', 'inv-owner-role'),
+        invitationData(WS1, ROLE_UIDS.owner, 'pending', INVITEE_EMAIL, 'owner', 'inv-owner-role'),
+      ),
+    );
+  });
+
+  test('an editor cannot invite with owner role', async () => {
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.editor), 'invitations', 'inv-editor-owner'),
+        invitationData(
+          WS1,
+          ROLE_UIDS.editor,
+          'pending',
+          INVITEE_EMAIL,
+          'owner',
+          'inv-editor-owner',
+        ),
       ),
     );
   });

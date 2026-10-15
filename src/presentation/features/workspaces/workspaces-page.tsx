@@ -35,6 +35,10 @@ export function WorkspacesPage({
   const session = useSession();
   const [createOpen, setCreateOpen] = useState(false);
   const [refreshToken, setRefreshToken] = useState(0);
+  const ownerId =
+    session.status === 'authenticated'
+      ? UserId.create(session.user.uid)
+      : UserId.create('anonymous');
 
   const createWorkspace: CreateWorkspace = useMemo(() => {
     if (session.status !== 'authenticated') {
@@ -48,9 +52,8 @@ export function WorkspacesPage({
       });
     }
 
-    const ownerId = UserId.create(session.user.uid);
     return (input: CreateWorkspaceInput) => createWorkspaceWithOwner({ ...input, ownerId });
-  }, [createWorkspaceWithOwner, session]);
+  }, [createWorkspaceWithOwner, session, ownerId]);
 
   const handleCreateWorkspace = () => {
     setCreateOpen(true);
@@ -91,6 +94,7 @@ export function WorkspacesPage({
         open={createOpen}
         onOpenChange={setCreateOpen}
         createWorkspace={createWorkspace}
+        createdBy={ownerId}
         onCreated={handleCreated}
       />
     </Page>

@@ -1,10 +1,11 @@
 import type { Membership, MembershipRole } from '../../domain/membership';
-import type { UserId, WorkspaceId } from '../../domain/shared';
+import type { InvitationId, UserId, WorkspaceId } from '../../domain/shared';
 
 export interface MembershipCreateInput {
   readonly userId: UserId;
   readonly workspaceId: WorkspaceId;
   readonly role: MembershipRole;
+  readonly invitationId?: InvitationId;
 }
 
 export interface MembershipRepository {

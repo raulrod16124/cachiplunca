@@ -52,7 +52,12 @@ export class FakeWorkspaceRepository implements WorkspaceRepository {
 
 function buildWorkspace(id: WorkspaceId, input: WorkspaceCreateInput): Workspace {
   try {
-    return Workspace.create({ id, name: input.name, description: input.description });
+    return Workspace.create({
+      id,
+      name: input.name,
+      createdBy: input.createdBy,
+      description: input.description,
+    });
   } catch (error) {
     throw toValidationError(error);
   }

@@ -1,5 +1,5 @@
 import { Membership, validateRole, type MembershipRole } from '../../domain/membership';
-import { UserId, WorkspaceId } from '../../domain/shared';
+import { InvitationId, UserId, WorkspaceId } from '../../domain/shared';
 
 export interface MembershipDocument {
   readonly userId: string;
@@ -7,15 +7,30 @@ export interface MembershipDocument {
   readonly role: MembershipRole;
   readonly createdAt: Date;
   readonly updatedAt: Date;
+  readonly invitationId?: string;
 }
 
-export function toMembershipDocument(membership: Membership): MembershipDocument {
+export function toMembershipDocument(
+  membership: Membership,
+  invitationId?: InvitationId,
+): MembershipDocument {
+  if (invitationId === undefined) {
+    return {
+      userId: membership.userId.value,
+      workspaceId: membership.workspaceId.value,
+      role: membership.role,
+      createdAt: membership.createdAt,
+      updatedAt: membership.updatedAt,
+    };
+  }
+
   return {
     userId: membership.userId.value,
     workspaceId: membership.workspaceId.value,
     role: membership.role,
     createdAt: membership.createdAt,
     updatedAt: membership.updatedAt,
+    invitationId: invitationId.value,
   };
 }
 

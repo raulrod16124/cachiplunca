@@ -2,12 +2,15 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { WorkspacesList } from '../../../../../../presentation/features/workspaces/components/workspaces-list';
 import { Workspace } from '../../../../../../domain/workspace';
-import { WorkspaceId } from '../../../../../../domain/shared';
+import { UserId, WorkspaceId } from '../../../../../../domain/shared';
+
+const CREATED_BY = UserId.create('user-1');
 
 function createWorkspace(name: string, updatedAt: Date): Workspace {
   const workspace = Workspace.create({
     id: WorkspaceId.create(`ws-${name}`),
     name,
+    createdBy: CREATED_BY,
   });
   // Override updatedAt for deterministic tests
   Object.defineProperty(workspace, 'updatedAt', {

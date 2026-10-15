@@ -70,6 +70,7 @@ export function createAcceptInvitation(deps: AcceptInvitationDeps): AcceptInvita
         userId: input.userId,
         workspaceId: invitation.workspaceId,
         role: invitation.role,
+        invitationId: invitation.id,
       });
 
       try {

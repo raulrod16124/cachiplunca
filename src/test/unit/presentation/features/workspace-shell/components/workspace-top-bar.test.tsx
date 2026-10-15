@@ -7,9 +7,12 @@ import { UserId, WorkspaceId } from '../../../../../../domain/shared';
 import { Workspace } from '../../../../../../domain/workspace';
 import { WorkspaceTopBar } from '../../../../../../presentation/features/workspace-shell/components/workspace-top-bar';
 
+const CREATED_BY = UserId.create('user-1');
+
 const WORKSPACE = Workspace.create({
   id: WorkspaceId.create('ws-1'),
   name: 'Roadmap Q4',
+  createdBy: CREATED_BY,
 });
 
 const CURRENT_USER: AuthUser = {

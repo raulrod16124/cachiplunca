@@ -133,6 +133,7 @@ export function createAppHarness(): AppHarness {
     leaveWorkspace: createLeaveWorkspace(membershipRepository),
     inviteMember: createInviteMember({
       invitationRepository,
+      membershipRepository,
       generateId: () => InvitationId.create(`inv-${++elementSequence}`),
       issueToken: async () => ({
         token: `token-${elementSequence}`,
@@ -174,7 +175,10 @@ export function createAppHarness(): AppHarness {
         throw new Error('Register a user before creating an owner workspace.');
       }
 
-      const workspace = await workspaceRepository.create({ name });
+      const workspace = await workspaceRepository.create({
+        name,
+        createdBy: UserId.create(currentUser.uid),
+      });
       await membershipRepository.create({
         userId: UserId.create(currentUser.uid),
         workspaceId: workspace.id,

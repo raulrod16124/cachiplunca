@@ -8,18 +8,26 @@ import {
   createListPendingInvitations,
   type ListPendingInvitations,
 } from '../../../../../../application/queries';
-import { InvitationId, UserId } from '../../../../../../domain/shared';
+import { InvitationId, UserId, WorkspaceId } from '../../../../../../domain/shared';
 import { InvitePanel } from '../../../../../../presentation/features/invitations/components/invite-panel';
 import { createAppError, ERROR_CODES } from '../../../../../../shared/errors';
 import { FakeInvitationRepository } from '../../../../../fixtures/fake-invitation-repository';
+import { FakeMembershipRepository } from '../../../../../fixtures/fake-membership-repository';
 
 const WORKSPACE_ID = 'ws-1';
 const INVITED_BY = UserId.create('user-1');
 
-function buildInviteMember(repository: FakeInvitationRepository): InviteMember {
+async function buildInviteMember(repository: FakeInvitationRepository): Promise<InviteMember> {
+  const membershipRepository = new FakeMembershipRepository();
+  await membershipRepository.create({
+    userId: INVITED_BY,
+    workspaceId: WorkspaceId.create(WORKSPACE_ID),
+    role: 'owner',
+  });
   let sequence = 0;
   return createInviteMember({
     invitationRepository: repository,
+    membershipRepository,
     generateId: () => InvitationId.create(`inv-${(sequence += 1)}`),
     issueToken: async () => ({ token: 'token-abc', tokenHash: 'hash-abc' }),
     now: () => new Date('2026-01-01T00:00:00.000Z'),
@@ -45,23 +53,23 @@ function renderPanel(
 describe('InvitePanel', () => {
   it('loads and shows the empty pending state when active', async () => {
     const repository = new FakeInvitationRepository();
-    renderPanel(createListPendingInvitations(repository), buildInviteMember(repository));
+    renderPanel(createListPendingInvitations(repository), await buildInviteMember(repository));
 
     expect(await screen.findByText('No pending invitations.')).toBeInTheDocument();
   });
 
-  it('does not load pending invitations while inactive', () => {
+  it('does not load pending invitations while inactive', async () => {
     const repository = new FakeInvitationRepository();
     const listPendingInvitations = jest.fn(createListPendingInvitations(repository));
 
-    renderPanel(listPendingInvitations, buildInviteMember(repository), false);
+    renderPanel(listPendingInvitations, await buildInviteMember(repository), false);
 
     expect(listPendingInvitations).not.toHaveBeenCalled();
   });
 
   it('invites a member, reveals the one-time link and refreshes the pending list', async () => {
     const repository = new FakeInvitationRepository();
-    renderPanel(createListPendingInvitations(repository), buildInviteMember(repository));
+    renderPanel(createListPendingInvitations(repository), await buildInviteMember(repository));
     await screen.findByText('No pending invitations.');
 
     fireEvent.change(screen.getByLabelText('Email'), {
@@ -86,7 +94,7 @@ describe('InvitePanel', () => {
       ),
     });
 
-    renderPanel(listPendingInvitations, buildInviteMember(repository));
+    renderPanel(listPendingInvitations, await buildInviteMember(repository));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'We could not reach the server. Check your connection and try again.',

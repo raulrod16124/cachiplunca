@@ -1,6 +1,6 @@
 import type { Firestore } from 'firebase/firestore';
 import { createFirebaseWorkspaceRepository } from '../../../../infrastructure/firebase/firebase-workspace-repository';
-import { WorkspaceId } from '../../../../domain/shared';
+import { UserId, WorkspaceId } from '../../../../domain/shared';
 import { ERROR_CODES, isAppError } from '../../../../shared/errors';
 import { describeWorkspaceRepositoryContract } from '../../../contract/workspace-repository-contract';
 import type { InMemoryFirestoreApi } from '../../../fixtures/in-memory-firestore';
@@ -31,7 +31,11 @@ describe('createFirebaseWorkspaceRepository', () => {
   it('persists the workspace document under its generated id with Date timestamps', async () => {
     const repository = createFirebaseWorkspaceRepository(makeFirestore());
 
-    const created = await repository.create({ name: 'Persisted', description: 'notes' });
+    const created = await repository.create({
+      name: 'Persisted',
+      description: 'notes',
+      createdBy: UserId.create('user-1'),
+    });
 
     const stored = firestoreMock.__read(`workspaces/${created.id.value}`);
     if (stored === undefined) {
@@ -48,7 +52,9 @@ describe('createFirebaseWorkspaceRepository', () => {
   it('does not write any document when input validation fails', async () => {
     const repository = createFirebaseWorkspaceRepository(makeFirestore());
 
-    await expect(repository.create({ name: '   ' })).rejects.toMatchObject({
+    await expect(
+      repository.create({ name: '   ', createdBy: UserId.create('user-1') }),
+    ).rejects.toMatchObject({
       kind: 'validation',
     });
 
@@ -72,7 +78,9 @@ describe('createFirebaseWorkspaceRepository', () => {
     const repository = createFirebaseWorkspaceRepository(makeFirestore());
     firestoreMock.__failNextWith('permission-denied');
 
-    const error: unknown = await repository.create({ name: 'Blocked' }).catch((r: unknown) => r);
+    const error: unknown = await repository
+      .create({ name: 'Blocked', createdBy: UserId.create('user-1') })
+      .catch((r: unknown) => r);
 
     expect(error).toMatchObject({
       kind: 'authorization',
@@ -84,7 +92,11 @@ describe('createFirebaseWorkspaceRepository', () => {
 
   it('updates only the changed fields of the stored document', async () => {
     const repository = createFirebaseWorkspaceRepository(makeFirestore());
-    const created = await repository.create({ name: 'Keeper', description: 'keep me' });
+    const created = await repository.create({
+      name: 'Keeper',
+      description: 'keep me',
+      createdBy: UserId.create('user-1'),
+    });
 
     await repository.update(created.id, { name: 'Renamed' });
 
@@ -97,6 +109,7 @@ describe('createFirebaseWorkspaceRepository', () => {
   it('rejects list with a validation AppError when a stored document breaks domain invariants', async () => {
     firestoreMock.__seed('workspaces/corrupt', {
       name: 42,
+      createdBy: 'user-1',
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -115,6 +128,7 @@ describe('createFirebaseWorkspaceRepository', () => {
     const createdAt = new Date('2026-01-01T00:00:00.000Z');
     firestoreMock.__seed('workspaces/seeded', {
       name: 'Seeded',
+      createdBy: 'user-1',
       description: null,
       createdAt: { toDate: () => createdAt },
       updatedAt: { toDate: () => createdAt },

@@ -19,6 +19,8 @@ export class FakeMembershipRepository implements MembershipRepository {
         role: input.role,
       }),
     );
+    // invitationId is accepted for API compatibility but not stored on the entity.
+    void input.invitationId;
 
     this.#memberships.set(key, membership);
     return membership;

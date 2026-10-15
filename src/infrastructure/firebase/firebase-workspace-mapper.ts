@@ -1,8 +1,9 @@
-import { WorkspaceId } from '../../domain/shared';
+import { UserId, WorkspaceId } from '../../domain/shared';
 import { Workspace } from '../../domain/workspace';
 
 export interface WorkspaceDocument {
   readonly name: string;
+  readonly createdBy: string;
   readonly createdAt: Date;
   readonly updatedAt: Date;
   readonly description: string | null;
@@ -11,6 +12,7 @@ export interface WorkspaceDocument {
 export function toWorkspaceDocument(workspace: Workspace): WorkspaceDocument {
   return {
     name: workspace.name,
+    createdBy: workspace.createdBy.value,
     createdAt: workspace.createdAt,
     updatedAt: workspace.updatedAt,
     description: workspace.description,
@@ -28,10 +30,18 @@ export function fromWorkspaceDocument(id: string, data: unknown): Workspace {
   return Workspace.create({
     id: WorkspaceId.create(id),
     name: data.name,
+    createdBy: UserId.create(readString(data.createdBy, 'createdBy')),
     description: readDescription(data.description),
     createdAt: readDate(data.createdAt, 'createdAt'),
     updatedAt: readDate(data.updatedAt, 'updatedAt'),
   });
+}
+
+function readString(value: unknown, field: string): string {
+  if (typeof value !== 'string') {
+    throw new Error(`Workspace document field "${field}" must be a string`);
+  }
+  return value;
 }
 
 function readDate(value: unknown, field: string): Date {

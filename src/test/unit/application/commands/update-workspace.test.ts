@@ -3,9 +3,11 @@ import {
   validateUpdateWorkspaceInput,
   type UpdateWorkspaceResult,
 } from '../../../../application/commands';
+import { UserId } from '../../../../domain/shared';
 import { ERROR_CODES } from '../../../../shared/errors';
 import { FakeWorkspaceRepository } from '../../../fixtures/fake-workspace-repository';
 
+const CREATED_BY = UserId.create('user-1');
 const VALID_ID = 'ws-1';
 
 describe('validateUpdateWorkspaceInput', () => {
@@ -52,7 +54,7 @@ describe('validateUpdateWorkspaceInput', () => {
 describe('createUpdateWorkspace', () => {
   it('updates the name with the trimmed value, preserving id and createdAt', async () => {
     const repository = new FakeWorkspaceRepository();
-    const created = await repository.create({ name: 'Original' });
+    const created = await repository.create({ createdBy: CREATED_BY, name: 'Original' });
     const updateWorkspace = createUpdateWorkspace(repository);
 
     const result = await updateWorkspace({ id: created.id.value, name: '  Renamed  ' });
@@ -71,7 +73,11 @@ describe('createUpdateWorkspace', () => {
 
   it('sets and clears the description with an explicit null', async () => {
     const repository = new FakeWorkspaceRepository();
-    const created = await repository.create({ name: 'Original', description: 'Previous' });
+    const created = await repository.create({
+      createdBy: CREATED_BY,
+      name: 'Original',
+      description: 'Previous',
+    });
     const updateWorkspace = createUpdateWorkspace(repository);
 
     const withDescription = await updateWorkspace({
@@ -93,7 +99,11 @@ describe('createUpdateWorkspace', () => {
 
   it('keeps omitted fields untouched', async () => {
     const repository = new FakeWorkspaceRepository();
-    const created = await repository.create({ name: 'Original', description: 'Keep me' });
+    const created = await repository.create({
+      createdBy: CREATED_BY,
+      name: 'Original',
+      description: 'Keep me',
+    });
     const updateWorkspace = createUpdateWorkspace(repository);
 
     const result = await updateWorkspace({ id: created.id.value, name: 'Renamed' });
@@ -107,7 +117,7 @@ describe('createUpdateWorkspace', () => {
 
   it('accepts an id with surrounding whitespace', async () => {
     const repository = new FakeWorkspaceRepository();
-    const created = await repository.create({ name: 'Original' });
+    const created = await repository.create({ createdBy: CREATED_BY, name: 'Original' });
     const updateWorkspace = createUpdateWorkspace(repository);
 
     const result = await updateWorkspace({ id: `  ${created.id.value}  `, name: 'Renamed' });

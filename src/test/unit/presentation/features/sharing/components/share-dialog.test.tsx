@@ -201,6 +201,7 @@ describe('ShareDialog', () => {
     const invitationRepository = new FakeInvitationRepository();
     const inviteMember = createInviteMember({
       invitationRepository,
+      membershipRepository: repository,
       generateId: () => InvitationId.create('inv-1'),
       issueToken: async () => ({ token: 'token-abc', tokenHash: 'hash-abc' }),
       now: () => new Date('2026-01-01T00:00:00.000Z'),

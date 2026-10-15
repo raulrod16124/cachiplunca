@@ -11,6 +11,7 @@ import { FakeWorkspaceRepository } from '../../../fixtures/fake-workspace-reposi
 
 const OWNER = UserId.create('user-owner');
 const OTHER_USER = UserId.create('user-other');
+const CREATED_BY = UserId.create('user-1');
 
 async function seedMember(
   repository: FakeMembershipRepository,
@@ -55,7 +56,7 @@ describe('validateDeleteWorkspaceInput', () => {
 describe('createDeleteWorkspace', () => {
   it('lets an owner delete a workspace so it is no longer exposed', async () => {
     const { workspaceRepository, membershipRepository, deleteWorkspace } = createFixture();
-    const created = await workspaceRepository.create({ name: 'Disposable' });
+    const created = await workspaceRepository.create({ createdBy: CREATED_BY, name: 'Disposable' });
     await seedMember(membershipRepository, OWNER, 'owner', created.id);
 
     const result = await deleteWorkspace({ id: created.id.value, actorUserId: OWNER.value });
@@ -67,7 +68,7 @@ describe('createDeleteWorkspace', () => {
 
   it('accepts an id with surrounding whitespace', async () => {
     const { workspaceRepository, membershipRepository, deleteWorkspace } = createFixture();
-    const created = await workspaceRepository.create({ name: 'Disposable' });
+    const created = await workspaceRepository.create({ createdBy: CREATED_BY, name: 'Disposable' });
     await seedMember(membershipRepository, OWNER, 'owner', created.id);
 
     const result = await deleteWorkspace({
@@ -83,7 +84,10 @@ describe('createDeleteWorkspace', () => {
     'forbids a %s from deleting the workspace without touching the repository',
     async (actorRole) => {
       const { workspaceRepository, membershipRepository, deleteWorkspace } = createFixture();
-      const created = await workspaceRepository.create({ name: 'Protected' });
+      const created = await workspaceRepository.create({
+        createdBy: CREATED_BY,
+        name: 'Protected',
+      });
       await seedMember(membershipRepository, OTHER_USER, actorRole, created.id);
       const remove = jest.spyOn(workspaceRepository, 'delete');
 
@@ -104,8 +108,11 @@ describe('createDeleteWorkspace', () => {
 
   it('forbids an actor that is not a member of the workspace', async () => {
     const { workspaceRepository, membershipRepository, deleteWorkspace } = createFixture();
-    const created = await workspaceRepository.create({ name: 'Protected' });
-    const otherWorkspace = await workspaceRepository.create({ name: 'Other' });
+    const created = await workspaceRepository.create({ createdBy: CREATED_BY, name: 'Protected' });
+    const otherWorkspace = await workspaceRepository.create({
+      createdBy: CREATED_BY,
+      name: 'Other',
+    });
     await seedMember(membershipRepository, OWNER, 'owner', otherWorkspace.id);
 
     const result = await deleteWorkspace({ id: created.id.value, actorUserId: OWNER.value });
@@ -156,7 +163,7 @@ describe('createDeleteWorkspace', () => {
 
   it('preserves AppErrors thrown by the repository', async () => {
     const { workspaceRepository, membershipRepository, deleteWorkspace } = createFixture();
-    const created = await workspaceRepository.create({ name: 'Disposable' });
+    const created = await workspaceRepository.create({ createdBy: CREATED_BY, name: 'Disposable' });
     await seedMember(membershipRepository, OWNER, 'owner', created.id);
     jest.spyOn(workspaceRepository, 'delete').mockRejectedValue({
       kind: 'network',
@@ -175,7 +182,7 @@ describe('createDeleteWorkspace', () => {
 
   it('normalizes unexpected errors into AppError', async () => {
     const { workspaceRepository, membershipRepository, deleteWorkspace } = createFixture();
-    const created = await workspaceRepository.create({ name: 'Disposable' });
+    const created = await workspaceRepository.create({ createdBy: CREATED_BY, name: 'Disposable' });
     await seedMember(membershipRepository, OWNER, 'owner', created.id);
     jest.spyOn(workspaceRepository, 'delete').mockRejectedValue(new Error('socket hang up'));
 

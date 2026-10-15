@@ -31,6 +31,7 @@ export function createInvitationServices(): InvitationServices {
   return {
     inviteMember: createInviteMember({
       invitationRepository,
+      membershipRepository,
       generateId: () => InvitationId.create(crypto.randomUUID()),
       issueToken: createInvitationTokenIssuer(),
     }),

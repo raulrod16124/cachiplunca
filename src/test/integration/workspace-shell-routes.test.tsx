@@ -16,7 +16,7 @@ import {
   createElementPersistenceOrchestrator,
   createRealtimeSubscriptionManager,
 } from '../../application/services';
-import { ElementId } from '../../domain/shared';
+import { ElementId, UserId } from '../../domain/shared';
 import { FakeAuthPort } from '../fixtures/fake-auth-port';
 import { FakeElementRepository } from '../fixtures/fake-element-repository';
 import { FakeMembershipRepository } from '../fixtures/fake-membership-repository';
@@ -31,7 +31,10 @@ async function renderAuthenticatedApp(initialPath = '/workspaces') {
   await authPort.signUp(CREDENTIALS);
 
   const repository = new FakeWorkspaceRepository();
-  const workspace = await repository.create({ name: 'Roadmap Q4' });
+  const workspace = await repository.create({
+    name: 'Roadmap Q4',
+    createdBy: UserId.create('user-1'),
+  });
   const elementRepository = new FakeElementRepository();
 
   const view = renderAppRoutes({

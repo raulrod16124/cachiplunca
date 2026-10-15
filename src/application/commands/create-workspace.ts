@@ -1,3 +1,4 @@
+import type { UserId } from '../../domain/shared';
 import type { Workspace } from '../../domain/workspace';
 import { toAppError, type AppError } from '../../shared/errors';
 import type { WorkspaceRepository } from '../ports';
@@ -5,6 +6,7 @@ import { validateWorkspaceName } from './validate-workspace-name';
 
 export interface CreateWorkspaceInput {
   readonly name: string;
+  readonly createdBy: UserId;
   readonly description?: string | null;
 }
 
@@ -19,8 +21,13 @@ export type CreateWorkspaceResult =
 
 export type CreateWorkspace = (input: CreateWorkspaceInput) => Promise<CreateWorkspaceResult>;
 
+export interface CreateWorkspaceValidationInput {
+  readonly name: string;
+  readonly description?: string | null;
+}
+
 export function validateCreateWorkspaceInput(
-  input: CreateWorkspaceInput,
+  input: CreateWorkspaceValidationInput,
 ): CreateWorkspaceFieldErrors {
   const fieldErrors: CreateWorkspaceFieldErrors = {};
 
@@ -42,6 +49,7 @@ export function createCreateWorkspace(workspaceRepository: WorkspaceRepository):
     try {
       const workspace = await workspaceRepository.create({
         name: input.name.trim(),
+        createdBy: input.createdBy,
         description: input.description,
       });
       return { status: 'ok', workspace };
