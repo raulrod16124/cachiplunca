@@ -4249,7 +4249,7 @@ Medir una línea base de rendimiento del canvas antes de optimizar.
 
 ### TASK-114 — Rendering optimization
 
-**Priority:** P1 · **Depends:** TASK-113 · **Status:** TODO
+**Priority:** P1 · **Depends:** TASK-113 · **Status:** DONE
 
 #### Objetivo
 
@@ -4264,12 +4264,26 @@ Completar **Rendering optimization** dejando un resultado verificable y apto par
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
+
+#### Resultados
+
+Medido con `npm run perf` (jsdom, mismo host que la línea base TASK-113). Mediana a 10.000 elementos:
+
+| Métrica     | Línea base | Optimizado | Mejora |
+| ----------- | ---------: | ---------: | ------ |
+| `mount`     |  755,28 ms |  125,81 ms | ~6x    |
+| `pan`       |  398,26 ms |    1,60 ms | ~249x  |
+| `zoom`      |  470,48 ms |    1,57 ms | ~300x  |
+| `selection` |  406,72 ms |    7,72 ms | ~53x   |
+| `heap`      |  ~262,3 MB |   ~11,9 MB | ~22x   |
+
+El detalle del cambio y su justificación está en `docs/performance/canvas-optimization.md`.
 
 #### Fuera de alcance
 

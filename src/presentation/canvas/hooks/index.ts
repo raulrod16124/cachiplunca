@@ -45,3 +45,5 @@ export type {
 } from './use-selection-keyboard';
 export { useCanvasFocus } from './use-canvas-focus';
 export type { UseCanvasFocusOptions, UseCanvasFocusResult } from './use-canvas-focus';
+export { useElementSize } from './use-element-size';
+export type { ElementSize, UseElementSizeResult } from './use-element-size';

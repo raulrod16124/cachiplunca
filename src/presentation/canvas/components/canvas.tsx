@@ -2,7 +2,7 @@ import { VisuallyHidden } from '@raulrod/ui';
 import type { ReactElement } from 'react';
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
 import styled from 'styled-components';
-import { Grid, type Position } from '../../../domain/shared';
+import { Bounds, Grid, Position } from '../../../domain/shared';
 import type { Element, ElementType } from '../../../domain/element';
 import type { ElementId } from '../../../domain/shared';
 import type {
@@ -14,6 +14,7 @@ import type {
 import {
   deleteElements,
   elementContentBounds,
+  getVisibleElementIds,
   toSelectableItems,
 } from '../../../application/services';
 import { describeBoard, describeElement } from '../accessibility';
@@ -27,6 +28,7 @@ import { useElementDuplicate } from '../hooks/use-element-duplicate';
 import { useElementMove } from '../hooks/use-element-move';
 import { useElementRedo } from '../hooks/use-element-redo';
 import { useElementResize } from '../hooks/use-element-resize';
+import { useElementSize } from '../hooks/use-element-size';
 import { useElementUndo } from '../hooks/use-element-undo';
 import { usePan } from '../hooks/use-pan';
 import { useSelection } from '../hooks/use-selection';
@@ -115,6 +117,8 @@ const Hint = styled.div`
 
 const CANVAS_GRID = Grid.default();
 
+const CULLING_MARGIN = 64;
+
 const BOARD_SUMMARY_ID = 'canvas-board-summary';
 
 const CANVAS_SHORTCUTS =
@@ -170,6 +174,7 @@ export function Canvas({
   const { isPanning, ref: panRef } = usePan({ onPan: store.pan, spacePressed });
   const { ref: zoomRef } = useZoom({ onZoom: store.zoom });
   const { ref: canvasFocusRef } = useCanvasFocus();
+  const { size: measuredSize, ref: elementSizeRef } = useElementSize();
   const handleCursorMove = useCallback(
     (position: Position) => {
       onCursorMove?.(position);
@@ -413,6 +418,7 @@ export function Canvas({
       elementRedoRef.current = node;
       cursorBroadcastRef.current = node;
       canvasFocusRef.current = node;
+      elementSizeRef(node);
     },
     [
       panRef,
@@ -430,6 +436,7 @@ export function Canvas({
       elementRedoRef,
       cursorBroadcastRef,
       canvasFocusRef,
+      elementSizeRef,
     ],
   );
 
@@ -445,6 +452,38 @@ export function Canvas({
     () => items.filter((item) => selectedIdSet.has(item.id)),
     [items, selectedIdSet],
   );
+
+  const ariaLabels = useMemo(() => {
+    const labels = new Map<string, string>();
+    for (const element of elements) {
+      labels.set(element.id.value, describeElement(element, elements));
+    }
+    return labels;
+  }, [elements]);
+
+  const visibleIds = useMemo<ReadonlySet<string> | null>(() => {
+    const measured =
+      measuredSize !== null && measuredSize.width > 0 && measuredSize.height > 0
+        ? measuredSize
+        : viewport.size;
+    const size = { width: measured.width, height: measured.height };
+
+    if (size.width <= 0 || size.height <= 0) {
+      return null;
+    }
+
+    const topLeft = viewport.screenToWorld(Position.create(0, 0));
+    const bottomRight = viewport.screenToWorld(Position.create(size.width, size.height));
+    const width = bottomRight.x - topLeft.x;
+    const height = bottomRight.y - topLeft.y;
+
+    if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+      return null;
+    }
+
+    const visibleWorld = Bounds.fromXYWH(topLeft.x, topLeft.y, width, height);
+    return new Set(getVisibleElementIds(items, visibleWorld, CULLING_MARGIN));
+  }, [measuredSize, viewport, items]);
 
   const canCreateElement = !readOnly && onCreateElement !== undefined;
   const canUndo =
@@ -489,15 +528,21 @@ export function Canvas({
           transform: `translate(${translateX}px, ${translateY}px) scale(${transform.scale})`,
         }}
       >
-        {elements.map((element) => (
-          <ElementView
-            key={element.id.value}
-            element={element}
-            selected={selectedIdSet.has(element.id.value)}
-            renderers={renderers}
-            ariaLabel={describeElement(element, elements)}
-          />
-        ))}
+        {elements.map((element) => {
+          if (visibleIds !== null && !visibleIds.has(element.id.value)) {
+            return null;
+          }
+
+          return (
+            <ElementView
+              key={element.id.value}
+              element={element}
+              selected={selectedIdSet.has(element.id.value)}
+              renderers={renderers}
+              ariaLabel={ariaLabels.get(element.id.value)}
+            />
+          );
+        })}
         <SelectionOverlay items={selectedItems} />
         {elements.length === 0 ? (
           <Hint>

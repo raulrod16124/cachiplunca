@@ -3,6 +3,7 @@ export * from './command-history';
 export * from './canvas-viewport-store';
 export * from './canvas-hit-test';
 export * from './canvas-navigation';
+export * from './canvas-visibility';
 export * from './element-move';
 export * from './element-resize';
 export * from './element-creation';
