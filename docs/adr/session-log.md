@@ -1,5 +1,17 @@
 # Session Log
 
+## 2026-10-15 — TASK-121 Dependency audit
+
+- Siguiente tarea del backlog: TASK-121 (primera TODO con dependencias DONE —TASK-116 DONE—, sin IN PROGRESS; confirmado en la entrada previa de este log). Alcance acordado con el usuario: **auditoría de dependencias + fixes seguros sin nueva funcionalidad**, informe en `docs/audits/dependency-audit.md`, ADR para la resolución forzada y **alta de hallazgos como tareas** en el backlog.
+- Baseline (`npm ci` reproducible, tree limpio): `npm audit` 53 (1 critical / 40 high / 12 moderate), `npm audit --omit=dev` **4 high**, 1280 paquetes, 114 paquetes con múltiples versiones, sin CI en el repo pese a TASK-008 DONE.
+- Análisis: uso real de cada dependencia directa por grep de imports; `@testing-library/dom` se conserva por ser `peerDependency` de `@testing-library/react@16`; licencias del grafo de producción 100% permisivas (Apache-2.0/MIT/BSD/ISC/0BSD), sin copyleft; el ruido Node/CLI (`yargs`, `cliui`, `ansi-*`) del grafo prod no aparece en `dist/assets/*.js`.
+- Correcciones aplicadas: **F1** `overrides: { "@grpc/grpc-js": "^1.14.6" }` en `package.json` — `@firebase/firestore@4.17.2` fija `~1.9.0` (rango vulnerable `<=1.13.5`, sin fix in-range) → **producción 4 high → 0** y dedupe de las 3 copias a 1, con ADR-0029; **F2** eliminado `@types/styled-components@^5` (styled-components v6 publica `dist/index.d.ts`); `npm audit fix` (subárbol opcional de `re2`) y `npm update` solo dentro de rango (oxlint, prettier, react/react-dom 19.3.1, styled-components 6.6.0, ts-jest, vite, @types/node). **No** se aplicó `--force` (degradaría `firebase` a 9.14.0 / subiría `firebase-tools` a 15 sin JDK ≥21, ADR-0023).
+- Resultado: `npm audit` 53 → **47** (1 critical / 35 high / 11 moderate), **todos en devDependencies** (`firebase-tools@14`, `jest@29`); `npm audit --omit=dev` → **0**.
+- Hallazgos documentados: F3 (High, dev tooling → TASK-128), F4 (Medium, sin CI → TASK-129), F5 (Medium, majors → TASK-128/130), F6/F7/F8/F9 (Low). Nuevas tareas: **TASK-128** (firebase-tools 15 + jest 30), **TASK-129** (CI + gate `npm audit --omit=dev` + Node 22/engines), **TASK-130** (firebase 13 + TypeScript 7 + retirada del override + code-splitting).
+- Tests: sin cambios de código de aplicación (solo `package.json`/`package-lock.json` y docs). Suite completa **1981 tests / 175 suites** en verde y `npm run test:rules` **68/68** con emulador (valida funcionalmente el override de `grpc-js` sobre Firestore por gRPC).
+- ADR-0029 (`docs/adr/0029-dependency-overrides.md`): override de `@grpc/grpc-js` como mitigación transitoria, alternativas descartadas (`--force`, imports granulares, fork) y condición de retirada. Backlog: TASK-121 → DONE (criterios [x]).
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test`, `npm run build` y `npm run test:rules` en verde. Siguiente tarea ejecutable por protocolo: consultar el backlog (TASK-122 Architecture audit, P0, deps DONE).
+
 ## 2026-10-15 — TASK-120 Security audit
 
 - Siguiente tarea del backlog: TASK-120 (dependencia TASK-098 DONE, sin IN PROGRESS; TASK-124 sigue bloqueada). Alcance acordado con el usuario: **auditoría + fixes de hallazgos Critical/High sin nueva funcionalidad**, informe en `docs/audits/security-audit.md` y **dar de alta los hallazgos como tareas** en el backlog.

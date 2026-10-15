@@ -4527,26 +4527,27 @@ Completar **Security audit** dejando un resultado verificable y apto para las ta
 
 ### TASK-121 — Dependency audit
 
-**Priority:** P1 · **Depends:** TASK-116 · **Status:** TODO
+**Priority:** P1 · **Depends:** TASK-116 · **Status:** DONE
 
 #### Objetivo
 
-Completar **Dependency audit** dejando un resultado verificable y apto para las tareas dependientes.
+Auditar el estado de las dependencias del MVP, aplicar las correcciones seguras y dejar los hallazgos clasificados con acción concreta.
 
 #### Alcance
 
-- Implementar el comportamiento necesario para **Dependency audit**.
-- Integrarlo con las capas existentes sin romper sus límites.
-- Añadir o actualizar tests relevantes.
+- Ejecutar `npm audit` (árbol completo y `--omit=dev`), `npm outdated` y `npm ls --depth=0` sobre el lockfile.
+- Revisar dependencias sin uso, redundantes, duplicadas y licencias del grafo de producción.
+- Aplicar las correcciones que no cruzan majors y documentar el resto.
+- Informe en `docs/audits/dependency-audit.md` y ADR-0029 para el override.
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Los hallazgos quedan clasificados por severidad y con acción concreta.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Los hallazgos quedan clasificados por severidad y con acción concreta.
 
 #### Fuera de alcance
 
@@ -4762,6 +4763,104 @@ Reducir la exposición de datos de `workspaces`/`invitations` a los miembros y e
 - Application depende de ports, no de implementaciones concretas.
 - Infrastructure contiene adapters concretos.
 - La autorización efectiva debe existir en backend/rules; la UI solo refleja permisos.
+
+### TASK-128 — Actualizar tooling de desarrollo con advisories
+
+**Priority:** P1 · **Depends:** TASK-121 · **Status:** TODO
+
+#### Objetivo
+
+Cerrar los advisories residuales que viven solo en `devDependencies` (`firebase-tools@14` y `jest@29`) subiendo ambos majors con validación completa.
+
+#### Alcance
+
+- Evaluar y aplicar `firebase-tools` 14 → 15 (exige JDK ≥21, ver ADR-0023) y `jest` 29 → 30.
+- Ajustar configuración de Jest/emulador afectada por el cambio de major.
+- Reejecutar los quality gates y `npm run test:rules` con el emulador.
+
+#### Criterios de aceptación
+
+- [ ] `npm audit` deja de reportar los advisories de `firebase-tools` y del stack de Jest.
+- [ ] Los quality gates y las rules tests pasan sin regresiones.
+- [ ] No se introducen advisories nuevos en el grafo de producción.
+- [ ] Los tests relevantes pasan sin regresiones.
+- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+
+#### Fuera de alcance
+
+- No cambiar el runtime de producción (`firebase` se actualiza en TASK-130).
+- No ampliar el alcance más allá de lo descrito en esta tarea.
+
+#### Constraints técnicos
+
+- El toolchain local debe cumplir los requisitos de las nuevas versiones (JDK ≥21 para `firebase-tools@15`).
+- Los upgrades de major se hacen por dependencia, no en bloque.
+
+### TASK-129 — CI y gate de auditoría de dependencias
+
+**Priority:** P1 · **Depends:** TASK-121 · **Status:** TODO
+
+#### Objetivo
+
+Automatizar la verificación del repositorio: hoy no existe CI pese a TASK-008 y la auditoría de dependencias no es un gate reproducible.
+
+#### Alcance
+
+- Pipeline de CI que ejecute los quality gates (`lint`, `format:check`, `tsc -b --noEmit`, `test`, `build`).
+- Job con emulador para `npm run test:rules`.
+- Gate bloqueante de `npm audit --omit=dev` y reporte informativo del árbol completo.
+- Fijar Node 22 LTS en CI y declarar `engines` en `package.json`.
+
+#### Criterios de aceptación
+
+- [ ] El pipeline ejecuta los gates y falla ante errores.
+- [ ] `npm audit --omit=dev` bloquea la integración si hay vulnerabilidades de producción.
+- [ ] La versión de Node es reproducible y coherente con `.nvmrc`.
+- [ ] Los tests relevantes pasan sin regresiones.
+- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+
+#### Fuera de alcance
+
+- No introducir despliegue automático.
+- No ampliar el alcance más allá de lo descrito en esta tarea.
+
+#### Constraints técnicos
+
+- `engine-strict` no debe bloquear instalaciones locales; `engines` es informativo.
+- El gate de auditoría de producción no debe depender de servicios de pago.
+
+### TASK-130 — Plan de upgrades de major de runtime y build
+
+**Priority:** P2 · **Depends:** TASK-121 · **Status:** TODO
+
+#### Objetivo
+
+Actualizar las dependencias directas con major pendiente sin romper el SDK ni el build.
+
+#### Alcance
+
+- Evaluar y aplicar `firebase` 12 → 13 y `typescript` 6 → 7.
+- Reevaluar `@types/node` 24 → 26 y `@testing-library/jest-dom` 6 → 7.
+- Retirar el override de `@grpc/grpc-js` (ADR-0029) si upstream publica un rango parcheado.
+- Valorar code-splitting del bundle (chunk único > 500 kB).
+
+#### Criterios de aceptación
+
+- [ ] Los majors se aplican por dependencia con sus tests actualizados.
+- [ ] El override de dependencia se elimina o queda justificado con evidencia.
+- [ ] Los quality gates y `npm run test:rules` pasan sin regresiones.
+- [ ] Los tests relevantes pasan sin regresiones.
+- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+
+#### Fuera de alcance
+
+- No introducir funcionalidad nueva.
+- No ampliar el alcance más allá de lo descrito en esta tarea.
+
+#### Constraints técnicos
+
+- La resolución forzada de dependencias debe justificarse y verificarse funcionalmente.
+- Los upgrades de major no se aplican en bloque.
 
 ---
 
