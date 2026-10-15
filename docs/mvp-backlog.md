@@ -3927,12 +3927,11 @@ Completar **Workspace top bar** dejando un resultado verificable y apto para las
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Los estados loading/error/empty relevantes son explícitos.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -4386,7 +4385,7 @@ Completar **Critical journey integration tests** dejando un resultado verificabl
 
 ### TASK-117 — Collaboration integration test
 
-**Priority:** P0 · **Depends:** TASK-088, TASK-102 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-088, TASK-102 · **Status:** DONE
 
 #### Objetivo
 
@@ -5206,10 +5205,10 @@ Añadir una entrada breve por sesión.
 ## 2026-10-15 — TASK-116
 
 - Resultado: **Critical journey integration tests**. Nuevo harness reutilizable `src/test/integration/harness.tsx` con dos capas: `renderAppRoutes({ authPort, props, initialPath, showLocation })` (deduplica el shell `MemoryRouter` + `SessionProvider` + `LocationProbe`) y `createAppHarness()` (wiring de `AppRoutes` con forma de producción sobre fakes in-memory: auth/workspace/membership/element/realtime/presence, `generateElementId` secuencial `el-N`, `register`, `createOwnerWorkspace`, `render`, getter `currentUser`). Nueva suite `src/test/integration/critical-journey.test.tsx` con 5 tests: (1) journey de registro por UI → workspace (rol `owner` verificado en `FakeMembershipRepository`) → abrir board → crear Text/Note por toolbar → Undo/Redo → Delete selection, comprobando persistencia en `FakeElementRepository`; (2) recovery tras remount del board con los mismos repos (TASK-075); (3) cambio remoto vía `FakeRealtimePort.emit` que sobrevive a Undo/Redo locales (TASK-088); (4)+(5) borrado de workspace owner-only (owner OK; editor/viewer/no-miembro → `auth/forbidden` sin borrar) (TASK-102).
-- Tests/quality gates: `npm test` 173 suites / 1960 tests en verde (+1 suite / +5 tests: `critical-journey.test.tsx`), sin regresiones; `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase).
-- Decisiones: (1) se extrae harness común y se migran los 3 tests de integración existentes (`auth-routes`, `create-workspace-flow`, `workspace-shell-routes`) a `renderAppRoutes` para eliminar el boilerplate de render duplicado, manteniendo su wiring propio; (2) alcance acotado a journey + dependencias — colaboración multi-cliente/presencia queda para TASK-117 y la matriz de permisos/UI para TASK-118; (3) el remote-change se valida observando que un `Undo` local no descarta elementos remotos (el historial local captura el estado vigente), en vez de aseverar el repositorio, porque los cambios remotos no se persisten localmente; (4) sin código de producción tocado y sin ADR por no haber decisión arquitectónica nueva.
+- Tests/quality gates: `npm test` 174 suites / 1965 tests en verde (+1 suite / +5 tests: `collaboration.test.tsx`), sin regresiones; `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npx tsc -b` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase).
+- Decisiones: (1) no modificar `harness.tsx` — solo agregar test; (2) archivo dedicado `collaboration.test.tsx` (no tocar `critical-journey.test.tsx`); (3) peers modelados vía eventos directos de los fakes (como en `critical-journey`), sin renderizar dos `AppRoutes`; (4) evitar duplicación de pruebas de history-vs-remote ya cubiertas en TASK-116/088 — el enfoque es presencia/realtime/reconexión/aislamiento.
 - Bloqueos: ninguno.
-- Siguiente tarea: TASK-117 (Collaboration integration test).
+- Siguiente tarea: TASK-118 (Permission integration tests).
 
 ---
 
