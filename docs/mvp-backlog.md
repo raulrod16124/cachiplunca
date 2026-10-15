@@ -4399,11 +4399,11 @@ Completar **Collaboration integration test** dejando un resultado verificable y 
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -4433,11 +4433,11 @@ Completar **Permission integration tests** dejando un resultado verificable y ap
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -4597,7 +4597,7 @@ Auditar que la implementación respeta Clean Architecture y Hexagonal Architectu
 
 ### TASK-123 — MVP documentation
 
-**Priority:** P1 · **Depends:** TASK-122 · **Status:** TODO
+**Priority:** P1 · **Depends:** TASK-122 · **Status:** DONE
 
 #### Objetivo
 
@@ -4605,17 +4605,17 @@ Completar **MVP documentation** dejando un resultado verificable y apto para las
 
 #### Alcance
 
-- Implementar el comportamiento necesario para **MVP documentation**.
-- Integrarlo con las capas existentes sin romper sus límites.
-- Añadir o actualizar tests relevantes.
+- Reescribir `README.md` con descripción del producto, stack, arquitectura, puesta en marcha, scripts, testing, estructura e índice de documentación.
+- Enlazar auditorías y ADRs relevantes sin duplicar su contenido.
+- Actualizar `docs/mvp-backlog.md` con el estado DONE y la entrada de Session Log.
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 

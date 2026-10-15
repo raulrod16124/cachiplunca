@@ -1,5 +1,14 @@
 # Session Log
 
+## 2026-10-15 — TASK-123 MVP documentation
+
+- Siguiente tarea del backlog: TASK-123 (primera TODO con dependencias DONE —TASK-122 DONE—, sin IN PROGRESS; acordado con el usuario por encima de TASK-126 P0 en esta sesión).
+- Alcance: reescribir `README.md` (en español, coherente con `docs/`) y actualizar el backlog + Session Log.
+- `README.md`: descripción del producto y journey principal; stack; arquitectura Clean/Hexagonal con capas y enlace a la auditoría de arquitectura y ADR-0030; puesta en marcha (Node 22, `.env.local`, Firebase Auth, emulador); tabla de scripts de `package.json`; sección de testing; estructura de `src/`; índice de documentación (`AGENTS.md`, backlog, ADRs, auditorías, performance); quality gates; licencia MIT.
+- Housekeeping: se marcan los criterios de TASK-117 y TASK-118 (ya completados con commits previos `5ac67af` y `286d81d`) para que el backlog refleje el estado real.
+- Backlog: TASK-123 → DONE; criterios [x]; checkboxes de TASK-117/118 corregidos.
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test`, `npm run build` en verde. Siguiente tarea ejecutable por protocolo: TASK-125 (Error Boundary global, P1).
+
 ## 2026-10-15 — TASK-122 Architecture audit
 
 - Siguiente tarea del backlog: TASK-122 (primera TODO con dependencias DONE —TASK-116 DONE—, sin IN PROGRESS). Alcance acordado con el usuario: **auditoría + gate automatizado de fronteras + fixes menores in-place**, informe en `docs/audits/architecture-audit.md`.
