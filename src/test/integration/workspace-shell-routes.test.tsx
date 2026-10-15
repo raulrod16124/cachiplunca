@@ -1,8 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import type { ReactNode } from 'react';
-import { MemoryRouter, useLocation } from 'react-router-dom';
-import { SessionProvider } from '../../app/providers/session-provider';
-import { AppRoutes } from '../../app/routes/app-routes';
+import { fireEvent, screen } from '@testing-library/react';
 import {
   createCreateOwnerMembership,
   createCreateWorkspaceWithOwner,
@@ -19,7 +15,6 @@ import {
   createElementPersistence,
   createElementPersistenceOrchestrator,
   createRealtimeSubscriptionManager,
-  createSessionStore,
 } from '../../application/services';
 import { ElementId } from '../../domain/shared';
 import { FakeAuthPort } from '../fixtures/fake-auth-port';
@@ -27,13 +22,9 @@ import { FakeElementRepository } from '../fixtures/fake-element-repository';
 import { FakeMembershipRepository } from '../fixtures/fake-membership-repository';
 import { FakeRealtimePort } from '../fixtures/fake-realtime-port';
 import { FakeWorkspaceRepository } from '../fixtures/fake-workspace-repository';
+import { renderAppRoutes } from './harness';
 
 const CREDENTIALS = { email: 'user@example.com', password: 'secret123' };
-
-function LocationProbe(): ReactNode {
-  const location = useLocation();
-  return <div data-testid="location">{location.pathname}</div>;
-}
 
 async function renderAuthenticatedApp(initialPath = '/workspaces') {
   const authPort = new FakeAuthPort();
@@ -43,30 +34,27 @@ async function renderAuthenticatedApp(initialPath = '/workspaces') {
   const workspace = await repository.create({ name: 'Roadmap Q4' });
   const elementRepository = new FakeElementRepository();
 
-  const view = render(
-    <MemoryRouter initialEntries={[initialPath]}>
-      <SessionProvider store={createSessionStore(authPort)}>
-        <AppRoutes
-          registerUser={createRegisterUser(authPort)}
-          loginUser={createLoginUser(authPort)}
-          logoutUser={createLogoutUser(authPort)}
-          listWorkspaces={createListWorkspaces(repository)}
-          createWorkspaceWithOwner={createCreateWorkspaceWithOwner({
-            workspaceRepository: repository,
-            createOwnerMembership: createCreateOwnerMembership(new FakeMembershipRepository()),
-          })}
-          getWorkspace={createGetWorkspace(repository)}
-          loadWorkspaceElements={createLoadWorkspaceElements(elementRepository)}
-          elementPersistenceOrchestrator={createElementPersistenceOrchestrator(
-            createElementPersistence(elementRepository),
-          )}
-          realtimeSubscriptionManager={createRealtimeSubscriptionManager(new FakeRealtimePort())}
-          generateElementId={() => ElementId.create('generated')}
-        />
-      </SessionProvider>
-      <LocationProbe />
-    </MemoryRouter>,
-  );
+  const view = renderAppRoutes({
+    authPort,
+    initialPath,
+    props: {
+      registerUser: createRegisterUser(authPort),
+      loginUser: createLoginUser(authPort),
+      logoutUser: createLogoutUser(authPort),
+      listWorkspaces: createListWorkspaces(repository),
+      createWorkspaceWithOwner: createCreateWorkspaceWithOwner({
+        workspaceRepository: repository,
+        createOwnerMembership: createCreateOwnerMembership(new FakeMembershipRepository()),
+      }),
+      getWorkspace: createGetWorkspace(repository),
+      loadWorkspaceElements: createLoadWorkspaceElements(elementRepository),
+      elementPersistenceOrchestrator: createElementPersistenceOrchestrator(
+        createElementPersistence(elementRepository),
+      ),
+      realtimeSubscriptionManager: createRealtimeSubscriptionManager(new FakeRealtimePort()),
+      generateElementId: () => ElementId.create('generated'),
+    },
+  });
 
   return { ...view, repository, elementRepository, workspace };
 }

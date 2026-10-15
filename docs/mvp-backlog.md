@@ -4352,7 +4352,7 @@ Estrategia **híbrida** (detalle en `docs/performance/canvas-regression.md`, dec
 
 ### TASK-116 — Critical journey integration tests
 
-**Priority:** P0 · **Depends:** TASK-075, TASK-088, TASK-102 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-075, TASK-088, TASK-102 · **Status:** DONE
 
 #### Objetivo
 
@@ -4366,11 +4366,11 @@ Completar **Critical journey integration tests** dejando un resultado verificabl
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -5202,6 +5202,14 @@ Añadir una entrada breve por sesión.
 - ADR-0026 (`docs/adr/0026-canvas-performance-baseline.md`): doble capa, escenarios/métricas, registro versionado, aislamiento del tooling y "medir antes de optimizar".
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-114 (Rendering optimization).
+
+## 2026-10-15 — TASK-116
+
+- Resultado: **Critical journey integration tests**. Nuevo harness reutilizable `src/test/integration/harness.tsx` con dos capas: `renderAppRoutes({ authPort, props, initialPath, showLocation })` (deduplica el shell `MemoryRouter` + `SessionProvider` + `LocationProbe`) y `createAppHarness()` (wiring de `AppRoutes` con forma de producción sobre fakes in-memory: auth/workspace/membership/element/realtime/presence, `generateElementId` secuencial `el-N`, `register`, `createOwnerWorkspace`, `render`, getter `currentUser`). Nueva suite `src/test/integration/critical-journey.test.tsx` con 5 tests: (1) journey de registro por UI → workspace (rol `owner` verificado en `FakeMembershipRepository`) → abrir board → crear Text/Note por toolbar → Undo/Redo → Delete selection, comprobando persistencia en `FakeElementRepository`; (2) recovery tras remount del board con los mismos repos (TASK-075); (3) cambio remoto vía `FakeRealtimePort.emit` que sobrevive a Undo/Redo locales (TASK-088); (4)+(5) borrado de workspace owner-only (owner OK; editor/viewer/no-miembro → `auth/forbidden` sin borrar) (TASK-102).
+- Tests/quality gates: `npm test` 173 suites / 1960 tests en verde (+1 suite / +5 tests: `critical-journey.test.tsx`), sin regresiones; `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase).
+- Decisiones: (1) se extrae harness común y se migran los 3 tests de integración existentes (`auth-routes`, `create-workspace-flow`, `workspace-shell-routes`) a `renderAppRoutes` para eliminar el boilerplate de render duplicado, manteniendo su wiring propio; (2) alcance acotado a journey + dependencias — colaboración multi-cliente/presencia queda para TASK-117 y la matriz de permisos/UI para TASK-118; (3) el remote-change se valida observando que un `Undo` local no descarta elementos remotos (el historial local captura el estado vigente), en vez de aseverar el repositorio, porque los cambios remotos no se persisten localmente; (4) sin código de producción tocado y sin ADR por no haber decisión arquitectónica nueva.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-117 (Collaboration integration test).
 
 ---
 
