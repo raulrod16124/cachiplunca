@@ -1,5 +1,15 @@
 # Session Log
 
+## 2026-10-15 — TASK-115 Performance regression test
+
+- Siguiente tarea del backlog: TASK-115 (dependencia TASK-114 DONE, sin IN PROGRESS ni BLOCKED). Alcance y umbrales confirmados con el usuario: estrategia **híbrida** (guard estructural determinista + presupuestos de tiempo) y umbrales **absolutos con holgura amplia** (fallar solo ante regresiones catastróficas).
+- Guard primario (en `npm test`): `src/test/unit/presentation/canvas/components/canvas-render-budget.test.tsx` (4 casos) con `generateElements` (semilla fija) y viewport 1280×800. Afirma que los nodos `[data-selectable]` montados son exactamente `getVisibleElementIds(items, visibleWorld, CULLING_MARGIN).length` y ≪ N; que el conteo no depende del tamaño del tablero (cluster fijo visible + 10 vs 5.000 elementos lejanos ⇒ mismo conteo); que `pan`/`zoom`/`selection` no montan elementos fuera del viewport; y que pan a zona vacía monta cero.
+- Único cambio de producción: `CULLING_MARGIN` se **exporta** desde `src/presentation/canvas/components/canvas.tsx` para que el test afirme el contrato real sin duplicar la constante.
+- Guard secundario (en `npm run perf`): `src/test/perf/budgets.ts` (tabla `CANVAS_PERFORMANCE_BUDGETS` + evaluador puro `evaluateBudgets`/`isWithinBudget`), `src/test/perf/canvas.regression.perf.test.tsx` (mide a 10.000 elementos y falla si algún `median` supera su techo) y `src/test/perf/budgets.perf.test.ts` (9 casos del evaluador: límite, superación, ausencia, no-finitos, formato). `canvas.perf.test.tsx` queda intacto (solo medición).
+- Techos absolutos entre el valor optimizado (TASK-114) y la línea base (TASK-113): `mount ≤ 1200 ms`, `pan/zoom/selection ≤ 120 ms`, `heap ≤ 120 MB`, más algoritmos (`toSelectableItems ≤ 60 ms`, `findSelectableAt ≤ 20 ms`, `findSelectablesInBounds ≤ 60 ms`, `describeBoard ≤ 40 ms`, `elementContentBounds ≤ 60 ms`). Holgura ~10–75x; `pan/zoom/selection` fallan si se vuelve al re-render total.
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit` (incluye `tsconfig.perf.json`), `npm test` (nuevo suite estructural en verde) y `npm run build` en verde; `npm run perf` → **todos los presupuestos pasan**. El guard estructural añade ~0,35 s a `npm test`.
+- ADR-0027 (`docs/adr/0027-performance-regression-testing.md`): guard estructural primario + presupuestos absolutos secundarios; alternativas descartadas (solo tiempo, solo estructural, relativos, snapshots de tiempo, dependencia de benchmarking). Doc de estrategia en `docs/performance/canvas-regression.md`. Criterios TASK-115 marcados [x] y `Status: DONE`. Siguiente tarea: TASK-116 (Critical journey integration tests).
+
 ## 2026-10-13 — TASK-098 Security Rules tests
 
 - Siguiente tarea del backlog: TASK-098 (dependencia TASK-097 DONE, sin IN PROGRESS ni BLOCKED). Alcance confirmado con el usuario: **suite exhaustiva allow/deny por recurso + test de paridad `PERMISSION_MATRIX` ↔ reglas**; sin cambiar `firestore.rules` salvo defecto revelado.

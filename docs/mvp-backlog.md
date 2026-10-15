@@ -4300,7 +4300,7 @@ El detalle del cambio y su justificación está en `docs/performance/canvas-opti
 
 ### TASK-115 — Performance regression test
 
-**Priority:** P1 · **Depends:** TASK-114 · **Status:** TODO
+**Priority:** P1 · **Depends:** TASK-114 · **Status:** DONE
 
 #### Objetivo
 
@@ -4314,11 +4314,28 @@ Completar **Performance regression test** dejando un resultado verificable y apt
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+
+#### Resultados
+
+Estrategia **híbrida** (detalle en `docs/performance/canvas-regression.md`, decisión en `docs/adr/0027-performance-regression-testing.md`):
+
+- **Guard estructural determinista** en `npm test`:
+  `src/test/unit/presentation/canvas/components/canvas-render-budget.test.tsx` (4 casos)
+  afirma que solo se montan los `ElementView` visibles (contrato exacto con
+  `getVisibleElementIds`), que el número de nodos montados no depende del tamaño del
+  tablero, que pan/zoom/selección no montan elementos ocultos y que pan a zona vacía
+  monta cero. `CULLING_MARGIN` pasa a exportarse desde `canvas.tsx` (único cambio de
+  producción: exportar una constante existente).
+- **Presupuestos absolutos holgados** en `npm run perf`:
+  `src/test/perf/budgets.ts` (tabla + evaluador puro), `src/test/perf/canvas.regression.perf.test.tsx`
+  (mide a 10.000 elementos y falla si un `median` supera su techo) y
+  `src/test/perf/budgets.perf.test.ts` (9 casos del evaluador). `canvas.perf.test.tsx`
+  permanece intacto (solo medición).
 
 #### Fuera de alcance
 
