@@ -1399,6 +1399,19 @@ describe('Canvas', () => {
       expect(screen.queryByTestId('selection-overlay')).not.toBeInTheDocument();
     });
 
+    it('positions the editor over the element world bounds', () => {
+      renderEditableCanvas({ elements: [FIRST_ITEM], onUpdateElement: jest.fn() });
+
+      fireEvent.doubleClick(screen.getByTestId('canvas-item-first'));
+
+      const editor = screen.getByTestId('element-editor');
+      expect(getComputedStyle(editor).position).toBe('absolute');
+      expect(editor.style.left).toBe('100px');
+      expect(editor.style.top).toBe('100px');
+      expect(editor.style.width).toBe('120px');
+      expect(editor.style.height).toBe('80px');
+    });
+
     it('opens the editor when the double-click is retargeted to the canvas surface', () => {
       renderEditableCanvas({ elements: [FIRST_ITEM], onUpdateElement: jest.fn() });
 

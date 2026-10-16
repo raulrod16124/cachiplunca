@@ -32,6 +32,8 @@ const EditorBox = styled.div`
 `;
 
 const TextAreaBox = styled.textarea<{ $padding: string }>`
+  position: absolute;
+  transform-origin: center center;
   box-sizing: border-box;
   padding: ${({ $padding }) => $padding};
   border: 1.5px solid ${({ theme }) => theme.canvas.selection};

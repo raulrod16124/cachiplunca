@@ -131,6 +131,23 @@ describe('ElementEditorOverlay', () => {
       expect(onCancel).toHaveBeenCalled();
     });
 
+    it('positions the editor over the element world bounds', () => {
+      render(
+        <ElementEditorOverlay
+          element={createText('hello')}
+          onCommit={jest.fn()}
+          onCancel={jest.fn()}
+        />,
+      );
+
+      const editor = screen.getByTestId('element-editor');
+      expect(getComputedStyle(editor).position).toBe('absolute');
+      expect(editor.style.left).toBe('10px');
+      expect(editor.style.top).toBe('20px');
+      expect(editor.style.width).toBe('160px');
+      expect(editor.style.height).toBe('80px');
+    });
+
     it('commits on Ctrl+Enter', async () => {
       const user = userEvent.setup();
       const element = createText('hello');
@@ -149,6 +166,21 @@ describe('ElementEditorOverlay', () => {
   });
 
   describe('note', () => {
+    it('positions the editor over the element world bounds', () => {
+      render(
+        <ElementEditorOverlay
+          element={createNote('a note')}
+          onCommit={jest.fn()}
+          onCancel={jest.fn()}
+        />,
+      );
+
+      const editor = screen.getByTestId('element-editor');
+      expect(getComputedStyle(editor).position).toBe('absolute');
+      expect(editor.style.left).toBe('10px');
+      expect(editor.style.top).toBe('20px');
+    });
+
     it('commits the note content', async () => {
       const user = userEvent.setup();
       const element = createNote('');
