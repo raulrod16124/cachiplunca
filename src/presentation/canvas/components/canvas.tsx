@@ -2,7 +2,7 @@ import { VisuallyHidden } from '@raulrod/ui';
 import type { ReactElement } from 'react';
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import styled from 'styled-components';
-import { Bounds, Grid, Position } from '../../../domain/shared';
+import { Bounds, Grid, Position, Size } from '../../../domain/shared';
 import type { Element, ElementType } from '../../../domain/element';
 import type { ElementId } from '../../../domain/shared';
 import type {
@@ -189,6 +189,15 @@ export function Canvas({
   const { ref: zoomRef } = useZoom({ onZoom: store.zoom });
   const { ref: canvasFocusRef } = useCanvasFocus();
   const { size: measuredSize, ref: elementSizeRef } = useElementSize();
+
+  useEffect(() => {
+    if (measuredSize === null || measuredSize.width <= 0 || measuredSize.height <= 0) {
+      return;
+    }
+
+    store.resize(Size.create(measuredSize.width, measuredSize.height));
+  }, [store, measuredSize]);
+
   const handleCursorMove = useCallback(
     (position: Position) => {
       onCursorMove?.(position);

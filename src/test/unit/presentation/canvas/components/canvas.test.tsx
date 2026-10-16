@@ -1399,6 +1399,30 @@ describe('Canvas', () => {
       expect(screen.queryByTestId('selection-overlay')).not.toBeInTheDocument();
     });
 
+    it('opens the editor when the double-click is retargeted to the canvas surface', () => {
+      renderEditableCanvas({ elements: [FIRST_ITEM], onUpdateElement: jest.fn() });
+
+      const item = screen.getByTestId('canvas-item-first');
+      const elementFromPoint = jest.fn(() => item);
+      Object.defineProperty(document, 'elementFromPoint', {
+        configurable: true,
+        writable: true,
+        value: elementFromPoint,
+      });
+
+      try {
+        fireEvent.doubleClick(screen.getByRole('application', { name: 'Canvas' }), {
+          clientX: 120,
+          clientY: 110,
+        });
+
+        expect(elementFromPoint).toHaveBeenCalled();
+        expect(screen.getByTestId('element-editor')).toHaveValue('hello');
+      } finally {
+        delete (document as { elementFromPoint?: unknown }).elementFromPoint;
+      }
+    });
+
     it('commits the edited content through onUpdateElement on blur', async () => {
       const user = userEvent.setup();
       const onUpdateElement = jest.fn();

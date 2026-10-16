@@ -73,6 +73,45 @@ describe('createCanvasViewportStore', () => {
     expect(store.getSnapshot()).toEqual(Viewport.default(Size.create(1024, 768)));
   });
 
+  describe('resize', () => {
+    it('updates the viewport size while preserving the transform', () => {
+      const store = createCanvasViewportStore(Size.create(800, 600));
+
+      store.pan(Position.create(50, 30));
+      store.zoom(2, Position.create(0, 0));
+      const transform = store.getSnapshot().transform;
+
+      store.resize(Size.create(1440, 900));
+
+      expect(store.getSnapshot().size).toEqual(Size.create(1440, 900));
+      expect(store.getSnapshot().transform).toEqual(transform);
+    });
+
+    it('notifies subscribers when the size changes', () => {
+      const store = createCanvasViewportStore(Size.create(800, 600));
+      const listener = jest.fn();
+
+      const unsubscribe = store.subscribe(listener);
+      store.resize(Size.create(1440, 900));
+
+      expect(listener).toHaveBeenCalledTimes(1);
+
+      unsubscribe();
+    });
+
+    it('does not notify subscribers when the size is unchanged', () => {
+      const store = createCanvasViewportStore(Size.create(800, 600));
+      const listener = jest.fn();
+
+      const unsubscribe = store.subscribe(listener);
+      store.resize(Size.create(800, 600));
+
+      expect(listener).not.toHaveBeenCalled();
+
+      unsubscribe();
+    });
+  });
+
   describe('zoom', () => {
     it('zooms in around the anchor point', () => {
       const store = createCanvasViewportStore(Size.create(800, 600));

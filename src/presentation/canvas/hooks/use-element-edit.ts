@@ -34,6 +34,14 @@ function closestSelectableId(target: EventTarget | null): string | null {
   return selectable.dataset.elementId ?? null;
 }
 
+function selectableIdAtPoint(event: MouseEvent): string | null {
+  if (typeof document.elementFromPoint !== 'function') {
+    return null;
+  }
+
+  return closestSelectableId(document.elementFromPoint(event.clientX, event.clientY));
+}
+
 export function useElementEdit({
   selectedIds,
   onBeginEdit,
@@ -69,7 +77,10 @@ export function useElementEdit({
     }
 
     function handleDoubleClick(event: MouseEvent): void {
-      const id = closestSelectableId(event.target);
+      // Pointer capture retargets the compatibility mouse events to the canvas
+      // surface, so `event.target` may not be the element. Fall back to a
+      // hit-test at the pointer coordinates to find the element under it.
+      const id = closestSelectableId(event.target) ?? selectableIdAtPoint(event);
 
       if (id === null) {
         return;
