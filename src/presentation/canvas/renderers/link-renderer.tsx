@@ -37,12 +37,7 @@ export function LinkRenderer({ element }: ElementRendererProps): ReactElement | 
   }
 
   return (
-    <Content
-      data-element-content="true"
-      data-element-type="link"
-      data-link-url={element.url}
-      aria-hidden="true"
-    >
+    <Content data-element-content="true" data-element-type="link" data-link-url={element.url}>
       {element.title === undefined ? null : <Title data-link-title="true">{element.title}</Title>}
       <Url data-link-url-label="true">{element.url}</Url>
     </Content>

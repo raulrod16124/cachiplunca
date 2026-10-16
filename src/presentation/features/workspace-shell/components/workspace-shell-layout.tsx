@@ -7,6 +7,7 @@ import type { ElementId, Position } from '../../../../domain/shared';
 import type { MembershipRole } from '../../../../domain/membership';
 import type { Presence } from '../../../../domain/collaboration';
 import type { LogoutUser } from '../../../../application/commands';
+import type { UpdateElementInput } from '../../../../application/commands';
 import type {
   CanvasViewportStore,
   CommandHistory,
@@ -62,7 +63,8 @@ export interface WorkspaceShellLayoutProps {
   readonly onPasteElements: (elements: readonly Element[], pastedIds: readonly string[]) => void;
   readonly onUndoElements: (elements: readonly Element[]) => void;
   readonly onRedoElements: (elements: readonly Element[]) => void;
-  readonly onCreateElement?: (type: ElementType) => void;
+  readonly onCreateElement?: (type: ElementType) => ElementId | void;
+  readonly onUpdateElement?: (input: UpdateElementInput) => void;
   readonly generateElementId: () => ElementId;
   readonly remoteCursors: readonly RemoteCursor[];
   readonly connectedUsers: readonly Presence[];
@@ -97,6 +99,7 @@ export function WorkspaceShellLayout({
   onUndoElements,
   onRedoElements,
   onCreateElement,
+  onUpdateElement,
   generateElementId,
   remoteCursors,
   connectedUsers,
@@ -153,6 +156,7 @@ export function WorkspaceShellLayout({
           onUndoElements={onUndoElements}
           onRedoElements={onRedoElements}
           onCreateElement={onCreateElement}
+          onUpdateElement={onUpdateElement}
           generateId={generateElementId}
           remoteCursors={remoteCursors}
           onCursorMove={onCursorMove}

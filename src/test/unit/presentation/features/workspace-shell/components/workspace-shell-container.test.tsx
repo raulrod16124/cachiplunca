@@ -1699,6 +1699,40 @@ describe('WorkspaceShellContainer', () => {
     });
   });
 
+  it('edits an element inline and persists the new content', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const repository = new FakeElementRepository();
+    const orchestrator = createElementPersistenceOrchestrator(createElementPersistence(repository));
+    const user = userEvent.setup();
+
+    renderContainer(getWorkspace, {
+      localUserId: 'user-local',
+      elementPersistenceOrchestrator: orchestrator,
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [TEXT_ELEMENT],
+      }),
+    });
+
+    const item = await screen.findByTestId('canvas-item-el-1');
+    fireEvent.doubleClick(item);
+
+    const editor = screen.getByTestId('element-editor');
+    await user.clear(editor);
+    await user.type(editor, 'Updated');
+    await user.tab();
+
+    await waitFor(async () => {
+      const stored = await repository.listByWorkspace(WorkspaceId.create('ws-test'));
+      expect(stored).toHaveLength(1);
+      const element = stored[0];
+      expect(element?.type).toBe('text');
+      if (element?.type === 'text') {
+        expect(element.content).toBe('Updated');
+      }
+    });
+  });
+
   it('creates a connector between two selected elements', async () => {
     const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
     const second = createTextElement({

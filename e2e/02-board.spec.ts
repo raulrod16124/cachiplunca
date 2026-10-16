@@ -54,4 +54,27 @@ test.describe('Board (MVP happy path)', () => {
     await expect(page.locator('[data-testid^="canvas-item-"]')).toHaveCount(1, { timeout: 20000 });
     await expect(page.getByRole('button', { name: 'Add text' })).toBeEnabled();
   });
+
+  test('edits text inline and persists it across reloads', async ({ page }) => {
+    await registerUser(page);
+    await createWorkspace(page, 'Editing board');
+
+    const item = await addElement(page, 'text');
+
+    const editor = page.getByTestId('element-editor');
+    await expect(editor).toBeVisible();
+    await editor.fill('Hola mundo');
+    await editor.blur();
+
+    await expect(item).toContainText('Hola mundo');
+
+    await page.reload();
+    await expect(page.getByRole('application', { name: 'Canvas' })).toBeVisible({ timeout: 20000 });
+    await expect(page.locator('[data-testid^="canvas-item-"]').first()).toContainText(
+      'Hola mundo',
+      {
+        timeout: 20000,
+      },
+    );
+  });
 });

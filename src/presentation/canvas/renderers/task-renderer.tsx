@@ -60,12 +60,7 @@ export function TaskRenderer({ element }: ElementRendererProps): ReactElement | 
   }
 
   return (
-    <Content
-      data-element-content="true"
-      data-element-type="task"
-      data-task-status={element.status}
-      aria-hidden="true"
-    >
+    <Content data-element-content="true" data-element-type="task" data-task-status={element.status}>
       <Title>{element.title}</Title>
       <StatusBadge>{STATUS_LABELS[element.status]}</StatusBadge>
       {element.assigneeId === undefined ? null : (

@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Position, ElementId, Size, UserId, WorkspaceId } from '../../../../../domain/shared';
 import { createTextElement } from '../../../../../domain/element';
 import type { Element, ElementType } from '../../../../../domain/element';
@@ -10,6 +11,7 @@ import {
 } from '../../../../../application/services';
 import type { CommandHistory } from '../../../../../application/services';
 import { createFunctionCommand } from '../../../../../application/commands';
+import type { UpdateElementInput } from '../../../../../application/commands';
 import { Canvas } from '../../../../../presentation/canvas/components/canvas';
 
 function createElement(id: string, x: number, y: number, width: number, height: number): Element {
@@ -1331,6 +1333,143 @@ describe('Canvas', () => {
       fireEvent.pointerDown(screen.getByRole('button', { name: 'Fit view' }), { button: 0 });
 
       expect(canvas).not.toHaveFocus();
+    });
+  });
+
+  describe('inline editing', () => {
+    interface EditableCanvasOptions {
+      readonly elements: readonly Element[];
+      readonly onUpdateElement?: (input: UpdateElementInput) => void;
+      readonly onCreateElement?: (type: ElementType) => ElementId | void;
+      readonly readOnly?: boolean;
+    }
+
+    function renderEditableCanvas(options: EditableCanvasOptions) {
+      const store = createCanvasViewportStore(Size.create(800, 600));
+      const selectionStore = createSelectionStore();
+
+      render(
+        <Canvas
+          store={store}
+          selectionStore={selectionStore}
+          elements={options.elements}
+          onUpdateElement={options.onUpdateElement}
+          onCreateElement={options.onCreateElement}
+          readOnly={options.readOnly}
+        />,
+      );
+
+      return { store, selectionStore };
+    }
+
+    function AutoEditHarness({
+      onUpdateElement,
+    }: {
+      readonly onUpdateElement: (input: UpdateElementInput) => void;
+    }) {
+      const store = useMemo(() => createCanvasViewportStore(Size.create(800, 600)), []);
+      const selectionStore = useMemo(() => createSelectionStore(), []);
+      const [elements, setElements] = useState<readonly Element[]>([]);
+      const counterRef = useRef(0);
+
+      const handleCreate = useCallback((): ElementId => {
+        counterRef.current += 1;
+        const element = createElement(`created-${counterRef.current}`, 100, 100, 100, 60);
+        setElements((previous) => [...previous, element]);
+        return element.id;
+      }, []);
+
+      return (
+        <Canvas
+          store={store}
+          selectionStore={selectionStore}
+          elements={elements}
+          onUpdateElement={onUpdateElement}
+          onCreateElement={handleCreate}
+        />
+      );
+    }
+
+    it('opens the inline editor when double-clicking an element', () => {
+      renderEditableCanvas({ elements: [FIRST_ITEM], onUpdateElement: jest.fn() });
+
+      fireEvent.doubleClick(screen.getByTestId('canvas-item-first'));
+
+      expect(screen.getByTestId('element-editor')).toHaveValue('hello');
+      expect(screen.queryByTestId('selection-overlay')).not.toBeInTheDocument();
+    });
+
+    it('commits the edited content through onUpdateElement on blur', async () => {
+      const user = userEvent.setup();
+      const onUpdateElement = jest.fn();
+      renderEditableCanvas({ elements: [FIRST_ITEM], onUpdateElement });
+
+      fireEvent.doubleClick(screen.getByTestId('canvas-item-first'));
+
+      const editor = screen.getByTestId('element-editor');
+      await user.clear(editor);
+      await user.type(editor, 'updated');
+      await user.tab();
+
+      expect(onUpdateElement).toHaveBeenCalledWith({
+        type: 'text',
+        element: FIRST_ITEM,
+        content: 'updated',
+      });
+      expect(screen.queryByTestId('element-editor')).not.toBeInTheDocument();
+    });
+
+    it('closes the editor without committing when Escape is pressed', async () => {
+      const user = userEvent.setup();
+      const onUpdateElement = jest.fn();
+      renderEditableCanvas({ elements: [FIRST_ITEM], onUpdateElement });
+
+      fireEvent.doubleClick(screen.getByTestId('canvas-item-first'));
+
+      const editor = screen.getByTestId('element-editor');
+      await user.clear(editor);
+      await user.type(editor, 'discarded');
+      await user.keyboard('{Escape}');
+
+      expect(onUpdateElement).not.toHaveBeenCalled();
+      expect(screen.queryByTestId('element-editor')).not.toBeInTheDocument();
+    });
+
+    it('opens the editor on Enter with a single selected element', async () => {
+      const user = userEvent.setup();
+      const { selectionStore } = renderEditableCanvas({
+        elements: [FIRST_ITEM],
+        onUpdateElement: jest.fn(),
+      });
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      await user.pointer({ keys: '[MouseLeft>]', target: canvas, coords: { x: 150, y: 130 } });
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['first']);
+
+      await user.keyboard('{Enter}');
+
+      expect(screen.getByTestId('element-editor')).toBeInTheDocument();
+    });
+
+    it('does not open the editor when the canvas is read-only', () => {
+      renderEditableCanvas({
+        elements: [FIRST_ITEM],
+        onUpdateElement: jest.fn(),
+        readOnly: true,
+      });
+
+      fireEvent.doubleClick(screen.getByTestId('canvas-item-first'));
+
+      expect(screen.queryByTestId('element-editor')).not.toBeInTheDocument();
+    });
+
+    it('opens the editor for a freshly created element', async () => {
+      const user = userEvent.setup();
+      render(<AutoEditHarness onUpdateElement={jest.fn()} />);
+
+      await user.click(screen.getByRole('button', { name: 'Add text' }));
+
+      expect(screen.getByTestId('element-editor')).toBeInTheDocument();
     });
   });
 });

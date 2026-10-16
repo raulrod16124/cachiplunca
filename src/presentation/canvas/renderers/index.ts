@@ -7,6 +7,7 @@ export { TaskRenderer } from './task-renderer';
 export { FrameRenderer } from './frame-renderer';
 export { ConnectorRenderer } from './connector-renderer';
 export { LinkRenderer } from './link-renderer';
+export { defaultRendererRegistry } from './default-renderer-registry';
 export { resolveElementRenderer } from './resolve-element-renderer';
 export type {
   ElementRenderer,

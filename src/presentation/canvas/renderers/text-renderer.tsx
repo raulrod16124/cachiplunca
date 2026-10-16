@@ -23,7 +23,7 @@ export function TextRenderer({ element }: ElementRendererProps): ReactElement | 
   }
 
   return (
-    <Content data-element-content="true" data-element-type="text" aria-hidden="true">
+    <Content data-element-content="true" data-element-type="text">
       {element.content}
     </Content>
   );

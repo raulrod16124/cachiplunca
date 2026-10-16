@@ -1,6 +1,6 @@
 import { VisuallyHidden } from '@raulrod/ui';
 import type { ReactElement } from 'react';
-import { useCallback, useMemo, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import styled from 'styled-components';
 import { Bounds, Grid, Position } from '../../../domain/shared';
 import type { Element, ElementType } from '../../../domain/element';
@@ -11,6 +11,7 @@ import type {
   RemoteCursor,
   SelectionStore,
 } from '../../../application/services';
+import type { UpdateElementInput } from '../../../application/commands';
 import {
   deleteElements,
   elementContentBounds,
@@ -25,6 +26,7 @@ import { useDragSelection } from '../hooks/use-drag-selection';
 import { useElementCopyPaste } from '../hooks/use-element-copy-paste';
 import { useElementDelete } from '../hooks/use-element-delete';
 import { useElementDuplicate } from '../hooks/use-element-duplicate';
+import { useElementEdit } from '../hooks/use-element-edit';
 import { useElementMove } from '../hooks/use-element-move';
 import { useElementRedo } from '../hooks/use-element-redo';
 import { useElementResize } from '../hooks/use-element-resize';
@@ -39,6 +41,7 @@ import { ElementView } from '../renderers';
 import type { ElementRendererRegistry } from '../renderers';
 import { EmptyState } from '../../components/empty-state';
 import { CanvasToolbar } from './canvas-toolbar';
+import { ElementEditorOverlay } from './element-editor-overlay';
 import { RemoteCursorsOverlay } from './remote-cursors-overlay';
 import { SelectionOverlay } from './selection-overlay';
 import { ViewportControls } from './viewport-controls';
@@ -125,6 +128,14 @@ const BOARD_SUMMARY_ID = 'canvas-board-summary';
 const CANVAS_SHORTCUTS =
   'Arrow keys to move selection · Shift + Arrow to extend selection · Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo';
 
+const EDITABLE_ELEMENT_TYPES: ReadonlySet<ElementType> = new Set<ElementType>([
+  'text',
+  'note',
+  'task',
+  'frame',
+  'link',
+]);
+
 export interface CanvasProps {
   readonly store: CanvasViewportStore;
   readonly selectionStore: SelectionStore;
@@ -143,7 +154,8 @@ export interface CanvasProps {
   readonly history?: CommandHistory<readonly Element[]>;
   readonly onUndoElements?: (elements: readonly Element[]) => void;
   readonly onRedoElements?: (elements: readonly Element[]) => void;
-  readonly onCreateElement?: (type: ElementType) => void;
+  readonly onCreateElement?: (type: ElementType) => ElementId | void;
+  readonly onUpdateElement?: (input: UpdateElementInput) => void;
   readonly remoteCursors?: readonly RemoteCursor[];
   readonly onCursorMove?: (position: Position) => void;
   readonly readOnly?: boolean;
@@ -165,6 +177,7 @@ export function Canvas({
   onUndoElements,
   onRedoElements,
   onCreateElement,
+  onUpdateElement,
   remoteCursors = [],
   onCursorMove,
   readOnly = false,
@@ -348,6 +361,57 @@ export function Canvas({
   const { ref: elementUndoRef } = useElementUndo({ history, onUndoElements, disabled: readOnly });
   const { ref: elementRedoRef } = useElementRedo({ history, onRedoElements, disabled: readOnly });
 
+  const [editingElementId, setEditingElementId] = useState<string | null>(null);
+
+  const editingElement = useMemo(
+    () =>
+      editingElementId === null
+        ? null
+        : (elements.find((element) => element.id.value === editingElementId) ?? null),
+    [elements, editingElementId],
+  );
+
+  useEffect(() => {
+    if (editingElementId !== null && editingElement === null) {
+      setEditingElementId(null);
+    }
+  }, [editingElementId, editingElement]);
+
+  const beginEditing = useCallback(
+    (id: string): void => {
+      if (readOnly || onUpdateElement === undefined) {
+        return;
+      }
+
+      const target = elements.find((element) => element.id.value === id);
+
+      if (target === undefined || !EDITABLE_ELEMENT_TYPES.has(target.type)) {
+        return;
+      }
+
+      setEditingElementId(id);
+    },
+    [elements, onUpdateElement, readOnly],
+  );
+
+  const { ref: elementEditRef } = useElementEdit({
+    selectedIds: selection.selectedIds,
+    onBeginEdit: beginEditing,
+    disabled: readOnly || onUpdateElement === undefined,
+  });
+
+  const handleCommitEdit = useCallback(
+    (input: UpdateElementInput): void => {
+      onUpdateElement?.(input);
+      setEditingElementId(null);
+    },
+    [onUpdateElement],
+  );
+
+  const handleCancelEdit = useCallback((): void => {
+    setEditingElementId(null);
+  }, []);
+
   const handleToolbarUndo = useCallback((): void => {
     if (history === undefined || !history.canUndo()) {
       return;
@@ -397,7 +461,13 @@ export function Canvas({
 
   const handleCreateElement = useCallback(
     (type: ElementType): void => {
-      onCreateElement?.(type);
+      const created = onCreateElement?.(type);
+
+      if (created === undefined) {
+        return;
+      }
+
+      setEditingElementId(created.value);
     },
     [onCreateElement],
   );
@@ -417,6 +487,7 @@ export function Canvas({
       elementCopyPasteRef.current = node;
       elementUndoRef.current = node;
       elementRedoRef.current = node;
+      elementEditRef.current = node;
       cursorBroadcastRef.current = node;
       canvasFocusRef.current = node;
       elementSizeRef(node);
@@ -435,6 +506,7 @@ export function Canvas({
       elementCopyPasteRef,
       elementUndoRef,
       elementRedoRef,
+      elementEditRef,
       cursorBroadcastRef,
       canvasFocusRef,
       elementSizeRef,
@@ -544,7 +616,15 @@ export function Canvas({
             />
           );
         })}
-        <SelectionOverlay items={selectedItems} />
+        {editingElementId === null ? <SelectionOverlay items={selectedItems} /> : null}
+        {editingElement === null ? null : (
+          <ElementEditorOverlay
+            key={editingElement.id.value}
+            element={editingElement}
+            onCommit={handleCommitEdit}
+            onCancel={handleCancelEdit}
+          />
+        )}
         {elements.length === 0 ? (
           <Hint>
             <EmptyState title="This board is empty" titleAs="h2" description={CANVAS_SHORTCUTS} />

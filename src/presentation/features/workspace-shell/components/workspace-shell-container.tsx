@@ -4,12 +4,14 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import styled from 'styled-components';
 import {
   createCreateElement,
+  createUpdateElement,
   type ChangeMemberRole,
   type CreateElementInput,
   type InviteMember,
   type LeaveWorkspace,
   type LogoutUser,
   type RemoveMember,
+  type UpdateElementInput,
 } from '../../../../application/commands';
 import type {
   GetWorkspace,
@@ -347,8 +349,35 @@ export function WorkspaceShellContainer({
     [generateElementId],
   );
 
+  const updateElementCommand = useMemo(() => createUpdateElement(), []);
+
+  const handleUpdateElement = useCallback(
+    (input: UpdateElementInput): void => {
+      const current = elementsRef.current.find(
+        (element) => element.id.value === input.element.id.value,
+      );
+
+      if (current === undefined) {
+        return;
+      }
+
+      const result = updateElementCommand({ ...input, element: current });
+
+      if (result.status === 'error') {
+        return;
+      }
+
+      const next = elementsRef.current.map((element) =>
+        element.id.value === current.id.value ? result.element : element,
+      );
+
+      commitElements(next, `Update ${current.type}`);
+    },
+    [updateElementCommand, commitElements],
+  );
+
   const handleCreateElement = useCallback(
-    (type: ElementType): void => {
+    (type: ElementType): ElementId | void => {
       if (localUserId === undefined) {
         return;
       }
@@ -409,6 +438,8 @@ export function WorkspaceShellContainer({
       setCreationError(null);
       commitElements([...elementsRef.current, result.element], `Create ${type}`);
       selectionStoreRef.current.select(result.element.id.value);
+
+      return result.element.id;
     },
     [localUserId, workspaceId, createElement, commitElements],
   );
@@ -742,6 +773,7 @@ export function WorkspaceShellContainer({
           onUndoElements={handleUndoElements}
           onRedoElements={handleRedoElements}
           onCreateElement={canCreateElement ? handleCreateElement : undefined}
+          onUpdateElement={canElementWrite ? handleUpdateElement : undefined}
           generateElementId={generateElementId}
           remoteCursors={remoteCursors}
           onCursorMove={cursorBroadcaster === null ? undefined : handleCursorMove}

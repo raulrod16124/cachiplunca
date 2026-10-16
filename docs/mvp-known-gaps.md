@@ -6,15 +6,16 @@
 
 ## GAP-01 — No hay UI para editar contenido de elementos (P0)
 
-**Estado:** abierto · **Impacto:** alto (el tablero acepta elementos pero nacen vacíos y no se pueden rellenar)
+**Estado:** cerrado (2026-10-16) · **Impacto:** alto (el tablero acepta elementos pero nacían vacíos y no se podían rellenar)
 
-El comando `UpdateElement` existe y está testeado (`src/application/commands/update-element.ts`, TASK-051/052 dejaron la edición "para una tarea futura" que nunca se creó), pero no está cableado en Presentation:
+El comando `UpdateElement` existía testeado pero no estaba cableado en Presentation. Se ha completado el journey de edición:
 
-- Los renderers (`text-renderer.tsx`, `note-renderer.tsx`, `task-renderer.tsx`, `link-renderer.tsx`, `frame-renderer.tsx`) son de solo lectura: no hay doble clic, textarea ni diálogo de edición.
-- `DEFAULT_TEXT_CONTENT = ''` (`element-creation.ts`): los elementos text/note nacen vacíos y el usuario no puede escribir en ellos.
-- El canvas permite crear/mover/redimensionar/eliminar/duplicar (verificado E2E), pero el journey "añadir contenido al tablero" queda incompleto: el usuario solo ve rectángulos vacíos.
+- Registro de renderers por defecto (`default-renderer-registry.ts`) conectado en `Canvas`; antes de esto **ningún** elemento usaba su renderer real (todos caían al `DefaultElementRenderer`, una caja vacía), por lo que ni el contenido existente se veía.
+- Edición inline vía `ElementEditorOverlay` (`src/presentation/canvas/components/element-editor-overlay.tsx`): doble clic o Enter con un elemento seleccionado abre un editor in-place (textarea para text/note, input para title de task/frame, dos campos para link). Enter con Ctrl/Cmd y blur confirman; Escape cancela; los cambios se commitean por `UpdateElement` y se persisten con el batcher existente.
+- Los elementos recién creados entran directamente en modo edición.
+- Tests: unitarios del overlay, integración de `Canvas` (doble clic/Enter/commit/readOnly), container (`handleUpdateElement` + persistencia) y E2E (`edits text inline and persists it across reloads`).
 
-**Condición de cierre:** nueva tarea en el backlog (p. ej. TASK-131 "Inline edit de contenido") que conecte `UpdateElement` con los renderers (doble clic o selección + teclado), con tests de integración y E2E.
+**Condición de cierre cumplida:** `UpdateElement` conectado con los renderers, con tests de integración y E2E.
 
 ---
 
@@ -56,7 +57,7 @@ El comando `UpdateElement` existe y está testeado (`src/application/commands/up
 
 Lo siguiente no lo cubre la suite Playwright actual y debe verificarse manualmente antes de declare de MVP:
 
-- [ ] **Edición de contenido (GAP-01):** crear elemento → intentar escribir → documentar fallo esperado.
+- [x] **Edición de contenido (GAP-01):** crear elemento → doble clic → escribir → persiste tras reload (cubierto también por E2E automatizado).
 - [ ] **Imágenes (GAP-02):** confirmar con producto si el MVP las requiere.
 - [ ] **Borrado de workspace (GAP-03).**
 - [ ] **Multi-usuario en tiempo real:** dos navegadores en el mismo tablero → cursores remotos, elementos que aparecen en ambos, estado de conexión.
