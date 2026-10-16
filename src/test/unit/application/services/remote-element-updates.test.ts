@@ -14,6 +14,7 @@ function buildElement(
     readonly createdAt?: Date;
     readonly updatedAt?: Date;
     readonly position?: Position;
+    readonly size?: Size;
   } = {},
 ): Element {
   const createdAt = overrides.createdAt ?? new Date('2024-01-01T00:00:00.000Z');
@@ -22,7 +23,7 @@ function buildElement(
     workspaceId: overrides.workspaceId ?? WORKSPACE_ID,
     createdBy: USER_ID,
     position: overrides.position ?? Position.create(10, 20),
-    size: Size.create(120, 80),
+    size: overrides.size ?? Size.create(120, 80),
     content: 'Hello',
     createdAt,
     updatedAt: overrides.updatedAt ?? new Date('2024-01-02T00:00:00.000Z'),
@@ -62,6 +63,44 @@ describe('applyRemoteElementChanges', () => {
     expect(next[0].updatedAt).toEqual(new Date('2024-01-03T00:00:00.000Z'));
   });
 
+  it('applies a remote resize when the remote version is newer', () => {
+    const current = buildElement('el-1', {
+      updatedAt: base,
+      position: Position.create(10, 20),
+      size: Size.create(120, 80),
+    });
+    const remote = buildElement('el-1', {
+      updatedAt: new Date('2024-01-03T00:00:00.000Z'),
+      position: Position.create(10, 20),
+      size: Size.create(300, 200),
+    });
+
+    const next = applyRemoteElementChanges([current], added(remote));
+
+    expect(next).toHaveLength(1);
+    expect(next[0].position.equals(Position.create(10, 20))).toBe(true);
+    expect(next[0].size.equals(Size.create(300, 200))).toBe(true);
+  });
+
+  it('applies a combined remote move and resize when the remote version is newer', () => {
+    const current = buildElement('el-1', {
+      updatedAt: base,
+      position: Position.create(10, 20),
+      size: Size.create(120, 80),
+    });
+    const remote = buildElement('el-1', {
+      updatedAt: new Date('2024-01-03T00:00:00.000Z'),
+      position: Position.create(150, 260),
+      size: Size.create(300, 200),
+    });
+
+    const next = applyRemoteElementChanges([current], added(remote));
+
+    expect(next).toHaveLength(1);
+    expect(next[0].position.equals(Position.create(150, 260))).toBe(true);
+    expect(next[0].size.equals(Size.create(300, 200))).toBe(true);
+  });
+
   it('ignores a remote version that is not strictly newer', () => {
     const current = buildElement('el-1', { updatedAt: base });
     const board = [current];
@@ -71,6 +110,23 @@ describe('applyRemoteElementChanges', () => {
 
     expect(next).toBe(board);
     expect(next[0]).toBe(current);
+  });
+
+  it('ignores a stale remote resize keeping the current board reference', () => {
+    const current = buildElement('el-1', {
+      updatedAt: base,
+      size: Size.create(120, 80),
+    });
+    const board = [current];
+    const stale = buildElement('el-1', {
+      updatedAt: new Date('2024-01-01T00:00:00.000Z'),
+      size: Size.create(500, 500),
+    });
+
+    const next = applyRemoteElementChanges(board, added(stale));
+
+    expect(next).toBe(board);
+    expect(next[0].size.equals(Size.create(120, 80))).toBe(true);
   });
 
   it('removes an element when the remote deletes it', () => {
@@ -178,5 +234,39 @@ describe('applyRemoteElementChanges', () => {
     });
 
     expect(next.map((element) => element.id.value)).toEqual(['el-1', 'el-2']);
+  });
+
+  it('converges the same way for a same-timestamp conflict regardless of arrival order', () => {
+    const timestamp = new Date('2024-01-02T00:00:00.000Z');
+    const local = buildElement('el-1', { position: Position.create(1, 1), updatedAt: timestamp });
+    const remote = buildElement('el-1', { position: Position.create(2, 2), updatedAt: timestamp });
+
+    const fromLocal = applyRemoteElementChanges([local], added(remote));
+    const fromRemote = applyRemoteElementChanges([remote], added(local));
+
+    expect(fromLocal).toEqual(fromRemote);
+  });
+
+  it('applies concurrent remote edits to independent elements in any order', () => {
+    const elementA = buildElement('el-a', { updatedAt: new Date('2024-01-03T00:00:00.000Z') });
+    const elementB = buildElement('el-b', { updatedAt: new Date('2024-01-04T00:00:00.000Z') });
+
+    const forward = applyRemoteElementChanges([], {
+      workspaceId: WORKSPACE_ID,
+      changes: [
+        { kind: 'added', element: elementA, origin: 'remote' },
+        { kind: 'added', element: elementB, origin: 'remote' },
+      ],
+    });
+    const reversed = applyRemoteElementChanges([], {
+      workspaceId: WORKSPACE_ID,
+      changes: [
+        { kind: 'added', element: elementB, origin: 'remote' },
+        { kind: 'added', element: elementA, origin: 'remote' },
+      ],
+    });
+
+    expect(forward).toEqual(reversed);
+    expect(forward.map((element) => element.id.value)).toEqual(['el-a', 'el-b']);
   });
 });

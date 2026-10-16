@@ -1,3 +1,4 @@
+import { UserId } from '../shared/value-objects/user-id';
 import { WorkspaceId } from '../shared/value-objects/workspace-id';
 
 export const WORKSPACE_NAME_MAX_LENGTH = 100;
@@ -5,6 +6,7 @@ export const WORKSPACE_NAME_MAX_LENGTH = 100;
 export interface WorkspaceProps {
   readonly id: WorkspaceId;
   readonly name: string;
+  readonly createdBy: UserId;
   readonly createdAt: Date;
   readonly updatedAt: Date;
   readonly description?: string | null;
@@ -13,6 +15,7 @@ export interface WorkspaceProps {
 export class Workspace {
   private readonly _id: WorkspaceId;
   private readonly _name: string;
+  private readonly _createdBy: UserId;
   private readonly _createdAt: Date;
   private readonly _updatedAt: Date;
   private readonly _description: string | null;
@@ -20,6 +23,7 @@ export class Workspace {
   private constructor(props: WorkspaceProps) {
     this._id = props.id;
     this._name = props.name;
+    this._createdBy = props.createdBy;
     this._createdAt = props.createdAt;
     this._updatedAt = props.updatedAt;
     this._description = props.description ?? null;
@@ -28,6 +32,7 @@ export class Workspace {
   static create(props: {
     readonly id: WorkspaceId;
     readonly name: string;
+    readonly createdBy: UserId;
     readonly createdAt?: Date;
     readonly updatedAt?: Date;
     readonly description?: string | null;
@@ -42,6 +47,7 @@ export class Workspace {
     return new Workspace({
       id: props.id,
       name,
+      createdBy: props.createdBy,
       createdAt,
       updatedAt,
       description: props.description,
@@ -62,6 +68,7 @@ export class Workspace {
     return new Workspace({
       id: this._id,
       name,
+      createdBy: this._createdBy,
       createdAt: this._createdAt,
       updatedAt,
       description,
@@ -99,6 +106,10 @@ export class Workspace {
     return this._name;
   }
 
+  get createdBy(): UserId {
+    return this._createdBy;
+  }
+
   get createdAt(): Date {
     return this._createdAt;
   }
@@ -114,6 +125,7 @@ export class Workspace {
   toJSON(): {
     id: string;
     name: string;
+    createdBy: string;
     createdAt: string;
     updatedAt: string;
     description: string | null;
@@ -121,6 +133,7 @@ export class Workspace {
     return {
       id: this._id.value,
       name: this._name,
+      createdBy: this._createdBy.value,
       createdAt: this._createdAt.toISOString(),
       updatedAt: this._updatedAt.toISOString(),
       description: this._description,

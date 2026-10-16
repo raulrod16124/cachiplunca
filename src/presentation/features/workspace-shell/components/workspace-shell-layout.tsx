@@ -1,21 +1,21 @@
-import { Badge, Button, Heading, Inline, Text } from '@raulrod/ui';
-import { ArrowLeft } from '@raulrod/icons';
 import type { ReactNode } from 'react';
 import styled from 'styled-components';
 import type { Workspace } from '../../../../domain/workspace';
-import type { Element } from '../../../../domain/element';
-import type { ElementId } from '../../../../domain/shared';
-import { SignOutButton } from '../../auth/sign-out-button';
+import type { Element, ElementType } from '../../../../domain/element';
+import type { ElementId, Position } from '../../../../domain/shared';
+import type { MembershipRole } from '../../../../domain/membership';
+import type { Presence } from '../../../../domain/collaboration';
 import type { LogoutUser } from '../../../../application/commands';
 import type {
   CanvasViewportStore,
   CommandHistory,
   PersistenceSyncStatus,
+  RemoteCursor,
   SelectionStore,
 } from '../../../../application/services';
-import type { RealtimeConnectionStatus } from '../../../../application/ports';
+import type { AuthUser, RealtimeConnectionStatus } from '../../../../application/ports';
 import { Canvas } from '../../../canvas';
-import { describeConnectionStatus, describeSyncStatus } from '../workspace-sync-status';
+import { WorkspaceTopBar } from './workspace-top-bar';
 
 const Shell = styled.div`
   display: flex;
@@ -23,14 +23,9 @@ const Shell = styled.div`
   min-height: 100dvh;
 `;
 
-const Header = styled.header`
-  border-bottom: 1px solid var(--rr-color-border-default, #e2e8f0);
-  padding: 12px 24px;
-`;
-
 const CanvasArea = styled.main`
   flex: 1 1 auto;
-  background: var(--rr-color-background-default, #f8fafc);
+  background: ${({ theme }) => theme.canvas.surface};
   position: relative;
   overflow: hidden;
 `;
@@ -38,6 +33,8 @@ const CanvasArea = styled.main`
 export interface WorkspaceShellLayoutProps {
   readonly workspace: Workspace;
   readonly elements: readonly Element[];
+  readonly role: MembershipRole | undefined;
+  readonly currentUser: AuthUser | null;
   readonly logoutUser: LogoutUser;
   readonly onBack: () => void;
   readonly canvasViewportStore: CanvasViewportStore;
@@ -54,16 +51,25 @@ export interface WorkspaceShellLayoutProps {
   readonly onPasteElements: (elements: readonly Element[], pastedIds: readonly string[]) => void;
   readonly onUndoElements: (elements: readonly Element[]) => void;
   readonly onRedoElements: (elements: readonly Element[]) => void;
+  readonly onCreateElement?: (type: ElementType) => void;
   readonly generateElementId: () => ElementId;
+  readonly remoteCursors: readonly RemoteCursor[];
+  readonly connectedUsers: readonly Presence[];
+  readonly onCursorMove?: (position: Position) => void;
   readonly syncStatus: PersistenceSyncStatus;
   readonly connectionStatus: RealtimeConnectionStatus;
   readonly persistenceErrorMessage: string | null;
   readonly collaborationErrorMessage: string | null;
+  readonly creationErrorMessage: string | null;
+  readonly onShare?: () => void;
+  readonly readOnly?: boolean;
 }
 
 export function WorkspaceShellLayout({
   workspace,
   elements,
+  role,
+  currentUser,
   logoutUser,
   onBack,
   canvasViewportStore,
@@ -77,57 +83,35 @@ export function WorkspaceShellLayout({
   onPasteElements,
   onUndoElements,
   onRedoElements,
+  onCreateElement,
   generateElementId,
+  remoteCursors,
+  connectedUsers,
+  onCursorMove,
   syncStatus,
   connectionStatus,
   persistenceErrorMessage,
   collaborationErrorMessage,
+  creationErrorMessage,
+  onShare,
+  readOnly = false,
 }: WorkspaceShellLayoutProps): ReactNode {
-  const syncBadge = describeSyncStatus(syncStatus);
-  const connectionBadge = describeConnectionStatus(connectionStatus);
-
   return (
     <Shell>
-      <Header>
-        <Inline justify="between" align="center" wrap gap="space-3">
-          <Inline gap="space-3" align="center">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={onBack}
-              aria-label="Back to workspaces"
-            >
-              <Inline gap="space-2" align="center">
-                <ArrowLeft aria-hidden="true" size={16} />
-                <Text>Workspaces</Text>
-              </Inline>
-            </Button>
-            <Heading as="h1">{workspace.name}</Heading>
-            {syncBadge === null ? null : (
-              <span role="status" aria-live="polite">
-                <Badge variant={syncBadge.variant}>{syncBadge.label}</Badge>
-              </span>
-            )}
-            {connectionBadge === null ? null : (
-              <span role="status" aria-live="polite">
-                <Badge variant={connectionBadge.variant}>{connectionBadge.label}</Badge>
-              </span>
-            )}
-          </Inline>
-          <SignOutButton logoutUser={logoutUser} />
-        </Inline>
-        {persistenceErrorMessage === null ? null : (
-          <Text role="alert" color="color.text.danger">
-            {persistenceErrorMessage}
-          </Text>
-        )}
-        {collaborationErrorMessage === null ? null : (
-          <Text role="alert" color="color.text.danger">
-            {collaborationErrorMessage}
-          </Text>
-        )}
-      </Header>
+      <WorkspaceTopBar
+        workspace={workspace}
+        role={role}
+        onBack={onBack}
+        syncStatus={syncStatus}
+        connectionStatus={connectionStatus}
+        connectedUsers={connectedUsers}
+        currentUser={currentUser}
+        logoutUser={logoutUser}
+        onShare={onShare}
+        persistenceErrorMessage={persistenceErrorMessage}
+        collaborationErrorMessage={collaborationErrorMessage}
+        creationErrorMessage={creationErrorMessage}
+      />
       <CanvasArea>
         <Canvas
           store={canvasViewportStore}
@@ -142,7 +126,11 @@ export function WorkspaceShellLayout({
           onPasteElements={onPasteElements}
           onUndoElements={onUndoElements}
           onRedoElements={onRedoElements}
+          onCreateElement={onCreateElement}
           generateId={generateElementId}
+          remoteCursors={remoteCursors}
+          onCursorMove={onCursorMove}
+          readOnly={readOnly}
         />
       </CanvasArea>
     </Shell>

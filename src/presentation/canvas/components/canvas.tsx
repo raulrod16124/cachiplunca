@@ -1,15 +1,26 @@
+import { VisuallyHidden } from '@raulrod/ui';
 import type { ReactElement } from 'react';
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
 import styled from 'styled-components';
-import { Grid } from '../../../domain/shared';
-import type { Element } from '../../../domain/element';
+import { Bounds, Grid, Position } from '../../../domain/shared';
+import type { Element, ElementType } from '../../../domain/element';
 import type { ElementId } from '../../../domain/shared';
 import type {
   CanvasViewportStore,
   CommandHistory,
+  RemoteCursor,
   SelectionStore,
 } from '../../../application/services';
-import { toSelectableItems } from '../../../application/services';
+import {
+  deleteElements,
+  elementContentBounds,
+  getVisibleElementIds,
+  toSelectableItems,
+} from '../../../application/services';
+import { describeBoard, describeElement } from '../accessibility';
+import { useCanvasNavigation } from '../hooks/use-canvas-navigation';
+import { useCanvasFocus } from '../hooks/use-canvas-focus';
+import { useCursorBroadcast } from '../hooks/use-cursor-broadcast';
 import { useDragSelection } from '../hooks/use-drag-selection';
 import { useElementCopyPaste } from '../hooks/use-element-copy-paste';
 import { useElementDelete } from '../hooks/use-element-delete';
@@ -17,6 +28,7 @@ import { useElementDuplicate } from '../hooks/use-element-duplicate';
 import { useElementMove } from '../hooks/use-element-move';
 import { useElementRedo } from '../hooks/use-element-redo';
 import { useElementResize } from '../hooks/use-element-resize';
+import { useElementSize } from '../hooks/use-element-size';
 import { useElementUndo } from '../hooks/use-element-undo';
 import { usePan } from '../hooks/use-pan';
 import { useSelection } from '../hooks/use-selection';
@@ -25,6 +37,9 @@ import { useSpacePressed } from '../hooks/use-space-pressed';
 import { useZoom } from '../hooks/use-zoom';
 import { ElementView } from '../renderers';
 import type { ElementRendererRegistry } from '../renderers';
+import { EmptyState } from '../../components/empty-state';
+import { CanvasToolbar } from './canvas-toolbar';
+import { RemoteCursorsOverlay } from './remote-cursors-overlay';
 import { SelectionOverlay } from './selection-overlay';
 import { ViewportControls } from './viewport-controls';
 
@@ -39,7 +54,7 @@ const CanvasContainer = styled.div`
   outline: none;
 
   &:focus-visible {
-    outline: 2px solid var(--rr-color-accent-default, #2563eb);
+    outline: 2px solid ${({ theme }) => theme.color.focusRing};
     outline-offset: -2px;
   }
 
@@ -67,8 +82,8 @@ const CanvasContainer = styled.div`
 const Marquee = styled.div`
   position: absolute;
   pointer-events: none;
-  border: 1px solid var(--rr-color-accent-default, #2563eb);
-  background-color: rgba(37, 99, 235, 0.08);
+  border: 1px solid ${({ theme }) => theme.canvas.selection};
+  background-color: ${({ theme }) => theme.canvas.selectionFill};
 `;
 
 const World = styled.div`
@@ -83,8 +98,8 @@ const GridLayer = styled.div`
   inset: 0;
   pointer-events: none;
   background-image:
-    linear-gradient(to right, var(--rr-color-border-subtle, #e2e8f0) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--rr-color-border-subtle, #e2e8f0) 1px, transparent 1px);
+    linear-gradient(to right, ${({ theme }) => theme.canvas.grid} 1px, transparent 1px),
+    linear-gradient(to bottom, ${({ theme }) => theme.canvas.grid} 1px, transparent 1px);
   opacity: 0.5;
 `;
 
@@ -95,11 +110,20 @@ const Hint = styled.div`
   transform: translate(-50%, -50%);
   text-align: center;
   pointer-events: none;
-  color: var(--rr-color-text-muted, #64748b);
-  font-size: 14px;
+  max-width: 480px;
+  color: ${({ theme }) => theme.canvas.hintText};
+  font-size: ${({ theme }) => theme.font.size.sm};
 `;
 
 const CANVAS_GRID = Grid.default();
+
+/** World-space margin kept mounted around the viewport to avoid flicker (TASK-114). */
+export const CULLING_MARGIN = 64;
+
+const BOARD_SUMMARY_ID = 'canvas-board-summary';
+
+const CANVAS_SHORTCUTS =
+  'Arrow keys to move selection · Shift + Arrow to extend selection · Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo';
 
 export interface CanvasProps {
   readonly store: CanvasViewportStore;
@@ -119,6 +143,10 @@ export interface CanvasProps {
   readonly history?: CommandHistory<readonly Element[]>;
   readonly onUndoElements?: (elements: readonly Element[]) => void;
   readonly onRedoElements?: (elements: readonly Element[]) => void;
+  readonly onCreateElement?: (type: ElementType) => void;
+  readonly remoteCursors?: readonly RemoteCursor[];
+  readonly onCursorMove?: (position: Position) => void;
+  readonly readOnly?: boolean;
 }
 
 export function Canvas({
@@ -136,14 +164,32 @@ export function Canvas({
   history,
   onUndoElements,
   onRedoElements,
+  onCreateElement,
+  remoteCursors = [],
+  onCursorMove,
+  readOnly = false,
 }: CanvasProps): ReactElement {
   const viewport = useSyncExternalStore(store.subscribe, store.getSnapshot);
   const selection = useSyncExternalStore(selectionStore.subscribe, selectionStore.getSnapshot);
   const spacePressed = useSpacePressed();
   const { isPanning, ref: panRef } = usePan({ onPan: store.pan, spacePressed });
   const { ref: zoomRef } = useZoom({ onZoom: store.zoom });
+  const { ref: canvasFocusRef } = useCanvasFocus();
+  const { size: measuredSize, ref: elementSizeRef } = useElementSize();
+  const handleCursorMove = useCallback(
+    (position: Position) => {
+      onCursorMove?.(position);
+    },
+    [onCursorMove],
+  );
+  const { ref: cursorBroadcastRef } = useCursorBroadcast({
+    onCursorMove: handleCursorMove,
+    viewport,
+    disabled: onCursorMove === undefined,
+  });
 
   const items = useMemo(() => toSelectableItems(elements), [elements]);
+  const boardSummary = useMemo(() => describeBoard(elements), [elements]);
 
   const handleSelect = useCallback(
     (id: string, additive: boolean) => {
@@ -191,6 +237,18 @@ export function Canvas({
     selectionStore.clear();
   }, [selectionStore]);
 
+  const handleNavigate = useCallback(
+    (id: string, additive: boolean) => {
+      if (additive) {
+        selectionStore.addMany([id]);
+        return;
+      }
+
+      selectionStore.select(id);
+    },
+    [selectionStore],
+  );
+
   const { ref: selectionRef } = useSelection({
     items,
     viewport,
@@ -205,6 +263,7 @@ export function Canvas({
     onSelectOnly: handleSelectOnly,
     onTransformEnd,
     spacePressed,
+    disabled: readOnly,
   });
 
   const { isResizing, ref: elementResizeRef } = useElementResize({
@@ -214,6 +273,7 @@ export function Canvas({
     onResizeElements,
     onTransformEnd,
     spacePressed,
+    disabled: readOnly,
   });
 
   const { ref: dragSelectionRef, rect: marqueeRect } = useDragSelection({
@@ -232,11 +292,19 @@ export function Canvas({
     onSelectAll: handleSelectAll,
   });
 
+  const { activeId, ref: canvasNavigationRef } = useCanvasNavigation({
+    items,
+    selectedIds: selection.selectedIds,
+    onNavigate: handleNavigate,
+    disabled: readOnly,
+  });
+
   const { ref: elementDeleteRef } = useElementDelete({
     elements,
     selectedIds: selection.selectedIds,
     onDeleteElements,
     onSelectionCleared: handleClear,
+    disabled: readOnly,
   });
 
   const handleDuplicateElements = useMemo(() => {
@@ -255,6 +323,7 @@ export function Canvas({
     selectedIds: selection.selectedIds,
     generateId,
     onDuplicateElements: handleDuplicateElements,
+    disabled: readOnly,
   });
 
   const handlePasteElements = useMemo(() => {
@@ -273,10 +342,65 @@ export function Canvas({
     selectedIds: selection.selectedIds,
     generateId,
     onPasteElements: handlePasteElements,
+    disabled: readOnly,
   });
 
-  const { ref: elementUndoRef } = useElementUndo({ history, onUndoElements });
-  const { ref: elementRedoRef } = useElementRedo({ history, onRedoElements });
+  const { ref: elementUndoRef } = useElementUndo({ history, onUndoElements, disabled: readOnly });
+  const { ref: elementRedoRef } = useElementRedo({ history, onRedoElements, disabled: readOnly });
+
+  const handleToolbarUndo = useCallback((): void => {
+    if (history === undefined || !history.canUndo()) {
+      return;
+    }
+
+    const result = history.undo();
+
+    if (result.status === 'error') {
+      return;
+    }
+
+    onUndoElements?.(result.state);
+  }, [history, onUndoElements]);
+
+  const handleToolbarRedo = useCallback((): void => {
+    if (history === undefined || !history.canRedo()) {
+      return;
+    }
+
+    const result = history.redo();
+
+    if (result.status === 'error') {
+      return;
+    }
+
+    onRedoElements?.(result.state);
+  }, [history, onRedoElements]);
+
+  const handleToolbarDelete = useCallback((): void => {
+    if (selection.selectedIds.length === 0) {
+      return;
+    }
+
+    const result = deleteElements(elements, selection.selectedIds);
+
+    if (result.status === 'error') {
+      return;
+    }
+
+    onDeleteElements?.(result.elements);
+    handleClear();
+  }, [elements, selection.selectedIds, onDeleteElements, handleClear]);
+
+  const handleFitView = useCallback((): void => {
+    store.fit(elementContentBounds(elements));
+  }, [store, elements]);
+
+  const handleCreateElement = useCallback(
+    (type: ElementType): void => {
+      onCreateElement?.(type);
+    },
+    [onCreateElement],
+  );
 
   const setContainerRef = useCallback(
     (node: HTMLDivElement | null) => {
@@ -285,6 +409,7 @@ export function Canvas({
       selectionRef.current = node;
       dragSelectionRef.current = node;
       selectionKeyboardRef.current = node;
+      canvasNavigationRef.current = node;
       elementMoveRef.current = node;
       elementResizeRef.current = node;
       elementDeleteRef.current = node;
@@ -292,6 +417,9 @@ export function Canvas({
       elementCopyPasteRef.current = node;
       elementUndoRef.current = node;
       elementRedoRef.current = node;
+      cursorBroadcastRef.current = node;
+      canvasFocusRef.current = node;
+      elementSizeRef(node);
     },
     [
       panRef,
@@ -299,6 +427,7 @@ export function Canvas({
       selectionRef,
       dragSelectionRef,
       selectionKeyboardRef,
+      canvasNavigationRef,
       elementMoveRef,
       elementResizeRef,
       elementDeleteRef,
@@ -306,6 +435,9 @@ export function Canvas({
       elementCopyPasteRef,
       elementUndoRef,
       elementRedoRef,
+      cursorBroadcastRef,
+      canvasFocusRef,
+      elementSizeRef,
     ],
   );
 
@@ -322,14 +454,58 @@ export function Canvas({
     [items, selectedIdSet],
   );
 
+  const ariaLabels = useMemo(() => {
+    const labels = new Map<string, string>();
+    for (const element of elements) {
+      labels.set(element.id.value, describeElement(element, elements));
+    }
+    return labels;
+  }, [elements]);
+
+  const visibleIds = useMemo<ReadonlySet<string> | null>(() => {
+    const measured =
+      measuredSize !== null && measuredSize.width > 0 && measuredSize.height > 0
+        ? measuredSize
+        : viewport.size;
+    const size = { width: measured.width, height: measured.height };
+
+    if (size.width <= 0 || size.height <= 0) {
+      return null;
+    }
+
+    const topLeft = viewport.screenToWorld(Position.create(0, 0));
+    const bottomRight = viewport.screenToWorld(Position.create(size.width, size.height));
+    const width = bottomRight.x - topLeft.x;
+    const height = bottomRight.y - topLeft.y;
+
+    if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+      return null;
+    }
+
+    const visibleWorld = Bounds.fromXYWH(topLeft.x, topLeft.y, width, height);
+    return new Set(getVisibleElementIds(items, visibleWorld, CULLING_MARGIN));
+  }, [measuredSize, viewport, items]);
+
+  const canCreateElement = !readOnly && onCreateElement !== undefined;
+  const canUndo =
+    !readOnly && history !== undefined && onUndoElements !== undefined && history.canUndo();
+  const canRedo =
+    !readOnly && history !== undefined && onRedoElements !== undefined && history.canRedo();
+  const hasSelection = !readOnly && selection.selectedIds.length > 0;
+  const canCreateConnector = canCreateElement && selection.selectedIds.length === 2;
+
   return (
     <CanvasContainer
       ref={setContainerRef}
       role="application"
       aria-label="Canvas"
-      aria-keyshortcuts="Escape Control+A Meta+A Delete Control+D Meta+D Control+C Meta+C Control+V Meta+V Control+Z Meta+Z Control+Shift+Z Meta+Shift+Z Control+Y Meta+Y"
+      aria-describedby={BOARD_SUMMARY_ID}
+      aria-readonly={readOnly}
+      aria-activedescendant={activeId === null ? undefined : `element-${activeId}`}
+      aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Escape Control+A Meta+A Delete Control+D Meta+D Control+C Meta+C Control+V Meta+V Control+Z Meta+Z Control+Shift+Z Meta+Shift+Z Control+Y Meta+Y"
       aria-grabbed={isPanning}
       tabIndex={0}
+      data-active-id={activeId ?? undefined}
       data-panning={isPanning}
       data-pan-key={spacePressed}
       data-selecting={marqueeRect !== null}
@@ -337,6 +513,9 @@ export function Canvas({
       data-resizing={isResizing}
       data-scale={transform.scale}
     >
+      <VisuallyHidden id={BOARD_SUMMARY_ID} data-testid="canvas-board-summary">
+        {boardSummary}
+      </VisuallyHidden>
       <GridLayer
         data-testid="canvas-grid"
         style={{
@@ -350,24 +529,41 @@ export function Canvas({
           transform: `translate(${translateX}px, ${translateY}px) scale(${transform.scale})`,
         }}
       >
-        {elements.map((element) => (
-          <ElementView
-            key={element.id.value}
-            element={element}
-            selected={selectedIdSet.has(element.id.value)}
-            renderers={renderers}
-          />
-        ))}
+        {elements.map((element) => {
+          if (visibleIds !== null && !visibleIds.has(element.id.value)) {
+            return null;
+          }
+
+          return (
+            <ElementView
+              key={element.id.value}
+              element={element}
+              selected={selectedIdSet.has(element.id.value)}
+              renderers={renderers}
+              ariaLabel={ariaLabels.get(element.id.value)}
+            />
+          );
+        })}
         <SelectionOverlay items={selectedItems} />
-        {items.length === 0 ? (
+        {elements.length === 0 ? (
           <Hint>
-            Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear ·
-            Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C
-            to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or
-            Ctrl/Cmd + Y to redo
+            <EmptyState title="This board is empty" titleAs="h2" description={CANVAS_SHORTCUTS} />
           </Hint>
         ) : null}
       </World>
+      <RemoteCursorsOverlay cursors={remoteCursors} viewport={viewport} />
+      <CanvasToolbar
+        onCreateElement={handleCreateElement}
+        onUndo={handleToolbarUndo}
+        onRedo={handleToolbarRedo}
+        onDeleteSelection={handleToolbarDelete}
+        onFitView={handleFitView}
+        canCreate={canCreateElement}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        hasSelection={hasSelection}
+        canCreateConnector={canCreateConnector}
+      />
       {marqueeRect !== null ? (
         <Marquee
           data-testid="drag-selection-rect"

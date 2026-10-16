@@ -13,10 +13,10 @@ const Controls = styled.div`
   gap: 8px;
   align-items: center;
   padding: 4px 8px;
-  border-radius: 8px;
-  background: var(--rr-color-background-default, #ffffff);
-  border: 1px solid var(--rr-color-border-default, #e2e8f0);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  border-radius: ${({ theme }) => theme.radius.md};
+  background: ${({ theme }) => theme.canvas.surface};
+  border: 1px solid ${({ theme }) => theme.canvas.elementBorder};
+  box-shadow: ${({ theme }) => theme.shadow.sm};
 `;
 
 const ZoomLabel = styled(Text)`

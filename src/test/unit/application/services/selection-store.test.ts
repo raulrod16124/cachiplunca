@@ -168,6 +168,46 @@ describe('createSelectionStore', () => {
     expect(store.getSnapshot()).toBe(before);
   });
 
+  it('retains only the ids that still exist, preserving their order', () => {
+    const store = createSelectionStore(['first', 'second', 'third']);
+    const listener = jest.fn();
+
+    const unsubscribe = store.subscribe(listener);
+    store.retain(['third', 'first']);
+
+    expect(store.getSnapshot().selectedIds).toEqual(['first', 'third']);
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    unsubscribe();
+  });
+
+  it('clears the selection when none of the retained ids exist', () => {
+    const store = createSelectionStore(['first', 'second']);
+    const listener = jest.fn();
+
+    const unsubscribe = store.subscribe(listener);
+    store.retain(['other']);
+
+    expect(store.getSnapshot().selectedIds).toEqual([]);
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    unsubscribe();
+  });
+
+  it('does not notify nor change the snapshot when retaining every selected id', () => {
+    const store = createSelectionStore(['first', 'second']);
+    const before = store.getSnapshot();
+    const listener = jest.fn();
+
+    const unsubscribe = store.subscribe(listener);
+    store.retain(['second', 'first', 'third']);
+
+    expect(listener).not.toHaveBeenCalled();
+    expect(store.getSnapshot()).toBe(before);
+
+    unsubscribe();
+  });
+
   it('clears the selection', () => {
     const store = createSelectionStore(['first', 'second']);
     const listener = jest.fn();

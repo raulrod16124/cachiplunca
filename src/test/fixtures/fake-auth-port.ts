@@ -80,6 +80,10 @@ export class FakeAuthPort implements AuthPort {
     return this.#listeners.size;
   }
 
+  setSession(next: AuthUser | null): void {
+    this.#setSession(next);
+  }
+
   emitSessionError(error: AppError): void {
     for (const errorListener of this.#errorListeners) {
       errorListener(error);

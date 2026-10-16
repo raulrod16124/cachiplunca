@@ -2,8 +2,157 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if false;
+    // Autorización efectiva basada en la matriz de ADR-0021
+    // (PERMISSION_MATRIX en src/domain/membership/authorization-policy.ts).
+    // La UI solo refleja permisos; estas reglas son la frontera de seguridad.
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function membershipId(workspaceId) {
+      return workspaceId + '_' + request.auth.uid;
+    }
+
+    function membershipPath(workspaceId) {
+      return /databases/$(database)/documents/memberships/$(membershipId(workspaceId));
+    }
+
+    function isMember(workspaceId) {
+      return signedIn() && exists(membershipPath(workspaceId));
+    }
+
+    function roleOf(workspaceId) {
+      return get(membershipPath(workspaceId)).data.role;
+    }
+
+    function hasRole(workspaceId, roles) {
+      return isMember(workspaceId) && roleOf(workspaceId) in roles;
+    }
+
+    function workspacePath(workspaceId) {
+      return /databases/$(database)/documents/workspaces/$(workspaceId);
+    }
+
+    function isWorkspaceCreator(workspaceId) {
+      return signedIn() &&
+        exists(workspacePath(workspaceId)) &&
+        get(workspacePath(workspaceId)).data.createdBy == request.auth.uid;
+    }
+
+    function isAcceptingValidInvitation(invitationId, workspaceId, role) {
+      return signedIn() &&
+        invitationId is string &&
+        exists(/databases/$(database)/documents/invitations/$(invitationId)) &&
+        get(/databases/$(database)/documents/invitations/$(invitationId)).data.workspaceId == workspaceId &&
+        get(/databases/$(database)/documents/invitations/$(invitationId)).data.email == request.auth.token.email &&
+        get(/databases/$(database)/documents/invitations/$(invitationId)).data.role == role &&
+        get(/databases/$(database)/documents/invitations/$(invitationId)).data.status == 'pending' &&
+        get(/databases/$(database)/documents/invitations/$(invitationId)).data.expiresAt > request.time;
+    }
+
+    function canGrantRoleInInvitation(workspaceId, grantedRole) {
+      return signedIn() && (
+        (grantedRole in ['owner'] && hasRole(workspaceId, ['owner'])) ||
+        (grantedRole in ['editor', 'viewer'] && hasRole(workspaceId, ['owner', 'editor']))
+      );
+    }
+
+    // workspaces: read limitado a autenticados (ListWorkspaces lee el catálogo
+    // sin filtrar por membership; limitación MVP documentada en ADR-0023).
+    // create exige que el creador quede registrado como createdBy para poder
+    // crear su membership de owner.
+    // update/delete exclusivos de owner.
+    match /workspaces/{workspaceId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if hasRole(workspaceId, ['owner']);
+    }
+
+    // memberships: el rol del usuario en el workspace.
+    // read: el propio usuario, miembros del workspace, o get de un doc inexistente
+    // (conserva el contrato null de findByUserAndWorkspace).
+    // create: solo si el usuario es el creador del workspace (owner-creation) o
+    // está aceptando una invitación válida (invitationId anclado y pendiente).
+    // update (role): exclusivo de owner, sin poder cambiar userId/workspaceId.
+    // delete: el propio usuario (leave) u owner (remove member).
+    match /memberships/{membershipId} {
+      allow read: if signedIn() && (
+        resource == null ||
+        resource.data.userId == request.auth.uid ||
+        isMember(resource.data.workspaceId)
+      );
+      allow create: if signedIn() && (
+        (
+          isWorkspaceCreator(request.resource.data.workspaceId) &&
+          request.resource.data.role == 'owner'
+        ) ||
+        isAcceptingValidInvitation(
+          request.resource.data.invitationId,
+          request.resource.data.workspaceId,
+          request.resource.data.role
+        )
+      );
+      allow update: if signedIn() && (
+        hasRole(resource.data.workspaceId, ['owner']) &&
+        request.resource.data.userId == resource.data.userId &&
+        request.resource.data.workspaceId == resource.data.workspaceId
+      );
+      allow delete: if signedIn() && (
+        resource.data.userId == request.auth.uid ||
+        hasRole(resource.data.workspaceId, ['owner'])
+      );
+    }
+
+    // elements: escritura solo owner/editor (element:write); los miembros leen.
+    // create exige createdBy == uid; update no permite cambiar workspaceId.
+    match /elements/{elementId} {
+      allow read: if isMember(resource.data.workspaceId);
+      allow create: if hasRole(request.resource.data.workspaceId, ['owner', 'editor'])
+        && request.resource.data.createdBy == request.auth.uid;
+      allow update: if hasRole(resource.data.workspaceId, ['owner', 'editor'])
+        && request.resource.data.workspaceId == resource.data.workspaceId
+        && request.resource.data.createdBy == resource.data.createdBy;
+      allow delete: if hasRole(resource.data.workspaceId, ['owner', 'editor']);
+    }
+
+    // invitations: invitar/listar owner/editor; el invitado cuyo email coincide y
+    // cuya invitación está pending puede aceptarla (pending -> accepted) sin
+    // tocar el resto de campos. El read amplio es necesario para el lookup por
+    // tokenHash del accept (las rules no hacen queries); limitación MVP ADR-0023.
+    // create restringe el rol otorgable según el rol del actor.
+    match /invitations/{invitationId} {
+      allow read: if signedIn();
+      allow create: if signedIn() &&
+        canGrantRoleInInvitation(request.resource.data.workspaceId, request.resource.data.role) &&
+        request.resource.data.invitedBy == request.auth.uid;
+      allow update: if signedIn() && (
+        (
+          hasRole(resource.data.workspaceId, ['owner', 'editor']) &&
+          request.resource.data.workspaceId == resource.data.workspaceId &&
+          request.resource.data.invitedBy == resource.data.invitedBy &&
+          request.resource.data.createdAt == resource.data.createdAt &&
+          request.resource.data.tokenHash == resource.data.tokenHash
+        ) ||
+        (
+          resource.data.email == request.auth.token.email &&
+          resource.data.status == 'pending' &&
+          request.resource.data.status == 'accepted' &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])
+        )
+      );
+    }
+
+    // presence: efímera. Solo el dueño del documento la escribe siendo miembro;
+    // los miembros la leen.
+    match /presence/{presenceId} {
+      allow read: if isMember(resource.data.workspaceId);
+      allow create, update: if signedIn() &&
+        request.resource.data.userId == request.auth.uid &&
+        isMember(request.resource.data.workspaceId);
+      allow delete: if signedIn() &&
+        resource.data.userId == request.auth.uid &&
+        isMember(resource.data.workspaceId);
     }
   }
 }

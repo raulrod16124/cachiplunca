@@ -4,7 +4,17 @@
   "categories": {
     "correctness": "error"
   },
-  "rules": {},
+  "rules": {
+    "no-console": "error"
+  },
+  "overrides": [
+    {
+      "files": ["src/test/**"],
+      "rules": {
+        "no-console": "off"
+      }
+    }
+  ],
   "env": {
     "builtin": true
   }

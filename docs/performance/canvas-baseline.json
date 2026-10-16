@@ -1,0 +1,457 @@
+{
+  "environment": {
+    "node": "v23.6.0",
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpus": 12,
+    "cpuModel": "Apple M2 Max",
+    "totalMemoryMb": 65536,
+    "timestamp": "2026-10-14T12:43:07.928Z"
+  },
+  "metrics": [
+    {
+      "label": "toSelectableItems@100",
+      "unit": "ms",
+      "samples": 20,
+      "min": 0.025,
+      "median": 0.027,
+      "mean": 0.029,
+      "p95": 0.042,
+      "max": 0.043
+    },
+    {
+      "label": "findSelectableAt@100",
+      "unit": "ms",
+      "samples": 20,
+      "min": 0.003,
+      "median": 0.004,
+      "mean": 0.005,
+      "p95": 0.011,
+      "max": 0.018
+    },
+    {
+      "label": "findSelectablesInBounds@100",
+      "unit": "ms",
+      "samples": 20,
+      "min": 0.009,
+      "median": 0.011,
+      "mean": 0.015,
+      "p95": 0.041,
+      "max": 0.05
+    },
+    {
+      "label": "describeBoard@100",
+      "unit": "ms",
+      "samples": 20,
+      "min": 0.007,
+      "median": 0.009,
+      "mean": 0.011,
+      "p95": 0.014,
+      "max": 0.042
+    },
+    {
+      "label": "describeElement:connector@100",
+      "unit": "ms",
+      "samples": 20,
+      "min": 0.001,
+      "median": 0.001,
+      "mean": 0.005,
+      "p95": 0.01,
+      "max": 0.054
+    },
+    {
+      "label": "elementContentBounds@100",
+      "unit": "ms",
+      "samples": 20,
+      "min": 0.049,
+      "median": 0.068,
+      "mean": 0.065,
+      "p95": 0.093,
+      "max": 0.096
+    },
+    {
+      "label": "toSelectableItems@1000",
+      "unit": "ms",
+      "samples": 10,
+      "min": 0.25,
+      "median": 0.261,
+      "mean": 0.265,
+      "p95": 0.296,
+      "max": 0.317
+    },
+    {
+      "label": "findSelectableAt@1000",
+      "unit": "ms",
+      "samples": 10,
+      "min": 0.008,
+      "median": 0.008,
+      "mean": 0.009,
+      "p95": 0.013,
+      "max": 0.015
+    },
+    {
+      "label": "findSelectablesInBounds@1000",
+      "unit": "ms",
+      "samples": 10,
+      "min": 0.034,
+      "median": 0.034,
+      "mean": 0.034,
+      "p95": 0.035,
+      "max": 0.036
+    },
+    {
+      "label": "describeBoard@1000",
+      "unit": "ms",
+      "samples": 10,
+      "min": 0.024,
+      "median": 0.027,
+      "mean": 0.028,
+      "p95": 0.034,
+      "max": 0.036
+    },
+    {
+      "label": "describeElement:connector@1000",
+      "unit": "ms",
+      "samples": 10,
+      "min": 0.001,
+      "median": 0.001,
+      "mean": 0.002,
+      "p95": 0.006,
+      "max": 0.006
+    },
+    {
+      "label": "elementContentBounds@1000",
+      "unit": "ms",
+      "samples": 10,
+      "min": 0.446,
+      "median": 0.533,
+      "mean": 0.515,
+      "p95": 0.547,
+      "max": 0.551
+    },
+    {
+      "label": "toSelectableItems@5000",
+      "unit": "ms",
+      "samples": 5,
+      "min": 1.313,
+      "median": 1.339,
+      "mean": 1.345,
+      "p95": 1.382,
+      "max": 1.385
+    },
+    {
+      "label": "findSelectableAt@5000",
+      "unit": "ms",
+      "samples": 5,
+      "min": 0.013,
+      "median": 0.015,
+      "mean": 0.015,
+      "p95": 0.016,
+      "max": 0.017
+    },
+    {
+      "label": "findSelectablesInBounds@5000",
+      "unit": "ms",
+      "samples": 5,
+      "min": 0.173,
+      "median": 0.174,
+      "mean": 0.177,
+      "p95": 0.188,
+      "max": 0.191
+    },
+    {
+      "label": "describeBoard@5000",
+      "unit": "ms",
+      "samples": 5,
+      "min": 0.111,
+      "median": 0.126,
+      "mean": 0.124,
+      "p95": 0.14,
+      "max": 0.142
+    },
+    {
+      "label": "describeElement:connector@5000",
+      "unit": "ms",
+      "samples": 5,
+      "min": 0.001,
+      "median": 0.002,
+      "mean": 0.002,
+      "p95": 0.005,
+      "max": 0.006
+    },
+    {
+      "label": "elementContentBounds@5000",
+      "unit": "ms",
+      "samples": 5,
+      "min": 2.22,
+      "median": 2.23,
+      "mean": 2.268,
+      "p95": 2.376,
+      "max": 2.406
+    },
+    {
+      "label": "toSelectableItems@10000",
+      "unit": "ms",
+      "samples": 3,
+      "min": 2.582,
+      "median": 2.685,
+      "mean": 2.664,
+      "p95": 2.721,
+      "max": 2.724
+    },
+    {
+      "label": "findSelectableAt@10000",
+      "unit": "ms",
+      "samples": 3,
+      "min": 0.023,
+      "median": 0.023,
+      "mean": 0.024,
+      "p95": 0.026,
+      "max": 0.026
+    },
+    {
+      "label": "findSelectablesInBounds@10000",
+      "unit": "ms",
+      "samples": 3,
+      "min": 0.054,
+      "median": 0.054,
+      "mean": 0.055,
+      "p95": 0.056,
+      "max": 0.056
+    },
+    {
+      "label": "describeBoard@10000",
+      "unit": "ms",
+      "samples": 3,
+      "min": 0.263,
+      "median": 0.293,
+      "mean": 0.336,
+      "p95": 0.437,
+      "max": 0.453
+    },
+    {
+      "label": "describeElement:connector@10000",
+      "unit": "ms",
+      "samples": 3,
+      "min": 0.001,
+      "median": 0.001,
+      "mean": 0.001,
+      "p95": 0.001,
+      "max": 0.001
+    },
+    {
+      "label": "elementContentBounds@10000",
+      "unit": "ms",
+      "samples": 3,
+      "min": 4.414,
+      "median": 4.502,
+      "mean": 4.509,
+      "p95": 4.6,
+      "max": 4.611
+    },
+    {
+      "label": "render:mount@100",
+      "unit": "ms",
+      "samples": 5,
+      "min": 15.027,
+      "median": 16.993,
+      "mean": 17.364,
+      "p95": 20.097,
+      "max": 20.75
+    },
+    {
+      "label": "render:pan@100",
+      "unit": "ms",
+      "samples": 5,
+      "min": 8.616,
+      "median": 9.617,
+      "mean": 9.763,
+      "p95": 10.981,
+      "max": 11.199
+    },
+    {
+      "label": "render:zoom@100",
+      "unit": "ms",
+      "samples": 5,
+      "min": 3.472,
+      "median": 3.999,
+      "mean": 4.064,
+      "p95": 4.722,
+      "max": 4.882
+    },
+    {
+      "label": "render:selection@100",
+      "unit": "ms",
+      "samples": 5,
+      "min": 3.787,
+      "median": 4.354,
+      "mean": 4.357,
+      "p95": 5.037,
+      "max": 5.204
+    },
+    {
+      "label": "render:heap@100",
+      "unit": "bytes",
+      "samples": 1,
+      "min": 9132376,
+      "median": 9132376,
+      "mean": 9132376,
+      "p95": 9132376,
+      "max": 9132376
+    },
+    {
+      "label": "render:mount@1000",
+      "unit": "ms",
+      "samples": 3,
+      "min": 69.689,
+      "median": 71.3,
+      "mean": 71.096,
+      "p95": 72.199,
+      "max": 72.299
+    },
+    {
+      "label": "render:pan@1000",
+      "unit": "ms",
+      "samples": 3,
+      "min": 28.81,
+      "median": 28.898,
+      "mean": 29.377,
+      "p95": 30.271,
+      "max": 30.423
+    },
+    {
+      "label": "render:zoom@1000",
+      "unit": "ms",
+      "samples": 3,
+      "min": 27.499,
+      "median": 27.904,
+      "mean": 27.795,
+      "p95": 27.974,
+      "max": 27.982
+    },
+    {
+      "label": "render:selection@1000",
+      "unit": "ms",
+      "samples": 3,
+      "min": 31.836,
+      "median": 32.06,
+      "mean": 48.489,
+      "p95": 76.619,
+      "max": 81.57
+    },
+    {
+      "label": "render:heap@1000",
+      "unit": "bytes",
+      "samples": 1,
+      "min": 31702728,
+      "median": 31702728,
+      "mean": 31702728,
+      "p95": 31702728,
+      "max": 31702728
+    },
+    {
+      "label": "render:mount@5000",
+      "unit": "ms",
+      "samples": 2,
+      "min": 348.043,
+      "median": 349.845,
+      "mean": 349.845,
+      "p95": 351.467,
+      "max": 351.647
+    },
+    {
+      "label": "render:pan@5000",
+      "unit": "ms",
+      "samples": 2,
+      "min": 164.61,
+      "median": 208.402,
+      "mean": 208.402,
+      "p95": 247.814,
+      "max": 252.193
+    },
+    {
+      "label": "render:zoom@5000",
+      "unit": "ms",
+      "samples": 2,
+      "min": 164.791,
+      "median": 165.8,
+      "mean": 165.8,
+      "p95": 166.709,
+      "max": 166.81
+    },
+    {
+      "label": "render:selection@5000",
+      "unit": "ms",
+      "samples": 2,
+      "min": 177.807,
+      "median": 183.422,
+      "mean": 183.422,
+      "p95": 188.475,
+      "max": 189.036
+    },
+    {
+      "label": "render:heap@5000",
+      "unit": "bytes",
+      "samples": 1,
+      "min": 136132800,
+      "median": 136132800,
+      "mean": 136132800,
+      "p95": 136132800,
+      "max": 136132800
+    },
+    {
+      "label": "render:mount@10000",
+      "unit": "ms",
+      "samples": 1,
+      "min": 755.278,
+      "median": 755.278,
+      "mean": 755.278,
+      "p95": 755.278,
+      "max": 755.278
+    },
+    {
+      "label": "render:pan@10000",
+      "unit": "ms",
+      "samples": 1,
+      "min": 398.261,
+      "median": 398.261,
+      "mean": 398.261,
+      "p95": 398.261,
+      "max": 398.261
+    },
+    {
+      "label": "render:zoom@10000",
+      "unit": "ms",
+      "samples": 1,
+      "min": 470.48,
+      "median": 470.48,
+      "mean": 470.48,
+      "p95": 470.48,
+      "max": 470.48
+    },
+    {
+      "label": "render:selection@10000",
+      "unit": "ms",
+      "samples": 1,
+      "min": 406.721,
+      "median": 406.721,
+      "mean": 406.721,
+      "p95": 406.721,
+      "max": 406.721
+    },
+    {
+      "label": "render:heap@10000",
+      "unit": "bytes",
+      "samples": 1,
+      "min": 262250520,
+      "median": 262250520,
+      "mean": 262250520,
+      "p95": 262250520,
+      "max": 262250520
+    }
+  ],
+  "notes": [
+    "Generated by `npm run perf` under jsdom; timings are machine-dependent and meant for same-host comparison.",
+    "Interaction scenarios run against in-memory stores only, decoupled from persistence."
+  ]
+}

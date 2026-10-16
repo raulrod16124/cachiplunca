@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import {
   createCreateWorkspace,
   type CreateWorkspace,
@@ -6,19 +7,29 @@ import {
 } from '../../../../../../application/commands';
 import { CreateWorkspaceDialog } from '../../../../../../presentation/features/workspaces/components/create-workspace-dialog';
 import { createAppError, ERROR_CODES } from '../../../../../../shared/errors';
+import { UserId } from '../../../../../../domain/shared';
 import { FakeWorkspaceRepository } from '../../../../../fixtures/fake-workspace-repository';
+
+const CREATED_BY = UserId.create('user-1');
 
 interface HarnessProps {
   readonly createWorkspace: CreateWorkspace;
   readonly open: boolean;
   readonly onOpenChange: jest.Mock;
   readonly onCreated: jest.Mock;
+  readonly createdBy: UserId;
 }
 
 function renderDialog(createWorkspace: CreateWorkspace) {
   const onOpenChange = jest.fn();
   const onCreated = jest.fn();
-  const props: HarnessProps = { createWorkspace, open: true, onOpenChange, onCreated };
+  const props: HarnessProps = {
+    createWorkspace,
+    open: true,
+    onOpenChange,
+    onCreated,
+    createdBy: CREATED_BY,
+  };
 
   const { rerender } = render(<CreateWorkspaceDialog {...props} />);
 
@@ -44,6 +55,7 @@ describe('CreateWorkspaceDialog', () => {
         open={false}
         onOpenChange={onOpenChange}
         createWorkspace={createWorkspace}
+        createdBy={CREATED_BY}
         onCreated={onCreated}
       />,
     );
@@ -54,6 +66,7 @@ describe('CreateWorkspaceDialog', () => {
         open
         onOpenChange={onOpenChange}
         createWorkspace={createWorkspace}
+        createdBy={CREATED_BY}
         onCreated={onCreated}
       />,
     );
@@ -93,6 +106,7 @@ describe('CreateWorkspaceDialog', () => {
     expect(createWorkspace).toHaveBeenCalledWith({
       name: '  Roadmap Q4  ',
       description: 'Shared plan',
+      createdBy: CREATED_BY,
     });
     const stored = await repository.list();
     expect(stored.map((workspace) => workspace.name)).toEqual(['Roadmap Q4']);
@@ -146,6 +160,25 @@ describe('CreateWorkspaceDialog', () => {
     expect(onCreated).not.toHaveBeenCalled();
   });
 
+  it('moves focus into the dialog when it opens', () => {
+    const repository = new FakeWorkspaceRepository();
+    const createWorkspace = jest.fn(createCreateWorkspace(repository));
+    renderDialog(createWorkspace);
+
+    expect(screen.getByRole('dialog')).toHaveFocus();
+  });
+
+  it('closes on Escape', async () => {
+    const repository = new FakeWorkspaceRepository();
+    const createWorkspace = jest.fn(createCreateWorkspace(repository));
+    const { onOpenChange } = renderDialog(createWorkspace);
+    const user = userEvent.setup();
+
+    await user.keyboard('{Escape}');
+
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
   it('resets the fields when reopened', () => {
     const createWorkspace = jest.fn();
     const onOpenChange = jest.fn();
@@ -156,6 +189,7 @@ describe('CreateWorkspaceDialog', () => {
         open
         onOpenChange={onOpenChange}
         createWorkspace={createWorkspace}
+        createdBy={CREATED_BY}
         onCreated={onCreated}
       />,
     );
@@ -166,6 +200,7 @@ describe('CreateWorkspaceDialog', () => {
         open={false}
         onOpenChange={onOpenChange}
         createWorkspace={createWorkspace}
+        createdBy={CREATED_BY}
         onCreated={onCreated}
       />,
     );
@@ -174,6 +209,7 @@ describe('CreateWorkspaceDialog', () => {
         open
         onOpenChange={onOpenChange}
         createWorkspace={createWorkspace}
+        createdBy={CREATED_BY}
         onCreated={onCreated}
       />,
     );

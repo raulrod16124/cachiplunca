@@ -7,6 +7,7 @@ import type {
 } from '../../../../application/queries/list-workspaces';
 import type { Workspace } from '../../../../domain/workspace';
 import { toAppError } from '../../../../shared/errors';
+import { describeListWorkspacesError } from '../workspace-error-messages';
 import { WorkspacesList } from './workspaces-list';
 
 export interface WorkspacesListContainerProps {
@@ -40,7 +41,8 @@ export function WorkspacesListContainer({
     void fetchWorkspaces();
   }, [fetchWorkspaces, refreshToken]);
 
-  const errorMessage = result?.status === 'error' ? result.error.message : undefined;
+  const errorMessage =
+    result?.status === 'error' ? describeListWorkspacesError(result.error) : undefined;
   const workspaces = result?.status === 'ok' ? result.workspaces : [];
 
   const handleSelectWorkspace = useCallback(

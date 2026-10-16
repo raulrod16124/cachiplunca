@@ -1,9 +1,11 @@
 import type { WorkspaceRepository } from '../../application/ports';
-import { WorkspaceId } from '../../domain/shared';
+import { UserId, WorkspaceId } from '../../domain/shared';
 import { Workspace } from '../../domain/workspace';
 import { ERROR_CODES, isAppError } from '../../shared/errors';
 
 type RepositoryFactory = () => WorkspaceRepository | Promise<WorkspaceRepository>;
+
+const CREATED_BY = UserId.create('user-1');
 
 function requireWorkspace(workspace: Workspace | null): Workspace {
   if (workspace === null) {
@@ -16,6 +18,7 @@ function expectSameWorkspace(actual: Workspace, expected: Workspace): void {
   expect(actual).toBeInstanceOf(Workspace);
   expect(actual.id.equals(expected.id)).toBe(true);
   expect(actual.name).toBe(expected.name);
+  expect(actual.createdBy.equals(expected.createdBy)).toBe(true);
   expect(actual.description).toBe(expected.description);
   expect(actual.createdAt.getTime()).toBe(expected.createdAt.getTime());
   expect(actual.updatedAt.getTime()).toBe(expected.updatedAt.getTime());
@@ -37,18 +40,23 @@ export function describeWorkspaceRepositoryContract(
     });
 
     it('creates a workspace with a generated id and timestamps as a domain entity', async () => {
-      const workspace = await repository.create({ name: 'Product roadmap' });
+      const workspace = await repository.create({ name: 'Product roadmap', createdBy: CREATED_BY });
 
       expect(workspace).toBeInstanceOf(Workspace);
       expect(workspace.id.value).not.toBe('');
       expect(workspace.name).toBe('Product roadmap');
+      expect(workspace.createdBy.equals(CREATED_BY)).toBe(true);
       expect(workspace.description).toBeNull();
       expect(workspace.createdAt).toBeInstanceOf(Date);
       expect(workspace.updatedAt.getTime()).toBeGreaterThanOrEqual(workspace.createdAt.getTime());
     });
 
     it('exposes created workspaces through list and findById', async () => {
-      const created = await repository.create({ name: 'First', description: 'notes' });
+      const created = await repository.create({
+        name: 'First',
+        description: 'notes',
+        createdBy: CREATED_BY,
+      });
 
       const listed = await repository.list();
       expect(listed).toHaveLength(1);
@@ -59,8 +67,8 @@ export function describeWorkspaceRepositoryContract(
     });
 
     it('generates a distinct id for each workspace', async () => {
-      const first = await repository.create({ name: 'One' });
-      const second = await repository.create({ name: 'Two' });
+      const first = await repository.create({ name: 'One', createdBy: CREATED_BY });
+      const second = await repository.create({ name: 'Two', createdBy: CREATED_BY });
 
       expect(first.id.value).not.toBe('');
       expect(second.id.value).not.toBe('');
@@ -68,15 +76,19 @@ export function describeWorkspaceRepositoryContract(
     });
 
     it('rejects create with a validation AppError when the name is empty', async () => {
-      await expect(repository.create({ name: '   ' })).rejects.toMatchObject({
-        kind: 'validation',
-        code: ERROR_CODES.VALIDATION_INVALID_INPUT,
-      });
+      await expect(repository.create({ name: '   ', createdBy: CREATED_BY })).rejects.toMatchObject(
+        {
+          kind: 'validation',
+          code: ERROR_CODES.VALIDATION_INVALID_INPUT,
+        },
+      );
       await expect(repository.list()).resolves.toEqual([]);
     });
 
     it('rejects create with a validation AppError when the name exceeds 100 characters', async () => {
-      await expect(repository.create({ name: 'x'.repeat(101) })).rejects.toMatchObject({
+      await expect(
+        repository.create({ name: 'x'.repeat(101), createdBy: CREATED_BY }),
+      ).rejects.toMatchObject({
         kind: 'validation',
         code: ERROR_CODES.VALIDATION_INVALID_INPUT,
       });
@@ -87,7 +99,7 @@ export function describeWorkspaceRepositoryContract(
     });
 
     it('updates name and description with a new instance while preserving id and createdAt', async () => {
-      const created = await repository.create({ name: 'Old name' });
+      const created = await repository.create({ name: 'Old name', createdBy: CREATED_BY });
 
       const updated = await repository.update(created.id, {
         name: 'New name',
@@ -110,7 +122,11 @@ export function describeWorkspaceRepositoryContract(
     });
 
     it('keeps omitted fields untouched on update', async () => {
-      const created = await repository.create({ name: 'Keeper', description: 'keep me' });
+      const created = await repository.create({
+        name: 'Keeper',
+        description: 'keep me',
+        createdBy: CREATED_BY,
+      });
 
       const updated = await repository.update(created.id, { name: 'Renamed' });
 
@@ -128,7 +144,7 @@ export function describeWorkspaceRepositoryContract(
     });
 
     it('rejects update with a validation AppError and keeps the stored workspace intact', async () => {
-      const created = await repository.create({ name: 'Original' });
+      const created = await repository.create({ name: 'Original', createdBy: CREATED_BY });
 
       await expect(repository.update(created.id, { name: '  ' })).rejects.toMatchObject({
         kind: 'validation',
@@ -141,7 +157,7 @@ export function describeWorkspaceRepositoryContract(
     });
 
     it('deletes a workspace and stops exposing it', async () => {
-      const created = await repository.create({ name: 'Disposable' });
+      const created = await repository.create({ name: 'Disposable', createdBy: CREATED_BY });
 
       await expect(repository.delete(created.id)).resolves.toBeUndefined();
 
@@ -160,7 +176,7 @@ export function describeWorkspaceRepositoryContract(
       const unknownId = WorkspaceId.create('missing');
 
       const operations = [
-        repository.create({ name: '' }),
+        repository.create({ name: '', createdBy: CREATED_BY }),
         repository.update(unknownId, { name: 'Nope' }),
         repository.delete(unknownId),
       ];

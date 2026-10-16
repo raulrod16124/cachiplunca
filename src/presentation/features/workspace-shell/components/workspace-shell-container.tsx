@@ -1,41 +1,80 @@
-import { Button, Heading, Inline, Skeleton, Stack, Text, VisuallyHidden } from '@raulrod/ui';
+import { Skeleton, Stack } from '@raulrod/ui';
 import type { ReactNode } from 'react';
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import styled from 'styled-components';
-import { createSnapshotCommand, type LogoutUser } from '../../../../application/commands';
+import {
+  createCreateElement,
+  type ChangeMemberRole,
+  type CreateElementInput,
+  type InviteMember,
+  type LeaveWorkspace,
+  type LogoutUser,
+  type RemoveMember,
+} from '../../../../application/commands';
 import type {
   GetWorkspace,
   GetWorkspaceResult,
+  GetWorkspaceRole,
+  ListPendingInvitations,
+  ListWorkspaceMembers,
   LoadWorkspaceElements,
 } from '../../../../application/queries';
 import {
   applyRemoteElementChanges,
+  buildConnectorCreateInput,
+  buildElementCreateInput,
+  connectorEndpoints,
+  createBoardWindowCommand,
   createCanvasViewportStore,
   createCommandHistory,
+  createConnectedUsersStore,
+  createCursorBroadcaster,
   createElementPersistenceBatcher,
   createRealtimeConnectionStore,
+  createRemoteCursorsStore,
   createSelectionStore,
+  createSharedPresencePort,
+  defaultElementSize,
+  elementContentBounds,
+  EMPTY_CONNECTED_USERS_STORE,
+  EMPTY_REMOTE_CURSORS_STORE,
+  resolveElementCreatePosition,
   rollbackFailedMutation,
 } from '../../../../application/services';
 import type {
   CanvasViewportStore,
   CommandHistory,
+  ConnectedUsersStore,
+  CursorBroadcaster,
   ElementPersistenceBatcher,
   ElementPersistenceOrchestrator,
   PersistenceSyncStatus,
   RealtimeConnectionStore,
   RealtimeSubscriptionManager,
+  RemoteCursorsStore,
   Scheduler,
   SelectionStore,
 } from '../../../../application/services';
-import type { RealtimeConnectionStatus } from '../../../../application/ports';
-import type { Element } from '../../../../domain/element';
-import { Size, WorkspaceId } from '../../../../domain/shared';
+import type {
+  AuthUser,
+  PresencePort,
+  RealtimeConnectionStatus,
+} from '../../../../application/ports';
+import type { Element, ElementType } from '../../../../domain/element';
+import type { MembershipRole } from '../../../../domain/membership';
+import { Presence } from '../../../../domain/collaboration';
+import { Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
+import { useWorkspacePermissions } from '../../../hooks';
 import type { ElementId } from '../../../../domain/shared';
 import { toAppError, type AppError } from '../../../../shared/errors';
+import { EmptyState } from '../../../components/empty-state';
+import { ErrorState } from '../../../components/error-state';
+import { LoadingState } from '../../../components/loading-state';
+import { ShareDialog } from '../../sharing';
 import { WorkspaceShellLayout } from './workspace-shell-layout';
 import {
   describeCollaborationSyncError,
+  describeCreateElementError,
   describeGetWorkspaceError,
   describeLoadWorkspaceElementsError,
   describePersistElementsError,
@@ -54,8 +93,19 @@ export interface WorkspaceShellContainerProps {
   readonly generateElementId: () => ElementId;
   readonly logoutUser: LogoutUser;
   readonly onBack: () => void;
+  readonly currentUser?: AuthUser | null;
+  readonly presencePort?: PresencePort;
+  readonly localUserId?: string;
+  readonly selectionStore?: SelectionStore;
   readonly persistenceDebounceMs?: number;
   readonly persistenceScheduler?: Scheduler;
+  readonly inviteMember?: InviteMember;
+  readonly listPendingInvitations?: ListPendingInvitations;
+  readonly getWorkspaceRole?: GetWorkspaceRole;
+  readonly listWorkspaceMembers?: ListWorkspaceMembers;
+  readonly changeMemberRole?: ChangeMemberRole;
+  readonly removeMember?: RemoveMember;
+  readonly leaveWorkspace?: LeaveWorkspace;
 }
 
 interface TransformGesture {
@@ -72,22 +122,40 @@ export function WorkspaceShellContainer({
   generateElementId,
   logoutUser,
   onBack,
+  currentUser = null,
+  presencePort,
+  localUserId,
+  selectionStore,
   persistenceDebounceMs,
   persistenceScheduler,
+  inviteMember,
+  listPendingInvitations,
+  getWorkspaceRole,
+  listWorkspaceMembers,
+  changeMemberRole,
+  removeMember,
+  leaveWorkspace,
 }: WorkspaceShellContainerProps): ReactNode {
   const [status, setStatus] = useState<'loading' | 'notFound' | 'error' | 'success'>('loading');
+  const [shareOpen, setShareOpen] = useState(false);
+  const [role, setRole] = useState<MembershipRole | undefined>(undefined);
+  const [roleStatus, setRoleStatus] = useState<'idle' | 'loading' | 'settled'>(
+    getWorkspaceRole === undefined ? 'idle' : 'loading',
+  );
+  const permissions = useWorkspacePermissions(role);
   const [result, setResult] = useState<GetWorkspaceResult | null>(null);
   const [elements, setElements] = useState<readonly Element[]>([]);
   const [elementsStatus, setElementsStatus] = useState<'loading' | 'error' | 'success'>('loading');
   const [elementsError, setElementsError] = useState<AppError | null>(null);
   const [persistenceError, setPersistenceError] = useState<AppError | null>(null);
   const [collaborationError, setCollaborationError] = useState<AppError | null>(null);
+  const [creationError, setCreationError] = useState<AppError | null>(null);
   const [syncStatus, setSyncStatus] = useState<PersistenceSyncStatus>('idle');
   const elementsRef = useRef<readonly Element[]>([]);
   const canvasViewportStoreRef = useRef<CanvasViewportStore>(
     createCanvasViewportStore(Size.create(800, 600)),
   );
-  const selectionStoreRef = useRef<SelectionStore>(createSelectionStore());
+  const selectionStoreRef = useRef<SelectionStore>(selectionStore ?? createSelectionStore());
   const connectionStoreRef = useRef<RealtimeConnectionStore>(createRealtimeConnectionStore());
   const connectionStatus = useSyncExternalStore(
     connectionStoreRef.current.subscribe,
@@ -98,6 +166,92 @@ export function WorkspaceShellContainer({
     createCommandHistory<readonly Element[]>({ initial: [] }),
   );
   const persistenceBatcherRef = useRef<ElementPersistenceBatcher | null>(null);
+
+  const sharedPresencePort = useMemo(
+    () => (presencePort === undefined ? undefined : createSharedPresencePort(presencePort)),
+    [presencePort],
+  );
+
+  const remoteCursorsStore = useMemo<RemoteCursorsStore>(() => {
+    if (sharedPresencePort === undefined || localUserId === undefined) {
+      return EMPTY_REMOTE_CURSORS_STORE;
+    }
+
+    return createRemoteCursorsStore(
+      sharedPresencePort,
+      WorkspaceId.create(workspaceId),
+      UserId.create(localUserId),
+    );
+  }, [sharedPresencePort, localUserId, workspaceId]);
+
+  const remoteCursors = useSyncExternalStore(
+    remoteCursorsStore.subscribe,
+    remoteCursorsStore.getSnapshot,
+  ).cursors;
+
+  const connectedUsersStore = useMemo<ConnectedUsersStore>(() => {
+    if (sharedPresencePort === undefined) {
+      return EMPTY_CONNECTED_USERS_STORE;
+    }
+
+    return createConnectedUsersStore(sharedPresencePort, WorkspaceId.create(workspaceId));
+  }, [sharedPresencePort, workspaceId]);
+
+  const connectedUsers = useSyncExternalStore(
+    connectedUsersStore.subscribe,
+    connectedUsersStore.getSnapshot,
+  ).users.filter((presence) => presence.userId.value !== localUserId);
+
+  const cursorBroadcaster = useMemo<CursorBroadcaster | null>(() => {
+    if (sharedPresencePort === undefined || localUserId === undefined) {
+      return null;
+    }
+
+    return createCursorBroadcaster({
+      presencePort: sharedPresencePort,
+      basePresence: Presence.create({
+        userId: UserId.create(localUserId),
+        workspaceId: WorkspaceId.create(workspaceId),
+      }),
+      onError: (error) => {
+        setCollaborationError(error);
+      },
+    });
+  }, [presencePort, localUserId, workspaceId]);
+
+  const handleCursorMove = useCallback(
+    (position: Position) => {
+      cursorBroadcaster?.move(position);
+    },
+    [cursorBroadcaster],
+  );
+
+  useEffect(() => {
+    if (cursorBroadcaster === null || elementsStatus !== 'success') {
+      return;
+    }
+
+    cursorBroadcaster.join();
+  }, [cursorBroadcaster, elementsStatus]);
+
+  useEffect(() => {
+    if (cursorBroadcaster === null) {
+      return;
+    }
+
+    const broadcaster = cursorBroadcaster;
+
+    function handlePagehide(): void {
+      void broadcaster.leave();
+    }
+
+    window.addEventListener('pagehide', handlePagehide);
+
+    return () => {
+      window.removeEventListener('pagehide', handlePagehide);
+      void broadcaster.leave();
+    };
+  }, [cursorBroadcaster]);
 
   if (persistenceBatcherRef.current === null) {
     persistenceBatcherRef.current = createElementPersistenceBatcher({
@@ -168,7 +322,12 @@ export function WorkspaceShellContainer({
       }
 
       const result = commandHistoryRef.current.execute(
-        createSnapshotCommand(previous, next, label),
+        createBoardWindowCommand({
+          readCurrent: () => elementsRef.current,
+          previous,
+          next,
+          label,
+        }),
       );
 
       if (result.status === 'error') {
@@ -180,6 +339,77 @@ export function WorkspaceShellContainer({
       void persistenceBatcher.flush();
     },
     [applyElements, persistenceBatcher],
+  );
+
+  const createElement = useMemo(
+    () => createCreateElement({ generateId: generateElementId }),
+    [generateElementId],
+  );
+
+  const handleCreateElement = useCallback(
+    (type: ElementType): void => {
+      if (localUserId === undefined) {
+        return;
+      }
+
+      const workspace = WorkspaceId.create(workspaceId);
+      const createdBy = UserId.create(localUserId);
+      let input: CreateElementInput;
+
+      if (type === 'connector') {
+        const endpoints = connectorEndpoints(selectionStoreRef.current.getSnapshot().selectedIds);
+
+        if (endpoints === null) {
+          return;
+        }
+
+        const [sourceId, targetId] = endpoints;
+        const source = elementsRef.current.find((element) => element.id.value === sourceId);
+        const target = elementsRef.current.find((element) => element.id.value === targetId);
+
+        if (source === undefined || target === undefined) {
+          return;
+        }
+
+        const bounds = elementContentBounds([source, target]);
+
+        if (bounds === null) {
+          return;
+        }
+
+        input = buildConnectorCreateInput(source.id, target.id, {
+          workspaceId: workspace,
+          createdBy,
+          position: bounds.position,
+          size: bounds.size,
+        });
+      } else {
+        const size = defaultElementSize(type);
+        const position = resolveElementCreatePosition(
+          canvasViewportStoreRef.current.getSnapshot(),
+          size,
+        );
+
+        input = buildElementCreateInput(type, {
+          workspaceId: workspace,
+          createdBy,
+          position,
+          size,
+        });
+      }
+
+      const result = createElement(input);
+
+      if (result.status === 'error') {
+        setCreationError(result.error);
+        return;
+      }
+
+      setCreationError(null);
+      commitElements([...elementsRef.current, result.element], `Create ${type}`);
+      selectionStoreRef.current.select(result.element.id.value);
+    },
+    [localUserId, workspaceId, createElement, commitElements],
   );
 
   const handleMoveElements = useCallback(
@@ -219,7 +449,12 @@ export function WorkspaceShellContainer({
 
     transformGestureRef.current = null;
     commandHistoryRef.current.execute(
-      createSnapshotCommand(gesture.base, elementsRef.current, gesture.label),
+      createBoardWindowCommand({
+        readCurrent: () => elementsRef.current,
+        previous: gesture.base,
+        next: elementsRef.current,
+        label: gesture.label,
+      }),
     );
     void persistenceBatcher.flush();
   }, [persistenceBatcher]);
@@ -303,6 +538,38 @@ export function WorkspaceShellContainer({
   }, [fetchWorkspace]);
 
   useEffect(() => {
+    if (getWorkspaceRole === undefined || localUserId === undefined) {
+      setRole(undefined);
+      setRoleStatus('idle');
+      return;
+    }
+
+    let active = true;
+    setRoleStatus('loading');
+
+    void (async () => {
+      try {
+        const response = await getWorkspaceRole(localUserId, workspaceId);
+        if (!active) {
+          return;
+        }
+        setRole(response.status === 'ok' ? response.role : undefined);
+        setRoleStatus('settled');
+      } catch {
+        if (!active) {
+          return;
+        }
+        setRole(undefined);
+        setRoleStatus('settled');
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [getWorkspaceRole, localUserId, workspaceId]);
+
+  useEffect(() => {
     if (status === 'success') {
       void fetchElements();
     }
@@ -323,6 +590,7 @@ export function WorkspaceShellContainer({
         if (next !== elementsRef.current) {
           applyElements(next);
         }
+        selectionStoreRef.current.retain(next.map((element) => element.id.value));
       },
       (error) => {
         setCollaborationError(error);
@@ -347,12 +615,13 @@ export function WorkspaceShellContainer({
 
   if (status === 'loading') {
     return (
-      <Container role="status" aria-busy="true">
-        <VisuallyHidden>Loading workspace</VisuallyHidden>
-        <Stack gap="space-4">
-          <Skeleton style={{ height: '32px', width: '40%' }} />
-          <Skeleton style={{ height: '400px', width: '100%' }} />
-        </Stack>
+      <Container>
+        <LoadingState label="Loading workspace">
+          <Stack gap="space-4">
+            <Skeleton style={{ height: '32px', width: '40%' }} />
+            <Skeleton style={{ height: '400px', width: '100%' }} />
+          </Stack>
+        </LoadingState>
       </Container>
     );
   }
@@ -360,17 +629,13 @@ export function WorkspaceShellContainer({
   if (status === 'notFound') {
     return (
       <Container>
-        <Stack gap="space-4">
-          <Heading as="h1">Workspace not found</Heading>
-          <Text color="color.text.muted">
-            The workspace you are looking for does not exist or you do not have access to it.
-          </Text>
-          <Inline gap="space-2">
-            <Button type="button" variant="primary" onClick={onBack}>
-              Back to workspaces
-            </Button>
-          </Inline>
-        </Stack>
+        <EmptyState
+          title="Workspace not found"
+          titleAs="h1"
+          description="The workspace you are looking for does not exist or you do not have access to it."
+          actionLabel="Back to workspaces"
+          onAction={onBack}
+        />
       </Container>
     );
   }
@@ -382,32 +647,30 @@ export function WorkspaceShellContainer({
         : 'Something went wrong.';
 
     return (
-      <Container role="alert" aria-live="polite">
-        <Stack gap="space-4">
-          <Heading as="h1">Could not load workspace</Heading>
-          <Text color="color.text.muted">{errorMessage}</Text>
-          <Inline gap="space-2">
-            <Button type="button" variant="primary" onClick={fetchWorkspace}>
-              Retry
-            </Button>
-            <Button type="button" variant="outline" onClick={onBack}>
-              Back to workspaces
-            </Button>
-          </Inline>
-        </Stack>
+      <Container>
+        <ErrorState
+          title="Could not load workspace"
+          titleAs="h1"
+          description={errorMessage}
+          actionLabel="Retry"
+          onAction={fetchWorkspace}
+          secondaryActionLabel="Back to workspaces"
+          onSecondaryAction={onBack}
+        />
       </Container>
     );
   }
 
   if (result?.status === 'ok') {
-    if (elementsStatus === 'loading') {
+    if (elementsStatus === 'loading' || roleStatus === 'loading') {
       return (
-        <Container role="status" aria-busy="true">
-          <VisuallyHidden>Loading board</VisuallyHidden>
-          <Stack gap="space-4">
-            <Skeleton style={{ height: '32px', width: '40%' }} />
-            <Skeleton style={{ height: '400px', width: '100%' }} />
-          </Stack>
+        <Container>
+          <LoadingState label="Loading board">
+            <Stack gap="space-4">
+              <Skeleton style={{ height: '32px', width: '40%' }} />
+              <Skeleton style={{ height: '400px', width: '100%' }} />
+            </Stack>
+          </LoadingState>
         </Container>
       );
     }
@@ -419,50 +682,93 @@ export function WorkspaceShellContainer({
           : describeLoadWorkspaceElementsError(elementsError);
 
       return (
-        <Container role="alert" aria-live="polite">
-          <Stack gap="space-4">
-            <Heading as="h1">Could not load board</Heading>
-            <Text color="color.text.muted">{errorMessage}</Text>
-            <Inline gap="space-2">
-              <Button type="button" variant="primary" onClick={fetchElements}>
-                Retry
-              </Button>
-              <Button type="button" variant="outline" onClick={onBack}>
-                Back to workspaces
-              </Button>
-            </Inline>
-          </Stack>
+        <Container>
+          <ErrorState
+            title="Could not load board"
+            titleAs="h1"
+            description={errorMessage}
+            actionLabel="Retry"
+            onAction={fetchElements}
+            secondaryActionLabel="Back to workspaces"
+            onSecondaryAction={onBack}
+          />
         </Container>
       );
     }
 
+    const permissionsEnforced = getWorkspaceRole !== undefined;
+    const canElementWrite = !permissionsEnforced || permissions.can('element:write');
+    const canMemberInvite = !permissionsEnforced || permissions.can('member:invite');
+    const canMemberUpdateRole = !permissionsEnforced || permissions.can('member:update-role');
+    const canMemberRemove = !permissionsEnforced || permissions.can('member:remove');
+    const canMemberLeave = !permissionsEnforced || permissions.can('member:leave');
+    const canCreateElement = canElementWrite && localUserId !== undefined;
+
+    const canShare =
+      localUserId !== undefined &&
+      listWorkspaceMembers !== undefined &&
+      leaveWorkspace !== undefined &&
+      (!permissionsEnforced || role !== undefined);
+
     return (
-      <WorkspaceShellLayout
-        workspace={result.workspace}
-        elements={elements}
-        logoutUser={logoutUser}
-        onBack={onBack}
-        canvasViewportStore={canvasViewportStoreRef.current}
-        selectionStore={selectionStoreRef.current}
-        commandHistory={commandHistoryRef.current}
-        onMoveElements={handleMoveElements}
-        onResizeElements={handleResizeElements}
-        onTransformEnd={handleTransformEnd}
-        onDeleteElements={handleDeleteElements}
-        onDuplicateElements={handleDuplicateElements}
-        onPasteElements={handlePasteElements}
-        onUndoElements={handleUndoElements}
-        onRedoElements={handleRedoElements}
-        generateElementId={generateElementId}
-        syncStatus={syncStatus}
-        connectionStatus={connectionStatus}
-        persistenceErrorMessage={
-          persistenceError === null ? null : describePersistElementsError(persistenceError)
-        }
-        collaborationErrorMessage={
-          collaborationError === null ? null : describeCollaborationSyncError(collaborationError)
-        }
-      />
+      <>
+        <WorkspaceShellLayout
+          workspace={result.workspace}
+          elements={elements}
+          role={role}
+          currentUser={currentUser}
+          connectedUsers={connectedUsers}
+          logoutUser={logoutUser}
+          onBack={onBack}
+          canvasViewportStore={canvasViewportStoreRef.current}
+          selectionStore={selectionStoreRef.current}
+          commandHistory={commandHistoryRef.current}
+          onMoveElements={handleMoveElements}
+          onResizeElements={handleResizeElements}
+          onTransformEnd={handleTransformEnd}
+          onDeleteElements={handleDeleteElements}
+          onDuplicateElements={handleDuplicateElements}
+          onPasteElements={handlePasteElements}
+          onUndoElements={handleUndoElements}
+          onRedoElements={handleRedoElements}
+          onCreateElement={canCreateElement ? handleCreateElement : undefined}
+          generateElementId={generateElementId}
+          remoteCursors={remoteCursors}
+          onCursorMove={cursorBroadcaster === null ? undefined : handleCursorMove}
+          syncStatus={syncStatus}
+          connectionStatus={connectionStatus}
+          persistenceErrorMessage={
+            persistenceError === null ? null : describePersistElementsError(persistenceError)
+          }
+          collaborationErrorMessage={
+            collaborationError === null ? null : describeCollaborationSyncError(collaborationError)
+          }
+          creationErrorMessage={
+            creationError === null ? null : describeCreateElementError(creationError)
+          }
+          readOnly={!canElementWrite}
+          onShare={canShare ? () => setShareOpen(true) : undefined}
+        />
+        {canShare ? (
+          <ShareDialog
+            open={shareOpen}
+            onOpenChange={setShareOpen}
+            workspaceId={workspaceId}
+            currentUserId={localUserId}
+            canInvite={canMemberInvite}
+            canChangeRole={canMemberUpdateRole}
+            canRemove={canMemberRemove}
+            canLeave={canMemberLeave}
+            listWorkspaceMembers={listWorkspaceMembers}
+            leaveWorkspace={leaveWorkspace}
+            changeMemberRole={changeMemberRole}
+            removeMember={removeMember}
+            inviteMember={inviteMember}
+            listPendingInvitations={listPendingInvitations}
+            onLeft={onBack}
+          />
+        ) : null}
+      </>
     );
   }
 

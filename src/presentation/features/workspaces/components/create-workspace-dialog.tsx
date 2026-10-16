@@ -17,6 +17,7 @@ import {
 } from '@raulrod/ui';
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import type { CreateWorkspace, CreateWorkspaceFieldErrors } from '../../../../application/commands';
+import type { UserId } from '../../../../domain/shared';
 import { toAppError } from '../../../../shared/errors';
 import { describeCreateWorkspaceError } from '../workspace-error-messages';
 
@@ -24,6 +25,7 @@ export interface CreateWorkspaceDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
   readonly createWorkspace: CreateWorkspace;
+  readonly createdBy: UserId;
   readonly onCreated: () => void;
 }
 
@@ -31,6 +33,7 @@ export function CreateWorkspaceDialog({
   open,
   onOpenChange,
   createWorkspace,
+  createdBy,
   onCreated,
 }: CreateWorkspaceDialogProps): ReactNode {
   const [name, setName] = useState('');
@@ -62,6 +65,7 @@ export function CreateWorkspaceDialog({
       const trimmedDescription = description.trim();
       const result = await createWorkspace({
         name,
+        createdBy,
         description: trimmedDescription === '' ? undefined : trimmedDescription,
       });
       switch (result.status) {

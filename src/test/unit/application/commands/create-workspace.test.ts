@@ -3,10 +3,12 @@ import {
   validateCreateWorkspaceInput,
   type CreateWorkspaceResult,
 } from '../../../../application/commands';
+import { UserId } from '../../../../domain/shared';
 import { ERROR_CODES } from '../../../../shared/errors';
 import { FakeWorkspaceRepository } from '../../../fixtures/fake-workspace-repository';
 
-const VALID_INPUT = { name: 'Product roadmap' };
+const CREATED_BY = UserId.create('user-1');
+const VALID_INPUT = { name: 'Product roadmap', createdBy: CREATED_BY };
 
 describe('validateCreateWorkspaceInput', () => {
   it('returns no errors for valid input', () => {
@@ -33,7 +35,10 @@ describe('createCreateWorkspace', () => {
     const repository = new FakeWorkspaceRepository();
     const createWorkspace = createCreateWorkspace(repository);
 
-    const result = await createWorkspace({ name: '  Product roadmap  ' });
+    const result = await createWorkspace({
+      name: '  Product roadmap  ',
+      createdBy: CREATED_BY,
+    });
 
     expect(result.status).toBe('ok');
     if (result.status === 'ok') {
@@ -50,13 +55,18 @@ describe('createCreateWorkspace', () => {
     const withDescription = await createWorkspace({
       name: 'With description',
       description: 'Shared plan',
+      createdBy: CREATED_BY,
     });
     expect(withDescription.status).toBe('ok');
     if (withDescription.status === 'ok') {
       expect(withDescription.workspace.description).toBe('Shared plan');
     }
 
-    const withNull = await createWorkspace({ name: 'No description', description: null });
+    const withNull = await createWorkspace({
+      name: 'No description',
+      description: null,
+      createdBy: CREATED_BY,
+    });
     expect(withNull.status).toBe('ok');
     if (withNull.status === 'ok') {
       expect(withNull.workspace.description).toBeNull();
@@ -68,7 +78,7 @@ describe('createCreateWorkspace', () => {
     const create = jest.spyOn(repository, 'create');
     const createWorkspace = createCreateWorkspace(repository);
 
-    const result = await createWorkspace({ name: '   ' });
+    const result = await createWorkspace({ name: '   ', createdBy: CREATED_BY });
 
     expect(result.status).toBe('invalid-input');
     if (result.status === 'invalid-input') {

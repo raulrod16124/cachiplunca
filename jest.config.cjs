@@ -2,6 +2,7 @@
 module.exports = {
   testEnvironment: 'jsdom',
   roots: ['<rootDir>/src'],
+  testPathIgnorePatterns: ['<rootDir>/src/test/rules', '<rootDir>/src/test/perf'],
   testMatch: [
     '**/src/test/**/*.test.ts',
     '**/src/test/**/*.test.tsx',
@@ -15,6 +16,11 @@ module.exports = {
   // @raulrod/* is ESM-only (exports with an "import" condition only), which the
   // CJS Jest resolver cannot see; map to the files and transpile them instead.
   moduleNameMapper: {
+    // Route every test through a render wrapper that mounts AppThemeProvider,
+    // so styled-components resolve tokens without per-test setup. The wrapper
+    // re-exports the real package via the `-real` alias to avoid self-resolution.
+    '^@testing-library/react$': '<rootDir>/src/test/setup/render-with-theme.tsx',
+    '^@testing-library/react-real$': '<rootDir>/node_modules/@testing-library/react/dist/index.js',
     '^@raulrod/ui$': '<rootDir>/node_modules/@raulrod/ui/dist/index.js',
     '^@raulrod/icons$': '<rootDir>/node_modules/@raulrod/icons/dist/index.js',
     '^@raulrod/tokens$': '<rootDir>/node_modules/@raulrod/tokens/dist/index.js',

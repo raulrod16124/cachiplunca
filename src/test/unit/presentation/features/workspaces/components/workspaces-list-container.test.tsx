@@ -8,13 +8,16 @@ import type {
   ListWorkspacesResult,
 } from '../../../../../../application/queries/list-workspaces';
 import { Workspace } from '../../../../../../domain/workspace';
-import { WorkspaceId } from '../../../../../../domain/shared';
+import { UserId, WorkspaceId } from '../../../../../../domain/shared';
 import { createAppError, ERROR_CODES } from '../../../../../../shared/errors';
+
+const CREATED_BY = UserId.create('user-1');
 
 function createWorkspace(name: string): Workspace {
   return Workspace.create({
     id: WorkspaceId.create(`ws-${name}`),
     name,
+    createdBy: CREATED_BY,
   });
 }
 
@@ -59,7 +62,9 @@ describe('WorkspacesListContainer', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeInTheDocument();
-      expect(screen.getByText('Network failed')).toBeInTheDocument();
+      expect(
+        screen.getByText('We could not load your workspaces. Please try again.'),
+      ).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole('button', { name: /retry/i }));
@@ -92,7 +97,10 @@ describe('WorkspacesListContainer', () => {
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeInTheDocument();
     });
-    expect(screen.getByText(/backend exploded/i)).toBeInTheDocument();
+    expect(
+      screen.getByText('We could not load your workspaces. Please try again.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/backend exploded/i)).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /retry/i }));
     expect(listWorkspaces).toHaveBeenCalledTimes(2);

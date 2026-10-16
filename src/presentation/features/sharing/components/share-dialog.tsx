@@ -1,0 +1,231 @@
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  Heading,
+  Stack,
+  Tabs,
+} from '@raulrod/ui';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import type {
+  ChangeMemberRole,
+  InviteMember,
+  LeaveWorkspace,
+  RemoveMember,
+} from '../../../../application/commands';
+import type { ListPendingInvitations, ListWorkspaceMembers } from '../../../../application/queries';
+import type { Membership, MembershipRole } from '../../../../domain/membership';
+import { UserId, WorkspaceId } from '../../../../domain/shared';
+import { toAppError } from '../../../../shared/errors';
+import { InvitePanel } from '../../invitations';
+import {
+  describeChangeMemberRoleError,
+  describeLeaveWorkspaceError,
+  describeListMembersError,
+  describeRemoveMemberError,
+} from '../share-error-messages';
+import { MembersList, type MembersStatus } from './members-list';
+
+const INVITE_TAB = 'invite';
+const PEOPLE_TAB = 'people';
+
+export interface ShareDialogProps {
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly workspaceId: string;
+  readonly currentUserId: string;
+  readonly canInvite: boolean;
+  readonly canChangeRole: boolean;
+  readonly canRemove: boolean;
+  readonly canLeave: boolean;
+  readonly listWorkspaceMembers: ListWorkspaceMembers;
+  readonly leaveWorkspace: LeaveWorkspace;
+  readonly changeMemberRole?: ChangeMemberRole;
+  readonly removeMember?: RemoveMember;
+  readonly inviteMember?: InviteMember;
+  readonly listPendingInvitations?: ListPendingInvitations;
+  readonly onLeft: () => void;
+}
+
+export function ShareDialog({
+  open,
+  onOpenChange,
+  workspaceId,
+  currentUserId,
+  canInvite,
+  canChangeRole,
+  canRemove,
+  canLeave,
+  listWorkspaceMembers,
+  leaveWorkspace,
+  changeMemberRole,
+  removeMember,
+  inviteMember,
+  listPendingInvitations,
+  onLeft,
+}: ShareDialogProps): ReactNode {
+  const canShowInvite =
+    canInvite && inviteMember !== undefined && listPendingInvitations !== undefined;
+  const defaultTab = canShowInvite ? INVITE_TAB : PEOPLE_TAB;
+
+  const [tab, setTab] = useState<string>(defaultTab);
+  const [status, setStatus] = useState<MembersStatus>('loading');
+  const [members, setMembers] = useState<readonly Membership[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
+
+  const fetchMembers = useCallback(async (): Promise<void> => {
+    setStatus('loading');
+    setErrorMessage(null);
+    try {
+      const result = await listWorkspaceMembers(workspaceId);
+      if (result.status === 'ok') {
+        setMembers(result.members);
+        setStatus('ready');
+        return;
+      }
+      setErrorMessage(describeListMembersError(result.error));
+      setStatus('error');
+    } catch (error) {
+      setErrorMessage(describeListMembersError(toAppError(error)));
+      setStatus('error');
+    }
+  }, [listWorkspaceMembers, workspaceId]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    setTab(defaultTab);
+    setActionError(null);
+    void fetchMembers();
+  }, [open, defaultTab, fetchMembers]);
+
+  const handleChangeRole = useCallback(
+    async (userId: string, role: MembershipRole): Promise<void> => {
+      if (changeMemberRole === undefined) {
+        return;
+      }
+      setPendingUserId(userId);
+      setActionError(null);
+      try {
+        const result = await changeMemberRole({
+          workspaceId: WorkspaceId.create(workspaceId),
+          actorUserId: UserId.create(currentUserId),
+          targetUserId: UserId.create(userId),
+          role,
+        });
+        if (result.status === 'ok') {
+          await fetchMembers();
+        } else if (result.status === 'invalid-input') {
+          setActionError('Choose a valid role.');
+        } else {
+          setActionError(describeChangeMemberRoleError(result.error));
+        }
+      } catch (error) {
+        setActionError(describeChangeMemberRoleError(toAppError(error)));
+      } finally {
+        setPendingUserId(null);
+      }
+    },
+    [changeMemberRole, currentUserId, fetchMembers, workspaceId],
+  );
+
+  const handleRemove = useCallback(
+    async (userId: string): Promise<void> => {
+      if (removeMember === undefined) {
+        return;
+      }
+      setPendingUserId(userId);
+      setActionError(null);
+      try {
+        const result = await removeMember({
+          workspaceId: WorkspaceId.create(workspaceId),
+          actorUserId: UserId.create(currentUserId),
+          targetUserId: UserId.create(userId),
+        });
+        if (result.status === 'ok') {
+          await fetchMembers();
+        } else {
+          setActionError(describeRemoveMemberError(result.error));
+        }
+      } catch (error) {
+        setActionError(describeRemoveMemberError(toAppError(error)));
+      } finally {
+        setPendingUserId(null);
+      }
+    },
+    [removeMember, currentUserId, fetchMembers, workspaceId],
+  );
+
+  const handleLeave = useCallback(async (): Promise<void> => {
+    setPendingUserId(currentUserId);
+    setActionError(null);
+    try {
+      const result = await leaveWorkspace({
+        workspaceId: WorkspaceId.create(workspaceId),
+        userId: UserId.create(currentUserId),
+      });
+      if (result.status === 'ok') {
+        onLeft();
+        return;
+      }
+      setActionError(describeLeaveWorkspaceError(result.error));
+    } catch (error) {
+      setActionError(describeLeaveWorkspaceError(toAppError(error)));
+    } finally {
+      setPendingUserId(null);
+    }
+  }, [leaveWorkspace, currentUserId, workspaceId, onLeft]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Share workspace</DialogTitle>
+          <DialogDescription>Invite people and manage who has access.</DialogDescription>
+        </DialogHeader>
+        <Tabs value={tab} onValueChange={setTab}>
+          <Tabs.List>
+            {canShowInvite ? <Tabs.Trigger value={INVITE_TAB}>Invite</Tabs.Trigger> : null}
+            <Tabs.Trigger value={PEOPLE_TAB}>People</Tabs.Trigger>
+          </Tabs.List>
+          {canShowInvite && inviteMember !== undefined && listPendingInvitations !== undefined ? (
+            <Tabs.Panel value={INVITE_TAB}>
+              <InvitePanel
+                active={open && tab === INVITE_TAB}
+                workspaceId={workspaceId}
+                invitedBy={UserId.create(currentUserId)}
+                inviteMember={inviteMember}
+                listPendingInvitations={listPendingInvitations}
+              />
+            </Tabs.Panel>
+          ) : null}
+          <Tabs.Panel value={PEOPLE_TAB}>
+            <Stack gap="space-3">
+              <Heading as="h3">Members</Heading>
+              <MembersList
+                status={status}
+                members={members}
+                currentUserId={currentUserId}
+                errorMessage={errorMessage}
+                actionError={actionError}
+                pendingUserId={pendingUserId}
+                canChangeRole={canChangeRole}
+                canRemove={canRemove}
+                canLeave={canLeave}
+                onChangeRole={(userId, role) => void handleChangeRole(userId, role)}
+                onRemove={(userId) => void handleRemove(userId)}
+                onLeave={() => void handleLeave()}
+                onRetry={() => void fetchMembers()}
+              />
+            </Stack>
+          </Tabs.Panel>
+        </Tabs>
+      </DialogContent>
+    </Dialog>
+  );
+}

@@ -13,21 +13,21 @@ const Content = styled.div`
   gap: 4px;
   padding: 12px;
   overflow: hidden;
-  border-radius: var(--rr-radius-100, 4px);
-  background-color: var(--rr-color-background-default, #ffffff);
-  color: var(--rr-color-text-default, #0f172a);
-  font-size: var(--rr-font-size-200, 14px);
+  border-radius: ${({ theme }) => theme.radius.sm};
+  background-color: ${({ theme }) => theme.canvas.surface};
+  color: ${({ theme }) => theme.color.text.primary};
+  font-size: ${({ theme }) => theme.font.size.sm};
   line-height: 1.4;
   cursor: pointer;
 `;
 
 const Title = styled.div`
-  font-weight: 600;
+  font-weight: ${({ theme }) => theme.font.weight.semibold};
   word-break: break-word;
 `;
 
 const Url = styled.div`
-  color: var(--rr-color-link-default, #2563eb);
+  color: ${({ theme }) => theme.color.link.text};
   overflow-wrap: anywhere;
 `;
 
@@ -37,7 +37,12 @@ export function LinkRenderer({ element }: ElementRendererProps): ReactElement | 
   }
 
   return (
-    <Content data-element-content="true" data-element-type="link" data-link-url={element.url}>
+    <Content
+      data-element-content="true"
+      data-element-type="link"
+      data-link-url={element.url}
+      aria-hidden="true"
+    >
       {element.title === undefined ? null : <Title data-link-title="true">{element.title}</Title>}
       <Url data-link-url-label="true">{element.url}</Url>
     </Content>

@@ -1,73 +1,60 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { ReactNode } from 'react';
-import { MemoryRouter, useLocation } from 'react-router-dom';
-import { SessionProvider } from '../../app/providers/session-provider';
-import { AppRoutes } from '../../app/routes/app-routes';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import {
   createLoginUser,
   createLogoutUser,
   createRegisterUser,
-  type CreateWorkspace,
+  type CreateWorkspaceWithOwner,
 } from '../../application/commands';
 import { createGetWorkspace } from '../../application/queries';
 import type { AuthPort } from '../../application/ports';
-import { createRealtimeSubscriptionManager, createSessionStore } from '../../application/services';
+import { createRealtimeSubscriptionManager } from '../../application/services';
 import { ElementId } from '../../domain/shared';
 import { FakeAuthPort } from '../fixtures/fake-auth-port';
 import { FakeRealtimePort } from '../fixtures/fake-realtime-port';
 import { PendingAuthPort } from '../fixtures/pending-auth-port';
+import { renderAppRoutes } from './harness';
 
 const CREDENTIALS = { email: 'user@example.com', password: 'secret123' };
-
-function LocationProbe(): ReactNode {
-  const location = useLocation();
-  return <div data-testid="location">{location.pathname}</div>;
-}
 
 function renderApp(
   authPort: AuthPort,
   initialPath: string,
-  createWorkspace: CreateWorkspace = jest.fn(),
-): ReturnType<typeof render> {
-  return render(
-    <MemoryRouter initialEntries={[initialPath]}>
-      <SessionProvider store={createSessionStore(authPort)}>
-        <AppRoutes
-          registerUser={createRegisterUser(authPort)}
-          loginUser={createLoginUser(authPort)}
-          logoutUser={createLogoutUser(authPort)}
-          listWorkspaces={jest.fn().mockResolvedValue({ status: 'ok' as const, workspaces: [] })}
-          createWorkspace={createWorkspace}
-          getWorkspace={createGetWorkspace({
-            async list() {
-              return [];
-            },
-            async findById() {
-              return null;
-            },
-            async create() {
-              throw new Error('Not implemented');
-            },
-            async update() {
-              throw new Error('Not implemented');
-            },
-            async delete() {
-              throw new Error('Not implemented');
-            },
-          })}
-          loadWorkspaceElements={jest
-            .fn()
-            .mockResolvedValue({ status: 'ok' as const, elements: [] })}
-          elementPersistenceOrchestrator={{
-            persistDelta: jest.fn().mockResolvedValue({ status: 'ok' as const }),
-          }}
-          realtimeSubscriptionManager={createRealtimeSubscriptionManager(new FakeRealtimePort())}
-          generateElementId={() => ElementId.create('generated')}
-        />
-      </SessionProvider>
-      <LocationProbe />
-    </MemoryRouter>,
-  );
+  createWorkspaceWithOwner: CreateWorkspaceWithOwner = jest.fn(),
+): ReturnType<typeof renderAppRoutes> {
+  return renderAppRoutes({
+    authPort,
+    initialPath,
+    props: {
+      registerUser: createRegisterUser(authPort),
+      loginUser: createLoginUser(authPort),
+      logoutUser: createLogoutUser(authPort),
+      listWorkspaces: jest.fn().mockResolvedValue({ status: 'ok' as const, workspaces: [] }),
+      createWorkspaceWithOwner,
+      getWorkspace: createGetWorkspace({
+        async list() {
+          return [];
+        },
+        async findById() {
+          return null;
+        },
+        async create() {
+          throw new Error('Not implemented');
+        },
+        async update() {
+          throw new Error('Not implemented');
+        },
+        async delete() {
+          throw new Error('Not implemented');
+        },
+      }),
+      loadWorkspaceElements: jest.fn().mockResolvedValue({ status: 'ok' as const, elements: [] }),
+      elementPersistenceOrchestrator: {
+        persistDelta: jest.fn().mockResolvedValue({ status: 'ok' as const }),
+      },
+      realtimeSubscriptionManager: createRealtimeSubscriptionManager(new FakeRealtimePort()),
+      generateElementId: () => ElementId.create('generated'),
+    },
+  });
 }
 
 function fillForm(): void {

@@ -9,10 +9,10 @@ const Content = styled.div`
   box-sizing: border-box;
   padding: 12px;
   overflow: hidden;
-  border-radius: var(--rr-radius-100, 4px);
-  background-color: var(--rr-color-background-default, #ffffff);
-  color: var(--rr-color-text-default, #0f172a);
-  font-size: var(--rr-font-size-200, 14px);
+  border-radius: ${({ theme }) => theme.radius.sm};
+  background-color: ${({ theme }) => theme.canvas.surface};
+  color: ${({ theme }) => theme.color.text.primary};
+  font-size: ${({ theme }) => theme.font.size.sm};
   line-height: 1.4;
   white-space: pre-wrap;
   word-break: break-word;
@@ -28,6 +28,7 @@ export function NoteRenderer({ element }: ElementRendererProps): ReactElement | 
     <Content
       data-element-content="true"
       data-element-type="note"
+      aria-hidden="true"
       style={element.color === undefined ? undefined : { backgroundColor: element.color }}
     >
       {element.content}

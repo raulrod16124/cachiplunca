@@ -3,16 +3,19 @@ import {
   sortWorkspacesForList,
   type ListWorkspacesResult,
 } from '../../../../application/queries';
-import { WorkspaceId } from '../../../../domain/shared';
+import { UserId, WorkspaceId } from '../../../../domain/shared';
 import { Workspace } from '../../../../domain/workspace';
 import { ERROR_CODES } from '../../../../shared/errors';
 import { FakeWorkspaceRepository } from '../../../fixtures/fake-workspace-repository';
+
+const CREATED_BY = UserId.create('user-1');
 
 function buildWorkspace(
   id: string,
   timestamps: { createdAt: Date; updatedAt?: Date } = { createdAt: new Date('2026-01-01') },
 ): Workspace {
   return Workspace.create({
+    createdBy: CREATED_BY,
     id: WorkspaceId.create(id),
     name: `Workspace ${id}`,
     createdAt: timestamps.createdAt,
@@ -89,8 +92,8 @@ describe('createListWorkspaces', () => {
 
   it('returns every workspace from the repository', async () => {
     const repository = new FakeWorkspaceRepository();
-    await repository.create({ name: 'First' });
-    await repository.create({ name: 'Second' });
+    await repository.create({ createdBy: CREATED_BY, name: 'First' });
+    await repository.create({ createdBy: CREATED_BY, name: 'Second' });
     const listWorkspaces = createListWorkspaces(repository);
 
     const result = await listWorkspaces();

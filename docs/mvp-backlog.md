@@ -3046,7 +3046,7 @@ Completar **Reconnect handling** dejando un resultado verificable y apto para la
 
 ### TASK-081 — Conflict strategy
 
-**Priority:** P0 · **Depends:** TASK-078 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-078 · **Status:** DONE
 
 #### Objetivo
 
@@ -3062,12 +3062,12 @@ Definir e implementar la estrategia de consistencia para cambios concurrentes.
 
 #### Criterios de aceptación
 
-- [ ] La estrategia está documentada.
-- [ ] Los conflictos previsibles son deterministas.
-- [ ] No se introduce CRDT.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] No se crean listeners duplicados.
+- [x] La estrategia está documentada.
+- [x] Los conflictos previsibles son deterministas.
+- [x] No se introduce CRDT.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] No se crean listeners duplicados.
 
 #### Fuera de alcance
 
@@ -3083,7 +3083,7 @@ Definir e implementar la estrategia de consistencia para cambios concurrentes.
 
 ### TASK-082 — Presence port/model
 
-**Priority:** P0 · **Depends:** TASK-076 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-076 · **Status:** DONE
 
 #### Objetivo
 
@@ -3101,13 +3101,13 @@ Completar **Presence port/model** dejando un resultado verificable y apto para l
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] No se crean listeners duplicados.
-- [ ] La presencia no modifica ni bloquea el documento persistido.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] No se crean listeners duplicados.
+- [x] La presencia no modifica ni bloquea el documento persistido.
 
 #### Fuera de alcance
 
@@ -3123,7 +3123,7 @@ Completar **Presence port/model** dejando un resultado verificable y apto para l
 
 ### TASK-083 — Connected users
 
-**Priority:** P0 · **Depends:** TASK-082 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-082 · **Status:** DONE
 
 #### Objetivo
 
@@ -3137,11 +3137,11 @@ Completar **Connected users** dejando un resultado verificable y apto para las t
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -3156,7 +3156,7 @@ Completar **Connected users** dejando un resultado verificable y apto para las t
 
 ### TASK-084 — Remote cursors
 
-**Priority:** P1 · **Depends:** TASK-082, TASK-028 · **Status:** TODO
+**Priority:** P1 · **Depends:** TASK-082, TASK-028 · **Status:** DONE
 
 #### Objetivo
 
@@ -3174,13 +3174,13 @@ Completar **Remote cursors** dejando un resultado verificable y apto para las ta
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] No se crean listeners duplicados.
-- [ ] La presencia no modifica ni bloquea el documento persistido.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] No se crean listeners duplicados.
+- [x] La presencia no modifica ni bloquea el documento persistido.
 
 #### Fuera de alcance
 
@@ -3192,11 +3192,10 @@ Completar **Remote cursors** dejando un resultado verificable y apto para las ta
 - Domain no importa React, Firebase, styled-components, `@raulrod/ui` ni APIs del navegador.
 - Application depende de ports, no de implementaciones concretas.
 - Infrastructure contiene adapters concretos.
-- Presentation concentra React, UI y composición de dependencias.
 
 ### TASK-085 — Presence cleanup
 
-**Priority:** P0 · **Depends:** TASK-083 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-083 · **Status:** DONE
 
 #### Objetivo
 
@@ -3214,13 +3213,13 @@ Completar **Presence cleanup** dejando un resultado verificable y apto para las 
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] No se crean listeners duplicados.
-- [ ] La presencia no modifica ni bloquea el documento persistido.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] No se crean listeners duplicados.
+- [x] La presencia no modifica ni bloquea el documento persistido.
 
 #### Fuera de alcance
 
@@ -3236,7 +3235,7 @@ Completar **Presence cleanup** dejando un resultado verificable y apto para las 
 
 ### TASK-086 — Remote create/delete
 
-**Priority:** P0 · **Depends:** TASK-078 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-078 · **Status:** DONE
 
 #### Objetivo
 
@@ -3252,12 +3251,12 @@ Completar **Remote create/delete** dejando un resultado verificable y apto para 
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] No se crean listeners duplicados.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] No se crean listeners duplicados.
 
 #### Fuera de alcance
 
@@ -3273,7 +3272,7 @@ Completar **Remote create/delete** dejando un resultado verificable y apto para 
 
 ### TASK-087 — Remote move/resize
 
-**Priority:** P0 · **Depends:** TASK-078 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-078 · **Status:** DONE
 
 #### Objetivo
 
@@ -3289,12 +3288,12 @@ Completar **Remote move/resize** dejando un resultado verificable y apto para la
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] No se crean listeners duplicados.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] No se crean listeners duplicados.
 
 #### Fuera de alcance
 
@@ -3310,7 +3309,7 @@ Completar **Remote move/resize** dejando un resultado verificable y apto para la
 
 ### TASK-088 — Local history vs remote changes
 
-**Priority:** P0 · **Depends:** TASK-065, TASK-078 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-065, TASK-078 · **Status:** DONE
 
 #### Objetivo
 
@@ -3326,13 +3325,13 @@ Completar **Local history vs remote changes** dejando un resultado verificable y
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Undo/redo no corrompe el estado ante secuencias válidas.
-- [ ] No se crean listeners duplicados.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Undo/redo no corrompe el estado ante secuencias válidas.
+- [x] No se crean listeners duplicados.
 
 #### Fuera de alcance
 
@@ -3349,7 +3348,7 @@ Completar **Local history vs remote changes** dejando un resultado verificable y
 
 ### TASK-089 — Membership repository port
 
-**Priority:** P0 · **Depends:** TASK-016 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-016 · **Status:** DONE
 
 #### Objetivo
 
@@ -3363,11 +3362,11 @@ Completar **Membership repository port** dejando un resultado verificable y apto
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -3386,7 +3385,7 @@ Completar **Membership repository port** dejando un resultado verificable y apto
 
 ### TASK-090 — Firestore membership repository
 
-**Priority:** P0 · **Depends:** TASK-089 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-089 · **Status:** DONE
 
 #### Objetivo
 
@@ -3400,11 +3399,11 @@ Completar **Firestore membership repository** dejando un resultado verificable y
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -3424,25 +3423,26 @@ Completar **Firestore membership repository** dejando un resultado verificable y
 
 ### TASK-091 — Create owner membership
 
-**Priority:** P0 · **Depends:** TASK-090 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-090 · **Status:** DONE
 
 #### Objetivo
 
-Completar **Create owner membership** dejando un resultado verificable y apto para las tareas dependientes.
+Al crear un workspace desde la app, el usuario que lo crea queda registrado como **owner** mediante el `MembershipRepository`, dejando el flujo reproducible y sin workspaces huérfanos.
 
 #### Alcance
 
-- Implementar el comportamiento necesario para **Create owner membership**.
-- Integrarlo con las capas existentes sin romper sus límites.
-- Añadir o actualizar tests relevantes.
+- `createCreateOwnerMembership(membershipRepository)` (`src/application/commands/create-owner-membership.ts`): crea la membership con `role: 'owner'` para `(userId, workspaceId)` y normaliza errores con `toAppError`.
+- `createCreateWorkspaceWithOwner({ workspaceRepository, createOwnerMembership })` (`src/application/commands/create-workspace-with-owner.ts`): compone validación (reusa `validateCreateWorkspaceInput`) + creación del workspace + membership de owner.
+- Compensación best-effort: si falla la membership tras persistir el workspace, se borra el workspace y se devuelve el error original; si el borrado también falla, el error se anota con `details.workspaceRollbackFailed: true`.
+- Wiring: `workspace-services` expone `createWorkspaceWithOwner` (con `createFirebaseWorkspaceRepository` + `createFirebaseMembershipRepository`); `App.tsx`, `app-routes` y `WorkspacesPage` derivan el `ownerId` de la sesión y adaptan el contrato del `CreateWorkspaceDialog` (sin cambios en el dialog).
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito (conflicto de membership y fallo de compensación).
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -3459,28 +3459,29 @@ Completar **Create owner membership** dejando un resultado verificable y apto pa
 
 ### TASK-092 — Invite member use case
 
-**Priority:** P0 · **Depends:** TASK-090 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-090 · **Status:** DONE
 
 #### Objetivo
 
-Completar **Invite member use case** dejando un resultado verificable y apto para las tareas dependientes.
+Permitir invitar a un colaborador por email creando una **invitación pendiente** desacoplada de la membership, con token de un solo uso persistido hasheado, sin conceder acceso hasta su aceptación (TASK-094).
 
 #### Alcance
 
-- Implementar el comportamiento necesario para **Invite member use case**.
-- Integrarlo con las capas existentes sin romper sus límites.
-- Añadir o actualizar tests relevantes.
-- Definir entradas y salidas del caso de uso.
-- Cubrir reglas de negocio con tests unitarios.
+- Dominio `Invitation` (`src/domain/invitation/`) + `InvitationStatus` (`pending`/`accepted`/`revoked`) + `InvitationId` (`src/domain/shared/value-objects/invitation-id.ts`). Normaliza y valida el email, valida rol/token/timestamps, deriva la expiración (`isExpired`) y expone transiciones inmutables `accept`/`revoke`.
+- Port `InvitationRepository` (`src/application/ports/invitation-repository.ts`): `create`, `findByTokenHash`, `listPendingByWorkspace`, `updateStatus`. `create` rechaza con `conflict/INVITATION_ALREADY_EXISTS` ante invitación pendiente duplicada o id repetido; `updateStatus` rechaza con `notFound` sobre inexistente.
+- Code `INVITATION_ALREADY_EXISTS: 'invitation/already-exists'` (kind `conflict`) en `src/shared/errors/app-error.ts`.
+- Use case `createInviteMember(deps)` (`src/application/commands/invite-member.ts`): valida email/rol, construye la entidad con `generateId`/`now`/`ttlMs` (TTL por defecto 7 días) y token vía `issueToken()` inyectado; persiste solo `tokenHash` y devuelve el token en claro una sola vez.
+- `FakeInvitationRepository` + contrato ejecutable (`src/test/fixtures/fake-invitation-repository.ts`, `src/test/contract/invitation-repository-contract.ts`) y tests unitarios de dominio y caso de uso.
+- ADR nuevo: `docs/adr/0018-invitation-model.md`.
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Puede probarse con ports fake sin Firebase.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Puede probarse con ports fake sin Firebase.
 
 #### Fuera de alcance
 
@@ -3497,7 +3498,7 @@ Completar **Invite member use case** dejando un resultado verificable y apto par
 
 ### TASK-093 — Invitation UI
 
-**Priority:** P0 · **Depends:** TASK-092 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-092 · **Status:** DONE
 
 #### Objetivo
 
@@ -3511,12 +3512,12 @@ Completar **Invitation UI** dejando un resultado verificable y apto para las tar
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Los estados loading/error/empty relevantes son explícitos.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Los estados loading/error/empty relevantes son explícitos.
 
 #### Fuera de alcance
 
@@ -3534,7 +3535,7 @@ Completar **Invitation UI** dejando un resultado verificable y apto para las tar
 
 ### TASK-094 — Accept invitation
 
-**Priority:** P0 · **Depends:** TASK-092 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-092 · **Status:** DONE
 
 #### Objetivo
 
@@ -3548,11 +3549,11 @@ Completar **Accept invitation** dejando un resultado verificable y apto para las
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -3569,7 +3570,7 @@ Completar **Accept invitation** dejando un resultado verificable y apto para las
 
 ### TASK-095 — Authorization policy
 
-**Priority:** P0 · **Depends:** TASK-016 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-016 · **Status:** DONE
 
 #### Objetivo
 
@@ -3582,10 +3583,10 @@ Definir la política de autorización Owner/Editor/Viewer como lógica explícit
 
 #### Criterios de aceptación
 
-- [ ] La política es testeable sin Firebase.
-- [ ] Viewer no puede modificar elementos ni miembros.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La política es testeable sin Firebase.
+- [x] Viewer no puede modificar elementos ni miembros.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -3602,7 +3603,7 @@ Definir la política de autorización Owner/Editor/Viewer como lógica explícit
 
 ### TASK-096 — Frontend permission guards
 
-**Priority:** P0 · **Depends:** TASK-095 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-095 · **Status:** DONE
 
 #### Objetivo
 
@@ -3616,11 +3617,11 @@ Completar **Frontend permission guards** dejando un resultado verificable y apto
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -3637,7 +3638,7 @@ Completar **Frontend permission guards** dejando un resultado verificable y apto
 
 ### TASK-097 — Firebase Security Rules
 
-**Priority:** P0 · **Depends:** TASK-090, TASK-095 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-090, TASK-095 · **Status:** DONE
 
 #### Objetivo
 
@@ -3650,10 +3651,10 @@ Aplicar la autorización efectiva mediante Firebase Security Rules.
 
 #### Criterios de aceptación
 
-- [ ] Un Viewer no puede escribir manipulando el cliente.
-- [ ] Casos allow/deny están testeados.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Un Viewer no puede escribir manipulando el cliente.
+- [x] Casos allow/deny están testeados.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -3670,7 +3671,7 @@ Aplicar la autorización efectiva mediante Firebase Security Rules.
 
 ### TASK-098 — Security Rules tests
 
-**Priority:** P0 · **Depends:** TASK-097 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-097 · **Status:** DONE
 
 #### Objetivo
 
@@ -3684,11 +3685,11 @@ Completar **Security Rules tests** dejando un resultado verificable y apto para 
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -3706,7 +3707,7 @@ Completar **Security Rules tests** dejando un resultado verificable y apto para 
 
 ### TASK-099 — Change member role
 
-**Priority:** P0 · **Depends:** TASK-097 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-097 · **Status:** DONE
 
 #### Objetivo
 
@@ -3720,11 +3721,11 @@ Completar **Change member role** dejando un resultado verificable y apto para la
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -3741,7 +3742,7 @@ Completar **Change member role** dejando un resultado verificable y apto para la
 
 ### TASK-100 — Remove member
 
-**Priority:** P0 · **Depends:** TASK-097 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-097 · **Status:** DONE
 
 #### Objetivo
 
@@ -3755,11 +3756,11 @@ Completar **Remove member** dejando un resultado verificable y apto para las tar
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -3776,7 +3777,7 @@ Completar **Remove member** dejando un resultado verificable y apto para las tar
 
 ### TASK-101 — Leave workspace
 
-**Priority:** P1 · **Depends:** TASK-097 · **Status:** TODO
+**Priority:** P1 · **Depends:** TASK-097 · **Status:** DONE
 
 #### Objetivo
 
@@ -3790,11 +3791,11 @@ Completar **Leave workspace** dejando un resultado verificable y apto para las t
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -3809,7 +3810,7 @@ Completar **Leave workspace** dejando un resultado verificable y apto para las t
 
 ### TASK-102 — Delete workspace authorization
 
-**Priority:** P0 · **Depends:** TASK-097 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-097 · **Status:** DONE
 
 #### Objetivo
 
@@ -3823,11 +3824,11 @@ Completar **Delete workspace authorization** dejando un resultado verificable y 
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -3844,7 +3845,7 @@ Completar **Delete workspace authorization** dejando un resultado verificable y 
 
 ### TASK-103 — Design tokens
 
-**Priority:** P0 · **Depends:** TASK-003 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-003 · **Status:** DONE
 
 #### Objetivo
 
@@ -3858,11 +3859,11 @@ Completar **Design tokens** dejando un resultado verificable y apto para las tar
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -3877,7 +3878,7 @@ Completar **Design tokens** dejando un resultado verificable y apto para las tar
 
 ### TASK-104 — Core UI components
 
-**Priority:** P0 · **Depends:** TASK-103 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-103 · **Status:** DONE
 
 #### Objetivo
 
@@ -3891,12 +3892,12 @@ Completar **Core UI components** dejando un resultado verificable y apto para la
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Los estados loading/error/empty relevantes son explícitos.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Los estados loading/error/empty relevantes son explícitos.
 
 #### Fuera de alcance
 
@@ -3912,7 +3913,7 @@ Completar **Core UI components** dejando un resultado verificable y apto para la
 
 ### TASK-105 — Workspace top bar
 
-**Priority:** P0 · **Depends:** TASK-104 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-104 · **Status:** DONE
 
 #### Objetivo
 
@@ -3926,12 +3927,11 @@ Completar **Workspace top bar** dejando un resultado verificable y apto para las
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Los estados loading/error/empty relevantes son explícitos.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -3947,7 +3947,7 @@ Completar **Workspace top bar** dejando un resultado verificable y apto para las
 
 ### TASK-106 — Canvas toolbar
 
-**Priority:** P0 · **Depends:** TASK-104 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-104 · **Status:** DONE
 
 #### Objetivo
 
@@ -3962,13 +3962,13 @@ Completar **Canvas toolbar** dejando un resultado verificable y apto para las ta
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
-- [ ] Los estados loading/error/empty relevantes son explícitos.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] Los estados loading/error/empty relevantes son explícitos.
 
 #### Fuera de alcance
 
@@ -3985,7 +3985,7 @@ Completar **Canvas toolbar** dejando un resultado verificable y apto para las ta
 
 ### TASK-107 — Share dialog
 
-**Priority:** P0 · **Depends:** TASK-104, TASK-093 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-104, TASK-093 · **Status:** DONE
 
 #### Objetivo
 
@@ -3999,12 +3999,12 @@ Completar **Share dialog** dejando un resultado verificable y apto para las tare
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Los estados loading/error/empty relevantes son explícitos.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Los estados loading/error/empty relevantes son explícitos.
 
 #### Fuera de alcance
 
@@ -4020,7 +4020,7 @@ Completar **Share dialog** dejando un resultado verificable y apto para las tare
 
 ### TASK-108 — Loading/error/empty states
 
-**Priority:** P0 · **Depends:** TASK-104 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-104 · **Status:** DONE
 
 #### Objetivo
 
@@ -4034,11 +4034,12 @@ Completar **Loading/error/empty states** dejando un resultado verificable y apto
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Los estados loading/error/empty relevantes son explícitos.
 
 #### Fuera de alcance
 
@@ -4053,7 +4054,7 @@ Completar **Loading/error/empty states** dejando un resultado verificable y apto
 
 ### TASK-109 — Keyboard navigation
 
-**Priority:** P0 · **Depends:** TASK-062 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-062 · **Status:** DONE
 
 #### Objetivo
 
@@ -4065,15 +4066,23 @@ Completar **Keyboard navigation** dejando un resultado verificable y apto para l
 - Integrarlo con las capas existentes sin romper sus límites.
 - Añadir o actualizar tests relevantes.
 
+#### Implementación
+
+- `src/application/services/canvas-navigation.ts`: `resolveNavigationKey` (normaliza flechas + `Shift`) y `findNextSelectable` (navegación espacial por proyección de centros, con desempate determinista).
+- `src/presentation/canvas/hooks/use-canvas-navigation.ts`: listener de teclado sobre el contenedor, estado efímero `activeId` sincronizado con la selección, ignora editables y repeticiones.
+- `src/presentation/canvas/components/canvas.tsx`: expone `aria-activedescendant`, `data-active-id`, amplía `aria-keyshortcuts` y el hint con las flechas.
+- `src/presentation/canvas/renderers/element-view.tsx`: `id="element-<id>"` estable para `aria-activedescendant`.
+- Sin ancla o ancla inválida selecciona el primer ítem; sin candidato no navega.
+
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Los estados loading/error/empty relevantes son explícitos.
-- [ ] La interacción principal es navegable con teclado y mantiene foco predecible.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Los estados loading/error/empty relevantes son explícitos.
+- [x] La interacción principal es navegable con teclado y mantiene foco predecible.
 
 #### Fuera de alcance
 
@@ -4089,7 +4098,7 @@ Completar **Keyboard navigation** dejando un resultado verificable y apto para l
 
 ### TASK-110 — Focus management
 
-**Priority:** P0 · **Depends:** TASK-104 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-104 · **Status:** DONE
 
 #### Objetivo
 
@@ -4101,15 +4110,23 @@ Completar **Focus management** dejando un resultado verificable y apto para las 
 - Integrarlo con las capas existentes sin romper sus límites.
 - Añadir o actualizar tests relevantes.
 
+#### Implementación
+
+- `src/presentation/canvas/hooks/use-canvas-focus.ts`: listener `pointerdown` sobre el contenedor del canvas que mueve el foco al lienzo (`focus({ preventScroll: true })`) salvo que el objetivo sea interactivo (`button, a, input, textarea, select, [contenteditable="true"], [role="button"]`) o ya esté enfocado; `disabled` respeta el modo solo lectura.
+- `src/presentation/hooks/use-roving-focus.ts`: hook compartido de **roving tabindex** para barras de herramientas. Un único `tabIndex=0` (primer control habilitado), el resto `-1`; flechas/`Home`/`End` por orientación (`horizontal`/`vertical`/`both`), ignora deshabilitados (`disabled`/`aria-disabled`), hace `preventDefault` + `stopPropagation` (las flechas no escapan al canvas), mantiene el índice en `focusin`, re-sincroniza el tope de tabulación en cada render (`useLayoutEffect`) y recupera el foco al siguiente control habilitado si el control activo se deshabilita.
+- `src/presentation/canvas/components/canvas-toolbar.tsx`: la `role="toolbar"` usa `useRovingFocus` (orientación `both` para consumir flechas verticales y horizontales).
+- `src/presentation/canvas/components/canvas.tsx`: `canvasFocusRef` fusionado en `setContainerRef`.
+- Reutiliza sin reimplementar el focus-trap, la restauración de foco y el dismiss (Escape/backdrop) que ya aporta `Dialog.Content` de `@raulrod/ui`; la barra de herramienta, `DropdownMenu`, `Popover`, `Select` y `Tabs` ya tenían su propio roving/focus-return.
+
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Los estados loading/error/empty relevantes son explícitos.
-- [ ] La interacción principal es navegable con teclado y mantiene foco predecible.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Los estados loading/error/empty relevantes son explícitos.
+- [x] La interacción principal es navegable con teclado y mantiene foco predecible.
 
 #### Fuera de alcance
 
@@ -4125,7 +4142,7 @@ Completar **Focus management** dejando un resultado verificable y apto para las 
 
 ### TASK-111 — Canvas accessibility strategy
 
-**Priority:** P0 · **Depends:** TASK-050 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-050 · **Status:** DONE
 
 #### Objetivo
 
@@ -4140,13 +4157,13 @@ Definir una estrategia de accesibilidad específica para el canvas.
 
 #### Criterios de aceptación
 
-- [ ] Las operaciones principales no dependen exclusivamente del puntero.
-- [ ] La estrategia queda documentada.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
-- [ ] Los estados loading/error/empty relevantes son explícitos.
-- [ ] La interacción principal es navegable con teclado y mantiene foco predecible.
+- [x] Las operaciones principales no dependen exclusivamente del puntero.
+- [x] La estrategia queda documentada.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] Los estados loading/error/empty relevantes son explícitos.
+- [x] La interacción principal es navegable con teclado y mantiene foco predecible.
 
 #### Fuera de alcance
 
@@ -4163,7 +4180,7 @@ Definir una estrategia de accesibilidad específica para el canvas.
 
 ### TASK-112 — Reduced motion / contrast
 
-**Priority:** P1 · **Depends:** TASK-103 · **Status:** TODO
+**Priority:** P1 · **Depends:** TASK-103 · **Status:** DONE
 
 #### Objetivo
 
@@ -4177,11 +4194,11 @@ Completar **Reduced motion / contrast** dejando un resultado verificable y apto 
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -4196,7 +4213,7 @@ Completar **Reduced motion / contrast** dejando un resultado verificable y apto 
 
 ### TASK-113 — Canvas performance baseline
 
-**Priority:** P0 · **Depends:** TASK-057 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-057 · **Status:** DONE
 
 #### Objetivo
 
@@ -4210,11 +4227,11 @@ Medir una línea base de rendimiento del canvas antes de optimizar.
 
 #### Criterios de aceptación
 
-- [ ] Existe método reproducible y registro de métricas.
-- [ ] Las optimizaciones posteriores se justifican con datos.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] Existe método reproducible y registro de métricas.
+- [x] Las optimizaciones posteriores se justifican con datos.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
 
 #### Fuera de alcance
 
@@ -4231,7 +4248,7 @@ Medir una línea base de rendimiento del canvas antes de optimizar.
 
 ### TASK-114 — Rendering optimization
 
-**Priority:** P1 · **Depends:** TASK-113 · **Status:** TODO
+**Priority:** P1 · **Depends:** TASK-113 · **Status:** DONE
 
 #### Objetivo
 
@@ -4246,12 +4263,26 @@ Completar **Rendering optimization** dejando un resultado verificable y apto par
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] La interacción representa correctamente posición, tamaño y estado relevante.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La interacción representa correctamente posición, tamaño y estado relevante.
+
+#### Resultados
+
+Medido con `npm run perf` (jsdom, mismo host que la línea base TASK-113). Mediana a 10.000 elementos:
+
+| Métrica     | Línea base | Optimizado | Mejora |
+| ----------- | ---------: | ---------: | ------ |
+| `mount`     |  755,28 ms |  125,81 ms | ~6x    |
+| `pan`       |  398,26 ms |    1,60 ms | ~249x  |
+| `zoom`      |  470,48 ms |    1,57 ms | ~300x  |
+| `selection` |  406,72 ms |    7,72 ms | ~53x   |
+| `heap`      |  ~262,3 MB |   ~11,9 MB | ~22x   |
+
+El detalle del cambio y su justificación está en `docs/performance/canvas-optimization.md`.
 
 #### Fuera de alcance
 
@@ -4268,7 +4299,7 @@ Completar **Rendering optimization** dejando un resultado verificable y apto par
 
 ### TASK-115 — Performance regression test
 
-**Priority:** P1 · **Depends:** TASK-114 · **Status:** TODO
+**Priority:** P1 · **Depends:** TASK-114 · **Status:** DONE
 
 #### Objetivo
 
@@ -4282,11 +4313,28 @@ Completar **Performance regression test** dejando un resultado verificable y apt
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+
+#### Resultados
+
+Estrategia **híbrida** (detalle en `docs/performance/canvas-regression.md`, decisión en `docs/adr/0027-performance-regression-testing.md`):
+
+- **Guard estructural determinista** en `npm test`:
+  `src/test/unit/presentation/canvas/components/canvas-render-budget.test.tsx` (4 casos)
+  afirma que solo se montan los `ElementView` visibles (contrato exacto con
+  `getVisibleElementIds`), que el número de nodos montados no depende del tamaño del
+  tablero, que pan/zoom/selección no montan elementos ocultos y que pan a zona vacía
+  monta cero. `CULLING_MARGIN` pasa a exportarse desde `canvas.tsx` (único cambio de
+  producción: exportar una constante existente).
+- **Presupuestos absolutos holgados** en `npm run perf`:
+  `src/test/perf/budgets.ts` (tabla + evaluador puro), `src/test/perf/canvas.regression.perf.test.tsx`
+  (mide a 10.000 elementos y falla si un `median` supera su techo) y
+  `src/test/perf/budgets.perf.test.ts` (9 casos del evaluador). `canvas.perf.test.tsx`
+  permanece intacto (solo medición).
 
 #### Fuera de alcance
 
@@ -4303,7 +4351,7 @@ Completar **Performance regression test** dejando un resultado verificable y apt
 
 ### TASK-116 — Critical journey integration tests
 
-**Priority:** P0 · **Depends:** TASK-075, TASK-088, TASK-102 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-075, TASK-088, TASK-102 · **Status:** DONE
 
 #### Objetivo
 
@@ -4317,11 +4365,11 @@ Completar **Critical journey integration tests** dejando un resultado verificabl
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -4337,7 +4385,7 @@ Completar **Critical journey integration tests** dejando un resultado verificabl
 
 ### TASK-117 — Collaboration integration test
 
-**Priority:** P0 · **Depends:** TASK-088, TASK-102 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-088, TASK-102 · **Status:** DONE
 
 #### Objetivo
 
@@ -4351,11 +4399,11 @@ Completar **Collaboration integration test** dejando un resultado verificable y 
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -4371,7 +4419,7 @@ Completar **Collaboration integration test** dejando un resultado verificable y 
 
 ### TASK-118 — Permission integration tests
 
-**Priority:** P0 · **Depends:** TASK-098 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-098 · **Status:** DONE
 
 #### Objetivo
 
@@ -4385,11 +4433,11 @@ Completar **Permission integration tests** dejando un resultado verificable y ap
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -4407,7 +4455,7 @@ Completar **Permission integration tests** dejando un resultado verificable y ap
 
 ### TASK-119 — Error handling audit
 
-**Priority:** P0 · **Depends:** TASK-116 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-116 · **Status:** DONE
 
 #### Objetivo
 
@@ -4421,12 +4469,12 @@ Completar **Error handling audit** dejando un resultado verificable y apto para 
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Los hallazgos quedan clasificados por severidad y con acción concreta.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Los hallazgos quedan clasificados por severidad y con acción concreta.
 
 #### Fuera de alcance
 
@@ -4442,7 +4490,7 @@ Completar **Error handling audit** dejando un resultado verificable y apto para 
 
 ### TASK-120 — Security audit
 
-**Priority:** P0 · **Depends:** TASK-098 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-098 · **Status:** DONE
 
 #### Objetivo
 
@@ -4456,12 +4504,12 @@ Completar **Security audit** dejando un resultado verificable y apto para las ta
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Los hallazgos quedan clasificados por severidad y con acción concreta.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Los hallazgos quedan clasificados por severidad y con acción concreta.
 
 #### Fuera de alcance
 
@@ -4479,26 +4527,27 @@ Completar **Security audit** dejando un resultado verificable y apto para las ta
 
 ### TASK-121 — Dependency audit
 
-**Priority:** P1 · **Depends:** TASK-116 · **Status:** TODO
+**Priority:** P1 · **Depends:** TASK-116 · **Status:** DONE
 
 #### Objetivo
 
-Completar **Dependency audit** dejando un resultado verificable y apto para las tareas dependientes.
+Auditar el estado de las dependencias del MVP, aplicar las correcciones seguras y dejar los hallazgos clasificados con acción concreta.
 
 #### Alcance
 
-- Implementar el comportamiento necesario para **Dependency audit**.
-- Integrarlo con las capas existentes sin romper sus límites.
-- Añadir o actualizar tests relevantes.
+- Ejecutar `npm audit` (árbol completo y `--omit=dev`), `npm outdated` y `npm ls --depth=0` sobre el lockfile.
+- Revisar dependencias sin uso, redundantes, duplicadas y licencias del grafo de producción.
+- Aplicar las correcciones que no cruzan majors y documentar el resto.
+- Informe en `docs/audits/dependency-audit.md` y ADR-0029 para el override.
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Los hallazgos quedan clasificados por severidad y con acción concreta.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Los hallazgos quedan clasificados por severidad y con acción concreta.
 
 #### Fuera de alcance
 
@@ -4514,7 +4563,7 @@ Completar **Dependency audit** dejando un resultado verificable y apto para las 
 
 ### TASK-122 — Architecture audit
 
-**Priority:** P0 · **Depends:** TASK-116 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-116 · **Status:** DONE
 
 #### Objetivo
 
@@ -4528,11 +4577,11 @@ Auditar que la implementación respeta Clean Architecture y Hexagonal Architectu
 
 #### Criterios de aceptación
 
-- [ ] No quedan dependencias prohibidas sin justificación.
-- [ ] Excepciones relevantes tienen ADR.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Los hallazgos quedan clasificados por severidad y con acción concreta.
+- [x] No quedan dependencias prohibidas sin justificación.
+- [x] Excepciones relevantes tienen ADR.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Los hallazgos quedan clasificados por severidad y con acción concreta.
 
 #### Fuera de alcance
 
@@ -4548,7 +4597,7 @@ Auditar que la implementación respeta Clean Architecture y Hexagonal Architectu
 
 ### TASK-123 — MVP documentation
 
-**Priority:** P1 · **Depends:** TASK-122 · **Status:** TODO
+**Priority:** P1 · **Depends:** TASK-122 · **Status:** DONE
 
 #### Objetivo
 
@@ -4556,17 +4605,17 @@ Completar **MVP documentation** dejando un resultado verificable y apto para las
 
 #### Alcance
 
-- Implementar el comportamiento necesario para **MVP documentation**.
-- Integrarlo con las capas existentes sin romper sus límites.
-- Añadir o actualizar tests relevantes.
+- Reescribir `README.md` con descripción del producto, stack, arquitectura, puesta en marcha, scripts, testing, estructura e índice de documentación.
+- Enlazar auditorías y ADRs relevantes sin duplicar su contenido.
+- Actualizar `docs/mvp-backlog.md` con el estado DONE y la entrada de Session Log.
 
 #### Criterios de aceptación
 
-- [ ] El comportamiento definido por el objetivo está implementado y reproducible.
-- [ ] Las dependencias de la tarea se respetan.
-- [ ] Los errores previsibles tienen comportamiento explícito.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El comportamiento definido por el objetivo está implementado y reproducible.
+- [x] Las dependencias de la tarea se respetan.
+- [x] Los errores previsibles tienen comportamiento explícito.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -4581,7 +4630,7 @@ Completar **MVP documentation** dejando un resultado verificable y apto para las
 
 ### TASK-124 — Final MVP validation
 
-**Priority:** P0 · **Depends:** TASK-119, TASK-120, TASK-122, TASK-123 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-119, TASK-120, TASK-122, TASK-123, TASK-126, TASK-129 · **Status:** DONE
 
 #### Objetivo
 
@@ -4595,12 +4644,12 @@ Ejecutar la validación final del MVP y confirmar que es entregable.
 
 #### Criterios de aceptación
 
-- [ ] Criterios críticos satisfechos.
-- [ ] Lint, typecheck, tests y build pasan.
-- [ ] Backlog refleja el estado real.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Los hallazgos quedan clasificados por severidad y con acción concreta.
+- [x] Criterios críticos satisfechos.
+- [x] Lint, typecheck, tests, rules tests, build y performance pasan.
+- [x] Backlog refleja el estado real.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Los hallazgos quedan clasificados por severidad y con acción concreta.
 
 #### Fuera de alcance
 
@@ -4614,49 +4663,248 @@ Ejecutar la validación final del MVP y confirmar que es entregable.
 - Infrastructure contiene adapters concretos.
 - Presentation concentra React, UI y composición de dependencias.
 
+### TASK-125 — Error Boundary global
+
+**Priority:** P1 · **Depends:** TASK-116 · **Status:** DONE
+
+#### Objetivo
+
+Evitar que un error de render no controlado deje la aplicación en blanco, ofreciendo un fallback recuperable y capturando errores globales.
+
+#### Alcance
+
+- `ErrorBoundary` en el root con fallback recuperable.
+- Handlers globales `window.error` y `window.unhandledrejection`.
+- Tests relevantes del fallback y de la recuperación.
+
+#### Criterios de aceptación
+
+- [x] Un error de render muestra un fallback en lugar de una pantalla en blanco.
+- [x] Los errores globales quedan capturados sin romper la app.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+
+#### Fuera de alcance
+
+- No ampliar el alcance más allá de lo descrito en esta tarea.
+- No introducir telemetría ni servicios externos.
+
+#### Constraints técnicos
+
+- Domain no importa React, Firebase, styled-components, `@raulrod/ui` ni APIs del navegador.
+- Application depende de ports, no de implementaciones concretas.
+- Presentation concentra React, UI y composición de dependencias.
+
+### TASK-126 — Cerrar escalada por self-join de membership
+
+**Priority:** P0 · **Depends:** TASK-098, TASK-094 · **Status:** DONE
+
+#### Objetivo
+
+Impedir que un usuario autenticado pueda auto-asignarse un rol (incluido `owner`) en cualquier workspace mediante `memberships.create`, manteniendo la aceptación legítima de invitaciones.
+
+#### Alcance
+
+- Anclar la creación de membership a una invitación válida (email, workspace, rol, estado `pending`) o a la propiedad del workspace en la ruta de creación.
+- Acotar el rol otorgable en invitaciones según el rol del actor (solo `owner` concede `owner`).
+- Actualizar dominio/puertos/adaptadores y `firestore.rules` de forma coherente.
+- Tests de reglas e integración que reproduzcan y cierren la escalada.
+
+#### Criterios de aceptación
+
+- [x] Un autenticado sin invitación válida no puede crear una membership con rol elevado.
+- [x] Aceptar una invitación válida sigue funcionando con el rol de la invitación.
+- [x] Un editor no puede otorgar el rol `owner`.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+
+#### Fuera de alcance
+
+- No ampliar el alcance más allá de lo descrito en esta tarea.
+- No confiar exclusivamente en guards del frontend.
+
+#### Constraints técnicos
+
+- Domain no importa React, Firebase, styled-components, `@raulrod/ui` ni APIs del navegador.
+- Application depende de ports, no de implementaciones concretas.
+- Infrastructure contiene adapters concretos.
+- La autorización efectiva debe existir en backend/rules; la UI solo refleja permisos.
+- Requiere ADR por el cambio de modelo de autorización.
+
+### TASK-127 — Acotar lecturas globales y verificación de email
+
+**Priority:** P1 · **Depends:** TASK-098 · **Status:** TODO
+
+#### Objetivo
+
+Reducir la exposición de datos de `workspaces`/`invitations` a los miembros y endurecer el accept con email verificado.
+
+#### Alcance
+
+- Acotar `workspaces.read` e `invitations.read` a membership, con los índices necesarios.
+- Exigir `email_verified` en el accept de invitación e introducir (o documentar) el flujo de verificación.
+- Tests de reglas correspondientes.
+
+#### Criterios de aceptación
+
+- [ ] Un autenticado no puede enumerar workspaces/invitaciones de los que no es miembro.
+- [ ] El accept solo procede con email verificado.
+- [ ] Los tests relevantes pasan sin regresiones.
+- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+
+#### Fuera de alcance
+
+- No ampliar el alcance más allá de lo descrito en esta tarea.
+- No confiar exclusivamente en guards del frontend.
+
+#### Constraints técnicos
+
+- Domain no importa React, Firebase, styled-components, `@raulrod/ui` ni APIs del navegador.
+- Application depende de ports, no de implementaciones concretas.
+- Infrastructure contiene adapters concretos.
+- La autorización efectiva debe existir en backend/rules; la UI solo refleja permisos.
+
+### TASK-128 — Actualizar tooling de desarrollo con advisories
+
+**Priority:** P1 · **Depends:** TASK-121 · **Status:** TODO
+
+#### Objetivo
+
+Cerrar los advisories residuales que viven solo en `devDependencies` (`firebase-tools@14` y `jest@29`) subiendo ambos majors con validación completa.
+
+#### Alcance
+
+- Evaluar y aplicar `firebase-tools` 14 → 15 (exige JDK ≥21, ver ADR-0023) y `jest` 29 → 30.
+- Ajustar configuración de Jest/emulador afectada por el cambio de major.
+- Reejecutar los quality gates y `npm run test:rules` con el emulador.
+
+#### Criterios de aceptación
+
+- [ ] `npm audit` deja de reportar los advisories de `firebase-tools` y del stack de Jest.
+- [ ] Los quality gates y las rules tests pasan sin regresiones.
+- [ ] No se introducen advisories nuevos en el grafo de producción.
+- [ ] Los tests relevantes pasan sin regresiones.
+- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+
+#### Fuera de alcance
+
+- No cambiar el runtime de producción (`firebase` se actualiza en TASK-130).
+- No ampliar el alcance más allá de lo descrito en esta tarea.
+
+#### Constraints técnicos
+
+- El toolchain local debe cumplir los requisitos de las nuevas versiones (JDK ≥21 para `firebase-tools@15`).
+- Los upgrades de major se hacen por dependencia, no en bloque.
+
+### TASK-129 — CI y gate de auditoría de dependencias
+
+**Priority:** P1 · **Depends:** TASK-121 · **Status:** DONE
+
+#### Objetivo
+
+Automatizar la verificación del repositorio: hoy no existe CI pese a TASK-008 y la auditoría de dependencias no es un gate reproducible.
+
+#### Alcance
+
+- Pipeline de CI que ejecute los quality gates (`lint`, `format:check`, `tsc -b --noEmit`, `test`, `build`).
+- Job con emulador para `npm run test:rules`.
+- Gate bloqueante de `npm audit --omit=dev` y reporte informativo del árbol completo.
+- Fijar Node 22 LTS en CI y declarar `engines` en `package.json`.
+
+#### Criterios de aceptación
+
+- [x] El pipeline ejecuta los gates y falla ante errores.
+- [x] `npm audit --omit=dev` bloquea la integración si hay vulnerabilidades de producción.
+- [x] La versión de Node es reproducible y coherente con `.nvmrc`.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+
+#### Fuera de alcance
+
+- No introducir despliegue automático.
+- No ampliar el alcance más allá de lo descrito en esta tarea.
+
+#### Constraints técnicos
+
+- `engine-strict` no debe bloquear instalaciones locales; `engines` es informativo.
+- El gate de auditoría de producción no debe depender de servicios de pago.
+
+### TASK-130 — Plan de upgrades de major de runtime y build
+
+**Priority:** P2 · **Depends:** TASK-121 · **Status:** TODO
+
+#### Objetivo
+
+Actualizar las dependencias directas con major pendiente sin romper el SDK ni el build.
+
+#### Alcance
+
+- Evaluar y aplicar `firebase` 12 → 13 y `typescript` 6 → 7.
+- Reevaluar `@types/node` 24 → 26 y `@testing-library/jest-dom` 6 → 7.
+- Retirar el override de `@grpc/grpc-js` (ADR-0029) si upstream publica un rango parcheado.
+- Valorar code-splitting del bundle (chunk único > 500 kB).
+
+#### Criterios de aceptación
+
+- [ ] Los majors se aplican por dependencia con sus tests actualizados.
+- [ ] El override de dependencia se elimina o queda justificado con evidencia.
+- [ ] Los quality gates y `npm run test:rules` pasan sin regresiones.
+- [ ] Los tests relevantes pasan sin regresiones.
+- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+
+#### Fuera de alcance
+
+- No introducir funcionalidad nueva.
+- No ampliar el alcance más allá de lo descrito en esta tarea.
+
+#### Constraints técnicos
+
+- La resolución forzada de dependencias debe justificarse y verificarse funcionalmente.
+- Los upgrades de major no se aplican en bloque.
+
 ---
 
 # 7. Definition of Done del MVP
 
 ## Producto
 
-- [ ] Registro/login funcionando.
-- [ ] Crear, abrir, renombrar y eliminar workspace.
-- [ ] Invitar colaboradores.
-- [ ] Owner/Editor/Viewer funcionando.
-- [ ] Canvas infinito.
-- [ ] Pan y zoom.
-- [ ] Selección y multiselección.
-- [ ] Text, Note, Task, Frame, Connector y Link.
-- [ ] Crear/mover/redimensionar/eliminar/duplicar.
-- [ ] Copy/paste.
-- [ ] Undo/redo.
-- [ ] Autosave.
-- [ ] Recuperación tras refresh.
-- [ ] Realtime.
-- [ ] Presence.
-- [ ] Remote cursors.
-- [ ] Reconnect.
-- [ ] Viewer no puede modificar.
+- [x] Registro/login funcionando.
+- [x] Crear, abrir, renombrar y eliminar workspace.
+- [x] Invitar colaboradores.
+- [x] Owner/Editor/Viewer funcionando.
+- [x] Canvas infinito.
+- [x] Pan y zoom.
+- [x] Selección y multiselección.
+- [x] Text, Note, Task, Frame, Connector y Link.
+- [x] Crear/mover/redimensionar/eliminar/duplicar.
+- [x] Copy/paste.
+- [x] Undo/redo.
+- [x] Autosave.
+- [x] Recuperación tras refresh.
+- [x] Realtime.
+- [x] Presence.
+- [x] Remote cursors.
+- [x] Reconnect.
+- [x] Viewer no puede modificar.
 
 ## Ingeniería
 
-- [ ] Clean Architecture respetada.
-- [ ] Hexagonal Architecture respetada.
-- [ ] Domain independiente.
-- [ ] Ports/adapters definidos.
-- [ ] Tests unitarios.
-- [ ] Tests de integración.
-- [ ] Tests de Security Rules.
-- [ ] CI verde.
-- [ ] TypeScript sin errores.
-- [ ] Oxlint verde.
-- [ ] Prettier check verde.
-- [ ] Build verde.
-- [ ] Performance medida y aceptable.
-- [ ] Accesibilidad básica validada.
-- [ ] README actualizado.
-- [ ] ADRs relevantes registrados.
+- [x] Clean Architecture respetada.
+- [x] Hexagonal Architecture respetada.
+- [x] Domain independiente.
+- [x] Ports/adapters definidos.
+- [x] Tests unitarios.
+- [x] Tests de integración.
+- [x] Tests de Security Rules.
+- [x] CI verde.
+- [x] TypeScript sin errores.
+- [x] Oxlint verde.
+- [x] Prettier check verde.
+- [x] Build verde.
+- [x] Performance medida y aceptable.
+- [x] Accesibilidad básica validada.
+- [x] README actualizado.
+- [x] ADRs relevantes registrados.
 
 ---
 
@@ -4935,6 +5183,249 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) alcance acotado a Application por acuerdo con el usuario: el cableado del `Canvas` y la orquestación de persistencia corresponden a TASK-072 y el debounce/batching a TASK-073; (2) el resultado `ok` no devuelve el elemento (el repositorio ya lo validó y el owner del estado es la UI): mantiene el contrato mínimo y evita duplicar datos; (3) las listas vacías no tocan el repositorio para no generar operaciones innecesarias con Firestore; (4) sin ADR por reutilizar el patrón ya establecido en `load-workspace-elements` (port inyectado, unión discriminada, `toAppError`).
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-072 (Persistence orchestration).
+
+## 2026-10-12 — TASK-081
+
+- Resultado: Estrategia de conflictos explícita, pura y convergente, sin CRDT. Nuevo `src/application/services/element-conflict-resolution.ts`: `compareElementVersions` (orden total por `updatedAt`), `isStrictlyNewer` (movido aquí desde `remote-element-updates`), `resolveElementVersion(a, b)` (LWW por elemento con desempate determinista y **simétrico**) y `canonicalizeElement` (serialización estable con claves ordenadas y `Date` a ISO). `applyRemoteElementChanges` pasa a usar `resolveElementVersion` en `added`/`modified`, conservando el contrato de ADR-0010 (ignora `origin: 'local'`, aísla por workspace, ordena con `sortElementsForLoad`, misma referencia sin cambios). `rollbackFailedMutation` **mantiene** `isStrictlyNewer` de forma intencional: en un rollback, un empate de `updatedAt` significa que el estado actual es la mutación optimista a revertir (ver ADR-0013 §5). Sin listeners nuevos ni cambios en el port/adapter.
+- Tests/quality gates: 1315 tests pasan (106 suites; +casos: 12 de `element-conflict-resolution.test.ts` —orden estricto en ambos sentidos, empate simétrico, misma referencia, `id` distinto lanza, canonicalización determinista—, 2 nuevos en `remote-element-updates.test.ts` —convergencia ante empate en distinto orden de llegada y ediciones concurrentes a elementos independientes— y 1 en `optimistic-element-updates.test.ts` —rollback con remoto de igual `updatedAt`—). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde.
+- Decisiones: (1) el desempate en empate de `updatedAt` es una **comparación canónica simétrica**, elegida con el usuario para garantizar convergencia entre réplicas sin cambiar el esquema; (2) la política vive en un único módulo puro de Application reutilizado por el camino remoto y el de rollback, eliminando la duplicación previa; (3) se documenta la estrategia en `docs/adr/0013-conflict-strategy.md` por ser una decisión transversal de consistencia realtime (§9); (4) fuera de alcance: CRDT, versionado/`updatedBy`, merge por campo e historial local vs remoto (TASK-088).
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-082 (Presence port/model).
+
+## 2026-10-12 — TASK-082
+
+- Resultado: Port, modelo y adapter Firebase de presencia efímera. Dominio: `src/domain/collaboration/presence.ts` (`Presence` con `userId`, `workspaceId`, `lastSeenAt`; `static create`, `refresh` inmutable para heartbeats, `isFor`, `equals` y `toJSON`) y barrel `src/domain/collaboration/index.ts`. Application: `src/application/ports/presence-port.ts` (`PresencePort.subscribe(workspaceId, listener, onError?, onConnectionChange?): Unsubscribe`, `announce(presence): Promise<void>` para publicar presencia local y `withdraw(workspaceId, userId): Promise<void>` para limpiarla al desconectar; cambios `joined`/`updated`/`left` con `origin: 'local' | 'remote'`, reutilizando `RealtimeChangeOrigin`/`RealtimeConnectionListener` de `realtime-port` como indica ADR-0012). Barrel de ports actualizado.
+- Infrastructure: `src/infrastructure/firebase/firebase-presence-mapper.ts` (`toPresenceDocument`/`fromPresenceDocument`, con lectura de `Date` o `Timestamp`) y `src/infrastructure/firebase/firebase-presence-adapter.ts` (`createFirebasePresenceAdapter(db)`: `subscribe` con `onSnapshot({ includeMetadataChanges: true })` sobre `query(collection('presence'), where('workspaceId', '==', …))`, descarta el primer snapshot, mapea `added`→`joined`, `modified`→`updated`, `removed`→`left` (userId desde el id `${workspaceId}_${userId}`), origen `hasPendingWrites ? 'local' : 'remote'`, estado de conexión `fromCache ? 'reconnecting' : 'connected'`, y `announce`/`withdraw` como `setDoc`/`deleteDoc` con errores mapeados). La presencia vive en la colección `presence`, totalmente separada de `elements`, por lo que no modifica ni bloquea el documento persistido.
+- Alcance: port + model + adapter. El servicio de aplicación de "Connected users" y el cableado en Presentation quedan para TASK-083/084/085 (no se toca App.tsx todavía porque aún no hay consumidor).
+- Tests/quality gates: `src/test/fixtures/fake-presence-port.ts` (fake con `announce`/`withdraw` que emiten `joined`/`updated`/`left` e infiere estado efímero), `src/test/contract/presence-port-contract.ts` (13 casos de contrato: entrega, aislamiento por workspace, unsubscribe idempotente, errores, cambios de conexión, una suscripción activa por subscribe) ejecutado tanto en `src/test/unit/application/ports/fake-presence-port.test.ts` (+5 casos del fake) como en `src/test/unit/infrastructure/firebase/firebase-presence-adapter.test.ts` (contrato + 13 casos del adapter: descarte del primer snapshot, mapeo de cambios/origen, `announce`/`withdraw`, mapeo de errores, documento corrupto, metadata, separación de `elements`), y `src/test/unit/domain/collaboration/presence.test.ts` (8 casos del modelo) + `src/test/unit/infrastructure/firebase/firebase-presence-mapper.test.ts` (10 casos del mapper). 62 tests de presencia en total. `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde.
+- Decisiones: (1) la presencia es efímera: modelo sin persistencia, adapter sobre una colección `presence` aparte, sin heartbeat/TTL (fuera del MVP); (2) se reutiliza el vocabulario de conexión del realtime port (ADR-0012) en vez de duplicarlo; (3) `withdraw(workspaceId, userId)` modela "limpiar presencia al desconectar" que consumirá TASK-085; (4) `announce`/`withdraw` son async para propagar errores de Firestore como `AppError` (patrón del `ElementRepository`).
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-083 (Connected users).
+
+## 2026-10-12 — TASK-083
+
+- Resultado: Servicio de Application `createConnectedUsersStore(presencePort, workspaceId)` en `src/application/services/connected-users-store.ts` (React/Firebase-free) que deriva de la presencia efímera la lista de usuarios conectados. Snapshot estable `{ users: readonly Presence[], error: AppError | null }` (referencia estable + guarda de igualdad, apto para `useSyncExternalStore`); suscripción perezosa al `PresencePort` con el primer subscriber y liberación con el último (patrón de `session-store`), una única suscripción por store. Reductor puro exportado `reduceConnectedUsers(users, event, workspaceId)`: `joined`/`updated` → upsert por `userId` (filtro defensivo `presence.isFor`), `left` → remove, ignora eventos de otro workspace y devuelve orden determinista por `userId`; errores del puerto fijados en `error` conservando `users` y limpiados en el siguiente cambio. Exportado en `services/index.ts`. Sin composición ni UI (llegan en TASK-084/085 y tareas de presentación con consumidor real).
+- Tests/quality gates: 1391 tests pasan (111 suites, +14 en `src/test/unit/application/services/connected-users-store.test.ts`: 6 del reductor —join/update/left, aislamiento por workspace, orden y no mutación— y 8 del store con `FakePresencePort` —estado inicial, lazy connect, una suscripción compartida, timeline de cambios, no-op sin notificación ni cambio de snapshot, error conservando usuarios y limpieza, reconexión tras el último unsubscribe y unsubscribe idempotente—). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) el store queda **scopeado a un workspace** mediante la fábrica (el `workspaceId` es una dependencia), de modo que la suscripción perezosa no necesita un parámetro adicional y el ciclo de vida coincide con el de la pantalla; (2) el error vive en el snapshot (`error`) para que la UI pueda consumirlo por `useSyncExternalStore` sin canal aparte, conservando los usuarios conocidos y limpiándose con el siguiente cambio válido; (3) se incluyen cambios `local` y `remote` (la presencia propia también forma parte de los conectados); (4) sin composición ni hook: TASK-084 (Remote cursors), TASK-085 (Presence cleanup) y las tareas de presentación conservan su alcance; (5) sin ADR por reutilizar el patrón de store de Application ya establecido (`session-store`, `realtime-connection-store`).
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-084 (Remote cursors).
+
+## 2026-10-12 — TASK-084
+
+- Resultado: Cursores remotos sobre el canal de presencia existente, sin colección ni port nuevos. Dominio: `Presence` gana `cursor: Position | null` con `moveCursor(cursor)` inmutable (no-op por referencia si no cambia), `refresh` que conserva el cursor, getter `cursor` y `equals`/`toJSON` que lo incluyen. Infrastructure: `toPresenceDocument` omite `cursor` cuando es `null` y `fromPresenceDocument` lo parsea tolerando ausencia/`null` (round-trip y compatibilidad con documentos previos).
+- Application: nuevo `src/application/services/cursor-broadcaster.ts` (`createCursorBroadcaster` con throttle **leading + trailing**, `DEFAULT_CURSOR_THROTTLE_MS = 80`, scheduler inyectable, descarte de posiciones repetidas, errores de `announce` traducidos con `toAppError` y expuestos por `onError`, `flush`/`stop`) y `src/application/services/remote-cursors-store.ts` (`createRemoteCursorsStore` con suscripción perezosa única y snapshot estable apto para `useSyncExternalStore`, `EMPTY_REMOTE_CURSORS_STORE` y el reductor puro `reduceRemoteCursors` que ignora `origin: 'local'`, el propio usuario, otros workspaces y presencias sin cursor, elimina al usuario que se va y devuelve orden determinista por `userId`). Exportados en `services/index.ts`. Sin React ni Firebase.
+- Composición: nuevo `src/app/config/presence-services.ts` (`createPresenceServices` → `createFirebasePresenceAdapter(getFirebaseFirestore())`), cableado como prop **opcional** `presencePort` en `App.tsx → AppRoutes → WorkspaceShellPage → WorkspaceShellContainer`; el `localUserId` se deriva de `useSession()` en la page (patrón de `workspaces-page`).
+- Presentation: `useCursorBroadcast` traduce `pointermove` a coordenadas de mundo (`screenToWorld`, respeta `disabled`) y `RemoteCursorsOverlay` pinta una capa `pointer-events: none`/`aria-hidden` posicionando cada cursor con `viewport.worldToScreen`. `Canvas` recibe `remoteCursors`/`onCursorMove` opcionales y fusiona el ref del hook con `setContainerRef`; el contenedor crea store y broadcaster con `useMemo`, lee el snapshot con `useSyncExternalStore` y hace `flush()` + `stop()` al desmontar. La suscripción al `PresencePort` sigue siendo única y compartida (sin listeners duplicados).
+- Tests/quality gates: 1436 tests pasan (115 suites; +~45: `presence.test.ts` cursores, `firebase-presence-mapper.test.ts` cursor round-trip/validación, nuevo `remote-cursors-store.test.ts` —12 del reductor y 9 del store con `FakePresencePort`—, nuevo `cursor-broadcaster.test.ts` —8 con `ManualScheduler`, incluye leading/trailing, coalescing, flush y `onError`—, nuevo `remote-cursors-overlay.test.tsx` —4— y nuevo `use-cursor-broadcast.test.tsx` —4—). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) el cursor viaja como campo del documento de presencia, reutilizando la suscripción y garantizando que no toca ni bloquea `elements`; (2) emisión con throttle leading+trailing en Application (puro y testeable) para acotar escrituras sin perder la posición final; (3) consumo derivado por un reductor puro + store perezoso, con lifecycle de suscripción compartido; (4) UI de presentación delgada (`useCursorBroadcast` + `RemoteCursorsOverlay`) sin hablar con Firebase; (5) alcance acotado a TASK-084: TTL/heartbeat, interpolación y etiquetas con nombre y la limpieza al desconectar (TASK-085) quedan fuera. Documentado en `docs/adr/0014-remote-cursors.md`.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-085 (Presence cleanup).
+
+## 2026-10-13 — TASK-090
+
+- Resultado: Repository de Membership sobre Firestore. `createFirebaseMembershipRepository(db)` en `src/infrastructure/firebase/firebase-membership-repository.ts` (factory + DI, patrón de ADR-0002) cumple el contrato ya definido en TASK-089. Documento con id compuesto determinista `${workspaceId}_${userId}` (convención de `presence`), de modo que `findByUserAndWorkspace` es un `getDoc` directo (sin índice compuesto) y `listByWorkspace`/`listByUser` son `query(where('workspaceId'|'userId','==',…))`. `create` construye/valida la entidad antes de escribir y prechequea existencia (el `setDoc` de Firestore sobrescribe) → duplicado lanza `conflict`/`MEMBERSHIP_ALREADY_EXISTS`; `updateRole` hace `updateDoc` parcial (`role`, `updatedAt`) preservando `createdAt`; `delete`/`updateRole` sobre membership inexistente lanzan `notFound`/`NOT_FOUND_RESOURCE`. Mapper puro `firebase-membership-mapper.ts` (sin import del SDK; lee `Date` o `Timestamp`-like vía `toDate()`, valida rol con `validateRole`). Errores concretos traducidos con `mapFirebaseError`. Sin composición todavía (el wiring llega con TASK-091+).
+- Tests/quality gates: 1506 tests pasan (118 suites, +21 en `src/test/unit/infrastructure/firebase/firebase-membership-repository.test.ts`: contrato completo de membership vía `describeMembershipRepositoryContract` + 7 casos del adapter —persistencia bajo id determinista `ws-1_user-1` con `Date`, no-escritura con rol inválido, `unavailable`→network, `permission-denied`→authorization sin escribir, `updateRole` parcial preservando `createdAt`, lectura de `Timestamp`-like y documento corrupto→validation—); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente). Smoke manual contra Firebase real pendiente de verificación con `npm run dev`.
+- Decisiones: (1) id compuesto determinista `${workspaceId}_${userId}` en una colección plana `memberships`, elegido con el usuario para evitar índice compuesto en producción y ser coherente con la colección `presence`; (2) el mapper no recibe el id del documento porque la identidad de `Membership` son los campos `(userId, workspaceId)`, no el id persistido; (3) la validación de rol/entidad vive en Domain (`Membership.create`/`updateRole`) y el adapter solo la traduce a `validation`/`VALIDATION_INVALID_INPUT`, igual que el resto de repositorios; (4) el prechequeo de duplicado sigue el patrón ya usado por el workspace repo para `update`/`delete`; (5) sin ADR por reutilizar ADR-0002/0005 y no introducir decisiones arquitectónicas nuevas.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-091 (Create owner membership).
+
+## 2026-10-13 — TASK-091
+
+- Resultado: El creador de un workspace queda registrado como **owner**. Nuevo `createCreateOwnerMembership(membershipRepository)` (`src/application/commands/create-owner-membership.ts`): crea la membership `(userId, workspaceId, role: 'owner')` y traduce errores con `toAppError`. Nuevo `createCreateWorkspaceWithOwner({ workspaceRepository, createOwnerMembership })` (`src/application/commands/create-workspace-with-owner.ts`): reusa `validateCreateWorkspaceInput`, crea el workspace y luego la membership de owner. Compensación best-effort: si falla la membership, borra el workspace y devuelve el error original; si el borrado también falla, anota el error con `details.workspaceRollbackFailed: true` y `cause`. Composición en `workspace-services` (`createWorkspaceWithOwner` con workspace + membership repos de Firestore) y wiring en `App.tsx`/`app-routes`/`WorkspacesPage` (el `ownerId` se deriva de `useSession()` con `useMemo` y se adapta al contrato del `CreateWorkspaceDialog`, que no cambia).
+- Tests/quality gates: 1520 tests pasan (120 suites; +14: `create-owner-membership.test.ts` —ok, conflicto, owners independientes, error de red, normalización—, `create-workspace-with-owner.test.ts` —ok con membership, trim/descripción, invalid-input sin tocar repos, fallo de workspace, rollback, rollback fallido anotado, normalización, scoping—, case de membership en `workspace-error-messages.test.ts` y el `create-workspace-flow.test.tsx` actualizado a la composición con assertions de owner). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) la creación del workspace se mantiene como use case independiente (`create-workspace.ts` intacto) y la composición con owner vive en un caso de uso nuevo, evitando acoplar `createWorkspace` a membership y preservando el contrato del `CreateWorkspaceDialog`; (2) compensación best-effort con borrado del workspace ante fallo de membership (acordado con el usuario) para no dejar workspaces sin owner; (3) el fallo de compensación no se silencia: queda observable en `error.details.workspaceRollbackFailed`; (4) `MEMBERSHIP_ALREADY_EXISTS` se mapea a un mensaje explícito en `describeCreateWorkspaceError`; (5) sin ADR por no introducir decisiones arquitectónicas nuevas.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-092 (Invite member use case).
+
+## 2026-10-13 — TASK-092
+
+- Resultado: Modelo de **invitación pendiente**. Dominio `src/domain/invitation/` con `InvitationStatus` (`pending`/`accepted`/`revoked`), entidad `Invitation` (`id`, `workspaceId`, `email`, `role`, `tokenHash`, `status`, `invitedBy`, `expiresAt`, timestamps) y `InvitationId` en `src/domain/shared/value-objects/invitation-id.ts`; normaliza/valida el email, valida rol/token/timestamps, deriva la expiración con `isExpired(now)` y expone transiciones inmutables `accept`/`revoke` (solo desde `pending`).
+- Port `InvitationRepository` (`create`, `findByTokenHash`, `listPendingByWorkspace`, `updateStatus`): `create` rechaza con `conflict/INVITATION_ALREADY_EXISTS` ante pendiente duplicada `(workspaceId, email)` o id repetido; `updateStatus` rechaza con `notFound` sobre inexistente. Nuevo code `INVITATION_ALREADY_EXISTS: 'invitation/already-exists'` (kind `conflict`).
+- Use case `createInviteMember({ invitationRepository, generateId, issueToken, now?, ttlMs? })` (`src/application/commands/invite-member.ts`): valida email/rol (reusa `isValidEmail`/`isValidRole`), calcula `expiresAt` con TTL por defecto `INVITATION_TTL_MS` (7 días), obtiene `{ token, tokenHash }` mediante `issueToken()` inyectado (la criptografía queda en composición), persiste solo `tokenHash` y devuelve el token en claro una sola vez. Errores de invariantes→`validation`; errores del repo con `toAppError` (preserva conflict/network, normaliza inesperados a `unknown`).
+- `FakeInvitationRepository` + contrato ejecutable (`src/test/fixtures/fake-invitation-repository.ts`, `src/test/contract/invitation-repository-contract.ts`) como especificación del futuro adapter Firestore. ADR nuevo `docs/adr/0018-invitation-model.md`.
+- Tests/quality gates: 1562 tests pasan (123 suites; +42 en `invitation.test.ts` —invariantes de dominio y transiciones—, `invite-member.test.ts` —ok/token, no persistir el token en claro, TTL custom, invalid-input sin tocar el repo, conflicto, independencia por workspace/email, preservación de red, normalización a unknown— y `fake-invitation-repository.test.ts` —contrato completo—). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) entidad `Invitation` separada de `Membership` con id y ciclo de vida propios (la membership solo nace al aceptar, TASK-094); (2) email como identidad funcional, normalizado y validado en dominio (sin importar `src/shared`); (3) token de un solo uso persistido **hasheado** y devuelto en claro una única vez, con `issueToken()` inyectado para no meter Web Crypto en Application; (4) expiración derivada, sin estado almacenado ni job; (5) el port incluye anticipadamente `findByTokenHash`/`listPendingByWorkspace`/`updateStatus` para TASK-093/094 (mismo criterio que ADR-0017); (6) autorización del invitador y adapter Firestore diferidos a TASK-095/097 y a la tarea de adapter; (7) sin restringir el rol invitado (se admite `owner`, como el dominio). Documentado en `docs/adr/0018-invitation-model.md`.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-093 (Invitation UI).
+
+## 2026-10-13 — TASK-093
+
+- Resultado: **Invitation UI end-to-end**. Query de Application `createListPendingInvitations` (`src/application/queries/list-pending-invitations.ts`) sobre `InvitationRepository` con `sortPendingInvitations` (createdAt desc, desempate por id) y resultado union `ok | error` con `toAppError`; exportada en `queries/index.ts`.
+- Infrastructure: `createFirebaseInvitationRepository(db)` (`src/infrastructure/firebase/firebase-invitation-repository.ts`) con colección plana `invitations` e id de documento = `invitation.id`; `create` prechequea id duplicado sobre el documento (Firestore sobrescribe) y pendiente duplicada `(workspaceId, email)` vía `listPendingByWorkspace` → `conflict/INVITATION_ALREADY_EXISTS`; `listPendingByWorkspace` filtra `(workspaceId, status='pending')`; `updateStatus` hace `updateDoc` parcial (`status`, `updatedAt`) preservando `createdAt` y rechaza inexistente con `notFound`; errores concretos traducidos con `mapFirebaseError`, invariantes→`validation`. Mapper puro `firebase-invitation-mapper.ts` (sin import del SDK, lee `Date` o `Timestamp`-like vía `toDate()`, valida rol/estado con los validators de dominio) e id dentro del documento. Contrato TASK-092 cumplido.
+- Criptografía en composición: `src/infrastructure/crypto/invitation-token.ts` con `createInvitationTokenIssuer()` (32 bytes aleatorios → token base64url → hash SHA-256 en hex) y `hashInvitationToken(token)` reutilizable por el accept (TASK-094) para comparar en claro con el hash persistido; sin `crypto`/Web Crypto en capas puras (ADR-0018 §4).
+- Composición/wiring: `src/app/config/invitation-services.ts` (`inviteMember` con `generateId: crypto.randomUUID()` y `issueToken`; `listPendingInvitations`), propagado `App.tsx → AppRoutes → WorkspaceShellPage → WorkspaceShellContainer` como props opcionales; el botón **Invite** vive en el header de `WorkspaceShellLayout` y se muestra solo cuando hay servicios de invitación + `localUserId`.
+- Presentation (`src/presentation/features/invitations/`): `InviteMemberForm` (email + rol con `Select` de `@raulrod/ui`, errores de campo vía resultado `invalid-input`, mensaje de error con `describeInviteMemberError`), `InvitationLink` (enlace de un solo uso `/invitations/<token>` con `buildInvitationLink` y `Copy link` vía clipboard), `PendingInvitationsList` (estados loading/error+retry/empty/lista con `Badge` de rol y expiración), e `InviteDialog` que orquesta (fetch al abrir, refresca tras invitar, muestra el enlace una sola vez). Nuevo `invitation-error-messages.ts` con `describeInviteMemberError`/`describePendingInvitationsError`.
+- Tests/quality gates: 1616 tests pasan (131 suites; +54: `list-pending-invitations.test.ts` (7) —sort, ok, vacío, aislamiento por workspace, error traducido—, `firebase-invitation-repository.test.ts` —contrato completo + 7 casos de adapter: persistencia bajo id, duplicado email → conflict sin escribir, `unavailable`→network, `permission-denied`→authorization, `updateStatus` parcial preservando createdAt, `Timestamp`-like, documento corrupto→validation—, `invitation-token.test.ts` (4, env node) —digest determinista, tokens distintos, url-safe y hash coincidente—, `invitation-error-messages.test.ts` (8), `invite-member-form.test.tsx` (4), `pending-invitations-list.test.tsx` (4), `invitation-link.test.tsx` (3), `invite-dialog.test.tsx` (4) y `workspace-shell-container.test.tsx` +2 —sin botón sin servicios, dialog desde el header—). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (el aviso de chunk >500 kB es el bundle de Firebase, preexistente).
+- Decisiones: (1) TASK-093 asumió también la tarea de adapter y la composición de token ausentes en el backlog (confirmado con el usuario) para dejar el flujo usable; (2) documento de invitación con `id` propio como campo + doc-id = `invitation.id` (a diferencia de membership, la entidad tiene identidad propia, ADR-0018 §2); (3) expiración legible en la lista vía `Intl.DateTimeFormat('en-US', UTC)`, sin formateadores de librería; (4) el enlace comparte la constante `INVITATION_ACCEPT_PATH = '/invitations'` que consumirá TASK-094; (5) `listPendingInvitations` recibe el `workspaceId` como string (patrón `getWorkspace`) y la validación del value object vive en Application. Documentado en `docs/adr/0019-invitation-repository-ui.md`.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-094 (Accept invitation).
+
+## 2026-10-13 — TASK-095
+
+- Resultado: Política de autorización Owner/Editor/Viewer como lógica pura de Domain. Nuevo `src/domain/membership/authorization-policy.ts` con la unión `WorkspaceOperation` (`workspace:view|update|delete`, `element:write`, `member:invite|update-role|remove|leave`), `WORKSPACE_OPERATIONS` (8 operaciones), `PERMISSION_MATRIX: Record<MembershipRole, readonly WorkspaceOperation[]>` como fuente única de verdad y el evaluador puro `can(role, operation): boolean`. Re-exportado en `src/domain/membership/index.ts`. Sin React/Firebase/DOM; la resolución del rol y la traducción a `AppError('authorization', AUTH_FORBIDDEN)` quedan para TASK-096/097.
+- Matriz confirmada con el usuario tras comparar con Figma/Miro: `workspace:update`/`workspace:delete`/`member:update-role`/`member:remove` solo owner; `element:write` y `member:invite` owner+editor (coherente con ADR-0018); `workspace:view` y `member:leave` todos los roles; el viewer nunca escribe.
+- Tests/quality gates: `src/test/unit/domain/membership/authorization-policy.test.ts` con `it.each` sobre las 24 combinaciones rol × operación más los criterios explícitos (viewer bloqueado en `element:write` y `member:*` salvo `leave`; editor invite sí, gestión no; owner todo). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde.
+- Decisiones: (1) la política vive en Domain por ser invariante de negocio pura y consumible por UI y rules; (2) una sola matriz tipada evita duplicar lógica entre entidad, guards y rules; (3) `element:write` agrupa las operaciones de elemento (sin granularidad por tipo en el MVP); (4) se deja como refactor opcional que `Membership.canEdit`/`canView` deleguen en `can(...)`, sin ampliar el alcance. Documentado en `docs/adr/0021-authorization-policy.md`.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-096 (Frontend permission guards).
+
+## 2026-10-13 — TASK-096
+
+- Resultado: **Frontend permission guards** end-to-end. Application: caso de uso `createGetWorkspaceRole(membershipRepository)` (`src/application/queries/get-workspace-role.ts`) con union `ok | notFound | error` (`toAppError`), exportado en `queries/index.ts`. Presentation: hook `useWorkspacePermissions(role)` (`src/presentation/hooks/use-workspace-permissions.ts`, + `index.ts`) que expone `{ role, can }` delegando en el `can(role, operation)` de Domain; `role` ausente ⇒ deny.
+- Guards: `WorkspaceShellContainer` resuelve el rol cuando `getWorkspaceRole` + `localUserId` están presentes (con gate de carga), oculta **Invite** si `!can('member:invite')` y pasa `readOnly={!can('element:write')}` al `Canvas`; `workspace-shell-layout.tsx` y `canvas.tsx` lo propagan a los hooks de edición (mover/redimensionar/borrar/duplicar/copiar-pegar/deshacer/rehacer) y exponen `aria-readonly`, conservando pan/zoom/selección/presencia.
+- Wiring: `workspace-services.ts` construye `getWorkspaceRole` (`createFirebaseMembershipRepository`) y se propaga `App.tsx → AppRoutes → WorkspaceShellPage → WorkspaceShellContainer` como prop opcional. Si no se cablea, los guards no se aplican (compatibilidad de composición/tests); con el servicio cableado y rol desconocido/`notFound` ⇒ deny.
+- Tests: `get-workspace-role.test.ts` (ok/notFound/error/id inválido), `use-workspace-permissions.test.tsx` (owner/editor/viewer/undefined) y `workspace-shell-container.test.tsx` +5 (viewer sin Invite, editor con Invite, canvas read-only para viewer, owner editable, rol desconocido read-only). 136 suites / 1685 tests.
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase).
+- Decisiones: (1) resolver el rol es un caso de uso de Application (Presentation no toca Firestore); (2) la UI consume `can(...)` de Domain sin reimplementar la matriz; (3) `readOnly` desactiva la edición pero conserva navegación/selección/presencia; (4) deny por defecto cuando el servicio está cableado y el rol no se conoce. La autorización efectiva sigue en Firebase Security Rules (TASK-097). Documentado en `docs/adr/0022-frontend-permission-guards.md`.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-097 (Firebase Security Rules).
+
+## 2026-10-13 — TASK-099
+
+- Resultado: Use case de Application **Change member role**, React/Firebase-free. Nuevo `createChangeMemberRole(membershipRepository)` (`src/application/commands/change-member-role.ts`): input con value objects (`workspaceId`, `actorUserId`, `targetUserId`, `role`), devuelve union `ok (membership) | invalid-input (fieldErrors) | error (AppError)`. Resuelve la membership del actor y aplica la autorización con el `can(actor.role, 'member:update-role')` de Domain (solo owner, matriz de ADR-0021); actor sin membership o sin permiso → error `authorization/AUTH_FORBIDDEN` con detalles (no se filtra "no eres miembro"); role inválido → `invalid-input` sin tocar el repo; `updateRole` del repo delega en la entidad `Membership.updateRole` (timestamp de `updatedAt`); errores del repo preservados con `toAppError` (notFound si el target no es miembro). Exportado en `commands/index.ts`. Composición en `workspace-services` (`changeMemberRole` con `createFirebaseMembershipRepository`); sin plumb en UI (el contrato llega a TASK-107 Share dialog).
+- Tests/quality gates: 1694 tests pasan (137 suites, +9 en `src/test/unit/application/commands/change-member-role.test.ts` —owner cambia rol y persiste, promoción a owner, editor/viewer denegados sin llamar al repo, actor no miembro denegado, target inexistente → notFound, role inválido → invalid-input sin tocar el repo, error de red preservado, normalización a unknown—). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase).
+- Decisiones: (1) la autorización vive en el use case (defensa en profundidad) además de las Security Rules de TASK-097; la UI de TASK-107 solo la reflejará con `can(...)`; (2) deny = `AUTH_FORBIDDEN` también para actor sin membership, para no revelar membresías; (3) sin invariante de "último owner": el backlog no lo especifica y se evita scope creep (se revisará en TASK-102/auditoría), acordado con el usuario; (4) sin ADR por reutilizar el patrón establecido en `invite-member`/`accept-invitation` y no introducir decisiones arquitectónicas nuevas.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-100 (Remove member).
+
+## 2026-10-13 — TASK-101
+
+- Resultado: Use case de Application **Leave workspace**, React/Firebase-free. Nuevo `createLeaveWorkspace(membershipRepository)` (`src/application/commands/leave-workspace.ts`): input con value objects (`workspaceId`, `userId`), devuelve union `ok | error (AppError)`. Resuelve la membership propia y aplica `can(role, 'member:leave')` de Domain (permitido a todos los roles, ADR-0021); usuario sin membership o sin permiso → `authorization/AUTH_FORBIDDEN` (sin revelar membresías); `membershipRepository.delete(userId, workspaceId)`; errores del repo preservados con `toAppError`. Exportado en `commands/index.ts` y compuesto en `workspace-services.ts`. Sin UI (la acción de "Leave" se cableará en TASK-107 Share dialog). Sin invariante de "último owner": se mantiene la decisión de TASK-099 y se deja para TASK-102/auditoría, coherente con las Security Rules actuales que permiten el self-delete.
+- Tests/quality gates: 1708 tests pasan (139 suites, +7 en `src/test/unit/application/commands/leave-workspace.test.ts` —owner/editor/viewer pueden salir, no-miembro denegado sin tocar el repo, no afecta membership en otro workspace, error de red preservado, error inesperado normalizado a unknown—). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase).
+- Decisiones: (1) self-delete de la propia membership, simétrico con remove-member pero sin `targetUserId`; (2) `AUTH_FORBIDDEN` para no-miembro, reutilizando el criterio de TASK-099/100; (3) no se añade UI ni hook, manteniendo el alcance acotado a Application + composición, como TASK-099/100; (4) sin ADR por ser decisión local que sigue el patrón establecido.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-102 (Delete workspace authorization).
+
+## 2026-10-13 — TASK-102
+
+- Resultado: Autorización owner-only en el borrado de workspace como defensa en profundidad (la frontera efectiva ya estaba en `firestore.rules:39`, con tests en TASK-098). `createDeleteWorkspace` pasa a recibir `DeleteWorkspaceDeps { workspaceRepository, membershipRepository }` y `DeleteWorkspaceInput` incorpora `actorUserId`; resuelve la membership del actor con `findByUserAndWorkspace` y aplica el `can(actor.role, 'workspace:delete')` de Domain (ADR-0021). Actor sin membership o sin permiso → `authorization`/`AUTH_FORBIDDEN` con `details` (`workspaceId`, `actorUserId`), sin revelar membresías; `validateDeleteWorkspaceInput` valida `id` y `actorUserId`. Composición en `workspace-services` (`deleteWorkspace` con workspace + membership repos de Firestore). Sin UI (coherente con TASK-099/100/101).
+- Tests/quality gates: 1712 tests pasan (139 suites; `delete-workspace.test.ts` reescrito a 13 casos: owner borra, editor/viewer/no-miembro denegados sin tocar el repositorio, workspace desconocido denegado, invalid-input sin tocar repos, `notFound`/`network` preservados y errores inesperados normalizados). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase).
+- Decisiones: (1) se modificó el comando existente en vez de crear un wrapper, dejando un único camino de borrado (acordado con el usuario); (2) `AUTH_FORBIDDEN` también cuando no existe membership (workspace desconocido), sin filtrar existencia, alineado con TASK-099/100/101; (3) sin invariante de "último owner" ni borrado en cascada de memberships/elements (fuera del alcance del backlog); (4) sin cambios en `firestore.rules` (ya correcta) ni ADR nuevo por reutilizar ADR-0021/0023 y el patrón establecido.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-103 (Design tokens).
+
+## 2026-10-13 — TASK-103
+
+- Resultado: **Capa de design tokens de Presentation**. Nuevo `src/presentation/styles/` con `tokens.ts` (`cssVarName`/`token` que traducen cualquier key de `@raulrod/tokens` a su custom property `--rr-*`, `TokenKey`), `theme.ts` (`appTheme` con roles semánticos —color, font, space, radius, shadow, motion, z— y alias `canvas.*` para grid/selección/stroke, todo resuelto a `var(--rr-*)`; `AppTheme`; augmentación `DefaultTheme` de styled-components) y `app-theme-provider.tsx` (`AppThemeProvider` = `ThemeProvider` de styled-components). Barrel `index.ts`.
+- Integración: `AppThemeProvider` envuelve el árbol en `App.tsx` (raíz). Se migraron **todas** las 14 hojas con styled-components que referenciaban tokens (canvas y overlays, los 7 renderers, element-view sin tokens, workspaces-list, pending-invitations-list, workspace-shell-layout) a `props.theme`, eliminando los nombres inválidos que caían a fallback (p. ej. `--rr-color-text-default`/`-subtle`, `--rr-color-accent-default`, `--rr-color-link-default`, `--rr-font-size-100/200`, `--rr-radius-100`) y mapeando a roles reales (text.primary/muted, border.primary, link.text, font.size.sm/2xs, radius.sm). El connector usa `color: theme.canvas.elementBorderStrong` + `stroke/fill="currentColor"` para no introducir hooks post-return.
+- Tests: infraestructura compartida — `jest.config.cjs` mapea `@testing-library/react` a `src/test/setup/render-with-theme.tsx`, que reexporta la librería real (alias `@testing-library/react-real`) y aplica `AppThemeProvider` como `wrapper` en `render` (soporta `rerender` y compone con un `wrapper` del test); declaration `testing-library-real.d.ts`. Tests nuevos: `tokens.test.ts` (mapeo de keys), `theme.test.ts` (todo `var(--rr-*)` del theme existe en primitives/semantic de `@raulrod/tokens`; sin nombres legacy) y `app-theme-provider.test.tsx` (los descendientes reciben el tema vía `useTheme`).
+- Quality gates: 142 suites / 1719 tests en verde (+3 suites: tokens/theme/provider). `npm run lint`, `npm run format:check`, `npx tsc -b`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase).
+- Decisiones: (1) el mecanismo es `ThemeProvider` de styled-components con valores que son referencias `var(--rr-*)`, de modo que light/dark lo resuelven las custom properties upstream sin recalcular en JS (acordado con el usuario); (2) alcance = capa base + migrar los usos existentes, sin tocar tokens de componentes ni px de layout que no eran tokens; (3) los alias `canvas.*` reutilizan roles semánticos en vez de inventar tokens de canvas; (4) el render de tests inyecta el tema globalmente vía alias de módulo en Jest, evitando tocar cada test y cubriendo `rerender`. Sin ADR por tratarse de una decisión de capa de Presentation ya implícita en la arquitectura (dependencia de UI en Presentation).
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-104 (Core UI components).
+
+## 2026-10-14 — TASK-105
+
+- Resultado: **Workspace top bar** en su propio componente de Presentation, `src/presentation/features/workspace-shell/components/workspace-top-bar.tsx` (header landmark), extraído del inline que vivía en `workspace-shell-layout.tsx`. Izquierda: back con `ArrowLeft`, `Heading as="h1"` con el nombre del workspace, `Badge` de rol (Owner/Editor/Viewer, solo cuando hay membership), y `Badge` de sync/conexión dentro de `role="status" aria-live="polite"` reutilizando `describeSyncStatus`/`describeConnectionStatus`. Derecha: resumen de presencia (`Avatar` apilados de los colaboradores conectados + contador `N connected` en `role="status"`, oculto si no hay nadie), botón `Invite` condicional (`onInvite`) y menú de cuenta. Banners de error de persistencia/colaboración como `role="alert"`. Props `readonly`. `workspace-shell-layout.tsx` delega en el top bar y ya no conoce `SignOutButton`.
+- Menú de cuenta: nuevo `src/presentation/features/auth/account-menu.tsx` (`Avatar` como trigger + `DropdownMenu` de `@raulrod/ui` con identidad displayName/email y acción **Sign out**), y hook `src/presentation/features/auth/use-sign-out.ts` que extrae la lógica de logout de `SignOutButton` (guard anti-reentrada por ref, `describeLoginError`, estado `signingOut`/`signOutError`); `SignOutButton` se refactoriza para consumirlo sin cambiar su comportamiento (sigue en `workspaces-page`).
+- Composición: `WorkspaceShellPage` deriva `currentUser` de `useSession()` y lo pasa por `WorkspaceShellContainer` (nueva prop opcional `currentUser`); el contenedor compone el `ConnectedUsersStore` (TASK-083) con `useSyncExternalStore`, filtra el usuario local y pasa `connectedUsers`/`role`/`currentUser` al layout. Para no abrir listeners duplicados de presencia, nuevo decorador `src/application/services/shared-presence-port.ts` (`createSharedPresencePort`) que multiplexa **una única** `subscribe` del `PresencePort` por workspace entre los consumidores (remote cursors + connected users), con fan-out de eventos/errores/conexión, teardown al último unsubscribe e idempotencia; `announce`/`withdraw` pasan directos. El contenedor construye el puerto compartido con `useMemo` y lo inyecta en ambos stores y en el `CursorBroadcaster`. `EMPTY_CONNECTED_USERS_STORE` añadido para el caso sin `presencePort`.
+- Tests/quality gates: 152 suites / 1752 tests en verde (+4 suites / +13: `shared-presence-port.test.ts` —5, `workspace-top-bar.test.tsx` —7, `account-menu.test.tsx` —3, más la assertion de cuenta en `workspace-shell-container.test.tsx`—). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase). Smoke manual con `npm run dev` pendiente (no se crean usuarios reales desde el agente).
+- Decisiones: (1) el top bar queda como componente de Presentation puro y testable por props; el layout solo compone; (2) la cuenta se resuelve con `Avatar` + `DropdownMenu` sobre `@raulrod/ui` (sin wrapper propio más allá del trigger estilado), sustituyendo el botón plano en el shell pero conservando `SignOutButton` en la lista de workspaces; (3) `role`/permisos se hacen visibles en el header como `Badge`, sin duplicar la lógica de `useWorkspacePermissions` (el contenedor sigue decidiendo); (4) la presencia del top bar reutiliza el `ConnectedUsersStore` ya existente y la suscripción de presencia se comparte con `createSharedPresencePort` para cumplir "sin listeners duplicados" (el store sigue scopeado a un workspace y con una única `subscribe` real); (5) alcance acotado a TASK-105: el Share dialog es TASK-107, así que el top bar expone el `Invite` existente como acción de compartir y no introduce UI muerta; (6) sin ADR por ser decisiones locales de Presentation/composición sobre patrones ya documentados.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-106 (Canvas toolbar).
+
+## 2026-10-14 — TASK-106
+
+- Resultado: **Canvas toolbar** funcional en Presentation. Nuevo componente puro `src/presentation/canvas/components/canvas-toolbar.tsx` (`role="toolbar"` horizontal, `data-testid="canvas-toolbar"`) montado como overlay del `Canvas`, con grupos: creación de elementos (text, note, task, frame, link, connector) vía `ToolbarButton` + `Tooltip` e iconos de `@raulrod/icons`; historial (undo/redo); y vista/edición (fit view, delete selection). Todos los botones tienen `aria-label`; los de creación se deshabilitan sin permiso o sin usuario, el de connector solo con exactamente dos elementos seleccionados, undo/redo según `CommandHistory.canUndo()/canRedo()` y delete sin selección. El `Canvas` gana la prop opcional `onCreateElement(type)`, calcula undo/redo/delete/fit con las primitivas ya existentes (`history`, `deleteElements`, `elementContentBounds`, `store.fit`) y delega la creación al contenedor.
+- Creación real (Application + composición): nuevo `src/application/services/element-creation.ts` (puro y testeable) con `ELEMENT_DEFAULT_SIZES`/`defaultElementSize`, `resolveElementCreatePosition(viewport, size)` (centra el elemento en el centro del viewport en coordenadas de mundo), `elementContentBounds(elements)` (union de bounds, base de fit view y del connector), `connectorEndpoints(selectedIds)` (exige 2) y los builders `buildElementCreateInput` (text/note/task/frame/link con defaults) y `buildConnectorCreateInput`. `WorkspaceShellContainer` compone `createCreateElement` con `generateElementId` y `handleCreateElement`: crea en el centro del viewport con tamaño por tipo, o un connector entre los dos seleccionados con el bounds union; hace `commitElements([...elements, nuevo], 'Create <type>')` (mismo camino de historial/persistencia/undo-redo) y autoselecciona el elemento. Errores de validación explícitos: nuevo `describeCreateElementError` y banner `creationErrorMessage` propagado por `WorkspaceShellLayout` → `WorkspaceTopBar` (`role="alert"`). El layout ya no conoce persistencia; `Canvas` mantiene la interacción desacoplada.
+- Tests/quality gates: 154 suites / 1786 tests en verde (+2 suites / +34: `element-creation.test.ts` —defaults, posición con pan/zoom, bounds, endpoints y builders—; `canvas-toolbar.test.tsx` —creación, connector, undo/redo, delete, fit—; y casos nuevos en `canvas.test.tsx` —toolbar: creación, connector con 2 seleccionados, undo, delete+clear, fit— y `workspace-shell-container.test.tsx` —crear text en el centro, persistir+undo, connector entre 2 seleccionados, creación deshabilitada sin usuario—). `npm run lint`, `npm run format:check`, `npx tsc -b --force`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase). Smoke manual con `npm run dev` pendiente (no se crean usuarios reales desde el agente).
+- Decisiones: (1) toolbar de **click-to-create** en el centro del viewport (sin "modo herramienta" persistente), acordado con el usuario, para no introducir estado de interacción nuevo; (2) la lógica pura de creación vive en Application (`element-creation`) y el cableado/estado en el contenedor, respetando Clean/Hexagonal y evitando meter dominio en Presentation; (3) el connector se crea desde la selección (exactamente 2), con posición/tamaño = bounds union, en vez de crear un elemento huérfano; (4) "Fit view" se añade a la toolbar y se mantiene "Reset view" en `ViewportControls` (no se duplica); (5) la creación usa `generateElementId` como única fuente de ids y reutiliza `commitElements` para historial/persistencia/undo-redo, sin un camino paralelo; (6) errores de validación de creación con mensaje propio y explícito; (7) sin ADR por ser decisiones locales de Presentation/composición sobre patrones ya documentados.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-107 (Share dialog).
+
+## 2026-10-14 — TASK-107
+
+- Resultado: **Share dialog** end-to-end (invitar + gestionar quién tiene acceso). Application: nueva query `createListWorkspaceMembers(membershipRepository)` (`src/application/queries/list-workspace-members.ts`), union `ok (members) | error (AppError)` con orden determinista `sortWorkspaceMembers` (owner → editor → viewer, desempate por `userId` asc); exportada en `queries/index.ts` y compuesta en `workspace-services.ts`. Presentation: nueva feature `src/presentation/features/sharing/` con `ShareDialog` (`Dialog` + `Tabs` "Invite"/"People", fetch de miembros al abrir, refresco tras mutación, `onLeft` al salir, estados loading/error+retry/empty), `MembersList` (Avatar + `userId` truncado a 8, badge "You", `Select` de rol, Remove y Leave condicionados) y `share-error-messages.ts`; el antiguo `InviteDialog` se degrada a `InvitePanel` (`active`) y se reutiliza dentro de la pestaña Invite (sustituye a `invite-dialog.tsx`).
+- Wiring: `App.tsx → AppRoutes → WorkspaceShellPage → WorkspaceShellContainer` propagan `listWorkspaceMembers`, `changeMemberRole`, `removeMember`, `leaveWorkspace` (props opcionales, junto a `inviteMember`/`listPendingInvitations`); el top bar renombra `onInvite`→`onShare` (botón **Share** visible a todos los miembros; dentro, las acciones se gatean con `can(...)`). `canShare` exige `localUserId` + servicios + rol resuelto cuando los guards están cableados.
+- Tests/quality gates: 158 suites / 1822 tests en verde (+4 suites: `list-workspace-members.test.ts`, `members-list.test.tsx`, `share-dialog.test.tsx`, `share-error-messages.test.ts`; `invite-dialog.test.tsx` migrado a `invite-panel.test.tsx`; `workspace-top-bar.test.tsx` y `workspace-shell-container.test.tsx` actualizados — Share sin servicios, apertura desde el header, viewer con Share pero sin pestaña Invite, editor con pestaña Invite, membership desconocida sin Share). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase). Smoke manual con `npm run dev` pendiente (no se crean usuarios reales desde el agente).
+- Decisiones: (1) una sola superficie "Share" (invitar + miembros) en vez de dos diálogos; (2) identidad de miembro = `userId` truncado (últimos 8) + `Avatar`, reutilizando el criterio de la presencia y evitando un directorio de usuarios inexistente; (3) el fetch de miembros vive en `ShareDialog` (refresco tras rol/eliminar) y el contenedor solo compone; (4) el miembro actual no puede cambiarse rol ni eliminarse desde la lista — sus acciones van por "Leave workspace"; (5) Share visible a todos los miembros (viewer incluido) con acciones internas gateadas por permiso; (6) sin invariante de "último owner" (se mantiene la decisión de TASK-099/100/101). ADR-0024 documenta la decisión.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-108 (Loading/error/empty states).
+
+## 2026-10-14 — TASK-108
+
+- Resultado: **Estados loading/error/empty consolidados** en Presentation sobre los componentes compartidos de TASK-104, que hasta ahora solo existían con sus tests y sin uso en features. `LoadingState` gana `label` (texto `VisuallyHidden` para lectores de pantalla) y `children` (indicador con forma de contenido, p. ej. skeletons), manteniendo `role="status" aria-live="polite" aria-busy="true"`; `ErrorState` gana `secondaryActionLabel`/`onSecondaryAction` (acción secundaria outline) y `titleAs` para el nivel de heading; `EmptyState` gana `titleAs`. Los tres renderizan el título con `Heading` (jerarquía correcta por defecto, `h2`). Migrados todos los estados inline duplicados: `WorkspacesList` (grid de skeletons + error + empty sobre `CardShell`), `PendingInvitationsList`, `MembersList`, `WorkspaceShellContainer` (loading workspace, notFound, error, loading board y error board con Retry + Back) y `AcceptInvitationPage` (aceptando + error). Además el `Canvas` muestra un `EmptyState` explícito ("This board is empty") con los atajos cuando el tablero no tiene elementos, sustituyendo el hint de texto plano.
+- A11y: se unifican semánticas —carga `role="status"` + `aria-busy`, errores `role="alert"`, vacíos `role="status"`— eliminando el markup inconsistente previo (p. ej. `ErrorState` usaba `Text` y `WorkspacesList` usaba `Heading` para el mismo concepto).
+- Tests/quality gates: 158 suites / 1831 tests en verde (+9 tests: `loading-state` label/children/busy, `error-state` acción secundaria y `titleAs`, `empty-state` `titleAs`, `workspaces-list` busy status y 2 casos de tablero vacío en `canvas.test.tsx`). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase). Smoke manual con `npm run dev` pendiente.
+- Decisiones: (1) consolidar sobre los componentes compartidos de TASK-104 (elegido por el usuario) en vez de solo auditar huecos; (2) extensiones mínimas y justificadas (`label`/`children` en `LoadingState`, acción secundaria y `titleAs` en `ErrorState`/`EmptyState`) sin abstracciones especulativas; (3) título como `Heading` con `titleAs` para respetar `h1` en páginas y `h2`/`h3` en paneles; (4) cambios solo en Presentation —Domain/Application/Infrastructure intactos—; (5) empty board explícito pedido por el usuario, reutilizando `EmptyState` dentro del overlay del canvas; (6) sin ADR por ser decisiones locales de Presentation sobre patrones ya documentados.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-109 (Keyboard navigation).
+
+## 2026-10-14 — TASK-109
+
+- Resultado: **Keyboard navigation** espacial en el canvas, con foco predecible y `aria-activedescendant`. Application: nuevo `src/application/services/canvas-navigation.ts` (`resolveNavigationKey` normaliza las cuatro flechas + `Shift` como aditivo, ignora `Ctrl`/`Meta`/`Alt`; `findNextSelectable(items, currentId, direction)` proyecta los centros sobre el eje de la dirección, exige candidato con proyección primaria `> 0.001`, puntúa `primary + secondary * 2` y desempata por secundario → primario → orden de entrada; sin ancla o ancla desconocida devuelve el primer ítem, sin candidato `null`), reutilizando `SelectableItem` de `canvas-hit-test`; exportado en `services/index.ts`.
+- Presentation: nuevo `src/presentation/canvas/hooks/use-canvas-navigation.ts` (listener `keydown` en el contenedor, estado efímero `activeId` vía refs sincronizado con la selección externa —si el activo no está seleccionado toma el último seleccionado—, ignora `event.repeat` y targets editables, `preventDefault()` solo cuando la tecla se resuelve y emite `onNavigate(id, additive)`). Cableado en `canvas.tsx`: `handleNavigate` → `selectionStore.select`/`addMany`, `aria-activedescendant="element-<id>"`, `data-active-id`, `aria-keyshortcuts` y hint ampliados con las flechas, `canvasNavigationRef` fusionado en `setContainerRef` y `disabled={readOnly}`. `element-view.tsx` añade `id="element-<id>"` estable.
+- Tests/quality gates: 160 suites / 1858 tests en verde (+2 suites / +27: `canvas-navigation.test.ts` —11: resolución de teclas y búsqueda espacial con vector/alineación/desempate/fallback—, `use-canvas-navigation.test.tsx` —12: navegación, extensión con Shift, id activo, editables, modificadores, `disabled`, `preventDefault`, repeat y cleanup—, y 4 de integración en `canvas.test.tsx` —selección inicial, movimiento, extensión con Shift e inerte sin foco—; actualizadas las assertions de hint y `aria-keyshortcuts`). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase). Smoke manual con `npm run dev` pendiente (no se crean usuarios reales desde el agente).
+- Decisiones: (1) alcance = navegación espacial + `aria-activedescendant`; el focus trap/roving tabindex/restauración quedan en TASK-110, acordado con el usuario; (2) `Shift + flecha` extiende la multiselección (confirmado con el usuario); (3) el resolver vive en Application (puro y testeable sin DOM) y el listener en Presentation, manteniendo los límites de capas; (4) el ancla de navegación es efímera en el hook y se sincroniza con la selección externa, sin introducir estado en el store; (5) `resolveSelectionKeyCommand` no cambia —las flechas siguen devolviendo `null`— evitando regresión; (6) sin ADR por ser una decisión local de interacción sobre patrones documentados. Nombres/roles accesibles por elemento quedan para TASK-111.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-110 (Focus management).
+
+## 2026-10-14 — TASK-110
+
+- Resultado: **Focus management** completo, cerrando lo diferido por TASK-109 (focus trap / roving tabindex / restauración). Presentation: nuevo hook compartido `src/presentation/hooks/use-roving-focus.ts` (roving tabindex reutilizable: un único `tabIndex=0` en el primer control habilitado, resto `-1`; flechas + `Home`/`End` con orientación `horizontal`/`vertical`/`both`; ignora `disabled`/`aria-disabled`; `preventDefault`+`stopPropagation` para que las flechas no escapen al canvas; índice sincronizado en `focusin`; re-sincroniza el tope de tabulación en cada render con `useLayoutEffect`; recupera el foco al siguiente control habilitado si el activo se deshabilita, por `focusout` real o por re-render cuando el foco salió del contenedor) y nuevo hook `src/presentation/canvas/hooks/use-canvas-focus.ts` (al `pointerdown` sobre el lienzo mueve el foco a `role="application"` salvo objetivo interactivo o ya enfocado; `disabled` en solo lectura).
+- Integración: `canvas-toolbar.tsx` aplica `useRovingFocus` a la `role="toolbar"` (orientación `both`); `canvas.tsx` fusiona `canvasFocusRef` en `setContainerRef`; ambos hooks exportados en sus barrels. Se **reutiliza sin reimplementar** el focus-trap, la restauración de foco y el dismiss (Escape/backdrop) que ya aporta `Dialog.Content` de `@raulrod/ui` (la toolbar y el botón **Share** son de App, el `Dialog` es de la librería), y el roving/focus-return preexistente de `DropdownMenu`/`Popover`/`Select`/`Tabs`.
+- Tests/quality gates: 162 suites / 1882 tests en verde (+2 suites / +24: `use-roving-focus.test.tsx` —9: tope único, flechas, wrap, Home/End, orientación, `stopPropagation`, retención al deshabilitarse y `disabled`—, `use-canvas-focus.test.tsx` —4: foco en zona no interactiva, no roba foco a controles, `disabled`, cleanup—, más `canvas-toolbar.test.tsx` —3: tope único + flechas, primer control habilitado sin creación, teclas no escapan—, `canvas.test.tsx` —3: foco al pulsar zona vacía, no roba foco en control, flechas de la toolbar no cambian la selección— y `create-workspace-dialog.test.tsx`/`share-dialog.test.tsx` —2+2: foco inicial en el panel y cierre con Escape— y `workspace-shell-container.test.tsx` —1: restaurar foco al botón **Share**—). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase). Smoke manual con `npm run dev` pendiente (no se crean usuarios reales desde el agente).
+- Decisiones: (1) alcance "completo" acordado con el usuario = foco del canvas + roving de la toolbar + tests de trap/restauración de diálogos, sin reimplementar lo que ya hace `@raulrod/ui`; (2) el roving tabindex vive en un hook **compartido** en `src/presentation/hooks` (reutilizable por futuras barras), no dentro del canvas; (3) las flechas de la toolbar hacen `stopPropagation` porque la toolbar está **dentro** del contenedor del canvas, de modo que `use-canvas-navigation` no reciba el evento (y un test lo verifica explícitamente); (4) la recuperación de foco al deshabilitarse el control activo se cubre por dos vías (evento `focusout` en navegador real y re-sincronización en re-render) para mantener el tope de tabulación siempre válido; (5) sin ADR por ser decisiones locales de Presentation sobre patrones de interacción ya documentados. Nombres/roles accesibles por elemento quedan para TASK-111.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-111 (Canvas accessibility strategy).
+
+## 2026-10-14 — TASK-111
+
+- Resultado: **Canvas accessibility strategy** completa, cerrando lo diferido por TASK-109/110 (nombres/roles accesibles por elemento). Nueva utilidad pura y React-free `src/presentation/canvas/accessibility/describe-element.ts` + barrel `index.ts` (exportado en `src/presentation/canvas/index.ts`): `describeElement(element, elements?)` produce nombres legibles por tipo (`Text: …`, `Note: …`, `Task: <título>, <estado>[, due <fecha>]`, `Frame: …`, `Link: …`, `Connector from … to …`), normaliza espacios, trunca contenido largo (`CONTENT_MAX_LENGTH = 80`) y resuelve los extremos del connector a la etiqueta del elemento referenciado cuando se le pasa el tablero; `describeBoard(elements)` genera un resumen escalable por tipo (`Board with N elements: …`; `This board is empty.`).
+- Presentation: `element-view.tsx` pasa a `role="group"` con `aria-label` (prop `ariaLabel` opcional que sobreescribe) y expone la selección con `aria-current="true"`; el contenedor referencia cada elemento por `aria-activedescendant`. Los renderers (`text`/`note`/`task`/`frame`/`link`/`default`) marcan su contenido visual con `aria-hidden="true"` (los connectors ya lo hacían) para que AT use el nombre conciso del grupo y no relea el contenido. `canvas.tsx` añade `VisuallyHidden` (`@raulrod/ui`) con `id="canvas-board-summary"` y `aria-describedby` en el `role="application"`, más el `aria-label` por elemento calculado con `describeElement(element, elements)`. Se reutiliza la navegación/teclado de TASK-109/110 y los controles de vista accesibles (`Fit view`, `Reset view`, zoom %), sin atajos nuevos.
+- Tests/quality gates: 163 suites / 1897 tests en verde (+1 suite / +15: `describe-element.test.ts` —9: por tipo, due, contenido vacío, truncado, connectors con ids sin tablero y resueltos con tablero, resumen vacío/por tipo/singular—, `element-view.test.tsx` —3: rol+nombre, `aria-current` en seleccionado, `ariaLabel` explícito— y `canvas.test.tsx` —3: resumen del tablero + `aria-describedby`, resumen vacío y nombre accesible por elemento—). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase). Smoke manual con lector de pantalla real pendiente (no ejecutable desde el agente).
+- Decisiones: (1) el canvas sigue como `role="application"` con `aria-activedescendant`, sin `listbox`/`grid` (no encajan con la multiselección/foco real); (2) cada elemento es `role="group"` con nombre explícito y `aria-current` para la selección (`aria-selected` no aplica a `group`); (3) el naming vive en Presentation por ser texto de UI y se implementa como función pura testeable sin DOM; (4) el contenido visual es decorativo para AT (`aria-hidden`), evitando doble anuncio; (5) alternativa textual mínima del tablero vía `aria-describedby` (no `aria-live`, para no generar ruido); (6) sin atajos nuevos — alcance acordado (nudge/zoom por teclado quedan fuera). ADR-0025 documenta la estrategia.
+- ADR-0025 (`docs/adr/0025-canvas-accessibility-strategy.md`): modelo de aplicación + activedescendant, rol/nombre por elemento, contenido visual `aria-hidden`, resumen del tablero y cobertura de teclado por controles existentes, con alternativas descartadas.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-112 (Reduced motion / contrast).
+
+## 2026-10-14 — TASK-112
+
+- Resultado: **Reduced motion / contrast** implementado en Presentation, sin tocar Domain/Application/Infrastructure. Nuevo `src/presentation/styles/preferences.ts` (React-free): `REDUCED_MOTION_QUERY`, `REDUCED_MOTION_BEHAVIOR` (`token('motion.behavior.reduced')` → `var(--rr-motion-behavior-reduced)`) y el fragmento `respectReducedMotion` que, bajo `@media (prefers-reduced-motion: reduce)`, fija `animation-name` al token reducido (contrato RRU-024 de `@raulrod/ui`). Se aplica a la única animación propia (`spinner.tsx`), que ahora se detiene con la preferencia del sistema. Nuevo `src/presentation/styles/global-styles.tsx`: componente `GlobalStyles` que inyecta en `<head>` (via `precedence` de React 19) el tratamiento `@media (prefers-contrast: more)`, remapeando las custom properties `--rr-color-border-default → --rr-color-border-strong` y `--rr-color-text-muted → --rr-color-text-primary` en `:root`, cubriendo app y `@raulrod/ui` sin duplicar reglas; montado en `AppThemeProvider`. Todo exportado por el barrel `styles/index.ts`.
+- Contraste (auditoría): nuevo `src/test/unit/presentation/styles/contrast.test.ts` con la tabla de todos los pares fg/bg que pinta la app (texto y no-texto) y verificación WCAG 2.1 AA en light y dark con `contrastRatio`/`requiredContrast` de `@raulrod/tokens` sobre los valores semánticos. No apareció ninguna violación, así que no hubo cambios visuales.
+- Tests/quality gates: 166 suites / 1912 tests en verde (+3 suites / +15: `contrast.test.ts` —11 pares—, `preferences.test.ts` —2: query y token—, `global-styles.test.tsx` —1: remaps de `prefers-contrast: more`— y `spinner.test.tsx` —+1: `animation-name` reducido bajo `prefers-reduced-motion`—). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase). Smoke manual con preferencias del SO pendiente (no ejecutable desde el agente).
+- Decisiones: (1) alcance acordado con el usuario = reduced motion "helper + Spinner" y contraste "ambos" (auditoría WCAG + `prefers-contrast`); (2) el helper de movimiento reutiliza el token reducido de `@raulrod/tokens` en vez de reimplementar la detección, igual que `@raulrod/ui`; (3) la auditoría de contraste es numérica (`contrastRatio`/`requiredContrast`) en lugar de ceñirse a la tabla `AUTHORIZED_PAIRS`, para no marcar pares válidos fuera de tabla y aun así blindar AA en ambos temas; (4) el tratamiento de alto contraste remapea tokens en `:root` (una sola fuente de verdad, cubre librería y app) en vez de reglas por componente; (5) `GlobalStyles` se implementa como elemento `<style>` con `precedence` de React 19 porque `createGlobalStyle` no inyecta bajo el build CJS/jsdom de tests; así el comportamiento es idéntico en app y test; (6) sin ADR por ser decisiones locales de Presentation sobre patrones ya documentados.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-113 (Canvas performance baseline).
+
+## 2026-10-14 — TASK-113
+
+- Resultado: **Canvas performance baseline** completa, sin tocar código de producción (TASK-114 optimiza, TASK-115 añade umbrales). Doble capa de medición acordada con el usuario: (1) suite Jest reproducible en jsdom y (2) harness manual de navegador para métricas reales de layout/paint/FPS.
+- Tooling de test (fuera de producción): `src/test/fixtures/generate-elements.ts` (tablero determinista por semilla con los seis tipos), `src/test/perf/measure.ts` (utilidades puras: `summarize`/`percentile`/`median`/`measure`/`measureSamples`/`heapUsedBytes`/formato), `src/test/perf/report.ts` (entorno + `writePerfReport`, Node-only) y `src/test/perf/canvas.perf.test.tsx` (28 tests: algoritmos del hot path + `mount`/`pan`/`zoom`/`selection`/`heap` a 100/1.000/5.000/10.000). Harness de navegador `perf.html` + `src/test/perf/browser/main.tsx` (monta el `<Canvas>` real, mide frames con rAF, `performance.memory` y permite copiar/descargar JSON).
+- Config/scripts: nuevo `jest.perf.config.cjs` (extiende el principal; `roots: src/test/perf`, timeout 120 s) + `tsconfig.perf.json` (proyecto Node/DOM con `types: jest,node,vite/client`, referenciado en `tsconfig.json`; `tsconfig.app.json` excluye `src/test/perf`). Scripts `npm run perf` (`node --expose-gc … jest --config jest.perf.config.cjs --runInBand`) y `npm run perf:dev` (`vite --open /perf.html`). `jest.config.cjs` ignora `src/test/perf` para que `npm test` no pague el coste.
+- Registro versionado: `docs/performance/canvas-baseline.json` (regenerable con `PERF_WRITE=1 npm run perf`) y `docs/performance/canvas-baseline.md` (método, entorno Apple M2 Max/Node v23.6.0, tablas por tamaño, hallazgos y limitaciones).
+- Hallazgos (para TASK-114): la **interacción no escala linealmente** — a 10.000 elementos `pan` ~398 ms, `zoom` ~470 ms, `selection` ~407 ms, `mount` ~755 ms (a 100: 4–17 ms) — porque cada cambio de viewport/selección re-renderiza todos los `ElementView` y recalcula `items`/`allIds`/`selectedItems`/`aria-label`; los **algoritmos puros sí son lineales y baratos** (`toSelectableItems` 2,7 ms y `elementContentBounds` 4,5 ms a 10.000); la **memoria crece ~lineal** (~26 KB/elemento: ~9 / ~32 / ~136 / ~262 MB).
+- Interacción desacoplada de persistencia: los escenarios usan solo `createCanvasViewportStore`/`createSelectionStore` y callbacks en memoria; `expect` verifica que `items`, bounds y selección representan posición/tamaño/estado tras cada escenario.
+- Tests/quality gates: `npm test` 168 suites / 1935 tests en verde (+2 suites / +23: `measure.test.ts` —15— y `generate-elements.test.ts` —8—); `npm run perf` → 28/28 en verde a los cuatro tamaños; `npm run lint`, `npm run format:check`, `npx tsc -b` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase). `perf.html` no entra en `npm run build`.
+- Decisiones: (1) medición en dos capas (jsdom reproducible + navegador manual) porque jsdom no pinta; (2) tooling vivo en `src/test` y aislado por config propia, con `--expose-gc` para una memoria fiable; (3) registro versionado = JSON + markdown, sin cifras de navegador (dependen del host); (4) sin cambios de producción — `perf.html` no forma parte del build; (5) ADR-0026 documenta el método y las alternativas descartadas.
+- ADR-0026 (`docs/adr/0026-canvas-performance-baseline.md`): doble capa, escenarios/métricas, registro versionado, aislamiento del tooling y "medir antes de optimizar".
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-114 (Rendering optimization).
+
+## 2026-10-15 — TASK-116
+
+- Resultado: **Critical journey integration tests**. Nuevo harness reutilizable `src/test/integration/harness.tsx` con dos capas: `renderAppRoutes({ authPort, props, initialPath, showLocation })` (deduplica el shell `MemoryRouter` + `SessionProvider` + `LocationProbe`) y `createAppHarness()` (wiring de `AppRoutes` con forma de producción sobre fakes in-memory: auth/workspace/membership/element/realtime/presence, `generateElementId` secuencial `el-N`, `register`, `createOwnerWorkspace`, `render`, getter `currentUser`). Nueva suite `src/test/integration/critical-journey.test.tsx` con 5 tests: (1) journey de registro por UI → workspace (rol `owner` verificado en `FakeMembershipRepository`) → abrir board → crear Text/Note por toolbar → Undo/Redo → Delete selection, comprobando persistencia en `FakeElementRepository`; (2) recovery tras remount del board con los mismos repos (TASK-075); (3) cambio remoto vía `FakeRealtimePort.emit` que sobrevive a Undo/Redo locales (TASK-088); (4)+(5) borrado de workspace owner-only (owner OK; editor/viewer/no-miembro → `auth/forbidden` sin borrar) (TASK-102).
+- Tests/quality gates: `npm test` 174 suites / 1965 tests en verde (+1 suite / +5 tests: `collaboration.test.tsx`), sin regresiones; `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npx tsc -b` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase).
+- Decisiones: (1) no modificar `harness.tsx` — solo agregar test; (2) archivo dedicado `collaboration.test.tsx` (no tocar `critical-journey.test.tsx`); (3) peers modelados vía eventos directos de los fakes (como en `critical-journey`), sin renderizar dos `AppRoutes`; (4) evitar duplicación de pruebas de history-vs-remote ya cubiertas en TASK-116/088 — el enfoque es presencia/realtime/reconexión/aislamiento.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-119 (Permission integration tests).
+
+## 2026-10-15 — TASK-129 / TASK-124
+
+- Resultado: Pipeline de CI creado en `.github/workflows/ci.yml` con dos jobs: `quality-gates` (`lint`, `format:check`, `typecheck`, `test`, `build`, `npm audit --omit=dev`) y `rules-tests` (Java 21 + emulador Firestore + `npm run test:rules`). Se añadieron `engines` (`node: 22`, `npm: >=10`) a `package.json`. Se añadió un test de reglas que reproduce la secuencia real de creación de workspace + membership owner (`src/test/rules/firestore.rules.test.ts`). El bug de permisos reportado quedó confirmado como rules no desplegadas en Firestore; con las rules desplegadas el flujo funciona y el test lo cubre contra regresiones. TASK-124 pasa a DONE: todos los gates pasan, el backlog refleja el estado real, no quedan P0 sin cerrar y los riesgos residuales quedan como TASK-125 (P1) y tareas futuras fuera del MVP.
+- Tests/quality gates: `npm test` 176 suites / 1990 tests en verde; `npm run test:rules` 78 tests en verde; `npm run perf` 38 tests / 10 budgets en verde; `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm run build` y `npm audit --omit=dev` en verde.
+- Decisiones: (1) Opción B acordada con el usuario: TASK-129 se cierra antes de TASK-124; (2) Java 21 en CI para compatibilidad futura con `firebase-tools@15` aunque localmente aún use JDK 17; (3) no añadir `engine-strict` para no bloquear entornos locales, siguiendo el constraint del backlog; (4) el bug de permisos no requirió cambio de código de aplicación ni de rules; se añadió cobertura de reglas para la secuencia exacta.
+- Hallazgos residuales: TASK-125 (Error Boundary global, P1) sigue pendiente; TASK-127 (lecturas globales + email verificado, P1), TASK-128 (tooling dev dependencies, P1) y TASK-130 (upgrades de runtime/build, P2) quedan fuera del cierre del MVP.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-125 (Error Boundary global).
+
+## 2026-10-15 — TASK-125
+
+- Resultado: Error Boundary global de punta a punta. `ErrorBoundary` (class component en `src/presentation/components/error-boundary.tsx`) con `getDerivedStateFromError`, `componentDidCatch` (callback `onError` opcional), fallback por defecto reutilizando `ErrorState` (`role="alert"` + botón "Try again" que resetea el estado) y prop `fallback` custom. `installGlobalErrorHandlers(options?)` en `src/presentation/providers/global-error-handlers.ts`: registra `window.error` y `window.unhandledrejection`, reenvía a callbacks opcionales (sin `console.*`, conforme a la regla `no-console`), y devuelve un `cleanup` que remueve ambos listeners. `main.tsx` envuelve `<App />` con `<ErrorBoundary>` (dentro de `StrictMode`) y llama `installGlobalErrorHandlers()` antes del render. Cierra F1 de `docs/audits/error-handling-audit.md` / `docs/audits/security-audit.md`.
+- Tests/quality gates: `npm test` 178 suites / 1998 tests en verde (+2 suites / +8 tests: `error-boundary.test.tsx` con render directo, fallback por defecto, callback `onError`, recuperación vía "Try again" y fallback custom; `global-error-handlers.test.ts` con captura de eventos `error`/`unhandledrejection` y verificación de add/remove de listeners vía spies); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit` y `npm run build` en verde.
+- Decisiones: (1) los handlers **no** usan `console.*` (regla `no-console` de `.oxlintrc.json`, F7 de `error-handling-audit`): solo reenvían a callbacks opcionales, y el motor sigue reportando por su canal nativo; (2) handlers en un módulo con `cleanup` explícito en vez de efecto de React para poder instalarlos una sola vez en `main.tsx` y testearlos sin render; (3) jsdom no implementa `PromiseRejectionEvent`, así que el test construye un `Event` con `reason` definido por `Object.defineProperty`; (4) sin ADR por ser patrón React estándar, decisión local no transversal.
+- Bloqueos: ninguno.
+- Siguiente tarea: primera TODO con dependencias DONE (TASK-127, TASK-128 o TASK-130; fuera del MVP salvo decisión explícita).
 
 ---
 

@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { act, StrictMode, type ReactNode } from 'react';
 import type { AuthPort, AuthUser, SessionListener } from '../../../../application/ports';
 import { createSessionStore, type SessionStore } from '../../../../application/services';
-import { SessionProvider, useSession } from '../../../../app/providers/session-provider';
+import { SessionProvider, useSession } from '../../../../presentation/providers/session-provider';
 import { FakeAuthPort } from '../../../fixtures/fake-auth-port';
 
 function SessionProbe(): ReactNode {

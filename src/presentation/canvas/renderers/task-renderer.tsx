@@ -19,32 +19,32 @@ const Content = styled.div`
   gap: 4px;
   padding: 12px;
   overflow: hidden;
-  border-radius: var(--rr-radius-100, 4px);
-  background-color: var(--rr-color-background-default, #ffffff);
-  color: var(--rr-color-text-default, #0f172a);
-  font-size: var(--rr-font-size-200, 14px);
+  border-radius: ${({ theme }) => theme.radius.sm};
+  background-color: ${({ theme }) => theme.canvas.surface};
+  color: ${({ theme }) => theme.color.text.primary};
+  font-size: ${({ theme }) => theme.font.size.sm};
   line-height: 1.4;
   cursor: pointer;
 `;
 
 const Title = styled.div`
-  font-weight: 600;
+  font-weight: ${({ theme }) => theme.font.weight.semibold};
   word-break: break-word;
 `;
 
 const StatusBadge = styled.span`
   align-self: flex-start;
   padding: 2px 6px;
-  border-radius: var(--rr-radius-100, 4px);
-  background-color: var(--rr-color-background-subtle, #f1f5f9);
-  font-size: var(--rr-font-size-100, 12px);
+  border-radius: ${({ theme }) => theme.radius.sm};
+  background-color: ${({ theme }) => theme.color.background.sunken};
+  font-size: ${({ theme }) => theme.font.size['2xs']};
   text-transform: uppercase;
   letter-spacing: 0.04em;
 `;
 
 const Meta = styled.div`
-  color: var(--rr-color-text-subtle, #64748b);
-  font-size: var(--rr-font-size-100, 12px);
+  color: ${({ theme }) => theme.color.text.muted};
+  font-size: ${({ theme }) => theme.font.size['2xs']};
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -60,7 +60,12 @@ export function TaskRenderer({ element }: ElementRendererProps): ReactElement | 
   }
 
   return (
-    <Content data-element-content="true" data-element-type="task" data-task-status={element.status}>
+    <Content
+      data-element-content="true"
+      data-element-type="task"
+      data-task-status={element.status}
+      aria-hidden="true"
+    >
       <Title>{element.title}</Title>
       <StatusBadge>{STATUS_LABELS[element.status]}</StatusBadge>
       {element.assigneeId === undefined ? null : (

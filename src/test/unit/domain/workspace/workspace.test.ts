@@ -1,5 +1,7 @@
 import { Workspace } from '../../../../domain/workspace';
-import { WorkspaceId } from '../../../../domain/shared';
+import { UserId, WorkspaceId } from '../../../../domain/shared';
+
+const CREATED_BY = UserId.create('user-1');
 
 describe('Workspace', () => {
   it('creates a workspace with valid data', () => {
@@ -8,6 +10,7 @@ describe('Workspace', () => {
     const updatedAt = new Date('2024-01-01T00:00:00.000Z');
 
     const workspace = Workspace.create({
+      createdBy: CREATED_BY,
       id,
       name: 'My Workspace',
       createdAt,
@@ -23,6 +26,7 @@ describe('Workspace', () => {
 
   it('trims the workspace name', () => {
     const workspace = Workspace.create({
+      createdBy: CREATED_BY,
       id: WorkspaceId.create('ws-123'),
       name: '  My Workspace  ',
     });
@@ -33,6 +37,7 @@ describe('Workspace', () => {
   it('throws when name is empty', () => {
     expect(() =>
       Workspace.create({
+        createdBy: CREATED_BY,
         id: WorkspaceId.create('ws-123'),
         name: '',
       }),
@@ -42,6 +47,7 @@ describe('Workspace', () => {
   it('throws when name is only whitespace', () => {
     expect(() =>
       Workspace.create({
+        createdBy: CREATED_BY,
         id: WorkspaceId.create('ws-123'),
         name: '   ',
       }),
@@ -52,6 +58,7 @@ describe('Workspace', () => {
     const longName = 'a'.repeat(101);
     expect(() =>
       Workspace.create({
+        createdBy: CREATED_BY,
         id: WorkspaceId.create('ws-123'),
         name: longName,
       }),
@@ -61,6 +68,7 @@ describe('Workspace', () => {
   it('accepts name with exactly 100 characters', () => {
     const name = 'a'.repeat(100);
     const workspace = Workspace.create({
+      createdBy: CREATED_BY,
       id: WorkspaceId.create('ws-123'),
       name,
     });
@@ -71,6 +79,7 @@ describe('Workspace', () => {
   it('sets timestamps to defaults when not provided', () => {
     const before = new Date();
     const workspace = Workspace.create({
+      createdBy: CREATED_BY,
       id: WorkspaceId.create('ws-123'),
       name: 'Test',
     });
@@ -84,6 +93,7 @@ describe('Workspace', () => {
   it('throws when updatedAt is before createdAt', () => {
     expect(() =>
       Workspace.create({
+        createdBy: CREATED_BY,
         id: WorkspaceId.create('ws-123'),
         name: 'Test',
         createdAt: new Date('2024-01-02T00:00:00.000Z'),
@@ -96,6 +106,7 @@ describe('Workspace', () => {
     const invalidDate = new Date('invalid');
     expect(() =>
       Workspace.create({
+        createdBy: CREATED_BY,
         id: WorkspaceId.create('ws-123'),
         name: 'Test',
         createdAt: invalidDate as unknown as Date,
@@ -106,6 +117,7 @@ describe('Workspace', () => {
 
   it('updates workspace name', () => {
     const workspace = Workspace.create({
+      createdBy: CREATED_BY,
       id: WorkspaceId.create('ws-123'),
       name: 'Old Name',
     });
@@ -120,6 +132,7 @@ describe('Workspace', () => {
 
   it('updates workspace description', () => {
     const workspace = Workspace.create({
+      createdBy: CREATED_BY,
       id: WorkspaceId.create('ws-123'),
       name: 'Test',
       description: 'Old desc',
@@ -132,6 +145,7 @@ describe('Workspace', () => {
 
   it('clears description when set to null', () => {
     const workspace = Workspace.create({
+      createdBy: CREATED_BY,
       id: WorkspaceId.create('ws-123'),
       name: 'Test',
       description: 'Old desc',
@@ -144,6 +158,7 @@ describe('Workspace', () => {
 
   it('preserves existing values when no updates provided', () => {
     const workspace = Workspace.create({
+      createdBy: CREATED_BY,
       id: WorkspaceId.create('ws-123'),
       name: 'Test',
       description: 'Desc',
@@ -157,6 +172,7 @@ describe('Workspace', () => {
 
   it('allows custom updatedAt in update', () => {
     const workspace = Workspace.create({
+      createdBy: CREATED_BY,
       id: WorkspaceId.create('ws-123'),
       name: 'Test',
     });
@@ -169,6 +185,7 @@ describe('Workspace', () => {
 
   it('throws on invalid update name', () => {
     const workspace = Workspace.create({
+      createdBy: CREATED_BY,
       id: WorkspaceId.create('ws-123'),
       name: 'Test',
     });
@@ -180,6 +197,7 @@ describe('Workspace', () => {
     const createdAt = new Date('2024-01-01T00:00:00.000Z');
     const updatedAt = new Date('2024-01-01T01:00:00.000Z');
     const workspace = Workspace.create({
+      createdBy: CREATED_BY,
       id: WorkspaceId.create('ws-123'),
       name: 'Test',
       createdAt,
@@ -192,6 +210,7 @@ describe('Workspace', () => {
     expect(json).toEqual({
       id: 'ws-123',
       name: 'Test',
+      createdBy: 'user-1',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T01:00:00.000Z',
       description: 'Description',

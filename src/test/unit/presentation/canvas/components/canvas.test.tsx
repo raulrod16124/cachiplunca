@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Position, ElementId, Size, UserId, WorkspaceId } from '../../../../../domain/shared';
 import { createTextElement } from '../../../../../domain/element';
-import type { Element } from '../../../../../domain/element';
+import type { Element, ElementType } from '../../../../../domain/element';
 import {
   createCanvasViewportStore,
   createCommandHistory,
@@ -123,9 +123,21 @@ describe('Canvas', () => {
     expect(screen.getByRole('application', { name: 'Canvas' })).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo',
+        'Arrow keys to move selection · Shift + Arrow to extend selection · Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo',
       ),
     ).toBeInTheDocument();
+  });
+
+  it('shows an empty board state when there are no elements', () => {
+    renderCanvas([]);
+
+    expect(screen.getByRole('heading', { name: 'This board is empty' })).toBeInTheDocument();
+  });
+
+  it('hides the empty board state once the board has elements', () => {
+    renderCanvas([FIRST_ITEM]);
+
+    expect(screen.queryByRole('heading', { name: 'This board is empty' })).not.toBeInTheDocument();
   });
 
   it('exposes the canvas as a focusable region with keyboard shortcuts', () => {
@@ -135,8 +147,30 @@ describe('Canvas', () => {
     expect(canvas).toHaveAttribute('tabindex', '0');
     expect(canvas).toHaveAttribute(
       'aria-keyshortcuts',
-      'Escape Control+A Meta+A Delete Control+D Meta+D Control+C Meta+C Control+V Meta+V Control+Z Meta+Z Control+Shift+Z Meta+Shift+Z Control+Y Meta+Y',
+      'ArrowUp ArrowDown ArrowLeft ArrowRight Escape Control+A Meta+A Delete Control+D Meta+D Control+C Meta+C Control+V Meta+V Control+Z Meta+Z Control+Shift+Z Meta+Shift+Z Control+Y Meta+Y',
     );
+  });
+
+  it('describes the board to assistive technology', () => {
+    renderCanvas([FIRST_ITEM]);
+
+    const canvas = screen.getByRole('application', { name: 'Canvas' });
+    expect(canvas).toHaveAttribute('aria-describedby', 'canvas-board-summary');
+    expect(screen.getByTestId('canvas-board-summary')).toHaveTextContent(
+      'Board with 1 element: 1 text.',
+    );
+  });
+
+  it('summarizes an empty board', () => {
+    renderCanvas([]);
+
+    expect(screen.getByTestId('canvas-board-summary')).toHaveTextContent('This board is empty.');
+  });
+
+  it('exposes each element with an accessible name', () => {
+    renderCanvas([FIRST_ITEM]);
+
+    expect(screen.getByRole('group', { name: 'Text: hello' })).toBeInTheDocument();
   });
 
   it('renders an infinite grid aligned to the world origin', () => {
@@ -520,6 +554,59 @@ describe('Canvas', () => {
         selectionStore.select('first');
       });
       await user.keyboard('{Escape}');
+
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['first']);
+    });
+  });
+
+  describe('keyboard navigation', () => {
+    it('selects the first item on the first arrow when focused', async () => {
+      const { selectionStore } = renderCanvas([FIRST_ITEM, SECOND_ITEM]);
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const user = userEvent.setup();
+
+      canvas.focus();
+      await user.keyboard('{ArrowRight}');
+
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['first']);
+      expect(canvas).toHaveAttribute('data-active-id', 'first');
+      expect(canvas).toHaveAttribute('aria-activedescendant', 'element-first');
+    });
+
+    it('moves the selection to the neighbour in the direction', async () => {
+      const { selectionStore } = renderCanvas([FIRST_ITEM, SECOND_ITEM]);
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const user = userEvent.setup();
+
+      canvas.focus();
+      await user.keyboard('{ArrowRight}{ArrowRight}');
+
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['second']);
+      expect(canvas).toHaveAttribute('aria-activedescendant', 'element-second');
+      expect(screen.getByTestId('canvas-item-second')).toHaveAttribute('data-selected', 'true');
+    });
+
+    it('extends the selection with shift', async () => {
+      const { selectionStore } = renderCanvas([FIRST_ITEM, SECOND_ITEM]);
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const user = userEvent.setup();
+
+      canvas.focus();
+      await user.keyboard('{ArrowRight}');
+      await user.keyboard('{Shift>}{ArrowRight}{/Shift}');
+
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['first', 'second']);
+      expect(canvas).toHaveAttribute('aria-activedescendant', 'element-second');
+    });
+
+    it('ignores navigation when not focused', async () => {
+      const { selectionStore } = renderCanvas([FIRST_ITEM, SECOND_ITEM]);
+      const user = userEvent.setup();
+
+      act(() => {
+        selectionStore.select('first');
+      });
+      await user.keyboard('{ArrowRight}');
 
       expect(selectionStore.getSnapshot().selectedIds).toEqual(['first']);
     });
@@ -1102,6 +1189,148 @@ describe('Canvas', () => {
       await userEvent.setup().keyboard('{Control>}{Shift>}z{/Shift}{/Control}');
 
       expect(onRedoElements).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('toolbar', () => {
+    interface ToolbarCanvasOptions {
+      readonly elements?: readonly Element[];
+      readonly onCreateElement?: (type: ElementType) => void;
+      readonly history?: CommandHistory<readonly Element[]>;
+      readonly onUndoElements?: (elements: readonly Element[]) => void;
+      readonly onRedoElements?: (elements: readonly Element[]) => void;
+      readonly onDeleteElements?: (elements: readonly Element[]) => void;
+    }
+
+    function renderToolbarCanvas(options: ToolbarCanvasOptions = {}) {
+      const store = createCanvasViewportStore(Size.create(800, 600));
+      const selectionStore = createSelectionStore();
+
+      render(
+        <Canvas
+          store={store}
+          selectionStore={selectionStore}
+          elements={options.elements}
+          onCreateElement={options.onCreateElement}
+          history={options.history}
+          onUndoElements={options.onUndoElements}
+          onRedoElements={options.onRedoElements}
+          onDeleteElements={options.onDeleteElements}
+        />,
+      );
+
+      return { store, selectionStore };
+    }
+
+    it('requests the creation of the clicked element type', async () => {
+      const onCreateElement = jest.fn();
+      renderToolbarCanvas({ onCreateElement });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByRole('button', { name: 'Add note' }));
+
+      expect(onCreateElement).toHaveBeenCalledWith('note');
+    });
+
+    it('enables the connector button only with two selected elements', async () => {
+      const onCreateElement = jest.fn();
+      const { selectionStore } = renderToolbarCanvas({
+        elements: [FIRST_ITEM, SECOND_ITEM],
+        onCreateElement,
+      });
+      const user = userEvent.setup();
+      const connector = screen.getByRole('button', { name: 'Connect selected elements' });
+
+      expect(connector).toBeDisabled();
+
+      act(() => {
+        selectionStore.selectMany(['first', 'second']);
+      });
+
+      expect(connector).toBeEnabled();
+
+      await user.click(connector);
+
+      expect(onCreateElement).toHaveBeenCalledWith('connector');
+    });
+
+    it('undoes the last command through the toolbar button', async () => {
+      const onUndoElements = jest.fn();
+      const history = historyWithRecordedCommand([FIRST_ITEM], [FIRST_ITEM, SECOND_ITEM]);
+      renderToolbarCanvas({
+        elements: [FIRST_ITEM, SECOND_ITEM],
+        history,
+        onUndoElements,
+      });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByRole('button', { name: 'Undo' }));
+
+      expect(onUndoElements).toHaveBeenCalledWith([FIRST_ITEM]);
+    });
+
+    it('deletes the selection and clears it through the toolbar button', async () => {
+      const onDeleteElements = jest.fn();
+      const { selectionStore } = renderToolbarCanvas({
+        elements: [FIRST_ITEM, SECOND_ITEM],
+        onDeleteElements,
+      });
+      const user = userEvent.setup();
+
+      act(() => {
+        selectionStore.selectMany(['first']);
+      });
+
+      await user.click(screen.getByRole('button', { name: 'Delete selection' }));
+
+      expect(onDeleteElements).toHaveBeenCalledWith([SECOND_ITEM]);
+      expect(selectionStore.getSnapshot().selectedIds).toEqual([]);
+    });
+
+    it('fits the viewport to the board content', async () => {
+      const { store } = renderToolbarCanvas({ elements: [FIRST_ITEM, SECOND_ITEM] });
+      const user = userEvent.setup();
+
+      expect(store.getSnapshot().transform.scale).toBe(1);
+
+      await user.click(screen.getByRole('button', { name: 'Fit view' }));
+
+      expect(store.getSnapshot().transform.scale).not.toBe(1);
+    });
+
+    it('navigates toolbar controls without changing the canvas selection', async () => {
+      const { selectionStore } = renderToolbarCanvas({
+        elements: [FIRST_ITEM, SECOND_ITEM],
+        onCreateElement: jest.fn(),
+      });
+      const user = userEvent.setup();
+
+      act(() => screen.getByRole('button', { name: 'Add text' }).focus());
+      await user.keyboard('{ArrowRight}');
+
+      expect(screen.getByRole('button', { name: 'Add note' })).toHaveFocus();
+      expect(selectionStore.getSnapshot().selectedIds).toEqual([]);
+      expect(screen.queryByTestId('selection-overlay')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('focus management', () => {
+    it('focuses the canvas when pressing on an empty area', () => {
+      renderCanvas([FIRST_ITEM, SECOND_ITEM]);
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      fireEvent.pointerDown(canvas, { button: 0 });
+
+      expect(canvas).toHaveFocus();
+    });
+
+    it('does not focus the canvas when pressing a toolbar control', () => {
+      renderCanvas([FIRST_ITEM, SECOND_ITEM]);
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      fireEvent.pointerDown(screen.getByRole('button', { name: 'Fit view' }), { button: 0 });
+
+      expect(canvas).not.toHaveFocus();
     });
   });
 });

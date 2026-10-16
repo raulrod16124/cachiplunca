@@ -1,7 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { RequireAuth } from '../../../../app/routes/require-auth';
-import { SessionProvider } from '../../../../app/providers/session-provider';
+import { SessionProvider } from '../../../../presentation/providers/session-provider';
 import type { AuthPort } from '../../../../application/ports';
 import { createSessionStore } from '../../../../application/services';
 import { FakeAuthPort } from '../../../fixtures/fake-auth-port';

@@ -1,16 +1,25 @@
 import type { ReactNode } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import type {
-  CreateWorkspace,
+  AcceptInvitation,
+  ChangeMemberRole,
+  CreateWorkspaceWithOwner,
+  InviteMember,
+  LeaveWorkspace,
   LoginUser,
   LogoutUser,
   RegisterUser,
+  RemoveMember,
 } from '../../application/commands';
 import type {
   GetWorkspace,
+  GetWorkspaceRole,
+  ListPendingInvitations,
+  ListWorkspaceMembers,
   ListWorkspaces,
   LoadWorkspaceElements,
 } from '../../application/queries';
+import type { PresencePort } from '../../application/ports';
 import type {
   ElementPersistenceOrchestrator,
   RealtimeSubscriptionManager,
@@ -18,6 +27,7 @@ import type {
 import type { ElementId } from '../../domain/shared';
 import { LoginPage } from '../../presentation/features/auth/login-page';
 import { RegisterPage } from '../../presentation/features/auth/register-page';
+import { AcceptInvitationPage } from '../../presentation/features/invitations';
 import { WorkspaceShellPage } from '../../presentation/features/workspace-shell';
 import { WorkspacesPage } from '../../presentation/features/workspaces/workspaces-page';
 import { RequireAnonymous } from './require-anonymous';
@@ -28,12 +38,21 @@ export interface AppRoutesProps {
   readonly loginUser: LoginUser;
   readonly logoutUser: LogoutUser;
   readonly listWorkspaces: ListWorkspaces;
-  readonly createWorkspace: CreateWorkspace;
+  readonly createWorkspaceWithOwner: CreateWorkspaceWithOwner;
   readonly getWorkspace: GetWorkspace;
   readonly loadWorkspaceElements: LoadWorkspaceElements;
   readonly elementPersistenceOrchestrator: ElementPersistenceOrchestrator;
   readonly realtimeSubscriptionManager: RealtimeSubscriptionManager;
   readonly generateElementId: () => ElementId;
+  readonly presencePort?: PresencePort;
+  readonly inviteMember?: InviteMember;
+  readonly listPendingInvitations?: ListPendingInvitations;
+  readonly acceptInvitation?: AcceptInvitation;
+  readonly getWorkspaceRole?: GetWorkspaceRole;
+  readonly listWorkspaceMembers?: ListWorkspaceMembers;
+  readonly changeMemberRole?: ChangeMemberRole;
+  readonly removeMember?: RemoveMember;
+  readonly leaveWorkspace?: LeaveWorkspace;
 }
 
 export function AppRoutes({
@@ -41,16 +60,31 @@ export function AppRoutes({
   loginUser,
   logoutUser,
   listWorkspaces,
-  createWorkspace,
+  createWorkspaceWithOwner,
   getWorkspace,
   loadWorkspaceElements,
   elementPersistenceOrchestrator,
   realtimeSubscriptionManager,
   generateElementId,
+  presencePort,
+  inviteMember,
+  listPendingInvitations,
+  acceptInvitation,
+  getWorkspaceRole,
+  listWorkspaceMembers,
+  changeMemberRole,
+  removeMember,
+  leaveWorkspace,
 }: AppRoutesProps): ReactNode {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/register" replace />} />
+      {acceptInvitation !== undefined && (
+        <Route
+          path="/invitations/:token"
+          element={<AcceptInvitationPage acceptInvitation={acceptInvitation} />}
+        />
+      )}
       <Route element={<RequireAnonymous />}>
         <Route path="/login" element={<LoginPage loginUser={loginUser} />} />
         <Route path="/register" element={<RegisterPage registerUser={registerUser} />} />
@@ -62,7 +96,7 @@ export function AppRoutes({
             <WorkspacesPage
               logoutUser={logoutUser}
               listWorkspaces={listWorkspaces}
-              createWorkspace={createWorkspace}
+              createWorkspaceWithOwner={createWorkspaceWithOwner}
             />
           }
         />
@@ -76,6 +110,14 @@ export function AppRoutes({
               realtimeSubscriptionManager={realtimeSubscriptionManager}
               generateElementId={generateElementId}
               logoutUser={logoutUser}
+              presencePort={presencePort}
+              inviteMember={inviteMember}
+              listPendingInvitations={listPendingInvitations}
+              getWorkspaceRole={getWorkspaceRole}
+              listWorkspaceMembers={listWorkspaceMembers}
+              changeMemberRole={changeMemberRole}
+              removeMember={removeMember}
+              leaveWorkspace={leaveWorkspace}
             />
           }
         />

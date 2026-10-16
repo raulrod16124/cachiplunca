@@ -1,5 +1,7 @@
 export { usePan } from './use-pan';
 export type { UsePanOptions, UsePanResult } from './use-pan';
+export { useCursorBroadcast } from './use-cursor-broadcast';
+export type { UseCursorBroadcastOptions, UseCursorBroadcastResult } from './use-cursor-broadcast';
 export { useZoom, DEFAULT_ZOOM_SENSITIVITY } from './use-zoom';
 export type { UseZoomOptions, UseZoomResult } from './use-zoom';
 export { useSelection } from './use-selection';
@@ -31,8 +33,17 @@ export type { UseElementUndoOptions, UseElementUndoResult } from './use-element-
 export { useElementRedo } from './use-element-redo';
 export type { UseElementRedoOptions, UseElementRedoResult } from './use-element-redo';
 export { useSpacePressed } from './use-space-pressed';
+export { useCanvasNavigation } from './use-canvas-navigation';
+export type {
+  UseCanvasNavigationOptions,
+  UseCanvasNavigationResult,
+} from './use-canvas-navigation';
 export { useSelectionKeyboard } from './use-selection-keyboard';
 export type {
   UseSelectionKeyboardOptions,
   UseSelectionKeyboardResult,
 } from './use-selection-keyboard';
+export { useCanvasFocus } from './use-canvas-focus';
+export type { UseCanvasFocusOptions, UseCanvasFocusResult } from './use-canvas-focus';
+export { useElementSize } from './use-element-size';
+export type { ElementSize, UseElementSizeResult } from './use-element-size';
