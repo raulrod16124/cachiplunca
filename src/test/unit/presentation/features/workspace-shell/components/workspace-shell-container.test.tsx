@@ -1605,6 +1605,52 @@ describe('WorkspaceShellContainer', () => {
     const canvas = await screen.findByRole('application', { name: 'Canvas' });
     expect(canvas).toHaveAttribute('aria-readonly', 'true');
     expect(screen.queryByRole('button', { name: 'Share' })).not.toBeInTheDocument();
+    expect(screen.getByText('View only')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('shows an explicit view-only banner with retry when role resolution fails', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const getWorkspaceRole: GetWorkspaceRole = jest
+      .fn()
+      .mockRejectedValueOnce(new Error('network down'))
+      .mockResolvedValueOnce({ status: 'ok', role: 'editor' });
+
+    renderContainer(getWorkspace, {
+      localUserId: 'user-local',
+      getWorkspaceRole,
+    });
+
+    const canvas = await screen.findByRole('application', { name: 'Canvas' });
+    await waitFor(() => expect(canvas).toHaveAttribute('aria-readonly', 'true'));
+    expect(screen.getByText('View only')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent(/could not verify your access/i);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+
+    const retriedCanvas = await screen.findByRole('application', { name: 'Canvas' });
+    await waitFor(() => expect(retriedCanvas).toHaveAttribute('aria-readonly', 'false'));
+    expect(screen.getByText('Editor')).toBeInTheDocument();
+    expect(screen.queryByText('View only')).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('shows the view-only banner when role resolution returns an error result', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const getWorkspaceRole: GetWorkspaceRole = jest.fn().mockResolvedValue({
+      status: 'error',
+      error: createAppError('network', ERROR_CODES.NETWORK_REQUEST_FAILED, 'offline'),
+    });
+
+    renderContainer(getWorkspace, {
+      localUserId: 'user-local',
+      getWorkspaceRole,
+    });
+
+    const canvas = await screen.findByRole('application', { name: 'Canvas' });
+    await waitFor(() => expect(canvas).toHaveAttribute('aria-readonly', 'true'));
+    expect(screen.getByText('View only')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent(/could not verify your access/i);
   });
 
   it('creates a text element from the toolbar at the viewport center', async () => {

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import styled from 'styled-components';
+import { Button, Text } from '@raulrod/ui';
 import type { Workspace } from '../../../../domain/workspace';
 import type { Element, ElementType } from '../../../../domain/element';
 import type { ElementId, Position } from '../../../../domain/shared';
@@ -20,7 +21,17 @@ import { WorkspaceTopBar } from './workspace-top-bar';
 const Shell = styled.div`
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  height: 100dvh;
+`;
+
+const AccessBanner = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.space[3]};
+  padding: ${({ theme }) => theme.space[3]} ${({ theme }) => theme.space[4]};
+  background: ${({ theme }) => theme.color.background.warning};
+  border-bottom: 1px solid ${({ theme }) => theme.color.border.default};
 `;
 
 const CanvasArea = styled.main`
@@ -63,6 +74,8 @@ export interface WorkspaceShellLayoutProps {
   readonly creationErrorMessage: string | null;
   readonly onShare?: () => void;
   readonly readOnly?: boolean;
+  readonly accessErrorMessage?: string | null;
+  readonly onRetryRole?: () => void;
 }
 
 export function WorkspaceShellLayout({
@@ -95,12 +108,15 @@ export function WorkspaceShellLayout({
   creationErrorMessage,
   onShare,
   readOnly = false,
+  accessErrorMessage = null,
+  onRetryRole,
 }: WorkspaceShellLayoutProps): ReactNode {
   return (
     <Shell>
       <WorkspaceTopBar
         workspace={workspace}
         role={role}
+        readOnly={readOnly}
         onBack={onBack}
         syncStatus={syncStatus}
         connectionStatus={connectionStatus}
@@ -112,6 +128,16 @@ export function WorkspaceShellLayout({
         collaborationErrorMessage={collaborationErrorMessage}
         creationErrorMessage={creationErrorMessage}
       />
+      {accessErrorMessage === null ? null : (
+        <AccessBanner role="alert">
+          <Text color="color.text.primary">{accessErrorMessage}</Text>
+          {onRetryRole === undefined ? null : (
+            <Button type="button" variant="secondary" size="sm" onClick={onRetryRole}>
+              Retry
+            </Button>
+          )}
+        </AccessBanner>
+      )}
       <CanvasArea>
         <Canvas
           store={canvasViewportStore}

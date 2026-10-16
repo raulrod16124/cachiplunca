@@ -139,9 +139,10 @@ export function WorkspaceShellContainer({
   const [status, setStatus] = useState<'loading' | 'notFound' | 'error' | 'success'>('loading');
   const [shareOpen, setShareOpen] = useState(false);
   const [role, setRole] = useState<MembershipRole | undefined>(undefined);
-  const [roleStatus, setRoleStatus] = useState<'idle' | 'loading' | 'settled'>(
+  const [roleStatus, setRoleStatus] = useState<'idle' | 'loading' | 'settled' | 'failed'>(
     getWorkspaceRole === undefined ? 'idle' : 'loading',
   );
+  const [roleAttempt, setRoleAttempt] = useState(0);
   const permissions = useWorkspacePermissions(role);
   const [result, setResult] = useState<GetWorkspaceResult | null>(null);
   const [elements, setElements] = useState<readonly Element[]>([]);
@@ -553,21 +554,30 @@ export function WorkspaceShellContainer({
         if (!active) {
           return;
         }
-        setRole(response.status === 'ok' ? response.role : undefined);
-        setRoleStatus('settled');
+        if (response.status === 'ok') {
+          setRole(response.role);
+          setRoleStatus('settled');
+          return;
+        }
+        setRole(undefined);
+        setRoleStatus(response.status === 'notFound' ? 'settled' : 'failed');
       } catch {
         if (!active) {
           return;
         }
         setRole(undefined);
-        setRoleStatus('settled');
+        setRoleStatus('failed');
       }
     })();
 
     return () => {
       active = false;
     };
-  }, [getWorkspaceRole, localUserId, workspaceId]);
+  }, [getWorkspaceRole, localUserId, workspaceId, roleAttempt]);
+
+  const handleRetryRole = useCallback(() => {
+    setRoleAttempt((attempt) => attempt + 1);
+  }, []);
 
   useEffect(() => {
     if (status === 'success') {
@@ -747,6 +757,12 @@ export function WorkspaceShellContainer({
             creationError === null ? null : describeCreateElementError(creationError)
           }
           readOnly={!canElementWrite}
+          accessErrorMessage={
+            roleStatus === 'failed'
+              ? 'We could not verify your access to this workspace. The board is view-only.'
+              : null
+          }
+          onRetryRole={roleStatus === 'failed' ? handleRetryRole : undefined}
           onShare={canShare ? () => setShareOpen(true) : undefined}
         />
         {canShare ? (

@@ -15,3 +15,14 @@ if (typeof globalThis.TextEncoder === 'undefined') {
 if (typeof globalThis.TextDecoder === 'undefined') {
   globalThis.TextDecoder = TextDecoder;
 }
+
+// jsdom's crypto lacks `subtle`; Node's webcrypto implements the full
+// SubtleCrypto API (used by invitation token hashing).
+if (typeof globalThis.crypto?.subtle === 'undefined') {
+  const { webcrypto } = require('node:crypto');
+  Object.defineProperty(globalThis, 'crypto', {
+    value: webcrypto,
+    configurable: true,
+    writable: true,
+  });
+}

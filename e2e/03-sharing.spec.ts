@@ -1,0 +1,65 @@
+import { expect, test } from '@playwright/test';
+import { registerUser, uniqueEmail } from './helpers/auth';
+import { addElement, createWorkspace } from './helpers/workspace';
+
+test.describe('Sharing (viewer happy path)', () => {
+  test('owner invites a viewer; viewer gets read-only access to the board', async ({ browser }) => {
+    const ownerContext = await browser.newContext();
+    const ownerPage = await ownerContext.newPage();
+    const viewerEmail = uniqueEmail('viewer');
+
+    await registerUser(ownerPage);
+    await createWorkspace(ownerPage, 'Shared board');
+    await addElement(ownerPage, 'text');
+
+    await ownerPage.getByRole('button', { name: 'Share' }).click();
+    const dialog = ownerPage.getByRole('dialog');
+    await expect(dialog.getByRole('heading', { name: 'Share workspace' })).toBeVisible();
+
+    await dialog.getByLabel('Email').fill(viewerEmail);
+    await dialog.getByLabel('Role').click();
+    await ownerPage.keyboard.press('ArrowDown');
+    await ownerPage.keyboard.press('Enter');
+    await expect(dialog.getByLabel('Role')).toHaveText(/Viewer/);
+    await dialog.getByRole('button', { name: 'Send invitation' }).click();
+
+    const invitationLink = dialog.getByLabel('Invitation link');
+    await expect(invitationLink).toBeVisible({ timeout: 15000 });
+    const link = await invitationLink.inputValue();
+    expect(link).toContain('/invitations/');
+
+    const viewerContext = await browser.newContext();
+    const viewerPage = await viewerContext.newPage();
+    await viewerPage.goto(link);
+    await expect(
+      viewerPage.getByRole('heading', { level: 1, name: 'Accept invitation' }),
+    ).toBeVisible({ timeout: 20000 });
+
+    await viewerPage.getByRole('button', { name: 'Create account' }).click();
+    await viewerPage.getByLabel('Email').fill(viewerEmail);
+    await viewerPage.getByLabel('Password').fill('Secret123');
+    await viewerPage.getByRole('button', { name: 'Create account' }).click();
+
+    await expect(
+      viewerPage.getByRole('heading', { level: 1, name: 'Invitation accepted' }),
+    ).toBeVisible({ timeout: 30000 });
+    await expect(viewerPage.getByText(/as viewer/i)).toBeVisible();
+
+    await viewerPage.getByRole('button', { name: 'Go to workspace' }).click();
+    const canvas = viewerPage.getByRole('application', { name: 'Canvas' });
+    await expect(canvas).toBeVisible({ timeout: 20000 });
+
+    await expect(viewerPage.getByText('Viewer', { exact: true })).toBeVisible();
+    await expect(canvas).toHaveAttribute('aria-readonly', 'true');
+    await expect(viewerPage.getByRole('button', { name: 'Add text' })).toBeDisabled();
+    await expect(viewerPage.getByRole('button', { name: 'Add note' })).toBeDisabled();
+    await expect(viewerPage.getByRole('button', { name: 'Delete selection' })).toBeDisabled();
+
+    await expect(viewerPage.locator('[data-testid^="canvas-item-"]')).toHaveCount(1, {
+      timeout: 20000,
+    });
+
+    await ownerContext.close();
+    await viewerContext.close();
+  });
+});

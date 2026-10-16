@@ -53,6 +53,7 @@ export interface WorkspaceTopBarProps {
   readonly currentUser: AuthUser | null;
   readonly logoutUser: LogoutUser;
   readonly onShare?: () => void;
+  readonly readOnly?: boolean;
   readonly persistenceErrorMessage: string | null;
   readonly collaborationErrorMessage: string | null;
   readonly creationErrorMessage: string | null;
@@ -68,6 +69,7 @@ export function WorkspaceTopBar({
   currentUser,
   logoutUser,
   onShare,
+  readOnly = false,
   persistenceErrorMessage,
   collaborationErrorMessage,
   creationErrorMessage,
@@ -93,7 +95,13 @@ export function WorkspaceTopBar({
             </Inline>
           </Button>
           <Heading as="h1">{workspace.name}</Heading>
-          {role === undefined ? null : <Badge variant="neutral">{ROLE_LABELS[role]}</Badge>}
+          {role === undefined ? (
+            readOnly ? (
+              <Badge variant="warning">View only</Badge>
+            ) : null
+          ) : (
+            <Badge variant="neutral">{ROLE_LABELS[role]}</Badge>
+          )}
           {syncBadge === null ? null : (
             <span role="status" aria-live="polite">
               <Badge variant={syncBadge.variant}>{syncBadge.label}</Badge>

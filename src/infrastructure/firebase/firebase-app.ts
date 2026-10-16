@@ -1,5 +1,5 @@
-import { getAuth, type Auth } from 'firebase/auth';
-import { getFirestore, type Firestore } from 'firebase/firestore';
+import { connectAuthEmulator, getAuth, type Auth } from 'firebase/auth';
+import { connectFirestoreEmulator, getFirestore, type Firestore } from 'firebase/firestore';
 import { getApps, initializeApp, type FirebaseApp } from 'firebase/app';
 
 interface FirebaseWebConfig {
@@ -12,12 +12,17 @@ interface FirebaseWebConfig {
   readonly measurementId?: string;
 }
 
+const AUTH_EMULATOR_URL = 'http://127.0.0.1:9099';
+const FIRESTORE_EMULATOR_HOST = '127.0.0.1';
+const FIRESTORE_EMULATOR_PORT = 8080;
+
 let cachedAuth: Auth | null = null;
 let cachedFirestore: Firestore | null = null;
 
 export function getFirebaseAuth(): Auth {
   if (cachedAuth === null) {
     cachedAuth = getAuth(getFirebaseApp());
+    connectEmulatorIfEnabled(() => connectAuthEmulator(cachedAuth as Auth, AUTH_EMULATOR_URL));
   }
   return cachedAuth;
 }
@@ -25,8 +30,26 @@ export function getFirebaseAuth(): Auth {
 export function getFirebaseFirestore(): Firestore {
   if (cachedFirestore === null) {
     cachedFirestore = getFirestore(getFirebaseApp());
+    connectEmulatorIfEnabled(() =>
+      connectFirestoreEmulator(
+        cachedFirestore as Firestore,
+        FIRESTORE_EMULATOR_HOST,
+        FIRESTORE_EMULATOR_PORT,
+      ),
+    );
   }
   return cachedFirestore;
+}
+
+/**
+ * Opt-in emulator wiring for local/E2E runs. Only active when
+ * `VITE_USE_EMULATORS === 'true'`, so production and real-project builds are
+ * unaffected and never leak into the emulator suite.
+ */
+function connectEmulatorIfEnabled(connect: () => void): void {
+  if (import.meta.env.VITE_USE_EMULATORS === 'true') {
+    connect();
+  }
 }
 
 function getFirebaseApp(): FirebaseApp {
