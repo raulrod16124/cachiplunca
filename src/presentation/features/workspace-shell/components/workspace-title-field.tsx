@@ -8,17 +8,23 @@ import { FieldError } from '../../../components';
 
 const TitleGroup = styled.span`
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   gap: ${({ theme }) => theme.space[1]};
   min-width: 0;
   max-width: min(36vw, 420px);
 `;
 
 const TruncatedHeading = styled(Heading)`
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
+  && {
+    display: -webkit-box;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    min-width: 0;
+    font-size: ${({ theme }) => theme.font.size.lg};
+    line-height: ${({ theme }) => theme.font.leading.tight};
+  }
 `;
 
 const EditAffordance = styled(IconButton)`
@@ -40,6 +46,7 @@ const TitleInput = styled(Input)`
   min-width: 12ch;
   max-width: 100%;
   font-weight: ${({ theme }) => theme.font.weight.semibold};
+  font-size: ${({ theme }) => theme.font.size.lg};
 `;
 
 const TitleColumn = styled.span`

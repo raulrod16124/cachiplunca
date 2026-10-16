@@ -20,6 +20,9 @@ const Content = styled.div`
   padding: 12px;
   overflow: hidden;
   border-radius: ${({ theme }) => theme.radius.sm};
+  border-width: 1px;
+  border-style: solid;
+  border-color: ${({ theme }) => theme.canvas.elementBorderSoft};
   background-color: ${({ theme }) => theme.canvas.surface};
   color: ${({ theme }) => theme.color.text.primary};
   font-size: ${({ theme }) => theme.font.size.sm};

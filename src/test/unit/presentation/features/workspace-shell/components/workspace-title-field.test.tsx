@@ -6,6 +6,7 @@ import { toAppError } from '../../../../../../shared/errors';
 import { UserId, WorkspaceId } from '../../../../../../domain/shared';
 import { Workspace } from '../../../../../../domain/workspace';
 import { WorkspaceTitleField } from '../../../../../../presentation/features/workspace-shell/components/workspace-title-field';
+import { appTheme } from '../../../../../../presentation/styles';
 
 function okResult(): UpdateWorkspaceResult {
   return {
@@ -28,6 +29,17 @@ describe('WorkspaceTitleField', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'Roadmap Q4' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Rename workspace' })).not.toBeInTheDocument();
+  });
+
+  it('renders the title at a reduced size that wraps to two lines', () => {
+    render(
+      <WorkspaceTitleField name="A very long workspace name that has to wrap onto several lines" />,
+    );
+
+    const heading = screen.getByRole('heading', { level: 1 });
+    expect(heading).toHaveStyle({ fontSize: appTheme.font.size.lg });
+    expect(heading).toHaveStyle({ overflow: 'hidden' });
+    expect(heading).not.toHaveStyle({ whiteSpace: 'nowrap' });
   });
 
   it('enters edit mode and commits with Enter', async () => {

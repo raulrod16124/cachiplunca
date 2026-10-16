@@ -62,6 +62,13 @@ describe('NoteRenderer', () => {
     expect(content).not.toHaveStyle({ backgroundColor: '#fef08a' });
   });
 
+  it('delimits the container with a soft border', () => {
+    render(<NoteRenderer element={createElement('hello')} selected={false} />);
+
+    const content = document.querySelector('[data-element-content]');
+    expect(content).toHaveStyle({ borderTopWidth: '1px', borderTopStyle: 'solid' });
+  });
+
   it('returns null for a non-note element', () => {
     const text = createTextElement({
       id: ElementId.create('elem-2'),

@@ -9,6 +9,10 @@ const Content = styled.div`
   box-sizing: border-box;
   padding: 8px;
   overflow: hidden;
+  border-radius: ${({ theme }) => theme.radius.sm};
+  border-width: 1px;
+  border-style: solid;
+  border-color: ${({ theme }) => theme.canvas.elementBorderSoft};
   color: ${({ theme }) => theme.color.text.primary};
   font-size: ${({ theme }) => theme.font.size.sm};
   line-height: 1.4;

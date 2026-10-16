@@ -48,6 +48,13 @@ describe('LinkRenderer', () => {
     expect(content).toHaveAttribute('data-link-url', 'https://example.com');
   });
 
+  it('delimits the container with a soft border', () => {
+    render(<LinkRenderer element={createElement('https://example.com')} selected={false} />);
+
+    const content = document.querySelector('[data-element-content]');
+    expect(content).toHaveStyle({ borderTopWidth: '1px', borderTopStyle: 'solid' });
+  });
+
   it('returns null for a non-link element', () => {
     const text = createTextElement({
       id: ElementId.create('elem-2'),

@@ -49,6 +49,13 @@ describe('TextRenderer', () => {
     expect(content?.textContent).toBe('');
   });
 
+  it('delimits the container with a soft border', () => {
+    render(<TextRenderer element={createElement('hello')} selected={false} />);
+
+    const content = document.querySelector('[data-element-content]');
+    expect(content).toHaveStyle({ borderTopWidth: '1px', borderTopStyle: 'solid' });
+  });
+
   it('returns null for a non-text element', () => {
     const note = createNoteElement({
       id: ElementId.create('elem-2'),

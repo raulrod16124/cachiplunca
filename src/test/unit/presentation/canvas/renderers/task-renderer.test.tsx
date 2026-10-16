@@ -101,6 +101,13 @@ describe('TaskRenderer', () => {
     expect(document.querySelector('[data-task-due-date]')).toBeNull();
   });
 
+  it('delimits the container with a soft border', () => {
+    render(<TaskRenderer element={createElement('Ship the MVP')} selected={false} />);
+
+    const content = document.querySelector('[data-element-content]');
+    expect(content).toHaveStyle({ borderTopWidth: '1px', borderTopStyle: 'solid' });
+  });
+
   it('returns null for a non-task element', () => {
     const text = createTextElement({
       id: ElementId.create('elem-2'),
