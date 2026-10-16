@@ -16,6 +16,10 @@
     "perf": "node --expose-gc ./node_modules/jest/bin/jest.js --config jest.perf.config.cjs --runInBand",
     "perf:dev": "vite --open /perf.html"
   },
+  "engines": {
+    "node": "22",
+    "npm": ">=10"
+  },
   "dependencies": {
     "@raulrod/tokens": "^1.0.0",
     "@raulrod/ui": "^1.2.0",

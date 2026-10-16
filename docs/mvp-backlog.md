@@ -4630,7 +4630,7 @@ Completar **MVP documentation** dejando un resultado verificable y apto para las
 
 ### TASK-124 — Final MVP validation
 
-**Priority:** P0 · **Depends:** TASK-119, TASK-120, TASK-122, TASK-123, TASK-126 · **Status:** TODO
+**Priority:** P0 · **Depends:** TASK-119, TASK-120, TASK-122, TASK-123, TASK-126, TASK-129 · **Status:** DONE
 
 #### Objetivo
 
@@ -4644,12 +4644,12 @@ Ejecutar la validación final del MVP y confirmar que es entregable.
 
 #### Criterios de aceptación
 
-- [ ] Criterios críticos satisfechos.
-- [ ] Lint, typecheck, tests y build pasan.
-- [ ] Backlog refleja el estado real.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
-- [ ] Los hallazgos quedan clasificados por severidad y con acción concreta.
+- [x] Criterios críticos satisfechos.
+- [x] Lint, typecheck, tests, rules tests, build y performance pasan.
+- [x] Backlog refleja el estado real.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Los hallazgos quedan clasificados por severidad y con acción concreta.
 
 #### Fuera de alcance
 
@@ -4665,7 +4665,7 @@ Ejecutar la validación final del MVP y confirmar que es entregable.
 
 ### TASK-125 — Error Boundary global
 
-**Priority:** P1 · **Depends:** TASK-116 · **Status:** TODO
+**Priority:** P1 · **Depends:** TASK-116 · **Status:** DONE
 
 #### Objetivo
 
@@ -4679,10 +4679,10 @@ Evitar que un error de render no controlado deje la aplicación en blanco, ofrec
 
 #### Criterios de aceptación
 
-- [ ] Un error de render muestra un fallback en lugar de una pantalla en blanco.
-- [ ] Los errores globales quedan capturados sin romper la app.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Un error de render muestra un fallback en lugar de una pantalla en blanco.
+- [x] Los errores globales quedan capturados sin romper la app.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -4798,7 +4798,7 @@ Cerrar los advisories residuales que viven solo en `devDependencies` (`firebase-
 
 ### TASK-129 — CI y gate de auditoría de dependencias
 
-**Priority:** P1 · **Depends:** TASK-121 · **Status:** TODO
+**Priority:** P1 · **Depends:** TASK-121 · **Status:** DONE
 
 #### Objetivo
 
@@ -4813,11 +4813,11 @@ Automatizar la verificación del repositorio: hoy no existe CI pese a TASK-008 y
 
 #### Criterios de aceptación
 
-- [ ] El pipeline ejecuta los gates y falla ante errores.
-- [ ] `npm audit --omit=dev` bloquea la integración si hay vulnerabilidades de producción.
-- [ ] La versión de Node es reproducible y coherente con `.nvmrc`.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] El pipeline ejecuta los gates y falla ante errores.
+- [x] `npm audit --omit=dev` bloquea la integración si hay vulnerabilidades de producción.
+- [x] La versión de Node es reproducible y coherente con `.nvmrc`.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -4868,43 +4868,43 @@ Actualizar las dependencias directas con major pendiente sin romper el SDK ni el
 
 ## Producto
 
-- [ ] Registro/login funcionando.
-- [ ] Crear, abrir, renombrar y eliminar workspace.
-- [ ] Invitar colaboradores.
-- [ ] Owner/Editor/Viewer funcionando.
-- [ ] Canvas infinito.
-- [ ] Pan y zoom.
-- [ ] Selección y multiselección.
-- [ ] Text, Note, Task, Frame, Connector y Link.
-- [ ] Crear/mover/redimensionar/eliminar/duplicar.
-- [ ] Copy/paste.
-- [ ] Undo/redo.
-- [ ] Autosave.
-- [ ] Recuperación tras refresh.
-- [ ] Realtime.
-- [ ] Presence.
-- [ ] Remote cursors.
-- [ ] Reconnect.
-- [ ] Viewer no puede modificar.
+- [x] Registro/login funcionando.
+- [x] Crear, abrir, renombrar y eliminar workspace.
+- [x] Invitar colaboradores.
+- [x] Owner/Editor/Viewer funcionando.
+- [x] Canvas infinito.
+- [x] Pan y zoom.
+- [x] Selección y multiselección.
+- [x] Text, Note, Task, Frame, Connector y Link.
+- [x] Crear/mover/redimensionar/eliminar/duplicar.
+- [x] Copy/paste.
+- [x] Undo/redo.
+- [x] Autosave.
+- [x] Recuperación tras refresh.
+- [x] Realtime.
+- [x] Presence.
+- [x] Remote cursors.
+- [x] Reconnect.
+- [x] Viewer no puede modificar.
 
 ## Ingeniería
 
-- [ ] Clean Architecture respetada.
-- [ ] Hexagonal Architecture respetada.
-- [ ] Domain independiente.
-- [ ] Ports/adapters definidos.
-- [ ] Tests unitarios.
-- [ ] Tests de integración.
-- [ ] Tests de Security Rules.
-- [ ] CI verde.
-- [ ] TypeScript sin errores.
-- [ ] Oxlint verde.
-- [ ] Prettier check verde.
-- [ ] Build verde.
-- [ ] Performance medida y aceptable.
-- [ ] Accesibilidad básica validada.
-- [ ] README actualizado.
-- [ ] ADRs relevantes registrados.
+- [x] Clean Architecture respetada.
+- [x] Hexagonal Architecture respetada.
+- [x] Domain independiente.
+- [x] Ports/adapters definidos.
+- [x] Tests unitarios.
+- [x] Tests de integración.
+- [x] Tests de Security Rules.
+- [x] CI verde.
+- [x] TypeScript sin errores.
+- [x] Oxlint verde.
+- [x] Prettier check verde.
+- [x] Build verde.
+- [x] Performance medida y aceptable.
+- [x] Accesibilidad básica validada.
+- [x] README actualizado.
+- [x] ADRs relevantes registrados.
 
 ---
 
@@ -5409,6 +5409,23 @@ Añadir una entrada breve por sesión.
 - Decisiones: (1) no modificar `harness.tsx` — solo agregar test; (2) archivo dedicado `collaboration.test.tsx` (no tocar `critical-journey.test.tsx`); (3) peers modelados vía eventos directos de los fakes (como en `critical-journey`), sin renderizar dos `AppRoutes`; (4) evitar duplicación de pruebas de history-vs-remote ya cubiertas en TASK-116/088 — el enfoque es presencia/realtime/reconexión/aislamiento.
 - Bloqueos: ninguno.
 - Siguiente tarea: TASK-119 (Permission integration tests).
+
+## 2026-10-15 — TASK-129 / TASK-124
+
+- Resultado: Pipeline de CI creado en `.github/workflows/ci.yml` con dos jobs: `quality-gates` (`lint`, `format:check`, `typecheck`, `test`, `build`, `npm audit --omit=dev`) y `rules-tests` (Java 21 + emulador Firestore + `npm run test:rules`). Se añadieron `engines` (`node: 22`, `npm: >=10`) a `package.json`. Se añadió un test de reglas que reproduce la secuencia real de creación de workspace + membership owner (`src/test/rules/firestore.rules.test.ts`). El bug de permisos reportado quedó confirmado como rules no desplegadas en Firestore; con las rules desplegadas el flujo funciona y el test lo cubre contra regresiones. TASK-124 pasa a DONE: todos los gates pasan, el backlog refleja el estado real, no quedan P0 sin cerrar y los riesgos residuales quedan como TASK-125 (P1) y tareas futuras fuera del MVP.
+- Tests/quality gates: `npm test` 176 suites / 1990 tests en verde; `npm run test:rules` 78 tests en verde; `npm run perf` 38 tests / 10 budgets en verde; `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm run build` y `npm audit --omit=dev` en verde.
+- Decisiones: (1) Opción B acordada con el usuario: TASK-129 se cierra antes de TASK-124; (2) Java 21 en CI para compatibilidad futura con `firebase-tools@15` aunque localmente aún use JDK 17; (3) no añadir `engine-strict` para no bloquear entornos locales, siguiendo el constraint del backlog; (4) el bug de permisos no requirió cambio de código de aplicación ni de rules; se añadió cobertura de reglas para la secuencia exacta.
+- Hallazgos residuales: TASK-125 (Error Boundary global, P1) sigue pendiente; TASK-127 (lecturas globales + email verificado, P1), TASK-128 (tooling dev dependencies, P1) y TASK-130 (upgrades de runtime/build, P2) quedan fuera del cierre del MVP.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-125 (Error Boundary global).
+
+## 2026-10-15 — TASK-125
+
+- Resultado: Error Boundary global de punta a punta. `ErrorBoundary` (class component en `src/presentation/components/error-boundary.tsx`) con `getDerivedStateFromError`, `componentDidCatch` (callback `onError` opcional), fallback por defecto reutilizando `ErrorState` (`role="alert"` + botón "Try again" que resetea el estado) y prop `fallback` custom. `installGlobalErrorHandlers(options?)` en `src/presentation/providers/global-error-handlers.ts`: registra `window.error` y `window.unhandledrejection`, reenvía a callbacks opcionales (sin `console.*`, conforme a la regla `no-console`), y devuelve un `cleanup` que remueve ambos listeners. `main.tsx` envuelve `<App />` con `<ErrorBoundary>` (dentro de `StrictMode`) y llama `installGlobalErrorHandlers()` antes del render. Cierra F1 de `docs/audits/error-handling-audit.md` / `docs/audits/security-audit.md`.
+- Tests/quality gates: `npm test` 178 suites / 1998 tests en verde (+2 suites / +8 tests: `error-boundary.test.tsx` con render directo, fallback por defecto, callback `onError`, recuperación vía "Try again" y fallback custom; `global-error-handlers.test.ts` con captura de eventos `error`/`unhandledrejection` y verificación de add/remove de listeners vía spies); `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit` y `npm run build` en verde.
+- Decisiones: (1) los handlers **no** usan `console.*` (regla `no-console` de `.oxlintrc.json`, F7 de `error-handling-audit`): solo reenvían a callbacks opcionales, y el motor sigue reportando por su canal nativo; (2) handlers en un módulo con `cleanup` explícito en vez de efecto de React para poder instalarlos una sola vez en `main.tsx` y testearlos sin render; (3) jsdom no implementa `PromiseRejectionEvent`, así que el test construye un `Event` con `reason` definido por `Object.defineProperty`; (4) sin ADR por ser patrón React estándar, decisión local no transversal.
+- Bloqueos: ninguno.
+- Siguiente tarea: primera TODO con dependencias DONE (TASK-127, TASK-128 o TASK-130; fuera del MVP salvo decisión explícita).
 
 ---
 

@@ -47,7 +47,7 @@
 
 - **TASK-126 (Critical, P0):** cerrar la escalada por self-join de membership. Diseño recomendado: la creación de membership debe quedar anclada a una invitación (p. ej. el aceptante incluye `invitationId`/`tokenHash` y las rules validan email + workspace + rol vía `get()`), o a la propiedad del workspace en la ruta de creación; acotar además el rol otorgable (solo owner concede owner). Requiere ADR y, previsiblemente, ajuste del modelo/local a nivel de adaptadores.
 - **TASK-127 (Medium, P1):** acotar las lecturas globales de `workspaces`/`invitations` a membership (con índices) y endurecer el accept con `email_verified` + flujo de verificación.
-- **TASK-125 (High, P1):** Error Boundary global + handlers `window.error`/`unhandledrejection` (heredado del informe de TASK-119).
+- **TASK-125 (High, P1):** ✅ Cerrada — Error Boundary global + handlers `window.error`/`unhandledrejection` (heredado del informe de TASK-119).
 
 ## Limitaciones
 

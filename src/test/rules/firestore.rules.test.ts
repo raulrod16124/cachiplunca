@@ -45,9 +45,11 @@ const OUTSIDER_UID = 'outsider-user';
 const INVITEE_UID = 'invitee-user';
 const INVITEE_EMAIL = 'invitee@example.com';
 const OTHER_EMAIL = 'other@example.com';
+const CREATOR_UID = 'creator-user';
 
 const WS1 = 'ws1';
 const WS2 = 'ws2';
+const NEW_WS = 'new-ws';
 
 const now = new Date('2026-10-13T00:00:00.000Z');
 
@@ -364,6 +366,19 @@ describe('firestore.rules — workspaces', () => {
       setDoc(
         doc(dbOf(OUTSIDER_UID), 'workspaces', 'bad-owner'),
         workspaceData('Bad', ROLE_UIDS.owner),
+      ),
+    );
+  });
+
+  test('an authenticated user can create a workspace and immediately create their own owner membership', async () => {
+    const db = dbOf(CREATOR_UID);
+    await assertSucceeds(
+      setDoc(doc(db, 'workspaces', NEW_WS), workspaceData('New workspace', CREATOR_UID)),
+    );
+    await assertSucceeds(
+      setDoc(
+        doc(db, 'memberships', `${NEW_WS}_${CREATOR_UID}`),
+        membershipData(NEW_WS, CREATOR_UID, 'owner'),
       ),
     );
   });
