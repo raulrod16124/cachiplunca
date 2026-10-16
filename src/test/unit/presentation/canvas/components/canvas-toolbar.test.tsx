@@ -8,20 +8,14 @@ type ToolbarProps = ComponentProps<typeof CanvasToolbar>;
 
 function renderToolbar(overrides: Partial<ToolbarProps> = {}) {
   const onCreateElement = jest.fn();
-  const onUndo = jest.fn();
-  const onRedo = jest.fn();
   const onDeleteSelection = jest.fn();
   const onFitView = jest.fn();
 
   const props: ToolbarProps = {
     onCreateElement,
-    onUndo,
-    onRedo,
     onDeleteSelection,
     onFitView,
     canCreate: true,
-    canUndo: false,
-    canRedo: false,
     hasSelection: false,
     canCreateConnector: false,
     ...overrides,
@@ -29,7 +23,7 @@ function renderToolbar(overrides: Partial<ToolbarProps> = {}) {
 
   render(<CanvasToolbar {...props} />);
 
-  return { onCreateElement, onUndo, onRedo, onDeleteSelection, onFitView };
+  return { onCreateElement, onDeleteSelection, onFitView };
 }
 
 describe('CanvasToolbar', () => {
@@ -83,22 +77,11 @@ describe('CanvasToolbar', () => {
     expect(screen.getByRole('button', { name: 'Connect selected elements' })).toBeDisabled();
   });
 
-  it('reflects undo and redo availability and forwards clicks', async () => {
-    const user = userEvent.setup();
-    const { onUndo, onRedo } = renderToolbar({ canUndo: true, canRedo: true });
+  it('does not render undo and redo, which live in the viewport controls', () => {
+    renderToolbar();
 
-    await user.click(screen.getByRole('button', { name: 'Undo' }));
-    await user.click(screen.getByRole('button', { name: 'Redo' }));
-
-    expect(onUndo).toHaveBeenCalledTimes(1);
-    expect(onRedo).toHaveBeenCalledTimes(1);
-  });
-
-  it('disables undo and redo when unavailable', () => {
-    renderToolbar({ canUndo: false, canRedo: false });
-
-    expect(screen.getByRole('button', { name: 'Undo' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Redo' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Undo' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Redo' })).not.toBeInTheDocument();
   });
 
   it('disables delete without a selection and forwards it with one', async () => {

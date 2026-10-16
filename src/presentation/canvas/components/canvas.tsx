@@ -421,7 +421,7 @@ export function Canvas({
     setEditingElementId(null);
   }, []);
 
-  const handleToolbarUndo = useCallback((): void => {
+  const handleUndo = useCallback((): void => {
     if (history === undefined || !history.canUndo()) {
       return;
     }
@@ -435,7 +435,7 @@ export function Canvas({
     onUndoElements?.(result.state);
   }, [history, onUndoElements]);
 
-  const handleToolbarRedo = useCallback((): void => {
+  const handleRedo = useCallback((): void => {
     if (history === undefined || !history.canRedo()) {
       return;
     }
@@ -643,13 +643,9 @@ export function Canvas({
       <RemoteCursorsOverlay cursors={remoteCursors} viewport={viewport} />
       <CanvasToolbar
         onCreateElement={handleCreateElement}
-        onUndo={handleToolbarUndo}
-        onRedo={handleToolbarRedo}
         onDeleteSelection={handleToolbarDelete}
         onFitView={handleFitView}
         canCreate={canCreateElement}
-        canUndo={canUndo}
-        canRedo={canRedo}
         hasSelection={hasSelection}
         canCreateConnector={canCreateConnector}
       />
@@ -665,7 +661,13 @@ export function Canvas({
           }}
         />
       ) : null}
-      <ViewportControls store={store} />
+      <ViewportControls
+        store={store}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+      />
     </CanvasContainer>
   );
 }

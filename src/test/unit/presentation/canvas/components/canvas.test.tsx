@@ -279,11 +279,11 @@ describe('Canvas', () => {
     renderCanvas();
     const canvas = screen.getByRole('application', { name: 'Canvas' });
 
-    expect(screen.getByLabelText('Zoom level')).toHaveTextContent('100%');
+    expect(screen.getByTestId('zoom-level')).toHaveTextContent('100%');
 
     fireEvent.wheel(canvas, { ctrlKey: true, deltaY: -100, clientX: 200, clientY: 150 });
 
-    expect(screen.getByLabelText('Zoom level')).not.toHaveTextContent('100%');
+    expect(screen.getByTestId('zoom-level')).not.toHaveTextContent('100%');
   });
 
   it('resets the viewport when clicking reset view', async () => {
@@ -299,7 +299,7 @@ describe('Canvas', () => {
     const world = screen.getByTestId('canvas-world');
     expect(Number(canvas.getAttribute('data-scale'))).toBe(1);
     expect(world.style.transform).toContain('translate(0px, 0px)');
-    expect(screen.getByLabelText('Zoom level')).toHaveTextContent('100%');
+    expect(screen.getByTestId('zoom-level')).toHaveTextContent('100%');
   });
 
   describe('selection', () => {
@@ -1256,7 +1256,7 @@ describe('Canvas', () => {
       expect(onCreateElement).toHaveBeenCalledWith('connector');
     });
 
-    it('undoes the last command through the toolbar button', async () => {
+    it('undoes the last command through the viewport controls button', async () => {
       const onUndoElements = jest.fn();
       const history = historyWithRecordedCommand([FIRST_ITEM], [FIRST_ITEM, SECOND_ITEM]);
       renderToolbarCanvas({
