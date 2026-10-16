@@ -6,8 +6,11 @@ import type { Element, ElementType } from '../../../../domain/element';
 import type { ElementId, Position } from '../../../../domain/shared';
 import type { MembershipRole } from '../../../../domain/membership';
 import type { Presence } from '../../../../domain/collaboration';
-import type { LogoutUser } from '../../../../application/commands';
-import type { UpdateElementInput } from '../../../../application/commands';
+import type {
+  LogoutUser,
+  UpdateElementInput,
+  UpdateWorkspaceResult,
+} from '../../../../application/commands';
 import type {
   CanvasViewportStore,
   CommandHistory,
@@ -75,6 +78,7 @@ export interface WorkspaceShellLayoutProps {
   readonly collaborationErrorMessage: string | null;
   readonly creationErrorMessage: string | null;
   readonly onShare?: () => void;
+  readonly onRename?: (name: string) => Promise<UpdateWorkspaceResult>;
   readonly readOnly?: boolean;
   readonly accessErrorMessage?: string | null;
   readonly onRetryRole?: () => void;
@@ -110,27 +114,13 @@ export function WorkspaceShellLayout({
   collaborationErrorMessage,
   creationErrorMessage,
   onShare,
+  onRename,
   readOnly = false,
   accessErrorMessage = null,
   onRetryRole,
 }: WorkspaceShellLayoutProps): ReactNode {
   return (
     <Shell>
-      <WorkspaceTopBar
-        workspace={workspace}
-        role={role}
-        readOnly={readOnly}
-        onBack={onBack}
-        syncStatus={syncStatus}
-        connectionStatus={connectionStatus}
-        connectedUsers={connectedUsers}
-        currentUser={currentUser}
-        logoutUser={logoutUser}
-        onShare={onShare}
-        persistenceErrorMessage={persistenceErrorMessage}
-        collaborationErrorMessage={collaborationErrorMessage}
-        creationErrorMessage={creationErrorMessage}
-      />
       {accessErrorMessage === null ? null : (
         <AccessBanner role="alert">
           <Text color="color.text.primary">{accessErrorMessage}</Text>
@@ -142,6 +132,22 @@ export function WorkspaceShellLayout({
         </AccessBanner>
       )}
       <CanvasArea>
+        <WorkspaceTopBar
+          workspace={workspace}
+          role={role}
+          readOnly={readOnly}
+          onBack={onBack}
+          syncStatus={syncStatus}
+          connectionStatus={connectionStatus}
+          connectedUsers={connectedUsers}
+          currentUser={currentUser}
+          logoutUser={logoutUser}
+          onShare={onShare}
+          onRename={onRename}
+          persistenceErrorMessage={persistenceErrorMessage}
+          collaborationErrorMessage={collaborationErrorMessage}
+          creationErrorMessage={creationErrorMessage}
+        />
         <Canvas
           store={canvasViewportStore}
           selectionStore={selectionStore}

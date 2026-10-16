@@ -12,6 +12,8 @@ import {
   type LogoutUser,
   type RemoveMember,
   type UpdateElementInput,
+  type UpdateWorkspace,
+  type UpdateWorkspaceResult,
 } from '../../../../application/commands';
 import type {
   GetWorkspace,
@@ -108,6 +110,7 @@ export interface WorkspaceShellContainerProps {
   readonly changeMemberRole?: ChangeMemberRole;
   readonly removeMember?: RemoveMember;
   readonly leaveWorkspace?: LeaveWorkspace;
+  readonly updateWorkspace?: UpdateWorkspace;
 }
 
 interface TransformGesture {
@@ -137,6 +140,7 @@ export function WorkspaceShellContainer({
   changeMemberRole,
   removeMember,
   leaveWorkspace,
+  updateWorkspace,
 }: WorkspaceShellContainerProps): ReactNode {
   const [status, setStatus] = useState<'loading' | 'notFound' | 'error' | 'success'>('loading');
   const [shareOpen, setShareOpen] = useState(false);
@@ -544,6 +548,28 @@ export function WorkspaceShellContainer({
     }
   }, [getWorkspace, workspaceId]);
 
+  const handleRenameWorkspace = useCallback(
+    async (name: string): Promise<UpdateWorkspaceResult> => {
+      if (updateWorkspace === undefined) {
+        return {
+          status: 'error',
+          error: toAppError(new Error('Renaming is not available.')),
+        };
+      }
+
+      const result = await updateWorkspace({ id: workspaceId, name });
+      if (result.status === 'ok') {
+        setResult((previous) =>
+          previous === null || previous.status !== 'ok'
+            ? previous
+            : { status: 'ok', workspace: result.workspace },
+        );
+      }
+      return result;
+    },
+    [updateWorkspace, workspaceId],
+  );
+
   const fetchElements = useCallback(async (): Promise<void> => {
     setElementsStatus('loading');
     setElementsError(null);
@@ -744,6 +770,9 @@ export function WorkspaceShellContainer({
     const canMemberRemove = !permissionsEnforced || permissions.can('member:remove');
     const canMemberLeave = !permissionsEnforced || permissions.can('member:leave');
     const canCreateElement = canElementWrite && localUserId !== undefined;
+    const canRename =
+      updateWorkspace !== undefined &&
+      (!permissionsEnforced || permissions.can('workspace:update'));
 
     const canShare =
       localUserId !== undefined &&
@@ -796,6 +825,7 @@ export function WorkspaceShellContainer({
           }
           onRetryRole={roleStatus === 'failed' ? handleRetryRole : undefined}
           onShare={canShare ? () => setShareOpen(true) : undefined}
+          onRename={canRename ? handleRenameWorkspace : undefined}
         />
         {canShare ? (
           <ShareDialog

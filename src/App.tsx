@@ -40,6 +40,7 @@ function App() {
             changeMemberRole={workspaceServices.changeMemberRole}
             removeMember={workspaceServices.removeMember}
             leaveWorkspace={workspaceServices.leaveWorkspace}
+            updateWorkspace={workspaceServices.updateWorkspace}
           />
         </SessionProvider>
       </BrowserRouter>
