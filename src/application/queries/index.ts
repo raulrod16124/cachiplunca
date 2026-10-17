@@ -1,3 +1,4 @@
+export * from './get-user-settings';
 export * from './get-workspace';
 export * from './get-workspace-role';
 export * from './list-pending-invitations';
