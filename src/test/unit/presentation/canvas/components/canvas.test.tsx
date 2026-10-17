@@ -37,6 +37,7 @@ function renderCanvas(
   onUndoElements?: (next: readonly Element[]) => void,
   onRedoElements?: (next: readonly Element[]) => void,
   onTransformEnd?: () => void,
+  onReorderElements?: (next: readonly Element[]) => void,
 ) {
   const store = createCanvasViewportStore(Size.create(800, 600));
   const selectionStore = createSelectionStore();
@@ -56,6 +57,7 @@ function renderCanvas(
       onUndoElements={onUndoElements}
       onRedoElements={onRedoElements}
       onTransformEnd={onTransformEnd}
+      onReorderElements={onReorderElements}
     />,
   );
 
@@ -125,7 +127,7 @@ describe('Canvas', () => {
     expect(screen.getByRole('application', { name: 'Canvas' })).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Arrow keys to move selection · Shift + Arrow to extend selection · Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo',
+        'Arrow keys to move selection · Shift + Arrow to extend selection · Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo · Ctrl/Cmd + ] to bring to front · Ctrl/Cmd + [ to send to back · Right-click an object for more options',
       ),
     ).toBeInTheDocument();
   });
@@ -149,7 +151,7 @@ describe('Canvas', () => {
     expect(canvas).toHaveAttribute('tabindex', '0');
     expect(canvas).toHaveAttribute(
       'aria-keyshortcuts',
-      'ArrowUp ArrowDown ArrowLeft ArrowRight Escape Control+A Meta+A Delete Control+D Meta+D Control+C Meta+C Control+V Meta+V Control+Z Meta+Z Control+Shift+Z Meta+Shift+Z Control+Y Meta+Y',
+      'ArrowUp ArrowDown ArrowLeft ArrowRight Escape Control+A Meta+A Delete Control+D Meta+D Control+C Meta+C Control+V Meta+V Control+Z Meta+Z Control+Shift+Z Meta+Shift+Z Control+Y Meta+Y Control+] Meta+] Control+[ Meta+[',
     );
   });
 
@@ -1024,6 +1026,161 @@ describe('Canvas', () => {
 
       expect(onPasteElements).not.toHaveBeenCalled();
       expect(selectionStore.getSnapshot().selectedIds).toEqual([]);
+    });
+  });
+
+  describe('z-order', () => {
+    it('brings the selected item to the front on Ctrl+]', async () => {
+      const onReorderElements = jest.fn();
+      const { selectionStore } = renderCanvas(
+        [FIRST_ITEM, SECOND_ITEM],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        onReorderElements,
+      );
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      act(() => {
+        selectionStore.select('first');
+      });
+
+      canvas.focus();
+      await userEvent.setup().keyboard('{Control>}]{/Control}');
+
+      expect(onReorderElements).toHaveBeenCalledTimes(1);
+      const reordered: readonly Element[] = onReorderElements.mock.calls[0][0];
+      expect(reordered.map((element) => element.id.value)).toEqual(['second', 'first']);
+    });
+
+    it('sends the selected item to the back on Ctrl+[', async () => {
+      const onReorderElements = jest.fn();
+      const { selectionStore } = renderCanvas(
+        [FIRST_ITEM, SECOND_ITEM],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        onReorderElements,
+      );
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      act(() => {
+        selectionStore.select('second');
+      });
+
+      canvas.focus();
+      await userEvent.setup().keyboard('{Control>}[[{/Control}');
+
+      expect(onReorderElements).toHaveBeenCalledTimes(1);
+      const reordered: readonly Element[] = onReorderElements.mock.calls[0][0];
+      expect(reordered.map((element) => element.id.value)).toEqual(['second', 'first']);
+    });
+
+    it('does nothing on the z-order shortcuts when there is no selection', async () => {
+      const onReorderElements = jest.fn();
+      renderCanvas(
+        [FIRST_ITEM],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        onReorderElements,
+      );
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      canvas.focus();
+      await userEvent.setup().keyboard('{Control>}]{/Control}');
+
+      expect(onReorderElements).not.toHaveBeenCalled();
+    });
+
+    it('opens a context menu on right-click and brings the hit item to the front', async () => {
+      const onReorderElements = jest.fn();
+      const { selectionStore } = renderCanvas(
+        [FIRST_ITEM, SECOND_ITEM],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        onReorderElements,
+      );
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const user = userEvent.setup();
+
+      fireEvent.contextMenu(canvas, { clientX: 150, clientY: 130 });
+
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['first']);
+
+      await user.click(screen.getByRole('menuitem', { name: 'Bring to front' }));
+
+      expect(onReorderElements).toHaveBeenCalledTimes(1);
+      const reordered: readonly Element[] = onReorderElements.mock.calls[0][0];
+      expect(reordered.map((element) => element.id.value)).toEqual(['second', 'first']);
+    });
+
+    it('sends the hit item to the back from the context menu', async () => {
+      const onReorderElements = jest.fn();
+      const { selectionStore } = renderCanvas(
+        [FIRST_ITEM, SECOND_ITEM],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        onReorderElements,
+      );
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const user = userEvent.setup();
+
+      fireEvent.contextMenu(canvas, { clientX: 350, clientY: 250 });
+
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['second']);
+
+      await user.click(screen.getByRole('menuitem', { name: 'Send to back' }));
+
+      expect(onReorderElements).toHaveBeenCalledTimes(1);
+      const reordered: readonly Element[] = onReorderElements.mock.calls[0][0];
+      expect(reordered.map((element) => element.id.value)).toEqual(['second', 'first']);
+    });
+
+    it('does not open a context menu when right-clicking empty space', () => {
+      renderCanvas([FIRST_ITEM]);
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      fireEvent.contextMenu(canvas, { clientX: 700, clientY: 550 });
+
+      expect(screen.queryByRole('menuitem', { name: 'Bring to front' })).not.toBeInTheDocument();
     });
   });
 

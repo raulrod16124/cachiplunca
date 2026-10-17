@@ -516,6 +516,13 @@ export function WorkspaceShellContainer({
     [commitElements],
   );
 
+  const handleReorderElements = useCallback(
+    (next: readonly Element[]) => {
+      commitElements(next, 'Reorder elements');
+    },
+    [commitElements],
+  );
+
   const handleUndoElements = useCallback(
     (restored: readonly Element[]) => {
       const previous = elementsRef.current;
@@ -799,6 +806,7 @@ export function WorkspaceShellContainer({
           onDeleteElements={handleDeleteElements}
           onDuplicateElements={handleDuplicateElements}
           onPasteElements={handlePasteElements}
+          onReorderElements={handleReorderElements}
           onUndoElements={handleUndoElements}
           onRedoElements={handleRedoElements}
           onCreateElement={canCreateElement ? handleCreateElement : undefined}

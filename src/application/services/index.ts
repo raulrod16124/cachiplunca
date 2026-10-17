@@ -9,6 +9,7 @@ export * from './element-resize';
 export * from './element-creation';
 export * from './element-delete';
 export * from './element-duplicate';
+export * from './element-z-order';
 export * from './selection-store';
 export * from './selection-keyboard';
 export * from './element-copy-paste';

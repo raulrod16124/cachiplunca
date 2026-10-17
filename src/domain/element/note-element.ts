@@ -15,6 +15,7 @@ export interface CreateNoteElementProps {
   readonly content: string;
   readonly color?: string;
   readonly rotation?: number;
+  readonly zIndex?: number;
   readonly createdAt?: Date;
   readonly updatedAt?: Date;
 }
@@ -34,6 +35,7 @@ export function createNoteElement(props: CreateNoteElementProps): NoteElement {
     position: props.position,
     size: props.size,
     rotation: props.rotation ?? 0,
+    zIndex: props.zIndex ?? 0,
     createdBy: props.createdBy,
     createdAt,
     updatedAt,

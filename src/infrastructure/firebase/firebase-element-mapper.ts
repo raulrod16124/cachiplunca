@@ -17,6 +17,7 @@ interface BaseElementDocument {
   readonly position: { readonly x: number; readonly y: number };
   readonly size: { readonly width: number; readonly height: number };
   readonly rotation: number;
+  readonly zIndex: number;
   readonly createdBy: string;
   readonly createdAt: Date;
   readonly updatedAt: Date;
@@ -74,6 +75,7 @@ export function toElementDocument(element: Element): ElementDocument {
     position: element.position.toJSON(),
     size: element.size.toJSON(),
     rotation: element.rotation,
+    zIndex: element.zIndex,
     createdBy: element.createdBy.value,
     createdAt: element.createdAt,
     updatedAt: element.updatedAt,
@@ -188,6 +190,7 @@ function readBaseElementProps(id: string, data: Record<string, unknown>) {
     position: readPosition(data.position),
     size: readSize(data.size),
     rotation: readNumber(data.rotation, 'rotation'),
+    ...(data.zIndex === undefined ? {} : { zIndex: readNumber(data.zIndex, 'zIndex') }),
     createdBy: UserId.create(readString(data.createdBy, 'createdBy')),
     createdAt: readDate(data.createdAt, 'createdAt'),
     updatedAt: readDate(data.updatedAt, 'updatedAt'),

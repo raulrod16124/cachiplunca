@@ -15,6 +15,7 @@ export interface CreateFrameElementProps {
   readonly title: string;
   readonly parentFrameId?: ElementId;
   readonly rotation?: number;
+  readonly zIndex?: number;
   readonly createdAt?: Date;
   readonly updatedAt?: Date;
 }
@@ -34,6 +35,7 @@ export function createFrameElement(props: CreateFrameElementProps): FrameElement
     position: props.position,
     size: props.size,
     rotation: props.rotation ?? 0,
+    zIndex: props.zIndex ?? 0,
     createdBy: props.createdBy,
     createdAt,
     updatedAt,
@@ -83,6 +85,7 @@ function buildFrameElement(element: FrameElement, overrides: FrameElementOverrid
     position: element.position,
     size: element.size,
     rotation: element.rotation,
+    zIndex: element.zIndex,
     createdBy: element.createdBy,
     createdAt: element.createdAt,
     updatedAt: overrides.updatedAt,

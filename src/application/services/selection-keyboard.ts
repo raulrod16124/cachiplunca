@@ -1,5 +1,15 @@
 export type SelectionKeyCommand =
-  'clear' | 'select-all' | 'delete' | 'duplicate' | 'copy' | 'paste' | 'undo' | 'redo' | null;
+  | 'clear'
+  | 'select-all'
+  | 'delete'
+  | 'duplicate'
+  | 'copy'
+  | 'paste'
+  | 'undo'
+  | 'redo'
+  | 'bring-to-front'
+  | 'send-to-back'
+  | null;
 
 export interface SelectionKeyInput {
   readonly key: string;
@@ -50,6 +60,14 @@ export function resolveSelectionKeyCommand(input: SelectionKeyInput): SelectionK
     input.key.toLowerCase() === 'z'
   ) {
     return 'undo';
+  }
+
+  if ((input.ctrlKey || input.metaKey) && !input.altKey && input.key === ']') {
+    return 'bring-to-front';
+  }
+
+  if ((input.ctrlKey || input.metaKey) && !input.altKey && input.key === '[') {
+    return 'send-to-back';
   }
 
   if (input.key === 'Delete') {

@@ -37,6 +37,7 @@ function expectBaseDocument(document: ElementDocument): void {
   expect(document.position).toEqual({ x: 10, y: 20 });
   expect(document.size).toEqual({ width: 120, height: 80 });
   expect(document.rotation).toBe(0);
+  expect(document.zIndex).toBe(0);
   expect(document.createdBy).toBe('user-1');
   expect(document.createdAt).toEqual(CREATED_AT);
   expect(document.updatedAt).toEqual(UPDATED_AT);
@@ -197,6 +198,30 @@ describe('fromElementDocument', () => {
       }),
     );
     expectRoundTrip(createLinkElement({ ...buildBase('el-link'), url: 'https://example.com' }));
+  });
+
+  it('maps a non-zero zIndex', () => {
+    const element = createTextElement({
+      ...buildBase('el-text'),
+      content: 'Hello',
+      zIndex: 7,
+    });
+
+    const document = toElementDocument(element);
+
+    expect(document.zIndex).toBe(7);
+    expectRoundTrip(element);
+  });
+
+  it('defaults a missing zIndex to zero for legacy documents', () => {
+    const document = toElementDocument(
+      createTextElement({ ...buildBase('el-text'), content: 'Hello' }),
+    );
+    const { zIndex: _zIndex, ...withoutZIndex } = document;
+
+    const element = fromElementDocument('el-text', withoutZIndex);
+
+    expect(element.zIndex).toBe(0);
   });
 
   it('accepts Timestamp-like date fields', () => {

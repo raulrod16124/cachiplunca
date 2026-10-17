@@ -186,6 +186,44 @@ describe('resolveSelectionKeyCommand', () => {
     ).toBeNull();
   });
 
+  it('resolves Ctrl+] to bring-to-front', () => {
+    expect(resolveSelectionKeyCommand({ key: ']', ...NO_MODIFIERS, ctrlKey: true })).toBe(
+      'bring-to-front',
+    );
+  });
+
+  it('resolves Cmd+] to bring-to-front', () => {
+    expect(resolveSelectionKeyCommand({ key: ']', ...NO_MODIFIERS, metaKey: true })).toBe(
+      'bring-to-front',
+    );
+  });
+
+  it('resolves Ctrl+[ to send-to-back', () => {
+    expect(resolveSelectionKeyCommand({ key: '[', ...NO_MODIFIERS, ctrlKey: true })).toBe(
+      'send-to-back',
+    );
+  });
+
+  it('resolves Cmd+[ to send-to-back', () => {
+    expect(resolveSelectionKeyCommand({ key: '[', ...NO_MODIFIERS, metaKey: true })).toBe(
+      'send-to-back',
+    );
+  });
+
+  it('returns null for plain brackets without a modifier', () => {
+    expect(resolveSelectionKeyCommand({ key: ']', ...NO_MODIFIERS })).toBeNull();
+    expect(resolveSelectionKeyCommand({ key: '[', ...NO_MODIFIERS })).toBeNull();
+  });
+
+  it('ignores the z-order shortcuts when Alt is also pressed', () => {
+    expect(
+      resolveSelectionKeyCommand({ key: ']', ...NO_MODIFIERS, ctrlKey: true, altKey: true }),
+    ).toBeNull();
+    expect(
+      resolveSelectionKeyCommand({ key: '[', ...NO_MODIFIERS, ctrlKey: true, altKey: true }),
+    ).toBeNull();
+  });
+
   it('returns null for unmapped keys', () => {
     expect(resolveSelectionKeyCommand({ key: 'ArrowRight', ...NO_MODIFIERS })).toBeNull();
     expect(resolveSelectionKeyCommand({ key: 'Backspace', ...NO_MODIFIERS })).toBeNull();

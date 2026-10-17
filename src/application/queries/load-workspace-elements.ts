@@ -14,6 +14,11 @@ export function sortElementsForLoad(elements: readonly Element[]): Element[] {
 }
 
 function compareElementsForLoad(a: Element, b: Element): number {
+  const zIndexDiff = a.zIndex - b.zIndex;
+  if (zIndexDiff !== 0) {
+    return zIndexDiff;
+  }
+
   const createdDiff = a.createdAt.getTime() - b.createdAt.getTime();
   if (createdDiff !== 0) {
     return createdDiff;

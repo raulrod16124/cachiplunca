@@ -15,6 +15,7 @@ export interface BaseElement {
   readonly position: Position;
   readonly size: Size;
   readonly rotation: number;
+  readonly zIndex: number;
   readonly createdBy: UserId;
   readonly createdAt: Date;
   readonly updatedAt: Date;
@@ -95,6 +96,12 @@ export function validateBaseElementProps(props: BaseElement): void {
   if (!Number.isFinite(props.rotation)) {
     throw new Error('Element rotation must be a finite number');
   }
+  if (props.zIndex === null || props.zIndex === undefined) {
+    throw new Error('Element zIndex must be defined');
+  }
+  if (!Number.isFinite(props.zIndex)) {
+    throw new Error('Element zIndex must be a finite number');
+  }
   if (props.createdAt > props.updatedAt) {
     throw new Error('Element createdAt cannot be after updatedAt');
   }
@@ -170,6 +177,22 @@ export function withRotation(
   }
 
   const next: Element = { ...element, rotation, updatedAt };
+
+  validateElement(next);
+
+  return next;
+}
+
+export function withZIndex(
+  element: Element,
+  zIndex: number,
+  updatedAt: Date = new Date(),
+): Element {
+  if (!Number.isFinite(zIndex)) {
+    throw new Error('Element zIndex must be a finite number');
+  }
+
+  const next: Element = { ...element, zIndex, updatedAt };
 
   validateElement(next);
 

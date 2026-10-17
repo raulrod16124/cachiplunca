@@ -64,6 +64,7 @@ export interface WorkspaceShellLayoutProps {
     duplicatedIds: readonly string[],
   ) => void;
   readonly onPasteElements: (elements: readonly Element[], pastedIds: readonly string[]) => void;
+  readonly onReorderElements: (elements: readonly Element[]) => void;
   readonly onUndoElements: (elements: readonly Element[]) => void;
   readonly onRedoElements: (elements: readonly Element[]) => void;
   readonly onCreateElement?: (type: ElementType) => ElementId | void;
@@ -100,6 +101,7 @@ export function WorkspaceShellLayout({
   onDeleteElements,
   onDuplicateElements,
   onPasteElements,
+  onReorderElements,
   onUndoElements,
   onRedoElements,
   onCreateElement,
@@ -159,6 +161,7 @@ export function WorkspaceShellLayout({
           onDeleteElements={onDeleteElements}
           onDuplicateElements={onDuplicateElements}
           onPasteElements={onPasteElements}
+          onReorderElements={onReorderElements}
           onUndoElements={onUndoElements}
           onRedoElements={onRedoElements}
           onCreateElement={onCreateElement}
