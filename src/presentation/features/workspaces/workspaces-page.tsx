@@ -12,7 +12,7 @@ import type {
 import type { ListWorkspaces } from '../../../application/queries/list-workspaces';
 import { UserId } from '../../../domain/shared';
 import { createAppError, ERROR_CODES } from '../../../shared/errors';
-import { SignOutButton } from '../auth/sign-out-button';
+import { AccountMenu } from '../auth/account-menu';
 import { CreateWorkspaceDialog } from './components/create-workspace-dialog';
 import { WorkspacesListContainer } from './components/workspaces-list-container';
 
@@ -35,6 +35,7 @@ export function WorkspacesPage({
   const session = useSession();
   const [createOpen, setCreateOpen] = useState(false);
   const [refreshToken, setRefreshToken] = useState(0);
+  const currentUser = session.status === 'authenticated' ? session.user : null;
   const ownerId =
     session.status === 'authenticated'
       ? UserId.create(session.user.uid)
@@ -80,7 +81,7 @@ export function WorkspacesPage({
               <Button type="button" variant="primary" onClick={handleCreateWorkspace}>
                 Create workspace
               </Button>
-              <SignOutButton logoutUser={logoutUser} />
+              <AccountMenu currentUser={currentUser} logoutUser={logoutUser} />
             </Inline>
           </Inline>
         </Stack>

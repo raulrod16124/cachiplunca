@@ -58,6 +58,16 @@ service cloud.firestore {
       );
     }
 
+    // user_settings: preferencias personales (tema, idioma, tamaño, motion).
+    // Solo el propio usuario puede leer y escribir su documento, identificado
+    // por su uid. El campo userId debe coincidir para evitar suplantaciones.
+    match /user_settings/{userId} {
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow write: if signedIn() &&
+        request.auth.uid == userId &&
+        request.resource.data.userId == userId;
+    }
+
     // workspaces: read limitado a autenticados (ListWorkspaces lee el catálogo
     // sin filtrar por membership; limitación MVP documentada en ADR-0023).
     // create exige que el creador quede registrado como createdBy para poder

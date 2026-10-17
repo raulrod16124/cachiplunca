@@ -33,7 +33,8 @@ export async function loginUser(page: Page, email: string, password = 'Secret123
 }
 
 export async function logout(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Sign out' }).click();
+  await page.getByRole('button', { name: 'Open account menu' }).click();
+  await page.getByRole('menuitem', { name: 'Sign out' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Sign in' })).toBeVisible({
     timeout: 20000,
   });

@@ -111,7 +111,7 @@ describe('createUserSettingsStore', () => {
     expect(ready(store.getSnapshot()).version).toBe(1);
   });
 
-  it('surfaces a load failure as an error state', async () => {
+  it('falls back to defaults and surfaces the error when the load fails', async () => {
     const repository: UserSettingsRepository = {
       getByUserId: async () => {
         throw new Error('offline');
@@ -122,10 +122,50 @@ describe('createUserSettingsStore', () => {
 
     await store.load(USER_ID);
 
-    expect(store.getSnapshot()).toEqual({
-      status: 'error',
-      error: new Error('offline'),
-    });
+    const snapshot = store.getSnapshot();
+    if (snapshot.status !== 'ready') {
+      throw new Error(`Expected ready state, received ${snapshot.status}`);
+    }
+    expect(snapshot.settings.theme).toBe('system');
+    expect(snapshot.error).toEqual(new Error('offline'));
+  });
+
+  it('keeps the chosen value and surfaces the error when persisting fails', async () => {
+    const repository = new FakeUserSettingsRepository();
+    const store = createUserSettingsStore(repository);
+    await store.load(USER_ID);
+    repository.upsert = async () => {
+      throw new Error('offline');
+    };
+
+    await store.update({ theme: 'dark' });
+
+    const snapshot = store.getSnapshot();
+    if (snapshot.status !== 'ready') {
+      throw new Error(`Expected ready state, received ${snapshot.status}`);
+    }
+    expect(snapshot.settings.theme).toBe('dark');
+    expect(snapshot.error).toEqual(new Error('offline'));
+  });
+
+  it('clears a previous error once a later update persists successfully', async () => {
+    const repository = new FakeUserSettingsRepository();
+    const store = createUserSettingsStore(repository);
+    await store.load(USER_ID);
+    repository.upsert = async () => {
+      throw new Error('offline');
+    };
+    await store.update({ theme: 'dark' });
+
+    repository.upsert = FakeUserSettingsRepository.prototype.upsert.bind(repository);
+    await store.update({ fontSize: 'lg' });
+
+    const snapshot = store.getSnapshot();
+    if (snapshot.status !== 'ready') {
+      throw new Error(`Expected ready state, received ${snapshot.status}`);
+    }
+    expect(snapshot.error).toBeNull();
+    expect(snapshot.settings.fontSize).toBe('lg');
   });
 });
 

@@ -11,6 +11,7 @@ import { useThemeMode } from '../hooks/use-theme-mode';
 export interface UserSettingsContextValue {
   readonly state: UserSettingsState;
   readonly settings: UserSettings | null;
+  readonly error: Error | null;
   readonly update: UserSettingsStore['update'];
 }
 
@@ -47,6 +48,7 @@ export function UserSettingsProvider({
     () => ({
       state,
       settings: state.status === 'ready' ? state.settings : null,
+      error: state.status === 'ready' ? state.error : null,
       update: store.update.bind(store),
     }),
     [state, store],

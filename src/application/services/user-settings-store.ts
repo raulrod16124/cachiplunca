@@ -10,8 +10,11 @@ import type { UserSettingsRepository } from '../ports/user-settings-repository';
 
 export type UserSettingsState =
   | { readonly status: 'loading' }
-  | { readonly status: 'ready'; readonly settings: UserSettings }
-  | { readonly status: 'error'; readonly error: Error };
+  | {
+      readonly status: 'ready';
+      readonly settings: UserSettings;
+      readonly error: Error | null;
+    };
 
 export interface UserSettingsPatch {
   readonly theme?: ThemeMode;
@@ -29,15 +32,22 @@ export interface UserSettingsStore {
 
 const LOADING_STATE: UserSettingsState = { status: 'loading' };
 
+function sameError(a: Error | null, b: Error | null): boolean {
+  if (a === b) {
+    return true;
+  }
+  if (a === null || b === null) {
+    return false;
+  }
+  return a.message === b.message;
+}
+
 function sameSettingsState(a: UserSettingsState, b: UserSettingsState): boolean {
   if (a.status !== b.status) {
     return false;
   }
   if (a.status === 'ready' && b.status === 'ready') {
-    return a.settings.equals(b.settings);
-  }
-  if (a.status === 'error' && b.status === 'error') {
-    return a.error === b.error;
+    return a.settings.equals(b.settings) && sameError(a.error, b.error);
   }
   return true;
 }
@@ -114,14 +124,23 @@ export function createUserSettingsStore(
       if (stored === null) {
         const settings = defaultSettings(userId);
         currentSettings = settings;
-        publish({ status: 'ready', settings });
-        await userSettingsRepository.upsert(settings);
+        publish({ status: 'ready', settings, error: null });
+        try {
+          await userSettingsRepository.upsert(settings);
+        } catch (error) {
+          publish({ status: 'ready', settings, error: toError(error) });
+        }
         return;
       }
       currentSettings = stored;
-      publish({ status: 'ready', settings: stored });
+      publish({ status: 'ready', settings: stored, error: null });
     } catch (error) {
-      publish({ status: 'error', error: toError(error) });
+      // A read failure (e.g. offline or missing permissions) must not drop the
+      // settings entirely: fall back to defaults so the theme still applies and
+      // the user can keep adjusting preferences, surfacing the error alongside.
+      const settings = defaultSettings(userId);
+      currentSettings = settings;
+      publish({ status: 'ready', settings, error: toError(error) });
     }
   }
 
@@ -129,16 +148,20 @@ export function createUserSettingsStore(
     if (currentSettings === null || currentUserId === null) {
       return;
     }
-    const next = currentSettings.update(patch);
-    if (next === currentSettings) {
+    const previous = currentSettings;
+    const next = previous.update(patch);
+    if (next === previous) {
       return;
     }
     currentSettings = next;
-    publish({ status: 'ready', settings: next });
+    publish({ status: 'ready', settings: next, error: null });
     try {
       await userSettingsRepository.upsert(next);
     } catch (error) {
-      publish({ status: 'error', error: toError(error) });
+      // Keep the optimistic choice visible and surface the persistence failure
+      // instead of dropping the settings. A later change re-persists the whole
+      // document, so the preference recovers once persistence works again.
+      publish({ status: 'ready', settings: next, error: toError(error) });
     }
   }
 

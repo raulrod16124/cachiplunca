@@ -54,7 +54,7 @@ function SettingsDialog({
 }: {
   readonly onOpenChange: (open: boolean) => void;
 }): ReactNode {
-  const { settings, update } = useUserSettings();
+  const { settings, error, update } = useUserSettings();
 
   const theme = settings?.theme ?? 'system';
   const fontSize = settings?.fontSize ?? 'base';
@@ -166,6 +166,13 @@ function SettingsDialog({
               Loading your preferences…
             </Text>
           ) : null}
+
+          {error === null ? null : (
+            <Text role="alert" color="color.text.danger" size="font.size.sm">
+              We could not sync your preferences. They apply for now but might not persist across
+              sessions.
+            </Text>
+          )}
         </Stack>
         <DialogFooter>
           <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
