@@ -42,6 +42,8 @@ const LOCALE_OPTIONS: readonly { readonly value: Locale; readonly label: string 
   { value: 'en', label: 'English' },
 ];
 
+const SELECT_CLASS_NAMES = { content: 'settings-select-content' } as const;
+
 export function SettingsModal({ open, onOpenChange }: SettingsModalProps): ReactNode {
   if (!open) {
     return null;
@@ -60,6 +62,7 @@ function SettingsDialog({
   const fontSize = settings?.fontSize ?? 'base';
   const locale = settings?.locale ?? 'system';
   const reducedMotion = settings?.reducedMotion ?? false;
+  const isLoading = settings === null;
 
   return (
     <Dialog open onOpenChange={onOpenChange}>
@@ -77,11 +80,12 @@ function SettingsDialog({
               {(field) => (
                 <Select
                   value={theme}
+                  classNames={SELECT_CLASS_NAMES}
                   onValueChange={(value) => {
                     void update({ theme: value as ThemeMode });
                   }}
                 >
-                  <Select.Trigger {...field} aria-label="Theme">
+                  <Select.Trigger {...field} aria-label="Theme" disabled={isLoading}>
                     <Select.Value />
                   </Select.Trigger>
                   <Select.Content>
@@ -102,11 +106,12 @@ function SettingsDialog({
               {(field) => (
                 <Select
                   value={fontSize}
+                  classNames={SELECT_CLASS_NAMES}
                   onValueChange={(value) => {
                     void update({ fontSize: value as FontSize });
                   }}
                 >
-                  <Select.Trigger {...field} aria-label="Font size">
+                  <Select.Trigger {...field} aria-label="Font size" disabled={isLoading}>
                     <Select.Value />
                   </Select.Trigger>
                   <Select.Content>
@@ -127,11 +132,12 @@ function SettingsDialog({
               {(field) => (
                 <Select
                   value={locale}
+                  classNames={SELECT_CLASS_NAMES}
                   onValueChange={(value) => {
                     void update({ locale: value as Locale });
                   }}
                 >
-                  <Select.Trigger {...field} aria-label="Language">
+                  <Select.Trigger {...field} aria-label="Language" disabled={isLoading}>
                     <Select.Value />
                   </Select.Trigger>
                   <Select.Content>
@@ -153,6 +159,7 @@ function SettingsDialog({
                 <Switch
                   {...field}
                   checked={reducedMotion}
+                  disabled={isLoading}
                   onChange={(event) => {
                     void update({ reducedMotion: event.target.checked });
                   }}
