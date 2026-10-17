@@ -1,4 +1,4 @@
-import { createTextElement, withTextContent } from '../../../../domain/element';
+import { createTextElement, richTextToPlain, withTextContent } from '../../../../domain/element';
 import type { CreateTextElementProps } from '../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
 
@@ -17,7 +17,7 @@ describe('TextElement', () => {
     const element = createTextElement(createProps());
 
     expect(element.type).toBe('text');
-    expect(element.content).toBe('hello');
+    expect(richTextToPlain(element.content)).toBe('hello');
     expect(element.rotation).toBe(0);
     expect(element.createdAt).toBeInstanceOf(Date);
     expect(element.updatedAt.getTime()).toBeGreaterThanOrEqual(element.createdAt.getTime());
@@ -51,7 +51,7 @@ describe('TextElement', () => {
     expect(() => createTextElement(createProps({ content: undefined }))).toThrow(/content/);
   });
 
-  it('rejects non-string content coming from untrusted data', () => {
+  it('rejects non-document content coming from untrusted data', () => {
     const untrusted = Object.assign(createProps(), { content: 123 });
     expect(() => createTextElement(untrusted)).toThrow(/content/);
   });
@@ -80,9 +80,9 @@ describe('TextElement', () => {
     const updated = withTextContent(original, 'updated text', updatedAt);
 
     expect(updated).not.toBe(original);
-    expect(updated.content).toBe('updated text');
+    expect(richTextToPlain(updated.content)).toBe('updated text');
     expect(updated.updatedAt).toBe(updatedAt);
-    expect(original.content).toBe('hello');
+    expect(richTextToPlain(original.content)).toBe('hello');
   });
 
   it('rejects an update whose updatedAt predates createdAt', () => {
@@ -100,6 +100,6 @@ describe('TextElement', () => {
 
     const updated = withTextContent(original, '');
 
-    expect(updated.content).toBe('');
+    expect(richTextToPlain(updated.content)).toBe('');
   });
 });

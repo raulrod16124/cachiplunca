@@ -6,6 +6,8 @@ import {
   createNoteElement,
   createTaskElement,
   createTextElement,
+  richTextFromPlain,
+  richTextToPlain,
   type ConnectorElement,
   type Element,
   type FrameElement,
@@ -70,7 +72,7 @@ describe('createUpdateElement', () => {
 
     expect(element.type).toBe('text');
     if (element.type === 'text') {
-      expect(element.content).toBe('updated');
+      expect(richTextToPlain(element.content)).toBe('updated');
     }
   });
 
@@ -246,7 +248,7 @@ describe('createUpdateElement', () => {
   });
 
   it('does not mutate the input or the original element', () => {
-    const element = textElement({ content: 'original' });
+    const element = textElement({ content: richTextFromPlain('original') });
     const input: UpdateElementInput = { element, type: 'text', content: 'changed' };
     const elementSnapshot = { ...element };
     const inputSnapshot = { ...input };
@@ -255,7 +257,7 @@ describe('createUpdateElement', () => {
 
     expect(element).toEqual(elementSnapshot);
     expect(input).toEqual(inputSnapshot);
-    expect(element.content).toBe('original');
+    expect(richTextToPlain(element.content)).toBe('original');
   });
 
   it('is stateless: successive calls do not share updated elements', () => {
@@ -273,13 +275,13 @@ describe('createUpdateElement', () => {
   });
 
   it('is apt for undo: discarding the result restores the original state', () => {
-    const original = textElement({ content: 'before' });
+    const original = textElement({ content: richTextFromPlain('before') });
     const result = makeCommand()({ element: original, type: 'text', content: 'after' });
 
     expect(result.status).toBe('ok');
     if (result.status === 'ok' && result.element.type === 'text') {
-      expect(result.element.content).toBe('after');
-      expect(original.content).toBe('before');
+      expect(richTextToPlain(result.element.content)).toBe('after');
+      expect(richTextToPlain(original.content)).toBe('before');
     }
   });
 });

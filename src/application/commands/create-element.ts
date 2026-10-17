@@ -6,6 +6,7 @@ import {
   createTaskElement,
   createTextElement,
   type Element,
+  type RichTextDocument,
   type TaskStatus,
 } from '../../domain/element';
 import type { ElementId, Position, Size, UserId, WorkspaceId } from '../../domain/shared';
@@ -21,7 +22,10 @@ export interface CreateElementBaseInput {
 }
 
 export type CreateElementInput =
-  | (CreateElementBaseInput & { readonly type: 'text'; readonly content: string })
+  | (CreateElementBaseInput & {
+      readonly type: 'text';
+      readonly content?: RichTextDocument | string;
+    })
   | (CreateElementBaseInput & {
       readonly type: 'note';
       readonly content: string;
@@ -84,7 +88,7 @@ function buildElement(input: CreateElementInput, deps: CreateElementDeps): Eleme
 
   switch (input.type) {
     case 'text':
-      return createTextElement({ ...base, content: input.content });
+      return createTextElement({ ...base, content: input.content ?? '' });
     case 'note':
       return createNoteElement({ ...base, content: input.content, color: input.color });
     case 'task':

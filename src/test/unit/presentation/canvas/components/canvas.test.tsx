@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Position, ElementId, Size, UserId, WorkspaceId } from '../../../../../domain/shared';
-import { createTextElement } from '../../../../../domain/element';
+import { createTextElement, richTextFromPlain } from '../../../../../domain/element';
 import type { Element, ElementType } from '../../../../../domain/element';
 import {
   createCanvasViewportStore,
@@ -13,6 +13,10 @@ import type { CommandHistory } from '../../../../../application/services';
 import { createFunctionCommand } from '../../../../../application/commands';
 import type { UpdateElementInput } from '../../../../../application/commands';
 import { Canvas } from '../../../../../presentation/canvas/components/canvas';
+
+jest.mock('../../../../../presentation/canvas/components/rich-text-editor', () =>
+  require('../../../../fixtures/rich-text-editor-stub'),
+);
 
 function createElement(id: string, x: number, y: number, width: number, height: number): Element {
   return createTextElement({
@@ -1182,6 +1186,17 @@ describe('Canvas', () => {
 
       expect(screen.queryByRole('menuitem', { name: 'Bring to front' })).not.toBeInTheDocument();
     });
+
+    it('shows text formatting options when right-clicking a text element', async () => {
+      renderCanvas([FIRST_ITEM]);
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      fireEvent.contextMenu(canvas, { clientX: 150, clientY: 130 });
+
+      expect(await screen.findByRole('menuitem', { name: 'Font' })).toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: 'Bold' })).toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: 'Alignment' })).toBeInTheDocument();
+    });
   });
 
   describe('undo', () => {
@@ -1547,21 +1562,21 @@ describe('Canvas', () => {
       );
     }
 
-    it('opens the inline editor when double-clicking an element', () => {
+    it('opens the inline editor when double-clicking an element', async () => {
       renderEditableCanvas({ elements: [FIRST_ITEM], onUpdateElement: jest.fn() });
 
       fireEvent.doubleClick(screen.getByTestId('canvas-item-first'));
 
-      expect(screen.getByTestId('element-editor')).toHaveValue('hello');
+      expect(await screen.findByTestId('element-editor')).toHaveValue('hello');
       expect(screen.queryByTestId('selection-overlay')).not.toBeInTheDocument();
     });
 
-    it('positions the editor over the element world bounds', () => {
+    it('positions the editor over the element world bounds', async () => {
       renderEditableCanvas({ elements: [FIRST_ITEM], onUpdateElement: jest.fn() });
 
       fireEvent.doubleClick(screen.getByTestId('canvas-item-first'));
 
-      const editor = screen.getByTestId('element-editor');
+      const editor = await screen.findByTestId('element-editor');
       expect(getComputedStyle(editor).position).toBe('absolute');
       expect(editor.style.left).toBe('100px');
       expect(editor.style.top).toBe('100px');
@@ -1569,7 +1584,7 @@ describe('Canvas', () => {
       expect(editor.style.height).toBe('80px');
     });
 
-    it('opens the editor when the double-click is retargeted to the canvas surface', () => {
+    it('opens the editor when the double-click is retargeted to the canvas surface', async () => {
       renderEditableCanvas({ elements: [FIRST_ITEM], onUpdateElement: jest.fn() });
 
       const item = screen.getByTestId('canvas-item-first');
@@ -1587,7 +1602,7 @@ describe('Canvas', () => {
         });
 
         expect(elementFromPoint).toHaveBeenCalled();
-        expect(screen.getByTestId('element-editor')).toHaveValue('hello');
+        expect(await screen.findByTestId('element-editor')).toHaveValue('hello');
       } finally {
         delete (document as { elementFromPoint?: unknown }).elementFromPoint;
       }
@@ -1600,7 +1615,7 @@ describe('Canvas', () => {
 
       fireEvent.doubleClick(screen.getByTestId('canvas-item-first'));
 
-      const editor = screen.getByTestId('element-editor');
+      const editor = await screen.findByTestId('element-editor');
       await user.clear(editor);
       await user.type(editor, 'updated');
       await user.tab();
@@ -1608,7 +1623,7 @@ describe('Canvas', () => {
       expect(onUpdateElement).toHaveBeenCalledWith({
         type: 'text',
         element: FIRST_ITEM,
-        content: 'updated',
+        content: richTextFromPlain('updated'),
       });
       expect(screen.queryByTestId('element-editor')).not.toBeInTheDocument();
     });
@@ -1620,7 +1635,7 @@ describe('Canvas', () => {
 
       fireEvent.doubleClick(screen.getByTestId('canvas-item-first'));
 
-      const editor = screen.getByTestId('element-editor');
+      const editor = await screen.findByTestId('element-editor');
       await user.clear(editor);
       await user.type(editor, 'discarded');
       await user.keyboard('{Escape}');
@@ -1642,7 +1657,7 @@ describe('Canvas', () => {
 
       await user.keyboard('{Enter}');
 
-      expect(screen.getByTestId('element-editor')).toBeInTheDocument();
+      expect(await screen.findByTestId('element-editor')).toBeInTheDocument();
     });
 
     it('does not open the editor when the canvas is read-only', () => {
@@ -1663,7 +1678,7 @@ describe('Canvas', () => {
 
       await user.click(screen.getByRole('button', { name: 'Add text' }));
 
-      expect(screen.getByTestId('element-editor')).toBeInTheDocument();
+      expect(await screen.findByTestId('element-editor')).toBeInTheDocument();
     });
   });
 });

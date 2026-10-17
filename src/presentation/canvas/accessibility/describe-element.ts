@@ -1,4 +1,4 @@
-import { ELEMENT_TYPES } from '../../../domain/element';
+import { ELEMENT_TYPES, richTextToPlain } from '../../../domain/element';
 import type { Element, ElementType, TaskStatus } from '../../../domain/element';
 
 const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
@@ -41,7 +41,7 @@ function contentLabel(prefix: string, content: string): string {
 function referenceLabel(element: Element): string {
   switch (element.type) {
     case 'text':
-      return contentLabel('text', element.content);
+      return contentLabel('text', richTextToPlain(element.content));
     case 'note':
       return contentLabel('note', element.content);
     case 'task':
@@ -75,7 +75,7 @@ function resolveReference(id: string, elements: readonly Element[]): string {
 export function describeElement(element: Element, elements: readonly Element[] = []): string {
   switch (element.type) {
     case 'text':
-      return contentLabel('Text', element.content);
+      return contentLabel('Text', richTextToPlain(element.content));
     case 'note':
       return contentLabel('Note', element.content);
     case 'task': {

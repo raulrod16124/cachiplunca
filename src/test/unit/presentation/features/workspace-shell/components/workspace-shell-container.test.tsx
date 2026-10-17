@@ -37,7 +37,7 @@ import type {
   ElementPersistenceOrchestrator,
   RealtimeSubscriptionManager,
 } from '../../../../../../application/services';
-import { createTextElement } from '../../../../../../domain/element';
+import { createTextElement, richTextFromPlain } from '../../../../../../domain/element';
 import { Presence } from '../../../../../../domain/collaboration';
 import {
   ElementId,
@@ -47,6 +47,10 @@ import {
   UserId,
   WorkspaceId,
 } from '../../../../../../domain/shared';
+
+jest.mock('../../../../../../presentation/canvas/components/rich-text-editor', () =>
+  require('../../../../../../test/fixtures/rich-text-editor-stub'),
+);
 import { Workspace } from '../../../../../../domain/workspace';
 import { createAppError, ERROR_CODES } from '../../../../../../shared/errors';
 import { WorkspaceShellContainer } from '../../../../../../presentation/features/workspace-shell/components/workspace-shell-container';
@@ -1720,7 +1724,7 @@ describe('WorkspaceShellContainer', () => {
     const item = await screen.findByTestId('canvas-item-el-1');
     fireEvent.doubleClick(item);
 
-    const editor = screen.getByTestId('element-editor');
+    const editor = await screen.findByTestId('element-editor');
     await user.clear(editor);
     await user.type(editor, 'Updated');
     await user.tab();
@@ -1731,7 +1735,7 @@ describe('WorkspaceShellContainer', () => {
       const element = stored[0];
       expect(element?.type).toBe('text');
       if (element?.type === 'text') {
-        expect(element.content).toBe('Updated');
+        expect(element.content).toEqual(richTextFromPlain('Updated'));
       }
     });
   });

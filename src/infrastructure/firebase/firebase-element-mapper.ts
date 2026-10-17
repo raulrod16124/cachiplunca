@@ -6,8 +6,11 @@ import {
   createTaskElement,
   createTextElement,
   ELEMENT_TYPES,
+  parseRichTextDocument,
+  richTextFromPlain,
   type Element,
   type ElementType,
+  type RichTextDocument,
 } from '../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../domain/shared';
 
@@ -25,7 +28,7 @@ interface BaseElementDocument {
 
 export interface TextElementDocument extends BaseElementDocument {
   readonly type: 'text';
-  readonly content: string;
+  readonly content: RichTextDocument;
 }
 
 export interface NoteElementDocument extends BaseElementDocument {
@@ -136,7 +139,7 @@ export function fromElementDocument(id: string, data: unknown): Element {
 
   switch (type) {
     case 'text':
-      return createTextElement({ ...base, content: readString(data.content, 'content') });
+      return createTextElement({ ...base, content: readRichText(data.content) });
     case 'note':
       return createNoteElement({
         ...base,
@@ -202,6 +205,13 @@ function readString(value: unknown, field: string): string {
     throw new Error(`Element document field "${field}" must be a string`);
   }
   return value;
+}
+
+function readRichText(value: unknown): RichTextDocument {
+  if (typeof value === 'string') {
+    return richTextFromPlain(value);
+  }
+  return parseRichTextDocument(value);
 }
 
 function readNumber(value: unknown, field: string): number {

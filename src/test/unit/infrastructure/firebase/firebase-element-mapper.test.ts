@@ -5,6 +5,7 @@ import {
   createNoteElement,
   createTaskElement,
   createTextElement,
+  richTextFromPlain,
   type Element,
 } from '../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
@@ -65,7 +66,7 @@ describe('toElementDocument', () => {
 
     expect(document.type).toBe('text');
     expectBaseDocument(document);
-    expect(asRecord(document).content).toBe('Hello');
+    expect(asRecord(document).content).toEqual(richTextFromPlain('Hello'));
   });
 
   it('maps a NoteElement preserving optional color', () => {
@@ -281,7 +282,7 @@ describe('fromElementDocument', () => {
     };
 
     expect(() => fromElementDocument('el-text', document)).toThrow(
-      'Element document field "content" must be a string',
+      'TextElement content must be a rich text document',
     );
   });
 

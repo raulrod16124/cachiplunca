@@ -1,5 +1,5 @@
 import { createPasteElement } from '../../../../application/commands';
-import { createTextElement, isTextElement, type Element } from '../../../../domain/element';
+import { createTextElement, isTextElement, richTextToPlain, type Element } from '../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
 import { ERROR_CODES } from '../../../../shared/errors';
 
@@ -36,7 +36,7 @@ describe('createPasteElement', () => {
       expect(result.element.createdAt).toEqual(NOW);
       expect(result.element.updatedAt).toEqual(NOW);
       if (isTextElement(result.element)) {
-        expect(result.element.content).toBe('hello');
+        expect(richTextToPlain(result.element.content)).toBe('hello');
       }
     }
   });

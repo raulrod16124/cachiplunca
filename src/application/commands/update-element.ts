@@ -18,6 +18,7 @@ import {
   type FrameElement,
   type LinkElement,
   type NoteElement,
+  type RichTextDocument,
   type TaskElement,
   type TaskStatus,
 } from '../../domain/element';
@@ -31,7 +32,10 @@ interface UpdateElementBaseInput {
 }
 
 export type UpdateElementInput =
-  | (UpdateElementBaseInput & { readonly type: 'text'; readonly content?: string })
+  | (UpdateElementBaseInput & {
+      readonly type: 'text';
+      readonly content?: RichTextDocument | string;
+    })
   | (UpdateElementBaseInput & {
       readonly type: 'note';
       readonly content?: string;

@@ -1,9 +1,11 @@
 import { VisuallyHidden } from '@raulrod/ui';
+import type { Editor } from '@tiptap/core';
 import type { MouseEvent as ReactMouseEvent, ReactElement } from 'react';
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import styled from 'styled-components';
 import { Bounds, Grid, Position, Size } from '../../../domain/shared';
 import type { Element, ElementType } from '../../../domain/element';
+import { isTextElement } from '../../../domain/element';
 import type { ElementId } from '../../../domain/shared';
 import type {
   CanvasViewportStore,
@@ -46,10 +48,14 @@ import type { ElementRendererRegistry } from '../renderers';
 import { EmptyState } from '../../components/empty-state';
 import { CanvasToolbar } from './canvas-toolbar';
 import { ElementContextMenu } from './element-context-menu';
+import type { TextFormatMenuSection } from './element-context-menu';
 import { ElementEditorOverlay } from './element-editor-overlay';
 import { RemoteCursorsOverlay } from './remote-cursors-overlay';
 import { SelectionOverlay } from './selection-overlay';
 import { ViewportControls } from './viewport-controls';
+import { applyFormatToEditor, getEditorFormatState } from '../text-format/editor-format';
+import { applyFormatToDocument, getTextFormatState } from '../text-format/text-format';
+import type { TextFormatAction } from '../text-format/text-format';
 
 const CanvasContainer = styled.div`
   position: relative;
@@ -435,6 +441,80 @@ export function Canvas({
     setEditingElementId(null);
   }, []);
 
+  const textEditorRef = useRef<Editor | null>(null);
+  const formatMenuOpenRef = useRef(false);
+  const [contextMenuTargetId, setContextMenuTargetId] = useState<string | null>(null);
+
+  const handleTextEditorReady = useCallback((editor: Editor | null): void => {
+    textEditorRef.current = editor;
+  }, []);
+
+  const formatTarget = useMemo(() => {
+    if (readOnly) {
+      return null;
+    }
+
+    const targetId =
+      contextMenuTargetId ?? (selection.selectedIds.length === 1 ? selection.selectedIds[0] : null);
+
+    if (targetId === null) {
+      return null;
+    }
+
+    const target = elements.find((element) => element.id.value === targetId);
+
+    return target !== undefined && isTextElement(target) ? target : null;
+  }, [readOnly, contextMenuTargetId, selection.selectedIds, elements]);
+
+  const handleFormatAction = useCallback(
+    (action: TextFormatAction): void => {
+      if (formatTarget === null || onUpdateElement === undefined) {
+        return;
+      }
+
+      const editor = textEditorRef.current;
+
+      if (
+        editingElement !== null &&
+        editingElement.id.value === formatTarget.id.value &&
+        editor !== null &&
+        !editor.isDestroyed
+      ) {
+        applyFormatToEditor(editor, action);
+        return;
+      }
+
+      const next = applyFormatToDocument(
+        formatTarget.content,
+        action,
+        getTextFormatState(formatTarget.content),
+      );
+
+      onUpdateElement({ type: 'text', element: formatTarget, content: next });
+    },
+    [formatTarget, editingElement, onUpdateElement],
+  );
+
+  const formatSection = useMemo<TextFormatMenuSection | null>(() => {
+    if (formatTarget === null) {
+      return null;
+    }
+
+    const editor = textEditorRef.current;
+    const isEditingTarget =
+      editingElement !== null &&
+      editingElement.id.value === formatTarget.id.value &&
+      editor !== null &&
+      !editor.isDestroyed;
+
+    return {
+      state: isEditingTarget
+        ? getEditorFormatState(editor)
+        : getTextFormatState(formatTarget.content),
+      onAction: handleFormatAction,
+    };
+  }, [formatTarget, editingElement, handleFormatAction]);
+
   const handleUndo = useCallback((): void => {
     if (history === undefined || !history.canUndo()) {
       return;
@@ -485,7 +565,9 @@ export function Canvas({
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
   const closeContextMenu = useCallback((): void => {
+    formatMenuOpenRef.current = false;
     setContextMenu(null);
+    setContextMenuTargetId(null);
   }, []);
 
   const handleContextMenu = useCallback(
@@ -502,7 +584,9 @@ export function Canvas({
       event.preventDefault();
 
       if (hitId === null) {
+        formatMenuOpenRef.current = false;
         setContextMenu(null);
+        setContextMenuTargetId(null);
         return;
       }
 
@@ -510,13 +594,15 @@ export function Canvas({
         selectionStore.select(hitId);
       }
 
+      formatMenuOpenRef.current = true;
       setContextMenu(offset);
+      setContextMenuTargetId(hitId);
     },
     [readOnly, viewport, items, selection.selectedIds, selectionStore],
   );
 
   const handleBringToFront = useCallback((): void => {
-    setContextMenu(null);
+    closeContextMenu();
 
     if (selection.selectedIds.length === 0) {
       return;
@@ -529,10 +615,10 @@ export function Canvas({
     }
 
     onReorderElements?.(result.elements);
-  }, [elements, selection.selectedIds, onReorderElements]);
+  }, [closeContextMenu, elements, selection.selectedIds, onReorderElements]);
 
   const handleSendToBack = useCallback((): void => {
-    setContextMenu(null);
+    closeContextMenu();
 
     if (selection.selectedIds.length === 0) {
       return;
@@ -545,7 +631,7 @@ export function Canvas({
     }
 
     onReorderElements?.(result.elements);
-  }, [elements, selection.selectedIds, onReorderElements]);
+  }, [closeContextMenu, elements, selection.selectedIds, onReorderElements]);
 
   const handleCreateElement = useCallback(
     (type: ElementType): void => {
@@ -714,6 +800,8 @@ export function Canvas({
             element={editingElement}
             onCommit={handleCommitEdit}
             onCancel={handleCancelEdit}
+            onTextEditorReady={handleTextEditorReady}
+            textCommitGuardRef={formatMenuOpenRef}
           />
         )}
         {elements.length === 0 ? (
@@ -728,6 +816,7 @@ export function Canvas({
         onBringToFront={handleBringToFront}
         onSendToBack={handleSendToBack}
         onClose={closeContextMenu}
+        format={formatSection}
       />
       <CanvasToolbar
         onCreateElement={handleCreateElement}

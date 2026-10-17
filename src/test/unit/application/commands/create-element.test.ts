@@ -1,5 +1,6 @@
 import { createCreateElement, type CreateElementInput } from '../../../../application/commands';
 import type { Element } from '../../../../domain/element';
+import { richTextToPlain } from '../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
 import { ERROR_CODES } from '../../../../shared/errors';
 
@@ -36,7 +37,7 @@ describe('createCreateElement', () => {
 
     expect(element.type).toBe('text');
     if (element.type === 'text') {
-      expect(element.content).toBe('Title');
+      expect(richTextToPlain(element.content)).toBe('Title');
     }
   });
 

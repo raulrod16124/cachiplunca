@@ -3,6 +3,8 @@ import { Position } from '../shared/value-objects/position';
 import { Size } from '../shared/value-objects/size';
 import { UserId } from '../shared/value-objects/user-id';
 import { WorkspaceId } from '../shared/value-objects/workspace-id';
+import { validateRichTextDocument } from './rich-text';
+import type { RichTextDocument } from './rich-text';
 
 export const ELEMENT_TYPES = ['text', 'note', 'task', 'frame', 'connector', 'link'] as const;
 
@@ -23,7 +25,7 @@ export interface BaseElement {
 
 export interface TextElement extends BaseElement {
   readonly type: 'text';
-  readonly content: string;
+  readonly content: RichTextDocument;
 }
 
 export interface NoteElement extends BaseElement {
@@ -112,6 +114,7 @@ export function validateTextElement(element: TextElement): void {
   if (element.content === undefined || element.content === null) {
     throw new Error('TextElement content must be defined');
   }
+  validateRichTextDocument(element.content);
 }
 
 export function validateNoteElement(element: NoteElement): void {

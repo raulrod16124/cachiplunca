@@ -2,6 +2,8 @@ import type { Firestore } from 'firebase/firestore';
 import {
   createTextElement,
   isTextElement,
+  richTextFromPlain,
+  richTextToPlain,
   type Element,
   type TextElement,
 } from '../../../../domain/element';
@@ -58,7 +60,7 @@ describe('createFirebaseElementRepository', () => {
     }
     expect(stored.type).toBe('text');
     expect(stored.workspaceId).toBe('ws-1');
-    expect(stored.content).toBe('Persisted');
+    expect(stored.content).toEqual(richTextFromPlain('Persisted'));
     expect(stored.createdAt).toBeInstanceOf(Date);
     expect(stored.updatedAt).toBeInstanceOf(Date);
     expect(stored.createdAt).toEqual(saved.createdAt);
@@ -129,7 +131,7 @@ describe('createFirebaseElementRepository', () => {
 
     expect(element).not.toBeNull();
     expect(isTextElement(element as Element)).toBe(true);
-    expect((element as TextElement).content).toBe('Seeded');
+    expect(richTextToPlain((element as TextElement).content)).toBe('Seeded');
     expect(element?.createdAt.getTime()).toBe(createdAt.getTime());
     expect(element?.updatedAt.getTime()).toBe(createdAt.getTime());
   });
@@ -171,7 +173,7 @@ describe('createFirebaseElementRepository', () => {
 
     expect(listed).toHaveLength(1);
     expect(isTextElement(listed[0] as Element)).toBe(true);
-    expect((listed[0] as TextElement).content).toBe('Here');
+    expect(richTextToPlain((listed[0] as TextElement).content)).toBe('Here');
   });
 
   it('writes saveMany through a single atomic writeBatch', async () => {
@@ -185,8 +187,8 @@ describe('createFirebaseElementRepository', () => {
     ]);
 
     expect(writeSpy).toHaveBeenCalledTimes(1);
-    expect(firestoreMock.__read('elements/el-1')?.content).toBe('One');
-    expect(firestoreMock.__read('elements/el-2')?.content).toBe('Two');
+    expect(firestoreMock.__read('elements/el-1')?.content).toEqual(richTextFromPlain('One'));
+    expect(firestoreMock.__read('elements/el-2')?.content).toEqual(richTextFromPlain('Two'));
 
     writeSpy.mockRestore();
   });

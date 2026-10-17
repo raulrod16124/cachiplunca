@@ -1,10 +1,11 @@
+import type { Editor } from '@tiptap/core';
 import type {
   CSSProperties,
   FocusEvent,
   KeyboardEvent as ReactKeyboardEvent,
   ReactElement,
 } from 'react';
-import { useRef, useState } from 'react';
+import { lazy, Suspense, useRef, useState } from 'react';
 import styled from 'styled-components';
 import type { UpdateElementInput } from '../../../application/commands';
 import type {
@@ -22,6 +23,10 @@ import {
   isTaskElement,
   isTextElement,
 } from '../../../domain/element';
+
+const LazyRichTextEditor = lazy(() =>
+  import('./rich-text-editor').then((module) => ({ default: module.RichTextEditor })),
+);
 
 const EditorBox = styled.div`
   position: absolute;
@@ -127,6 +132,8 @@ export interface ElementEditorOverlayProps {
   readonly element: Element;
   readonly onCommit: (input: UpdateElementInput) => void;
   readonly onCancel: () => void;
+  readonly onTextEditorReady?: (editor: Editor | null) => void;
+  readonly textCommitGuardRef?: { readonly current: boolean };
 }
 
 type FieldEditorProps<TElement extends Element> = {
@@ -157,56 +164,22 @@ function TextContentEditor({
   element,
   onCommit,
   onCancel,
-}: FieldEditorProps<TextElement>): ReactElement {
-  const [draft, setDraft] = useState(element.content);
-  const cancelledRef = useRef(false);
-
-  const cancel = (): void => {
-    cancelledRef.current = true;
-    onCancel();
-  };
-
-  const commit = (): void => {
-    if (cancelledRef.current) {
-      return;
-    }
-
-    if (draft === element.content) {
-      cancel();
-      return;
-    }
-
-    onCommit({ type: 'text', element, content: draft });
-  };
-
-  const handleKeyDown = (event: ReactKeyboardEvent<HTMLTextAreaElement>): void => {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      event.stopPropagation();
-      cancel();
-      return;
-    }
-
-    if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
-      event.preventDefault();
-      commit();
-    }
-  };
-
+  onEditorReady,
+  commitGuardRef,
+}: FieldEditorProps<TextElement> & {
+  readonly onEditorReady?: (editor: Editor | null) => void;
+  readonly commitGuardRef?: { readonly current: boolean };
+}): ReactElement {
   return (
-    <TextAreaBox
-      $padding="8px"
-      style={boxStyle(element)}
-      data-testid="element-editor"
-      data-editor-field="content"
-      aria-label="Text content"
-      autoFocus
-      value={draft}
-      onChange={(event) => setDraft(event.target.value)}
-      onFocus={selectAllOnFocus}
-      onBlur={commit}
-      onKeyDown={handleKeyDown}
-    />
+    <Suspense fallback={null}>
+      <LazyRichTextEditor
+        element={element}
+        onCommit={onCommit}
+        onCancel={onCancel}
+        onEditorReady={onEditorReady}
+        commitGuardRef={commitGuardRef}
+      />
+    </Suspense>
   );
 }
 
@@ -487,9 +460,19 @@ export function ElementEditorOverlay({
   element,
   onCommit,
   onCancel,
+  onTextEditorReady,
+  textCommitGuardRef,
 }: ElementEditorOverlayProps): ReactElement | null {
   if (isTextElement(element)) {
-    return <TextContentEditor element={element} onCommit={onCommit} onCancel={onCancel} />;
+    return (
+      <TextContentEditor
+        element={element}
+        onCommit={onCommit}
+        onCancel={onCancel}
+        onEditorReady={onTextEditorReady}
+        commitGuardRef={textCommitGuardRef}
+      />
+    );
   }
 
   if (isNoteElement(element)) {

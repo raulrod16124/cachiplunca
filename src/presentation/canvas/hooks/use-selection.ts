@@ -20,7 +20,10 @@ function isInteractiveTarget(target: EventTarget | null): boolean {
     return false;
   }
 
-  return target.closest('button, a, input, textarea, select, [role="button"]') !== null;
+  return (
+    target.closest('button, a, input, textarea, select, [contenteditable="true"], [role="button"]') !==
+    null
+  );
 }
 
 export function useSelection({

@@ -6,9 +6,14 @@ import {
   createNoteElement,
   createTaskElement,
   createTextElement,
+  richTextFromPlain,
 } from '../../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../../domain/shared';
 import { ElementEditorOverlay } from '../../../../../presentation/canvas/components/element-editor-overlay';
+
+jest.mock('../../../../../presentation/canvas/components/rich-text-editor', () =>
+  require('../../../../fixtures/rich-text-editor-stub'),
+);
 
 const WORKSPACE_ID = WorkspaceId.create('ws-1');
 const USER_ID = UserId.create('user-1');
@@ -80,14 +85,18 @@ describe('ElementEditorOverlay', () => {
 
       render(<ElementEditorOverlay element={element} onCommit={onCommit} onCancel={onCancel} />);
 
-      const editor = screen.getByTestId('element-editor');
+      const editor = await screen.findByTestId('element-editor');
       expect(editor).toHaveValue('hello');
 
       await user.clear(editor);
       await user.type(editor, 'updated');
       await user.tab();
 
-      expect(onCommit).toHaveBeenCalledWith({ type: 'text', element, content: 'updated' });
+      expect(onCommit).toHaveBeenCalledWith({
+        type: 'text',
+        element,
+        content: richTextFromPlain('updated'),
+      });
     });
 
     it('cancels without committing when the content is unchanged', async () => {
@@ -103,6 +112,7 @@ describe('ElementEditorOverlay', () => {
         />,
       );
 
+      await screen.findByTestId('element-editor');
       await user.tab();
 
       expect(onCommit).not.toHaveBeenCalled();
@@ -122,7 +132,7 @@ describe('ElementEditorOverlay', () => {
         />,
       );
 
-      const editor = screen.getByTestId('element-editor');
+      const editor = await screen.findByTestId('element-editor');
       await user.clear(editor);
       await user.type(editor, 'discarded');
       await user.keyboard('{Escape}');
@@ -131,7 +141,7 @@ describe('ElementEditorOverlay', () => {
       expect(onCancel).toHaveBeenCalled();
     });
 
-    it('positions the editor over the element world bounds', () => {
+    it('positions the editor over the element world bounds', async () => {
       render(
         <ElementEditorOverlay
           element={createText('hello')}
@@ -140,7 +150,7 @@ describe('ElementEditorOverlay', () => {
         />,
       );
 
-      const editor = screen.getByTestId('element-editor');
+      const editor = await screen.findByTestId('element-editor');
       expect(getComputedStyle(editor).position).toBe('absolute');
       expect(editor.style.left).toBe('10px');
       expect(editor.style.top).toBe('20px');
@@ -156,12 +166,16 @@ describe('ElementEditorOverlay', () => {
 
       render(<ElementEditorOverlay element={element} onCommit={onCommit} onCancel={onCancel} />);
 
-      const editor = screen.getByTestId('element-editor');
+      const editor = await screen.findByTestId('element-editor');
       await user.clear(editor);
       await user.type(editor, 'done');
       fireEvent.keyDown(editor, { key: 'Enter', ctrlKey: true });
 
-      expect(onCommit).toHaveBeenCalledWith({ type: 'text', element, content: 'done' });
+      expect(onCommit).toHaveBeenCalledWith({
+        type: 'text',
+        element,
+        content: richTextFromPlain('done'),
+      });
     });
   });
 

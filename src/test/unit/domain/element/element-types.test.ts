@@ -8,6 +8,8 @@ import {
   isNoteElement,
   isTaskElement,
   isTextElement,
+  richTextFromPlain,
+  richTextToPlain,
   validateConnectorElement,
   validateElement,
   validateFrameElement,
@@ -49,7 +51,7 @@ const createBaseElement = (overrides: Partial<BaseElement> = {}): BaseElement =>
 const createTextElement = (overrides: Partial<TextElement> = {}): TextElement => ({
   ...createBaseElement(),
   type: 'text',
-  content: 'hello',
+  content: richTextFromPlain('hello'),
   ...overrides,
 });
 
@@ -132,7 +134,7 @@ describe('Element types', () => {
     const summaries = elements.map((element) => {
       switch (element.type) {
         case 'text':
-          return element.content;
+          return richTextToPlain(element.content);
         case 'task':
           return `${element.title}:${element.status}`;
         case 'link':
