@@ -277,6 +277,7 @@ export function FloatingTextToolbar({
 
   const state: TextFormatState | null =
     open && formatTarget !== null ? formatTarget.getState() : null;
+  const listsEnabled = formatTarget?.capabilities.lists !== false;
 
   if (!open || state === null || anchor === null) {
     return null;
@@ -390,6 +391,7 @@ export function FloatingTextToolbar({
           data-mixed={state.bulletList === 'mixed'}
           $active={state.bulletList === 'on'}
           $mixed={state.bulletList === 'mixed'}
+          disabled={!listsEnabled}
           onClick={() => applyAction({ kind: 'list', value: 'bulletList' })}
         >
           <List aria-hidden="true" size={16} />
@@ -401,6 +403,7 @@ export function FloatingTextToolbar({
           data-mixed={state.orderedList === 'mixed'}
           $active={state.orderedList === 'on'}
           $mixed={state.orderedList === 'mixed'}
+          disabled={!listsEnabled}
           onClick={() => applyAction({ kind: 'list', value: 'orderedList' })}
         >
           <ListOrdered aria-hidden="true" size={16} />

@@ -13,6 +13,7 @@ import type {
   FrameElement,
   LinkElement,
   NoteElement,
+  RichTextDocument,
   TaskElement,
   TextElement,
 } from '../../../domain/element';
@@ -22,6 +23,7 @@ import {
   isNoteElement,
   isTaskElement,
   isTextElement,
+  richTextFromPlain,
   richTextToPlain,
 } from '../../../domain/element';
 
@@ -33,50 +35,19 @@ const EditorBox = styled.div`
   position: absolute;
   box-sizing: border-box;
   transform-origin: center center;
-  outline: 1.5px solid ${({ theme }) => theme.canvas.selection};
-  outline-offset: 0;
-`;
-
-const TextAreaBox = styled.textarea<{ $padding: string }>`
-  position: absolute;
-  transform-origin: center center;
-  box-sizing: border-box;
-  padding: ${({ $padding }) => $padding};
+  padding: 8px;
+  overflow: auto;
   border: 1.5px solid ${({ theme }) => theme.canvas.selection};
   border-radius: ${({ theme }) => theme.radius.sm};
-  outline: none;
-  resize: none;
-  overflow: auto;
-  user-select: text;
-  caret-color: auto;
+  background-color: ${({ theme }) => theme.canvas.surface};
   color: ${({ theme }) => theme.color.text.primary};
   font-family: inherit;
   font-size: ${({ theme }) => theme.font.size.sm};
   line-height: 1.4;
-  background-color: ${({ theme }) => theme.canvas.surface};
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
 `;
 
-const TitleField = styled.input`
-  box-sizing: border-box;
-  width: 100%;
-  padding: 0;
-  border: none;
-  outline: none;
-  user-select: text;
-  caret-color: auto;
-  color: ${({ theme }) => theme.color.text.primary};
-  font-family: inherit;
-  font-size: ${({ theme }) => theme.font.size.sm};
-  font-weight: ${({ theme }) => theme.font.weight.semibold};
-  line-height: 1.4;
-  background: transparent;
-
-  &::placeholder {
-    color: ${({ theme }) => theme.color.text.muted};
-    font-weight: ${({ theme }) => theme.font.weight.regular};
-  }
+const NoteBox = styled(EditorBox)`
+  padding: 12px;
 `;
 
 const UrlField = styled.input`
@@ -103,13 +74,18 @@ const TaskBox = styled(EditorBox)`
   flex-direction: column;
   gap: 4px;
   padding: 12px;
-  border-radius: ${({ theme }) => theme.radius.sm};
-  background-color: ${({ theme }) => theme.canvas.surface};
+`;
+
+const TaskTitle = styled.div`
+  font-weight: ${({ theme }) => theme.font.weight.semibold};
+  word-break: break-word;
 `;
 
 const FrameBox = styled(EditorBox)`
   display: flex;
   flex-direction: column;
+  padding: 0;
+  overflow: hidden;
   background-color: ${({ theme }) => theme.canvas.surfaceMuted};
 `;
 
@@ -117,6 +93,8 @@ const FrameHeader = styled.div`
   padding: 8px 12px;
   border-bottom: 1px solid ${({ theme }) => theme.canvas.elementBorder};
   background-color: ${({ theme }) => theme.canvas.surface};
+  font-weight: ${({ theme }) => theme.font.weight.semibold};
+  word-break: break-word;
 `;
 
 const LinkBox = styled(EditorBox)`
@@ -125,8 +103,11 @@ const LinkBox = styled(EditorBox)`
   justify-content: center;
   gap: 4px;
   padding: 12px;
-  border-radius: ${({ theme }) => theme.radius.sm};
-  background-color: ${({ theme }) => theme.canvas.surface};
+`;
+
+const LinkTitle = styled.div`
+  font-weight: ${({ theme }) => theme.font.weight.semibold};
+  word-break: break-word;
 `;
 
 export interface ElementEditorOverlayProps {
@@ -143,6 +124,20 @@ type FieldEditorProps<TElement extends Element> = {
   readonly onCancel: () => void;
 };
 
+type RichTextFieldEditorProps = {
+  readonly document: RichTextDocument;
+  readonly ariaLabel: string;
+  readonly dataField: 'content' | 'title';
+  readonly singleLine?: boolean;
+  readonly autoFocus?: boolean;
+  readonly selectAllOnFocus?: boolean;
+  readonly onChange?: (document: RichTextDocument) => void;
+  readonly onCommit: (document: RichTextDocument) => void;
+  readonly onCancel: () => void;
+  readonly onEditorReady?: (editor: Editor | null) => void;
+  readonly commitGuardRef?: { readonly current: boolean };
+};
+
 function boxStyle(element: Element): CSSProperties {
   return {
     left: element.position.x,
@@ -153,8 +148,36 @@ function boxStyle(element: Element): CSSProperties {
   };
 }
 
-function selectAllOnFocus(event: FocusEvent<HTMLInputElement | HTMLTextAreaElement>): void {
-  event.currentTarget.select();
+function RichTextFieldEditor({
+  document,
+  ariaLabel,
+  dataField,
+  singleLine = false,
+  autoFocus = false,
+  selectAllOnFocus = false,
+  onChange,
+  onCommit,
+  onCancel,
+  onEditorReady,
+  commitGuardRef,
+}: RichTextFieldEditorProps): ReactElement {
+  return (
+    <Suspense fallback={null}>
+      <LazyRichTextEditor
+        document={document}
+        ariaLabel={ariaLabel}
+        dataField={dataField}
+        singleLine={singleLine}
+        autoFocus={autoFocus}
+        selectAllOnFocus={selectAllOnFocus}
+        onChange={onChange}
+        onCommit={onCommit}
+        onCancel={onCancel}
+        onEditorReady={onEditorReady}
+        commitGuardRef={commitGuardRef}
+      />
+    </Suspense>
+  );
 }
 
 function isContainedFocus(event: FocusEvent<HTMLElement>, container: HTMLElement | null): boolean {
@@ -171,16 +194,28 @@ function TextContentEditor({
   readonly onEditorReady?: (editor: Editor | null) => void;
   readonly commitGuardRef?: { readonly current: boolean };
 }): ReactElement {
+  const handleCommit = (document: RichTextDocument): void => {
+    if (JSON.stringify(document) === JSON.stringify(element.content)) {
+      onCancel();
+      return;
+    }
+
+    onCommit({ type: 'text', element, content: document });
+  };
+
   return (
-    <Suspense fallback={null}>
-      <LazyRichTextEditor
-        element={element}
-        onCommit={onCommit}
+    <EditorBox style={boxStyle(element)} data-testid="element-editor-box">
+      <RichTextFieldEditor
+        document={element.content}
+        ariaLabel="Text content"
+        dataField="content"
+        autoFocus
+        onCommit={handleCommit}
         onCancel={onCancel}
         onEditorReady={onEditorReady}
         commitGuardRef={commitGuardRef}
       />
-    </Suspense>
+    </EditorBox>
   );
 }
 
@@ -189,58 +224,32 @@ function NoteContentEditor({
   onCommit,
   onCancel,
 }: FieldEditorProps<NoteElement>): ReactElement {
-  const [draft, setDraft] = useState(richTextToPlain(element.content));
-  const cancelledRef = useRef(false);
-
-  const cancel = (): void => {
-    cancelledRef.current = true;
-    onCancel();
-  };
-
-  const commit = (): void => {
-    if (cancelledRef.current) {
+  const handleCommit = (document: RichTextDocument): void => {
+    if (JSON.stringify(document) === JSON.stringify(element.content)) {
+      onCancel();
       return;
     }
 
-    if (draft === richTextToPlain(element.content)) {
-      cancel();
-      return;
-    }
-
-    onCommit({ type: 'note', element, content: draft });
-  };
-
-  const handleKeyDown = (event: ReactKeyboardEvent<HTMLTextAreaElement>): void => {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      event.stopPropagation();
-      cancel();
-      return;
-    }
-
-    if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
-      event.preventDefault();
-      commit();
-    }
+    onCommit({ type: 'note', element, content: document });
   };
 
   return (
-    <TextAreaBox
-      $padding="12px"
+    <NoteBox
       style={{
         ...boxStyle(element),
         ...(element.color === undefined ? {} : { backgroundColor: element.color }),
       }}
-      data-testid="element-editor"
-      data-editor-field="content"
-      aria-label="Note content"
-      autoFocus
-      value={draft}
-      onChange={(event) => setDraft(event.target.value)}
-      onFocus={selectAllOnFocus}
-      onBlur={commit}
-      onKeyDown={handleKeyDown}
-    />
+      data-testid="element-editor-box"
+    >
+      <RichTextFieldEditor
+        document={element.content}
+        ariaLabel="Note content"
+        dataField="content"
+        autoFocus
+        onCommit={handleCommit}
+        onCancel={onCancel}
+      />
+    </NoteBox>
   );
 }
 
@@ -249,62 +258,29 @@ function TaskTitleEditor({
   onCommit,
   onCancel,
 }: FieldEditorProps<TaskElement>): ReactElement {
-  const [draft, setDraft] = useState(richTextToPlain(element.title));
-  const cancelledRef = useRef(false);
-  const boxRef = useRef<HTMLDivElement | null>(null);
-
-  const cancel = (): void => {
-    cancelledRef.current = true;
-    onCancel();
-  };
-
-  const commit = (): void => {
-    if (cancelledRef.current) {
+  const handleCommit = (document: RichTextDocument): void => {
+    if (JSON.stringify(document) === JSON.stringify(element.title)) {
+      onCancel();
       return;
     }
 
-    if (draft === richTextToPlain(element.title)) {
-      cancel();
-      return;
-    }
-
-    onCommit({ type: 'task', element, title: draft });
-  };
-
-  const handleKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>): void => {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      event.stopPropagation();
-      cancel();
-      return;
-    }
-
-    if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
-      event.preventDefault();
-      commit();
-    }
-  };
-
-  const handleBlur = (event: FocusEvent<HTMLInputElement>): void => {
-    if (isContainedFocus(event, boxRef.current)) {
-      return;
-    }
-
-    commit();
+    onCommit({ type: 'task', element, title: document });
   };
 
   return (
-    <TaskBox ref={boxRef} style={boxStyle(element)} data-testid="element-editor">
-      <TitleField
-        data-editor-field="title"
-        aria-label="Task title"
-        autoFocus
-        value={draft}
-        onChange={(event) => setDraft(event.target.value)}
-        onFocus={selectAllOnFocus}
-        onBlur={handleBlur}
-        onKeyDown={handleKeyDown}
-      />
+    <TaskBox style={boxStyle(element)} data-testid="element-editor-box">
+      <TaskTitle>
+        <RichTextFieldEditor
+          document={element.title}
+          ariaLabel="Task title"
+          dataField="title"
+          singleLine
+          autoFocus
+          selectAllOnFocus
+          onCommit={handleCommit}
+          onCancel={onCancel}
+        />
+      </TaskTitle>
     </TaskBox>
   );
 }
@@ -314,62 +290,26 @@ function FrameTitleEditor({
   onCommit,
   onCancel,
 }: FieldEditorProps<FrameElement>): ReactElement {
-  const [draft, setDraft] = useState(richTextToPlain(element.title));
-  const cancelledRef = useRef(false);
-  const boxRef = useRef<HTMLDivElement | null>(null);
-
-  const cancel = (): void => {
-    cancelledRef.current = true;
-    onCancel();
-  };
-
-  const commit = (): void => {
-    if (cancelledRef.current) {
+  const handleCommit = (document: RichTextDocument): void => {
+    if (JSON.stringify(document) === JSON.stringify(element.title)) {
+      onCancel();
       return;
     }
 
-    if (draft === richTextToPlain(element.title)) {
-      cancel();
-      return;
-    }
-
-    onCommit({ type: 'frame', element, title: draft });
-  };
-
-  const handleKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>): void => {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      event.stopPropagation();
-      cancel();
-      return;
-    }
-
-    if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
-      event.preventDefault();
-      commit();
-    }
-  };
-
-  const handleBlur = (event: FocusEvent<HTMLInputElement>): void => {
-    if (isContainedFocus(event, boxRef.current)) {
-      return;
-    }
-
-    commit();
+    onCommit({ type: 'frame', element, title: document });
   };
 
   return (
-    <FrameBox ref={boxRef} style={boxStyle(element)} data-testid="element-editor">
+    <FrameBox style={boxStyle(element)} data-testid="element-editor-box">
       <FrameHeader>
-        <TitleField
-          data-editor-field="title"
-          aria-label="Frame title"
+        <RichTextFieldEditor
+          document={element.title}
+          ariaLabel="Frame title"
+          dataField="title"
+          singleLine
           autoFocus
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          onFocus={selectAllOnFocus}
-          onBlur={handleBlur}
-          onKeyDown={handleKeyDown}
+          onCommit={handleCommit}
+          onCancel={onCancel}
         />
       </FrameHeader>
     </FrameBox>
@@ -381,12 +321,11 @@ function LinkFieldsEditor({
   onCommit,
   onCancel,
 }: FieldEditorProps<LinkElement>): ReactElement {
-  const [titleDraft, setTitleDraft] = useState(
-    element.title === undefined ? '' : richTextToPlain(element.title),
-  );
   const [urlDraft, setUrlDraft] = useState(element.url);
+  const titleDraftRef = useRef<RichTextDocument>(element.title ?? richTextFromPlain(''));
   const cancelledRef = useRef(false);
   const boxRef = useRef<HTMLDivElement | null>(null);
+  const initialTitle = element.title ?? richTextFromPlain('');
 
   const cancel = (): void => {
     cancelledRef.current = true;
@@ -398,9 +337,12 @@ function LinkFieldsEditor({
       return;
     }
 
-    const currentTitle = element.title === undefined ? '' : richTextToPlain(element.title);
+    const titleDraft = titleDraftRef.current;
 
-    if (titleDraft === currentTitle && urlDraft === element.url) {
+    if (
+      JSON.stringify(titleDraft) === JSON.stringify(initialTitle) &&
+      urlDraft === element.url
+    ) {
       cancel();
       return;
     }
@@ -408,7 +350,7 @@ function LinkFieldsEditor({
     onCommit({
       type: 'link',
       element,
-      title: titleDraft === '' ? null : titleDraft,
+      title: richTextToPlain(titleDraft).trim().length === 0 ? null : titleDraft,
       url: urlDraft,
     });
   };
@@ -427,7 +369,7 @@ function LinkFieldsEditor({
     }
   };
 
-  const handleBlur = (event: FocusEvent<HTMLInputElement>): void => {
+  const handleBlur = (event: FocusEvent<HTMLDivElement>): void => {
     if (isContainedFocus(event, boxRef.current)) {
       return;
     }
@@ -436,16 +378,22 @@ function LinkFieldsEditor({
   };
 
   return (
-    <LinkBox ref={boxRef} style={boxStyle(element)} data-testid="element-editor">
-      <TitleField
-        data-editor-field="title"
-        aria-label="Link title"
-        placeholder="Title"
-        value={titleDraft}
-        onChange={(event) => setTitleDraft(event.target.value)}
-        onKeyDown={handleKeyDown}
-        onBlur={handleBlur}
-      />
+    <LinkBox ref={boxRef} style={boxStyle(element)} data-testid="element-editor-box" onBlur={handleBlur}>
+      <LinkTitle>
+        <RichTextFieldEditor
+          document={initialTitle}
+          ariaLabel="Link title"
+          dataField="title"
+          singleLine
+          onChange={(document) => {
+            titleDraftRef.current = document;
+          }}
+          onCommit={(document) => {
+            titleDraftRef.current = document;
+          }}
+          onCancel={cancel}
+        />
+      </LinkTitle>
       <UrlField
         data-editor-field="url"
         aria-label="Link URL"
@@ -453,7 +401,6 @@ function LinkFieldsEditor({
         autoFocus
         value={urlDraft}
         onChange={(event) => setUrlDraft(event.target.value)}
-        onFocus={selectAllOnFocus}
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
       />

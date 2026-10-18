@@ -150,7 +150,7 @@ describe('ElementEditorOverlay', () => {
         />,
       );
 
-      const editor = await screen.findByTestId('element-editor');
+      const editor = await screen.findByTestId('element-editor-box');
       expect(getComputedStyle(editor).position).toBe('absolute');
       expect(editor.style.left).toBe('10px');
       expect(editor.style.top).toBe('20px');
@@ -189,7 +189,7 @@ describe('ElementEditorOverlay', () => {
         />,
       );
 
-      const editor = screen.getByTestId('element-editor');
+      const editor = screen.getByTestId('element-editor-box');
       expect(getComputedStyle(editor).position).toBe('absolute');
       expect(editor.style.left).toBe('10px');
       expect(editor.style.top).toBe('20px');
@@ -205,7 +205,11 @@ describe('ElementEditorOverlay', () => {
       await user.type(screen.getByTestId('element-editor'), 'a note');
       await user.tab();
 
-      expect(onCommit).toHaveBeenCalledWith({ type: 'note', element, content: 'a note' });
+      expect(onCommit).toHaveBeenCalledWith({
+        type: 'note',
+        element,
+        content: richTextFromPlain('a note'),
+      });
     });
   });
 
@@ -224,7 +228,11 @@ describe('ElementEditorOverlay', () => {
       await user.type(title, 'Ship it');
       await user.tab();
 
-      expect(onCommit).toHaveBeenCalledWith({ type: 'task', element, title: 'Ship it' });
+      expect(onCommit).toHaveBeenCalledWith({
+        type: 'task',
+        element,
+        title: richTextFromPlain('Ship it'),
+      });
     });
   });
 
@@ -241,7 +249,11 @@ describe('ElementEditorOverlay', () => {
       await user.type(title, 'Discovery');
       await user.tab();
 
-      expect(onCommit).toHaveBeenCalledWith({ type: 'frame', element, title: 'Discovery' });
+      expect(onCommit).toHaveBeenCalledWith({
+        type: 'frame',
+        element,
+        title: richTextFromPlain('Discovery'),
+      });
     });
   });
 
@@ -265,7 +277,7 @@ describe('ElementEditorOverlay', () => {
       expect(onCommit).toHaveBeenCalledWith({
         type: 'link',
         element,
-        title: 'Docs',
+        title: richTextFromPlain('Docs'),
         url: 'https://docs.example.com',
       });
     });

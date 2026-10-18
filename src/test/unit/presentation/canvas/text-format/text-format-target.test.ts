@@ -15,6 +15,7 @@ describe('text-format-target', () => {
 
     const target = editorFormatTarget(editor);
 
+    expect(target.capabilities.lists).toBe(true);
     expect(target.getState().bold).toBe('off');
 
     editor.commands.selectAll();
@@ -76,5 +77,34 @@ describe('text-format-target', () => {
     target.applyAction({ kind: 'align', value: 'left' });
 
     expect(commits).toHaveLength(0);
+  });
+
+  it('disables and ignores list actions for single-line documents', () => {
+    const doc = richTextFromPlain('Title');
+    const commits: RichTextDocument[] = [];
+
+    const target = documentFormatTarget({
+      getDocument: () => doc,
+      commitDocument: (next) => {
+        commits.push(next);
+      },
+      singleLine: true,
+    });
+
+    expect(target.capabilities.lists).toBe(false);
+    target.applyAction({ kind: 'list', value: 'bulletList' });
+
+    expect(commits).toHaveLength(0);
+  });
+
+  it('disables list capabilities for single-line editors', () => {
+    const editor = createFormatTestEditor({
+      type: 'doc',
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Title' }] }],
+    });
+
+    expect(editorFormatTarget(editor, { singleLine: true }).capabilities.lists).toBe(false);
+
+    editor.destroy();
   });
 });

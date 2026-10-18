@@ -2,6 +2,7 @@ import { act, renderHook } from '@testing-library/react';
 import { createRef } from 'react';
 import {
   readTextSelection,
+  readTextSelectionElementId,
   useTextSelection,
 } from '../../../../../presentation/canvas/text-format/use-text-selection';
 import type { TextSelectionSnapshot } from '../../../../../presentation/canvas/text-format/use-text-selection';
@@ -99,6 +100,46 @@ describe('readTextSelection', () => {
     selection.addRange(range);
 
     expect(readTextSelection(scope)).toBeNull();
+  });
+});
+
+describe('readTextSelectionElementId', () => {
+  afterEach(() => {
+    clearSelection();
+    document.body.innerHTML = '';
+  });
+
+  it('returns the closest selectable element id', () => {
+    const scope = document.createElement('div');
+    const selectable = document.createElement('div');
+    selectable.dataset.selectable = 'true';
+    selectable.dataset.elementId = 'element-1';
+    const content = document.createElement('p');
+    content.textContent = 'hello world';
+    selectable.append(content);
+    scope.append(selectable);
+    document.body.append(scope);
+
+    selectNode(content);
+
+    expect(readTextSelectionElementId(scope)).toBe('element-1');
+  });
+
+  it('returns null when the selection is outside the scope', () => {
+    const scope = document.createElement('div');
+    const outside = document.createElement('div');
+    outside.dataset.selectable = 'true';
+    outside.dataset.elementId = 'element-2';
+    outside.textContent = 'outside';
+    document.body.append(scope, outside);
+
+    selectNode(outside);
+
+    expect(readTextSelectionElementId(scope)).toBeNull();
+  });
+
+  it('returns null without a selection', () => {
+    expect(readTextSelectionElementId()).toBeNull();
   });
 });
 

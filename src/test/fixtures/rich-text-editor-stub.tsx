@@ -1,31 +1,20 @@
-import type {
-  CSSProperties,
-  FocusEvent,
-  KeyboardEvent as ReactKeyboardEvent,
-  ReactElement,
-} from 'react';
+import type { KeyboardEvent as ReactKeyboardEvent, ReactElement } from 'react';
 import { useEffect, useRef } from 'react';
-import type { UpdateElementInput } from '../../application/commands';
-import type { TextElement } from '../../domain/element';
+import type { RichTextDocument } from '../../domain/element';
 import { richTextFromPlain, richTextToPlain } from '../../domain/element';
 
 export interface RichTextEditorProps {
-  readonly element: TextElement;
-  readonly onCommit: (input: UpdateElementInput) => void;
+  readonly document: RichTextDocument;
+  readonly ariaLabel: string;
+  readonly dataField: 'content' | 'title';
+  readonly singleLine?: boolean;
+  readonly autoFocus?: boolean;
+  readonly selectAllOnFocus?: boolean;
+  readonly onChange?: (document: RichTextDocument) => void;
+  readonly onCommit: (document: RichTextDocument) => void;
   readonly onCancel: () => void;
   readonly onEditorReady?: (editor: unknown) => void;
   readonly commitGuardRef?: { readonly current: boolean };
-}
-
-function boxStyle(element: TextElement): CSSProperties {
-  return {
-    position: 'absolute',
-    left: element.position.x,
-    top: element.position.y,
-    width: element.size.width,
-    height: element.size.height,
-    transform: `rotate(${element.rotation}deg)`,
-  };
 }
 
 /**
@@ -35,14 +24,19 @@ function boxStyle(element: TextElement): CSSProperties {
  * editor logic is covered by the rich-text, adapter and headless-editor tests.
  */
 export function RichTextEditor({
-  element,
+  document,
+  ariaLabel,
+  dataField,
+  singleLine = false,
+  autoFocus = false,
+  selectAllOnFocus = false,
+  onChange,
   onCommit,
   onCancel,
   onEditorReady,
   commitGuardRef,
 }: RichTextEditorProps): ReactElement {
-  const valueRef = useRef(richTextToPlain(element.content));
-  const cancelledRef = useRef(false);
+  const valueRef = useRef(richTextToPlain(document));
 
   useEffect(() => {
     onEditorReady?.(null);
@@ -52,60 +46,53 @@ export function RichTextEditor({
     };
   }, [onEditorReady]);
 
-  const cancel = (): void => {
-    cancelledRef.current = true;
-    onCancel();
-  };
-
   const commit = (): void => {
-    if (cancelledRef.current) {
-      return;
-    }
-
-    const next = richTextFromPlain(valueRef.current);
-
-    if (richTextToPlain(next) === richTextToPlain(element.content)) {
-      cancel();
-      return;
-    }
-
-    onCommit({ type: 'text', element, content: next });
+    onCommit(richTextFromPlain(valueRef.current));
   };
 
   const handleKeyDown = (event: ReactKeyboardEvent<HTMLTextAreaElement>): void => {
     if (event.key === 'Escape') {
       event.preventDefault();
-      cancel();
+      onCancel();
       return;
     }
 
     if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
       event.preventDefault();
       commit();
-    }
-  };
-
-  const handleBlur = (_event: FocusEvent<HTMLTextAreaElement>): void => {
-    if (commitGuardRef?.current === true) {
       return;
     }
 
-    commit();
+    if (singleLine && event.key === 'Enter') {
+      event.preventDefault();
+    }
   };
 
   return (
     <textarea
       data-testid="element-editor"
-      data-editor-field="content"
-      aria-label="Text content"
-      style={boxStyle(element)}
+      data-editor-field={dataField}
+      aria-label={ariaLabel}
+      style={{ boxSizing: 'border-box', width: '100%', resize: 'none' }}
       defaultValue={valueRef.current}
-      autoFocus
+      autoFocus={autoFocus}
+      onFocus={(event) => {
+        if (selectAllOnFocus) {
+          event.currentTarget.select();
+        }
+      }}
       onChange={(event) => {
         valueRef.current = event.target.value;
+        onChange?.(richTextFromPlain(valueRef.current));
       }}
       onKeyDown={handleKeyDown}
-      onBlur={handleBlur}
+      onBlur={() => {
+        if (commitGuardRef?.current === true) {
+          return;
+        }
+
+        commit();
+      }}
     />
   );
 }

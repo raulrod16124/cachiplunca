@@ -38,6 +38,7 @@ function createMockTarget(
   return {
     actions,
     target: {
+      capabilities: { lists: true },
       getState: () => state,
       applyAction: (action) => {
         actions.push(action);

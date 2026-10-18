@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import styled from 'styled-components';
 import { Bounds, Grid, Position, Size } from '../../../domain/shared';
 import type { Element, ElementType } from '../../../domain/element';
-import { isTextElement } from '../../../domain/element';
 import type { ElementId } from '../../../domain/shared';
 import type {
   CanvasViewportStore,
@@ -48,14 +47,18 @@ import type { ElementRendererRegistry } from '../renderers';
 import { EmptyState } from '../../components/empty-state';
 import { CanvasToolbar } from './canvas-toolbar';
 import { ElementContextMenu } from './element-context-menu';
-import type { TextFormatMenuSection } from './element-context-menu';
 import { ElementEditorOverlay } from './element-editor-overlay';
 import { RemoteCursorsOverlay } from './remote-cursors-overlay';
 import { SelectionOverlay } from './selection-overlay';
 import { ViewportControls } from './viewport-controls';
-import { applyFormatToEditor, getEditorFormatState } from '../text-format/editor-format';
-import { applyFormatToDocument, getTextFormatState } from '../text-format/text-format';
-import type { TextFormatAction } from '../text-format/text-format';
+import {
+  getEditableRichTextTarget,
+  toUpdateElementInput,
+} from '../text-format/editable-text-element';
+import { FloatingTextToolbar } from '../text-format/floating-text-toolbar';
+import { documentFormatTarget, editorFormatTarget } from '../text-format/text-format-target';
+import type { TextFormatTarget } from '../text-format/text-format-target';
+import { readTextSelectionElementId } from '../text-format/use-text-selection';
 
 const CanvasContainer = styled.div`
   position: relative;
@@ -391,6 +394,7 @@ export function Canvas({
   const { ref: elementRedoRef } = useElementRedo({ history, onRedoElements, disabled: readOnly });
 
   const [editingElementId, setEditingElementId] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   const editingElement = useMemo(
     () =>
@@ -441,21 +445,38 @@ export function Canvas({
     setEditingElementId(null);
   }, []);
 
-  const textEditorRef = useRef<Editor | null>(null);
-  const formatMenuOpenRef = useRef(false);
+  const [activeTextEditor, setActiveTextEditor] = useState<Editor | null>(null);
+  const floatingToolbarOpenRef = useRef(false);
   const [contextMenuTargetId, setContextMenuTargetId] = useState<string | null>(null);
+  const [textSelectionTargetId, setTextSelectionTargetId] = useState<string | null>(null);
+  const elementsRef = useRef(elements);
+  elementsRef.current = elements;
 
-  const handleTextEditorReady = useCallback((editor: Editor | null): void => {
-    textEditorRef.current = editor;
+  useEffect(() => {
+    const handleSelectionChange = (): void => {
+      setTextSelectionTargetId(readTextSelectionElementId(containerRef.current));
+    };
+
+    document.addEventListener('selectionchange', handleSelectionChange);
+
+    return () => {
+      document.removeEventListener('selectionchange', handleSelectionChange);
+    };
   }, []);
 
-  const formatTarget = useMemo(() => {
-    if (readOnly) {
-      return null;
+  const handleTextEditorReady = useCallback((editor: Editor | null): void => {
+    setActiveTextEditor(editor);
+  }, []);
+
+  const editableTarget = useMemo(() => {
+    if (editingElement !== null) {
+      return getEditableRichTextTarget(editingElement);
     }
 
     const targetId =
-      contextMenuTargetId ?? (selection.selectedIds.length === 1 ? selection.selectedIds[0] : null);
+      textSelectionTargetId ??
+      contextMenuTargetId ??
+      (selection.selectedIds.length === 1 ? selection.selectedIds[0] : null);
 
     if (targetId === null) {
       return null;
@@ -463,57 +484,46 @@ export function Canvas({
 
     const target = elements.find((element) => element.id.value === targetId);
 
-    return target !== undefined && isTextElement(target) ? target : null;
-  }, [readOnly, contextMenuTargetId, selection.selectedIds, elements]);
+    return getEditableRichTextTarget(target);
+  }, [
+    editingElement,
+    textSelectionTargetId,
+    contextMenuTargetId,
+    selection.selectedIds,
+    elements,
+  ]);
 
-  const handleFormatAction = useCallback(
-    (action: TextFormatAction): void => {
-      if (formatTarget === null || onUpdateElement === undefined) {
-        return;
-      }
-
-      const editor = textEditorRef.current;
-
-      if (
-        editingElement !== null &&
-        editingElement.id.value === formatTarget.id.value &&
-        editor !== null &&
-        !editor.isDestroyed
-      ) {
-        applyFormatToEditor(editor, action);
-        return;
-      }
-
-      const next = applyFormatToDocument(
-        formatTarget.content,
-        action,
-        getTextFormatState(formatTarget.content),
-      );
-
-      onUpdateElement({ type: 'text', element: formatTarget, content: next });
-    },
-    [formatTarget, editingElement, onUpdateElement],
-  );
-
-  const formatSection = useMemo<TextFormatMenuSection | null>(() => {
-    if (formatTarget === null) {
+  const formatTarget = useMemo<TextFormatTarget | null>(() => {
+    if (readOnly || onUpdateElement === undefined || editableTarget === null) {
       return null;
     }
 
-    const editor = textEditorRef.current;
-    const isEditingTarget =
+    if (
       editingElement !== null &&
-      editingElement.id.value === formatTarget.id.value &&
-      editor !== null &&
-      !editor.isDestroyed;
+      activeTextEditor !== null &&
+      !activeTextEditor.isDestroyed
+    ) {
+      return editorFormatTarget(activeTextEditor, { singleLine: editableTarget.singleLine });
+    }
 
-    return {
-      state: isEditingTarget
-        ? getEditorFormatState(editor)
-        : getTextFormatState(formatTarget.content),
-      onAction: handleFormatAction,
-    };
-  }, [formatTarget, editingElement, handleFormatAction]);
+    const targetId = editableTarget.element.id.value;
+
+    return documentFormatTarget({
+      singleLine: editableTarget.singleLine,
+      getDocument: () => {
+        const current = elementsRef.current.find((element) => element.id.value === targetId);
+        return getEditableRichTextTarget(current)?.document;
+      },
+      commitDocument: (document) => {
+        const current = elementsRef.current.find((element) => element.id.value === targetId);
+        const currentTarget = getEditableRichTextTarget(current);
+
+        if (currentTarget !== null) {
+          onUpdateElement(toUpdateElementInput(currentTarget, document));
+        }
+      },
+    });
+  }, [readOnly, onUpdateElement, editableTarget, activeTextEditor]);
 
   const handleUndo = useCallback((): void => {
     if (history === undefined || !history.canUndo()) {
@@ -565,7 +575,6 @@ export function Canvas({
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
   const closeContextMenu = useCallback((): void => {
-    formatMenuOpenRef.current = false;
     setContextMenu(null);
     setContextMenuTargetId(null);
   }, []);
@@ -584,7 +593,6 @@ export function Canvas({
       event.preventDefault();
 
       if (hitId === null) {
-        formatMenuOpenRef.current = false;
         setContextMenu(null);
         setContextMenuTargetId(null);
         return;
@@ -594,7 +602,6 @@ export function Canvas({
         selectionStore.select(hitId);
       }
 
-      formatMenuOpenRef.current = true;
       setContextMenu(offset);
       setContextMenuTargetId(hitId);
     },
@@ -648,6 +655,7 @@ export function Canvas({
 
   const setContainerRef = useCallback(
     (node: HTMLDivElement | null) => {
+      containerRef.current = node;
       panRef.current = node;
       zoomRef.current = node;
       selectionRef.current = node;
@@ -801,7 +809,7 @@ export function Canvas({
             onCommit={handleCommitEdit}
             onCancel={handleCancelEdit}
             onTextEditorReady={handleTextEditorReady}
-            textCommitGuardRef={formatMenuOpenRef}
+            textCommitGuardRef={floatingToolbarOpenRef}
           />
         )}
         {elements.length === 0 ? (
@@ -811,12 +819,19 @@ export function Canvas({
         ) : null}
       </World>
       <RemoteCursorsOverlay cursors={remoteCursors} viewport={viewport} />
+      <FloatingTextToolbar
+        scopeRef={containerRef}
+        formatTarget={formatTarget}
+        enabled={!readOnly}
+        onOpenChange={(open) => {
+          floatingToolbarOpenRef.current = open;
+        }}
+      />
       <ElementContextMenu
         position={contextMenu}
         onBringToFront={handleBringToFront}
         onSendToBack={handleSendToBack}
         onClose={closeContextMenu}
-        format={formatSection}
       />
       <CanvasToolbar
         onCreateElement={handleCreateElement}

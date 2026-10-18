@@ -42,6 +42,7 @@ function renderCanvas(
   onRedoElements?: (next: readonly Element[]) => void,
   onTransformEnd?: () => void,
   onReorderElements?: (next: readonly Element[]) => void,
+  onUpdateElement?: (input: UpdateElementInput) => void,
 ) {
   const store = createCanvasViewportStore(Size.create(800, 600));
   const selectionStore = createSelectionStore();
@@ -62,6 +63,7 @@ function renderCanvas(
       onRedoElements={onRedoElements}
       onTransformEnd={onTransformEnd}
       onReorderElements={onReorderElements}
+      onUpdateElement={onUpdateElement}
     />,
   );
 

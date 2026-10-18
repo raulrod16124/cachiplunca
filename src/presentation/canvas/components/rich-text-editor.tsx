@@ -15,30 +15,17 @@ import Text from '@tiptap/extension-text';
 import TextAlign from '@tiptap/extension-text-align';
 import { Color, FontFamily, FontSize, TextStyle } from '@tiptap/extension-text-style';
 import Underline from '@tiptap/extension-underline';
-import type {
-  CSSProperties,
-  FocusEvent,
-  KeyboardEvent as ReactKeyboardEvent,
-  ReactElement,
-} from 'react';
+import type { FocusEvent, KeyboardEvent as ReactKeyboardEvent, ReactElement } from 'react';
 import { useEffect, useRef } from 'react';
 import styled from 'styled-components';
-import type { UpdateElementInput } from '../../../application/commands';
-import type { TextElement } from '../../../domain/element';
+import type { RichTextDocument } from '../../../domain/element';
+import { richTextToPlain } from '../../../domain/element';
+import { normalizeSingleLineDocument } from '../text-format/editable-text-element';
 import { docToEditorJson, editorJsonToDoc } from '../text-format/rich-text-adapter';
 
-const EditorShell = styled.div`
-  position: absolute;
+const Surface = styled.div`
   box-sizing: border-box;
-  transform-origin: center center;
-  padding: 8px;
-  overflow: auto;
-  border: 1.5px solid ${({ theme }) => theme.canvas.selection};
-  border-radius: ${({ theme }) => theme.radius.sm};
-  background-color: ${({ theme }) => theme.canvas.surface};
-  color: ${({ theme }) => theme.color.text.primary};
-  font-size: ${({ theme }) => theme.font.size.sm};
-  line-height: 1.4;
+  min-width: 0;
   user-select: text;
   caret-color: auto;
 
@@ -81,34 +68,38 @@ const EditorShell = styled.div`
 `;
 
 export interface RichTextEditorProps {
-  readonly element: TextElement;
-  readonly onCommit: (input: UpdateElementInput) => void;
+  readonly document: RichTextDocument;
+  readonly ariaLabel: string;
+  readonly dataField: 'content' | 'title';
+  readonly singleLine?: boolean;
+  readonly autoFocus?: boolean;
+  readonly selectAllOnFocus?: boolean;
+  readonly onChange?: (document: RichTextDocument) => void;
+  readonly onCommit: (document: RichTextDocument) => void;
   readonly onCancel: () => void;
   readonly onEditorReady?: (editor: Editor | null) => void;
-  /** While `true`, blur must not commit (e.g. the format context menu is open). */
+  /** While `true`, blur must not commit (e.g. the floating toolbar is open). */
   readonly commitGuardRef?: { readonly current: boolean };
 }
 
-function boxStyle(element: TextElement): CSSProperties {
-  return {
-    left: element.position.x,
-    top: element.position.y,
-    width: element.size.width,
-    height: element.size.height,
-    transform: `rotate(${element.rotation}deg)`,
-  };
-}
-
 export function RichTextEditor({
-  element,
+  document,
+  ariaLabel,
+  dataField,
+  singleLine = false,
+  autoFocus = false,
+  selectAllOnFocus = false,
+  onChange,
   onCommit,
   onCancel,
   onEditorReady,
   commitGuardRef,
 }: RichTextEditorProps): ReactElement {
-  const shellRef = useRef<HTMLDivElement | null>(null);
+  const surfaceRef = useRef<HTMLDivElement | null>(null);
   const cancelledRef = useRef(false);
+  const onChangeRef = useRef(onChange);
   const onEditorReadyRef = useRef(onEditorReady);
+  onChangeRef.current = onChange;
   onEditorReadyRef.current = onEditorReady;
 
   const editor = useEditor({
@@ -132,13 +123,25 @@ export function RichTextEditor({
       FontSize.configure({ types: ['textStyle'] }),
       TextAlign.configure({ types: ['paragraph', 'heading'] }),
     ],
-    content: docToEditorJson(element.content),
+    content: docToEditorJson(document),
     editorProps: {
       attributes: {
         'data-testid': 'rich-text-editor-surface',
-        'data-editor-field': 'content',
-        'aria-label': 'Text content',
+        'data-editor-field': dataField,
+        'aria-label': ariaLabel,
       },
+      handleKeyDown: (_view, event) => {
+        if (singleLine && event.key === 'Enter' && !event.metaKey && !event.ctrlKey) {
+          event.preventDefault();
+          return true;
+        }
+
+        return false;
+      },
+      transformPastedText: singleLine ? (text) => text.replace(/\s*\n+\s*/g, ' ') : undefined,
+    },
+    onUpdate: ({ editor: current }) => {
+      onChangeRef.current?.(editorJsonToDoc(current.getJSON()));
     },
   });
 
@@ -151,18 +154,22 @@ export function RichTextEditor({
   }, [editor]);
 
   useEffect(() => {
-    if (editor === null) {
+    if (editor === null || !autoFocus) {
       return;
     }
 
     const timer = window.setTimeout(() => {
       editor.commands.focus('end', { scrollIntoView: false });
+
+      if (selectAllOnFocus) {
+        editor.commands.selectAll();
+      }
     }, 0);
 
     return () => {
       window.clearTimeout(timer);
     };
-  }, [editor]);
+  }, [editor, autoFocus, selectAllOnFocus]);
 
   const cancel = (): void => {
     cancelledRef.current = true;
@@ -175,13 +182,7 @@ export function RichTextEditor({
     }
 
     const next = editorJsonToDoc(editor.getJSON());
-
-    if (JSON.stringify(next) === JSON.stringify(element.content)) {
-      cancel();
-      return;
-    }
-
-    onCommit({ type: 'text', element, content: next });
+    onCommit(singleLine ? normalizeSingleLineDocument(next) : next);
   };
 
   const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>): void => {
@@ -203,7 +204,7 @@ export function RichTextEditor({
       return;
     }
 
-    if (event.relatedTarget instanceof Node && shellRef.current?.contains(event.relatedTarget)) {
+    if (event.relatedTarget instanceof Node && surfaceRef.current?.contains(event.relatedTarget)) {
       return;
     }
 
@@ -211,15 +212,17 @@ export function RichTextEditor({
   };
 
   return (
-    <EditorShell
-      ref={shellRef}
-      style={boxStyle(element)}
+    <Surface
+      ref={surfaceRef}
       data-testid="element-editor"
       onKeyDown={handleKeyDown}
       onBlur={handleBlur}
     >
-      {editor !== null ? <TextFormatToolbar editor={editor} /> : null}
-      <EditorContent editor={editor} />
-    </EditorShell>
+      {editor === null ? null : <EditorContent editor={editor} />}
+    </Surface>
   );
+}
+
+export function richTextIsEmpty(document: RichTextDocument): boolean {
+  return richTextToPlain(document).trim().length === 0;
 }

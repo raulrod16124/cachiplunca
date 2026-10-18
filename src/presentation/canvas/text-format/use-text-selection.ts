@@ -43,6 +43,26 @@ export function readTextSelection(scope?: HTMLElement | null): TextSelectionSnap
   return { rect: selectionRect(range), text };
 }
 
+export function readTextSelectionElementId(scope?: HTMLElement | null): string | null {
+  const selection = window.getSelection();
+
+  if (selection === null || selection.isCollapsed || selection.rangeCount === 0) {
+    return null;
+  }
+
+  const range = selection.getRangeAt(0);
+
+  if (scope !== null && scope !== undefined && !scope.contains(range.commonAncestorContainer)) {
+    return null;
+  }
+
+  const container = range.commonAncestorContainer;
+  const element = container instanceof Element ? container : container.parentElement;
+  const owner = element?.closest('[data-selectable]');
+
+  return owner instanceof HTMLElement ? (owner.dataset.elementId ?? null) : null;
+}
+
 function selectionRect(range: Range): TextSelectionRect {
   const rects =
     typeof range.getClientRects === 'function'
