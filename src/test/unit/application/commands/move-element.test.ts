@@ -101,7 +101,7 @@ describe('createMoveElement', () => {
     });
     expect(movedNote.type).toBe('note');
     if (movedNote.type === 'note') {
-      expect(movedNote.content).toBe('idea');
+      expect(richTextToPlain(movedNote.content)).toBe('idea');
       expect(movedNote.color).toBe('#ff0');
     }
   });

@@ -94,7 +94,7 @@ describe('createDeleteElement', () => {
     const removedNote = expectOk({ element: noteElement({ color: '#ff0' }) });
     expect(removedNote.type).toBe('note');
     if (removedNote.type === 'note') {
-      expect(removedNote.content).toBe('idea');
+      expect(richTextToPlain(removedNote.content)).toBe('idea');
       expect(removedNote.color).toBe('#ff0');
     }
   });

@@ -4,7 +4,7 @@ import {
   withNoteColor,
   withNoteContent,
 } from '../../../../domain/element';
-import type { CreateNoteElementProps } from '../../../../domain/element';
+import type { CreateNoteElementProps, RichTextDocument } from '../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
 
 const createProps = (overrides: Partial<CreateNoteElementProps> = {}): CreateNoteElementProps => ({
@@ -57,6 +57,31 @@ describe('NoteElement', () => {
 
   it('allows empty content so the editor can start and type into it', () => {
     expect(() => createNoteElement(createProps({ content: '' }))).not.toThrow();
+  });
+
+  it('accepts a multi-block rich text document as content', () => {
+    const document = {
+      blocks: [
+        { type: 'heading', level: 2, align: 'left', spans: [{ text: 'Ideas' }] },
+        {
+          type: 'bulletList',
+          items: [
+            {
+              type: 'listItem',
+              content: [{ type: 'paragraph', align: 'left', spans: [{ text: 'first' }] }],
+            },
+          ],
+        },
+      ],
+    } satisfies RichTextDocument;
+
+    const element = createNoteElement(createProps({ content: document }));
+
+    expect(richTextToPlain(element.content)).toBe('Ideas\nfirst');
+  });
+
+  it('rejects an invalid rich text document as content', () => {
+    expect(() => createNoteElement(createProps({ content: { blocks: [] } }))).toThrow(/blocks/);
   });
 
   it('rejects undefined content', () => {

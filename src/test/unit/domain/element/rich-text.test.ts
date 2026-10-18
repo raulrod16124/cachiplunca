@@ -4,12 +4,14 @@ import {
   richTextFromPlain,
   richTextToPlain,
   isEmptyRichText,
+  isSingleInlineBlockDocument,
   parseRichTextDocument,
   setDocumentBooleanMark,
   setDocumentColor,
   setDocumentFontFamily,
   setDocumentFontSize,
   setDocumentAlign,
+  validateTitleDocument,
   getDocumentBooleanMarkState,
   getDocumentColor,
   getDocumentFontFamily,
@@ -279,5 +281,197 @@ describe('document formatting operations', () => {
     };
 
     expect(getDocumentColor(input)).toBe('#fff');
+  });
+});
+
+describe('extended blocks and marks', () => {
+  it('parses a document with heading, bullet list and ordered list', () => {
+    const input = {
+      blocks: [
+        { type: 'heading', level: 2, align: 'left', spans: [{ text: 'Title' }] },
+        {
+          type: 'bulletList',
+          items: [
+            {
+              type: 'listItem',
+              content: [{ type: 'paragraph', align: 'left', spans: [{ text: 'a' }] }],
+            },
+          ],
+        },
+        {
+          type: 'orderedList',
+          items: [
+            {
+              type: 'listItem',
+              content: [{ type: 'paragraph', align: 'left', spans: [{ text: 'b' }] }],
+            },
+          ],
+        },
+      ],
+    };
+
+    const parsed = parseRichTextDocument(input);
+
+    expect(parsed.blocks.map((block) => block.type)).toEqual([
+      'heading',
+      'bulletList',
+      'orderedList',
+    ]);
+  });
+
+  it('rejects an unknown heading level', () => {
+    expect(() =>
+      parseRichTextDocument({
+        blocks: [{ type: 'heading', level: 4, align: 'left', spans: [{ text: 'x' }] }],
+      }),
+    ).toThrow(/level/);
+  });
+
+  it('rejects an unknown block type', () => {
+    expect(() =>
+      parseRichTextDocument({
+        blocks: [{ type: 'blockquote', align: 'left', spans: [{ text: 'x' }] }],
+      }),
+    ).toThrow(/paragraph, heading, bulletList or orderedList/);
+  });
+
+  it('rejects a non-boolean italic or highlight mark', () => {
+    expect(() =>
+      parseRichTextDocument({
+        blocks: [
+          { type: 'paragraph', align: 'left', spans: [{ text: 'x', marks: { italic: 'yes' } }] },
+        ],
+      }),
+    ).toThrow(/"italic" must be a boolean/);
+
+    expect(() =>
+      parseRichTextDocument({
+        blocks: [
+          { type: 'paragraph', align: 'left', spans: [{ text: 'x', marks: { highlight: 1 } }] },
+        ],
+      }),
+    ).toThrow(/"highlight" must be a boolean/);
+  });
+
+  it('flattens headings and lists to plain text', () => {
+    const plain = richTextToPlain({
+      blocks: [
+        { type: 'heading', level: 1, align: 'left', spans: [{ text: 'H' }] },
+        {
+          type: 'bulletList',
+          items: [
+            {
+              type: 'listItem',
+              content: [{ type: 'paragraph', align: 'left', spans: [{ text: 'one' }] }],
+            },
+            {
+              type: 'listItem',
+              content: [{ type: 'paragraph', align: 'left', spans: [{ text: 'two' }] }],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(plain).toBe('H\none\ntwo');
+  });
+
+  it('toggles italic and highlight marks across every span', () => {
+    const input = doc([{ text: 'a' }, { text: 'b' }]);
+
+    const italicized = setDocumentBooleanMark(input, 'italic', true);
+    expect(getDocumentBooleanMarkState(italicized, 'italic')).toBe('on');
+    expect(getDocumentBooleanMarkState(input, 'italic')).toBe('off');
+
+    const highlighted = setDocumentBooleanMark(input, 'highlight', true);
+    expect(getDocumentBooleanMarkState(highlighted, 'highlight')).toBe('on');
+
+    const cleared = setDocumentBooleanMark(italicized, 'italic', false);
+    expect(getDocumentBooleanMarkState(cleared, 'italic')).toBe('off');
+  });
+
+  it('reports mixed italic state across spans', () => {
+    const input: RichTextDocument = {
+      blocks: [
+        {
+          type: 'paragraph',
+          align: 'left',
+          spans: [{ text: 'a', marks: { italic: true } }, { text: 'b' }],
+        },
+      ],
+    };
+
+    expect(getDocumentBooleanMarkState(input, 'italic')).toBe('mixed');
+  });
+
+  it('round-trips a document with extended blocks through parse', () => {
+    const input: RichTextDocument = {
+      blocks: [
+        {
+          type: 'heading',
+          level: 3,
+          align: 'center',
+          spans: [{ text: 'Hi', marks: { italic: true, highlight: true } }],
+        },
+        {
+          type: 'orderedList',
+          items: [
+            {
+              type: 'listItem',
+              content: [{ type: 'paragraph', align: 'left', spans: [{ text: 'item' }] }],
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(parseRichTextDocument(input)).toEqual(input);
+  });
+});
+
+describe('validateTitleDocument', () => {
+  it('accepts a single paragraph block', () => {
+    expect(() => validateTitleDocument(richTextFromPlain('ok'))).not.toThrow();
+    expect(isSingleInlineBlockDocument(richTextFromPlain('ok'))).toBe(true);
+  });
+
+  it('accepts a single heading block', () => {
+    const heading: RichTextDocument = {
+      blocks: [{ type: 'heading', level: 1, align: 'left', spans: [{ text: 'Title' }] }],
+    };
+
+    expect(() => validateTitleDocument(heading)).not.toThrow();
+    expect(isSingleInlineBlockDocument(heading)).toBe(true);
+  });
+
+  it('rejects a document with more than one block', () => {
+    const multi: RichTextDocument = {
+      blocks: [
+        { type: 'paragraph', align: 'left', spans: [{ text: 'a' }] },
+        { type: 'paragraph', align: 'left', spans: [{ text: 'b' }] },
+      ],
+    };
+
+    expect(() => validateTitleDocument(multi)).toThrow(/exactly one block/);
+    expect(isSingleInlineBlockDocument(multi)).toBe(false);
+  });
+
+  it('rejects a document whose single block is a list', () => {
+    const list: RichTextDocument = {
+      blocks: [
+        {
+          type: 'bulletList',
+          items: [
+            {
+              type: 'listItem',
+              content: [{ type: 'paragraph', align: 'left', spans: [{ text: 'a' }] }],
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(() => validateTitleDocument(list)).toThrow(/paragraph or heading/);
+    expect(isSingleInlineBlockDocument(list)).toBe(false);
   });
 });

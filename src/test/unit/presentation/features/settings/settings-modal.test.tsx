@@ -1,6 +1,6 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { render } from '../../../../setup/render-with-theme';
-import type { UserSettingsRepository } from '../../../../../application/ports';
+import type { SystemEnvironment, UserSettingsRepository } from '../../../../../application/ports';
 import {
   createUserSettingsStore,
   type UserSettingsStore,
@@ -11,6 +11,11 @@ import { UserSettingsProvider } from '../../../../../presentation/providers/user
 import { SettingsModal } from '../../../../../presentation/features/settings/settings-modal';
 
 const USER_ID = UserId.create('user-1');
+
+const TEST_ENVIRONMENT: SystemEnvironment = {
+  getReducedMotionPref: () => false,
+  getLanguages: () => ['en-US'],
+};
 
 beforeAll(() => {
   Object.defineProperty(window, 'matchMedia', {
@@ -64,7 +69,7 @@ function renderModal(store: UserSettingsStore): HTMLElement {
 
 describe('SettingsModal', () => {
   it('raises the theme listbox above the dialog overlay', async () => {
-    const store = createUserSettingsStore(createRepository(null));
+    const store = createUserSettingsStore(createRepository(null), TEST_ENVIRONMENT);
     renderModal(store);
 
     const trigger = await screen.findByRole('combobox', { name: 'Theme' });
@@ -78,7 +83,7 @@ describe('SettingsModal', () => {
 
   it('persists the selected theme', async () => {
     const repository = createRepository(UserSettings.create({ userId: USER_ID }));
-    const store = createUserSettingsStore(repository);
+    const store = createUserSettingsStore(repository, TEST_ENVIRONMENT);
     renderModal(store);
 
     const trigger = await screen.findByRole('combobox', { name: 'Theme' });
@@ -92,10 +97,13 @@ describe('SettingsModal', () => {
 
   it('disables the controls while settings are still loading', async () => {
     const pending = deferred<UserSettings | null>();
-    const store = createUserSettingsStore({
-      getByUserId: () => pending.promise,
-      upsert: async (next) => next,
-    });
+    const store = createUserSettingsStore(
+      {
+        getByUserId: () => pending.promise,
+        upsert: async (next) => next,
+      },
+      TEST_ENVIRONMENT,
+    );
     renderModal(store);
 
     expect(screen.getByRole('combobox', { name: 'Theme' })).toBeDisabled();

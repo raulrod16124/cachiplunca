@@ -50,7 +50,9 @@ export function getEditorFormatState(editor: Editor): TextFormatState {
   };
 }
 
-function readFontFamily(value: unknown): { fontFamily: NonNullable<TextFormatState['fontFamily']> } | Record<string, never> {
+function readFontFamily(
+  value: unknown,
+): { fontFamily: NonNullable<TextFormatState['fontFamily']> } | Record<string, never> {
   if (typeof value !== 'string') {
     return {};
   }

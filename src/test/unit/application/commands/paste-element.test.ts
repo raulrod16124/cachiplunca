@@ -1,5 +1,10 @@
 import { createPasteElement } from '../../../../application/commands';
-import { createTextElement, isTextElement, richTextToPlain, type Element } from '../../../../domain/element';
+import {
+  createTextElement,
+  isTextElement,
+  richTextToPlain,
+  type Element,
+} from '../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
 import { ERROR_CODES } from '../../../../shared/errors';
 

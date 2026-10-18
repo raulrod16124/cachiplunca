@@ -238,6 +238,39 @@ describe('fromElementDocument', () => {
     expect(element.updatedAt.getTime()).toBe(UPDATED_AT.getTime());
   });
 
+  it('converts legacy string content and titles when reading', () => {
+    const base = {
+      ...toElementDocument(createTextElement({ ...buildBase('el-text'), content: 'Hello' })),
+    };
+    const text = fromElementDocument('el-text', { ...base, content: 'Legacy text' });
+    expect(text.type).toBe('text');
+    expect(text.type === 'text' ? text.content : null).toEqual(richTextFromPlain('Legacy text'));
+
+    const noteDocument = toElementDocument(
+      createNoteElement({ ...buildBase('el-note'), content: 'x' }),
+    );
+    const note = fromElementDocument('el-note', { ...noteDocument, content: 'Legacy note' });
+    expect(note.type === 'note' ? note.content : null).toEqual(richTextFromPlain('Legacy note'));
+
+    const taskDocument = toElementDocument(
+      createTaskElement({ ...buildBase('el-task'), title: 'x', status: 'todo' }),
+    );
+    const task = fromElementDocument('el-task', { ...taskDocument, title: 'Legacy task' });
+    expect(task.type === 'task' ? task.title : null).toEqual(richTextFromPlain('Legacy task'));
+
+    const frameDocument = toElementDocument(
+      createFrameElement({ ...buildBase('el-frame'), title: 'x' }),
+    );
+    const frame = fromElementDocument('el-frame', { ...frameDocument, title: 'Legacy frame' });
+    expect(frame.type === 'frame' ? frame.title : null).toEqual(richTextFromPlain('Legacy frame'));
+
+    const linkDocument = toElementDocument(
+      createLinkElement({ ...buildBase('el-link'), url: 'https://example.com' }),
+    );
+    const link = fromElementDocument('el-link', { ...linkDocument, title: 'Legacy link' });
+    expect(link.type === 'link' ? link.title : null).toEqual(richTextFromPlain('Legacy link'));
+  });
+
   it('rejects a non-object document', () => {
     expect(() => fromElementDocument('el-1', null)).toThrow('Element document must be an object');
   });

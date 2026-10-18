@@ -49,7 +49,10 @@ function referenceLabel(element: Element): string {
     case 'frame':
       return contentLabel('frame', richTextToPlain(element.title));
     case 'link':
-      return contentLabel('link', element.title === undefined ? element.url : richTextToPlain(element.title));
+      return contentLabel(
+        'link',
+        element.title === undefined ? element.url : richTextToPlain(element.title),
+      );
     case 'connector':
       return 'connector';
     default: {
@@ -79,7 +82,10 @@ export function describeElement(element: Element, elements: readonly Element[] =
     case 'note':
       return contentLabel('Note', richTextToPlain(element.content));
     case 'task': {
-      const parts = [`Task: ${truncate(richTextToPlain(element.title))}`, TASK_STATUS_LABELS[element.status]];
+      const parts = [
+        `Task: ${truncate(richTextToPlain(element.title))}`,
+        TASK_STATUS_LABELS[element.status],
+      ];
 
       if (element.dueDate !== undefined) {
         parts.push(`due ${element.dueDate.toISOString().slice(0, 10)}`);

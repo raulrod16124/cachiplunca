@@ -45,9 +45,7 @@ export function getTextFormatState(doc: RichTextDocument): TextFormatState {
     underline: getDocumentBooleanMarkState(doc, 'underline'),
     strikethrough: getDocumentBooleanMarkState(doc, 'strikethrough'),
     highlight: getDocumentBooleanMarkState(doc, 'highlight'),
-    ...(getDocumentFontFamily(doc) === undefined
-      ? {}
-      : { fontFamily: getDocumentFontFamily(doc) }),
+    ...(getDocumentFontFamily(doc) === undefined ? {} : { fontFamily: getDocumentFontFamily(doc) }),
     ...(getDocumentFontSize(doc) === undefined ? {} : { fontSize: getDocumentFontSize(doc) }),
     ...(getDocumentColor(doc) === undefined ? {} : { color: getDocumentColor(doc) }),
     ...(getDocumentAlign(doc) === undefined ? {} : { align: getDocumentAlign(doc) }),

@@ -44,7 +44,10 @@ export function useThemeMode(): ThemeModeResult {
     if (settings === null) {
       return;
     }
-    document.documentElement.setAttribute('lang', resolveLocale(settings.locale));
+    document.documentElement.setAttribute(
+      'lang',
+      resolveLocale(settings.locale, navigator.languages),
+    );
   }, [settings]);
 
   return useMemo(() => {
@@ -58,7 +61,7 @@ export function useThemeMode(): ThemeModeResult {
     return {
       resolvedTheme:
         settings.theme === 'system' ? (media?.matches ? 'dark' : 'light') : settings.theme,
-      effectiveLocale: resolveLocale(settings.locale),
+      effectiveLocale: resolveLocale(settings.locale, navigator.languages),
     };
   }, [settings]);
 }

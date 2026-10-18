@@ -224,7 +224,9 @@ describe('Element types', () => {
 
   it('validates task element', () => {
     expect(() => validateTaskElement(createTaskElement())).not.toThrow();
-    expect(() => validateTaskElement(createTaskElement({ title: richTextFromPlain('   ') }))).toThrow(/title/);
+    expect(() =>
+      validateTaskElement(createTaskElement({ title: richTextFromPlain('   ') })),
+    ).toThrow(/title/);
     expect(() => validateTaskElement(createTaskElement({ dueDate: new Date('invalid') }))).toThrow(
       /dueDate/,
     );
@@ -236,7 +238,9 @@ describe('Element types', () => {
 
   it('validates frame element', () => {
     expect(() => validateFrameElement(createFrameElement())).not.toThrow();
-    expect(() => validateFrameElement(createFrameElement({ title: richTextFromPlain('') }))).toThrow(/title/);
+    expect(() =>
+      validateFrameElement(createFrameElement({ title: richTextFromPlain('') })),
+    ).toThrow(/title/);
     expect(() =>
       validateFrameElement(
         createFrameElement({
@@ -262,7 +266,9 @@ describe('Element types', () => {
   it('validates link element', () => {
     expect(() => validateLinkElement(createLinkElement())).not.toThrow();
     expect(() => validateLinkElement(createLinkElement({ url: '' }))).toThrow(/url/);
-    expect(() => validateLinkElement(createLinkElement({ title: richTextFromPlain('   ') }))).toThrow(/title/);
+    expect(() =>
+      validateLinkElement(createLinkElement({ title: richTextFromPlain('   ') })),
+    ).toThrow(/title/);
   });
 
   it('rejects untrusted element data with an unknown type', () => {

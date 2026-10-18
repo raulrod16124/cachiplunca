@@ -7,6 +7,7 @@ import {
 } from '../../domain/user-settings';
 import type { UserId } from '../../domain/shared/value-objects/user-id';
 import type { UserSettingsRepository } from '../ports/user-settings-repository';
+import type { SystemEnvironment } from '../ports/system-environment';
 
 export type UserSettingsState =
   | { readonly status: 'loading' }
@@ -56,22 +57,7 @@ function toError(error: unknown): Error {
   return error instanceof Error ? error : new Error(String(error));
 }
 
-function getSystemReducedMotion(): boolean {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-    return false;
-  }
-  try {
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  } catch {
-    return false;
-  }
-}
-
-function detectBrowserLocale(): 'es' | 'en' {
-  if (typeof navigator === 'undefined') {
-    return 'en';
-  }
-  const languages = navigator.languages ?? [navigator.language];
+function detectLocale(languages: readonly string[]): 'es' | 'en' {
   for (const lang of languages) {
     if (typeof lang !== 'string' || lang.length === 0) {
       continue;
@@ -89,6 +75,7 @@ function detectBrowserLocale(): 'es' | 'en' {
 
 export function createUserSettingsStore(
   userSettingsRepository: UserSettingsRepository,
+  systemEnvironment: SystemEnvironment,
 ): UserSettingsStore {
   const listeners = new Set<() => void>();
   let snapshot: UserSettingsState = LOADING_STATE;
@@ -111,7 +98,7 @@ export function createUserSettingsStore(
       theme: 'system',
       fontSize: 'base',
       locale: 'system',
-      reducedMotion: getSystemReducedMotion(),
+      reducedMotion: systemEnvironment.getReducedMotionPref(),
     });
   }
 
@@ -178,9 +165,9 @@ export function createUserSettingsStore(
   };
 }
 
-export function resolveLocale(locale: Locale): 'es' | 'en' {
+export function resolveLocale(locale: Locale, languages: readonly string[]): 'es' | 'en' {
   if (locale === 'system') {
-    return detectBrowserLocale();
+    return detectLocale(languages);
   }
   return locale;
 }

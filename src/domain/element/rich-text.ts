@@ -83,14 +83,9 @@ export interface RichTextListItem {
 }
 
 export type RichTextListItemContentBlock =
-  | RichTextParagraphBlock
-  | RichTextHeadingBlock
-  | RichTextListBlock;
+  RichTextParagraphBlock | RichTextHeadingBlock | RichTextListBlock;
 
-export type RichTextBlock =
-  | RichTextParagraphBlock
-  | RichTextHeadingBlock
-  | RichTextListBlock;
+export type RichTextBlock = RichTextParagraphBlock | RichTextHeadingBlock | RichTextListBlock;
 
 export interface RichTextDocument {
   readonly blocks: readonly RichTextBlock[];
@@ -362,7 +357,8 @@ export function setDocumentFontSize(
   }
 
   return mapSpans(doc, (span) => {
-    const marks = fontSize === null ? omitStyle(span.marks, 'fontSize') : { ...span.marks, fontSize };
+    const marks =
+      fontSize === null ? omitStyle(span.marks, 'fontSize') : { ...span.marks, fontSize };
     return withMarks(span, marks);
   });
 }
@@ -545,7 +541,10 @@ function mapSpans(
   };
 }
 
-function mapBlockSpans(block: RichTextBlock, map: (span: RichTextSpan) => RichTextSpan): RichTextBlock {
+function mapBlockSpans(
+  block: RichTextBlock,
+  map: (span: RichTextSpan) => RichTextSpan,
+): RichTextBlock {
   switch (block.type) {
     case 'paragraph':
     case 'heading':

@@ -32,9 +32,7 @@ const EDITOR_MARK_TO_BOOLEAN: Record<string, TextBooleanMark> = {
   highlight: 'highlight',
 };
 
-const CSS_TO_FONT_FAMILY = new Map(
-  FONT_FAMILY_OPTIONS.map((option) => [option.css, option.value]),
-);
+const CSS_TO_FONT_FAMILY = new Map(FONT_FAMILY_OPTIONS.map((option) => [option.css, option.value]));
 
 type MutableMarks = {
   -readonly [K in keyof RichTextMarks]?: RichTextMarks[K];
@@ -181,5 +179,7 @@ function parseFontSize(value: string): TextFontSize | undefined {
 }
 
 function readAlign(value: unknown): TextAlign {
-  return value === 'center' || value === 'right' || value === 'justify' ? value : DEFAULT_TEXT_ALIGN;
+  return value === 'center' || value === 'right' || value === 'justify'
+    ? value
+    : DEFAULT_TEXT_ALIGN;
 }

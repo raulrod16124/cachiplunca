@@ -39,15 +39,15 @@ describe('UserSettings', () => {
     });
 
     it('rejects an invalid theme', () => {
-      expect(() =>
-        UserSettings.create({ userId: USER_ID, theme: 'neon' as never }),
-      ).toThrow('UserSettings theme must be one of: light, dark, system');
+      expect(() => UserSettings.create({ userId: USER_ID, theme: 'neon' as never })).toThrow(
+        'UserSettings theme must be one of: light, dark, system',
+      );
     });
 
     it('rejects an invalid font size', () => {
-      expect(() =>
-        UserSettings.create({ userId: USER_ID, fontSize: 'huge' as never }),
-      ).toThrow('UserSettings fontSize must be one of: sm, base, lg, xl');
+      expect(() => UserSettings.create({ userId: USER_ID, fontSize: 'huge' as never })).toThrow(
+        'UserSettings fontSize must be one of: sm, base, lg, xl',
+      );
     });
 
     it('rejects an invalid locale', () => {
@@ -63,9 +63,9 @@ describe('UserSettings', () => {
     });
 
     it('rejects an invalid timestamp', () => {
-      expect(() =>
-        UserSettings.create({ userId: USER_ID, updatedAt: new Date('nope') }),
-      ).toThrow('UserSettings timestamp must be a valid Date');
+      expect(() => UserSettings.create({ userId: USER_ID, updatedAt: new Date('nope') })).toThrow(
+        'UserSettings timestamp must be a valid Date',
+      );
     });
   });
 

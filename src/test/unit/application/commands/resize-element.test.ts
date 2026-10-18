@@ -101,7 +101,7 @@ describe('createResizeElement', () => {
     });
     expect(resizedNote.type).toBe('note');
     if (resizedNote.type === 'note') {
-      expect(resizedNote.content).toBe('idea');
+      expect(richTextToPlain(resizedNote.content)).toBe('idea');
       expect(resizedNote.color).toBe('#ff0');
     }
   });

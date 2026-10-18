@@ -4871,7 +4871,7 @@ Actualizar las dependencias directas con major pendiente sin romper el SDK ni el
 
 ### TASK-131 — Rich text model foundation
 
-**Priority:** P1 · **Depends:** TASK-045 · **Status:** TODO
+**Priority:** P1 · **Depends:** TASK-045 · **Status:** DONE
 
 #### Objetivo
 
@@ -4889,12 +4889,12 @@ Extender el modelo de dominio para que `note`, `task`, `frame` y `link` puedan a
 
 #### Criterios de aceptación
 
-- [ ] `note`, `task`, `frame` y `link` se crean y actualizan con `RichTextDocument` o `string`.
-- [ ] Los títulos de task/frame/link rechazan documentos con más de un bloque o con listas.
-- [ ] El mapper lee documentos antiguos en formato string sin errores.
-- [ ] Los tests de dominio (`note-element`, `task-element`, `frame-element`, `link-element`, `rich-text`) pasan.
-- [ ] Los tests del mapper pasan, incluyendo round-trip de strings legacy.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] `note`, `task`, `frame` y `link` se crean y actualizan con `RichTextDocument` o `string`.
+- [x] Los títulos de task/frame/link rechazan documentos con más de un bloque o con listas.
+- [x] El mapper lee documentos antiguos en formato string sin errores.
+- [x] Los tests de dominio (`note-element`, `task-element`, `frame-element`, `link-element`, `rich-text`) pasan.
+- [x] Los tests del mapper pasan, incluyendo round-trip de strings legacy.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 

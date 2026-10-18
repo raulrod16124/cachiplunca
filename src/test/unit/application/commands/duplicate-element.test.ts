@@ -143,7 +143,7 @@ describe('createDuplicateElement', () => {
     const note = expectOk({ element: noteElement({ color: '#ff0' }) });
     expect(note.type).toBe('note');
     if (note.type === 'note') {
-      expect(note.content).toBe('idea');
+      expect(richTextToPlain(note.content)).toBe('idea');
       expect(note.color).toBe('#ff0');
     }
   });

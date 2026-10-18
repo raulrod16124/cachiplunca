@@ -3,6 +3,7 @@ import { createGetUserSettings, type GetUserSettings } from '../../application/q
 import { createUpdateUserSettings, type UpdateUserSettings } from '../../application/commands';
 import { createUserSettingsStore, type UserSettingsStore } from '../../application/services';
 import { createFirebaseUserSettingsRepository } from '../../infrastructure/firebase/firebase-user-settings-repository';
+import { createBrowserSystemEnvironment } from '../../infrastructure/browser/system-environment';
 
 export interface UserSettingsServices {
   readonly userSettingsRepository: ReturnType<typeof createFirebaseUserSettingsRepository>;
@@ -17,6 +18,9 @@ export function createUserSettingsServices(db: Firestore): UserSettingsServices 
     userSettingsRepository,
     getUserSettings: createGetUserSettings(userSettingsRepository),
     updateUserSettings: createUpdateUserSettings(userSettingsRepository),
-    userSettingsStore: createUserSettingsStore(userSettingsRepository),
+    userSettingsStore: createUserSettingsStore(
+      userSettingsRepository,
+      createBrowserSystemEnvironment(),
+    ),
   };
 }

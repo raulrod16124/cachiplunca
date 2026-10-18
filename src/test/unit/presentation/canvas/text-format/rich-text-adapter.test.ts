@@ -77,7 +77,11 @@ describe('rich-text-adapter', () => {
     const json = {
       type: 'doc',
       content: [
-        { type: 'paragraph', attrs: { textAlign: 'left' }, content: [{ type: 'text', text: 'ok' }] },
+        {
+          type: 'paragraph',
+          attrs: { textAlign: 'left' },
+          content: [{ type: 'text', text: 'ok' }],
+        },
         { type: 'heading', attrs: { level: 1 }, content: [{ type: 'text', text: 'ignored' }] },
       ],
     };
@@ -97,7 +101,9 @@ describe('rich-text-adapter', () => {
     };
 
     expect(editorJsonToDoc(json)).toEqual({
-      blocks: [{ type: 'paragraph', align: DEFAULT_TEXT_ALIGN, spans: [{ text: 'no align attr' }] }],
+      blocks: [
+        { type: 'paragraph', align: DEFAULT_TEXT_ALIGN, spans: [{ text: 'no align attr' }] },
+      ],
     });
   });
 });

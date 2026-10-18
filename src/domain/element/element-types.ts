@@ -3,11 +3,7 @@ import { Position } from '../shared/value-objects/position';
 import { Size } from '../shared/value-objects/size';
 import { UserId } from '../shared/value-objects/user-id';
 import { WorkspaceId } from '../shared/value-objects/workspace-id';
-import {
-  isEmptyRichText,
-  validateRichTextDocument,
-  validateTitleDocument,
-} from './rich-text';
+import { isEmptyRichText, validateRichTextDocument, validateTitleDocument } from './rich-text';
 import type { RichTextDocument } from './rich-text';
 
 export const ELEMENT_TYPES = ['text', 'note', 'task', 'frame', 'connector', 'link'] as const;

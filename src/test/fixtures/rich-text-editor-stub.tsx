@@ -1,4 +1,9 @@
-import type { CSSProperties, FocusEvent, KeyboardEvent as ReactKeyboardEvent, ReactElement } from 'react';
+import type {
+  CSSProperties,
+  FocusEvent,
+  KeyboardEvent as ReactKeyboardEvent,
+  ReactElement,
+} from 'react';
 import { useEffect, useRef } from 'react';
 import type { UpdateElementInput } from '../../application/commands';
 import type { TextElement } from '../../domain/element';

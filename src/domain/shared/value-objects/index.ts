@@ -3,7 +3,6 @@ export * from './element-id';
 export * from './grid';
 export * from './invitation-id';
 export * from './position';
-export * from './rich-text-document';
 export * from './size';
 export * from './transform';
 export * from './user-id';

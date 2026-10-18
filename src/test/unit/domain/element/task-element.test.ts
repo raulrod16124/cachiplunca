@@ -1,13 +1,16 @@
 import {
   createTaskElement,
-  richTextFromPlain,
   richTextToPlain,
   withTaskAssignee,
   withTaskDueDate,
   withTaskStatus,
   withTaskTitle,
 } from '../../../../domain/element';
-import type { CreateTaskElementProps, TaskElement } from '../../../../domain/element';
+import type {
+  CreateTaskElementProps,
+  RichTextDocument,
+  TaskElement,
+} from '../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
 
 const createProps = (overrides: Partial<CreateTaskElementProps> = {}): CreateTaskElementProps => ({
@@ -80,6 +83,49 @@ describe('TaskElement', () => {
   it('rejects non-string title coming from untrusted data', () => {
     const untrusted = Object.assign(createProps(), { title: 123 });
     expect(() => createTaskElement(untrusted)).toThrow(/rich text/);
+  });
+
+  it('rejects a title document with more than one block', () => {
+    const multiBlock = {
+      blocks: [
+        { type: 'paragraph', align: 'left', spans: [{ text: 'a' }] },
+        { type: 'paragraph', align: 'left', spans: [{ text: 'b' }] },
+      ],
+    } satisfies RichTextDocument;
+
+    expect(() => createTaskElement(createProps({ title: multiBlock }))).toThrow(
+      /exactly one block/,
+    );
+  });
+
+  it('rejects a title document whose single block is a list', () => {
+    const listTitle = {
+      blocks: [
+        {
+          type: 'bulletList',
+          items: [
+            {
+              type: 'listItem',
+              content: [{ type: 'paragraph', align: 'left', spans: [{ text: 'a' }] }],
+            },
+          ],
+        },
+      ],
+    } satisfies RichTextDocument;
+
+    expect(() => createTaskElement(createProps({ title: listTitle }))).toThrow(
+      /paragraph or heading/,
+    );
+  });
+
+  it('accepts a rich text document as title', () => {
+    const headingTitle = {
+      blocks: [{ type: 'heading', level: 2, align: 'left', spans: [{ text: 'Ship it' }] }],
+    } satisfies RichTextDocument;
+
+    const element = createTaskElement(createProps({ title: headingTitle }));
+
+    expect(richTextToPlain(element.title)).toBe('Ship it');
   });
 
   it('rejects an unknown status coming from untrusted data', () => {

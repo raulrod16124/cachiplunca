@@ -3,11 +3,16 @@ import {
   resolveLocale,
   type UserSettingsState,
 } from '../../../../application/services/user-settings-store';
-import type { UserSettingsRepository } from '../../../../application/ports';
+import type { SystemEnvironment, UserSettingsRepository } from '../../../../application/ports';
 import { UserSettings } from '../../../../domain/user-settings';
 import { UserId } from '../../../../domain/shared';
 
 const USER_ID = UserId.create('user-1');
+
+const TEST_ENVIRONMENT: SystemEnvironment = {
+  getReducedMotionPref: () => false,
+  getLanguages: () => ['en-US'],
+};
 
 class FakeUserSettingsRepository implements UserSettingsRepository {
   public stored: UserSettings | null = null;
@@ -33,14 +38,14 @@ function ready(state: UserSettingsState): UserSettings {
 
 describe('createUserSettingsStore', () => {
   it('starts in the loading state', () => {
-    const store = createUserSettingsStore(new FakeUserSettingsRepository());
+    const store = createUserSettingsStore(new FakeUserSettingsRepository(), TEST_ENVIRONMENT);
 
     expect(store.getSnapshot()).toEqual({ status: 'loading' });
   });
 
   it('creates and persists defaults when the account has no settings', async () => {
     const repository = new FakeUserSettingsRepository();
-    const store = createUserSettingsStore(repository);
+    const store = createUserSettingsStore(repository, TEST_ENVIRONMENT);
 
     await store.load(USER_ID);
 
@@ -54,7 +59,7 @@ describe('createUserSettingsStore', () => {
   it('loads stored settings without overwriting them', async () => {
     const repository = new FakeUserSettingsRepository();
     repository.stored = UserSettings.create({ userId: USER_ID, theme: 'dark' });
-    const store = createUserSettingsStore(repository);
+    const store = createUserSettingsStore(repository, TEST_ENVIRONMENT);
 
     await store.load(USER_ID);
 
@@ -63,7 +68,7 @@ describe('createUserSettingsStore', () => {
   });
 
   it('notifies subscribers when settings change', async () => {
-    const store = createUserSettingsStore(new FakeUserSettingsRepository());
+    const store = createUserSettingsStore(new FakeUserSettingsRepository(), TEST_ENVIRONMENT);
     const listener = jest.fn();
     const unsubscribe = store.subscribe(listener);
 
@@ -78,7 +83,7 @@ describe('createUserSettingsStore', () => {
 
   it('applies and persists updates with an incremented version', async () => {
     const repository = new FakeUserSettingsRepository();
-    const store = createUserSettingsStore(repository);
+    const store = createUserSettingsStore(repository, TEST_ENVIRONMENT);
     await store.load(USER_ID);
 
     await store.update({ theme: 'dark', fontSize: 'lg' });
@@ -92,7 +97,7 @@ describe('createUserSettingsStore', () => {
 
   it('ignores updates before any account is loaded', async () => {
     const repository = new FakeUserSettingsRepository();
-    const store = createUserSettingsStore(repository);
+    const store = createUserSettingsStore(repository, TEST_ENVIRONMENT);
 
     await store.update({ theme: 'dark' });
 
@@ -102,7 +107,7 @@ describe('createUserSettingsStore', () => {
 
   it('does not persist a no-op update', async () => {
     const repository = new FakeUserSettingsRepository();
-    const store = createUserSettingsStore(repository);
+    const store = createUserSettingsStore(repository, TEST_ENVIRONMENT);
     await store.load(USER_ID);
 
     await store.update({ theme: 'system' });
@@ -118,7 +123,7 @@ describe('createUserSettingsStore', () => {
       },
       upsert: async (settings) => settings,
     };
-    const store = createUserSettingsStore(repository);
+    const store = createUserSettingsStore(repository, TEST_ENVIRONMENT);
 
     await store.load(USER_ID);
 
@@ -132,7 +137,7 @@ describe('createUserSettingsStore', () => {
 
   it('keeps the chosen value and surfaces the error when persisting fails', async () => {
     const repository = new FakeUserSettingsRepository();
-    const store = createUserSettingsStore(repository);
+    const store = createUserSettingsStore(repository, TEST_ENVIRONMENT);
     await store.load(USER_ID);
     repository.upsert = async () => {
       throw new Error('offline');
@@ -150,7 +155,7 @@ describe('createUserSettingsStore', () => {
 
   it('clears a previous error once a later update persists successfully', async () => {
     const repository = new FakeUserSettingsRepository();
-    const store = createUserSettingsStore(repository);
+    const store = createUserSettingsStore(repository, TEST_ENVIRONMENT);
     await store.load(USER_ID);
     repository.upsert = async () => {
       throw new Error('offline');
@@ -171,22 +176,17 @@ describe('createUserSettingsStore', () => {
 
 describe('resolveLocale', () => {
   it('returns the explicit locale without detection', () => {
-    expect(resolveLocale('es')).toBe('es');
-    expect(resolveLocale('en')).toBe('en');
+    expect(resolveLocale('es', ['en-US'])).toBe('es');
+    expect(resolveLocale('en', ['es-ES'])).toBe('en');
   });
 
-  it('falls back to the browser language when set to system', () => {
-    const original = navigator.languages;
-    Object.defineProperty(navigator, 'languages', {
-      configurable: true,
-      value: ['es-ES', 'en-US'],
-    });
+  it('falls back to the system language list when set to system', () => {
+    expect(resolveLocale('system', ['es-ES', 'en-US'])).toBe('es');
+    expect(resolveLocale('system', ['en-GB'])).toBe('en');
+  });
 
-    expect(resolveLocale('system')).toBe('es');
-
-    Object.defineProperty(navigator, 'languages', {
-      configurable: true,
-      value: original,
-    });
+  it('falls back to english when no supported language is detected', () => {
+    expect(resolveLocale('system', [])).toBe('en');
+    expect(resolveLocale('system', ['fr-FR'])).toBe('en');
   });
 });
