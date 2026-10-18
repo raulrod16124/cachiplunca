@@ -7,6 +7,8 @@ export { TaskRenderer } from './task-renderer';
 export { FrameRenderer } from './frame-renderer';
 export { ConnectorRenderer } from './connector-renderer';
 export { LinkRenderer } from './link-renderer';
+export { RichTextContent } from './rich-text-content';
+export type { RichTextContentMode, RichTextContentProps } from './rich-text-content';
 export { defaultRendererRegistry } from './default-renderer-registry';
 export { resolveElementRenderer } from './resolve-element-renderer';
 export type {

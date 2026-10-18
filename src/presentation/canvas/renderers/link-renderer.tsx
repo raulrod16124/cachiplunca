@@ -1,7 +1,8 @@
 import type { ReactElement } from 'react';
 import styled from 'styled-components';
-import { isLinkElement, richTextToPlain } from '../../../domain/element';
+import { isLinkElement } from '../../../domain/element';
 import type { ElementRendererProps } from './element-renderer';
+import { RichTextContent } from './rich-text-content';
 
 const Content = styled.div`
   position: absolute;
@@ -42,7 +43,9 @@ export function LinkRenderer({ element }: ElementRendererProps): ReactElement | 
   return (
     <Content data-element-content="true" data-element-type="link" data-link-url={element.url}>
       {element.title === undefined ? null : (
-        <Title data-link-title="true">{richTextToPlain(element.title)}</Title>
+        <Title data-link-title="true">
+          <RichTextContent document={element.title} mode="inline" />
+        </Title>
       )}
       <Url data-link-url-label="true">{element.url}</Url>
     </Content>

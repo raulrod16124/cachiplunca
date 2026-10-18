@@ -1,10 +1,17 @@
 import { render, screen } from '@testing-library/react';
-import { createNoteElement, createTextElement } from '../../../../../domain/element';
-import type { NoteElement } from '../../../../../domain/element';
+import {
+  createNoteElement,
+  createTextElement,
+  DEFAULT_TEXT_ALIGN,
+} from '../../../../../domain/element';
+import type { NoteElement, RichTextDocument } from '../../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../../domain/shared';
 import { ElementView, NoteRenderer } from '../../../../../presentation/canvas/renderers';
 
-function createElement(content: string, overrides: Partial<{ color: string }> = {}): NoteElement {
+function createElement(
+  content: string | RichTextDocument,
+  overrides: Partial<{ color: string }> = {},
+): NoteElement {
   return createNoteElement({
     id: ElementId.create('elem-1'),
     workspaceId: WorkspaceId.create('ws-1'),
@@ -82,6 +89,60 @@ describe('NoteRenderer', () => {
     const { container } = render(<NoteRenderer element={text} selected={false} />);
 
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it('renders multi-block documents as separate paragraphs', () => {
+    const doc: RichTextDocument = {
+      blocks: [
+        { type: 'paragraph', align: DEFAULT_TEXT_ALIGN, spans: [{ text: 'first' }] },
+        { type: 'paragraph', align: DEFAULT_TEXT_ALIGN, spans: [{ text: 'second' }] },
+      ],
+    };
+
+    render(<NoteRenderer element={createElement(doc)} selected={false} />);
+
+    expect(screen.getByText('first').tagName).toBe('P');
+    expect(screen.getByText('second').tagName).toBe('P');
+  });
+
+  it('renders headings and lists from a rich text document', () => {
+    const doc: RichTextDocument = {
+      blocks: [
+        { type: 'heading', level: 2, align: DEFAULT_TEXT_ALIGN, spans: [{ text: 'Ideas' }] },
+        {
+          type: 'bulletList',
+          items: [
+            {
+              type: 'listItem',
+              content: [
+                { type: 'paragraph', align: DEFAULT_TEXT_ALIGN, spans: [{ text: 'idea a' }] },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const { container } = render(<NoteRenderer element={createElement(doc)} selected={false} />);
+
+    expect(screen.getByRole('heading', { level: 2, name: 'Ideas' })).toBeInTheDocument();
+    expect(container.querySelector('ul li')).toHaveTextContent('idea a');
+  });
+
+  it('renders inline marks from a rich text document', () => {
+    const doc: RichTextDocument = {
+      blocks: [
+        {
+          type: 'paragraph',
+          align: DEFAULT_TEXT_ALIGN,
+          spans: [{ text: 'strong', marks: { bold: true } }],
+        },
+      ],
+    };
+
+    render(<NoteRenderer element={createElement(doc)} selected={false} />);
+
+    expect(screen.getByText('strong')).toHaveStyle({ fontWeight: 700 });
   });
 
   it('delegates to the renderer through ElementView', () => {

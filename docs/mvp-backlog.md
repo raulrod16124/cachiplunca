@@ -4947,7 +4947,7 @@ Hacer que TipTap pueda editar el rich text extendido (italic, highlight, heading
 
 ### TASK-133 — Rich text rendering for all elements
 
-**Priority:** P1 · **Depends:** TASK-132 · **Status:** TODO
+**Priority:** P1 · **Depends:** TASK-132 · **Status:** DONE
 
 #### Objetivo
 
@@ -4965,11 +4965,11 @@ Renderizar el contenido enriquecido en `note`, `task`, `frame` y `link` de forma
 
 #### Criterios de aceptación
 
-- [ ] `text` y `note` renderizan párrafos, headings, listas y marcas inline.
-- [ ] `task`, `frame` y `link.title` renderizan un único bloque con marcas inline.
-- [ ] `RichTextContent` se usa como base en todos los renderers.
-- [ ] Los tests de renderizado de cada tipo pasan.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] `text` y `note` renderizan párrafos, headings, listas y marcas inline.
+- [x] `task`, `frame` y `link.title` renderizan un único bloque con marcas inline.
+- [x] `RichTextContent` se usa como base en todos los renderers.
+- [x] Los tests de renderizado de cada tipo pasan.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -5186,6 +5186,14 @@ Añadir una entrada breve por sesión.
 - Bloqueos:
 - Siguiente tarea:
 -->
+
+## 2026-10-18 — TASK-133
+
+- Resultado: **Rich text rendering for all elements** completa. Nuevo componente compartido `RichTextContent` (`src/presentation/canvas/renderers/rich-text-content.tsx`) con dos modos: `block` (párrafos, headings h1–h3 con tamaños 1.5em/1.25em/1.1em, listas ordenadas/no ordenadas con anidación, alineación) e `inline` (solo el primer bloque de texto, ignorando listas y bloques extra — defensivo frente a documentos con listas en títulos). Las marcas inline cubren bold, italic, underline+strikethrough combinados, color, fontFamily, fontSize y highlight (elemento `<mark>`). `text-renderer` y `note-renderer` usan modo `block`; `task`, `frame` y `link` usan modo `inline` en sus títulos. Se eliminó el flattening con `richTextToPlain` de los cinco renderers y el `spanStyle` local de text-renderer.
+- Tests/quality gates: 193 suites / 2273 tests en verde (nuevas: `rich-text-content.test.tsx` con 18 tests; ampliados text/note/task/frame/link renderer tests con headings, listas, marcas y modo defensivo de títulos multi-bloque). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente).
+- Decisiones: (1) `RichTextContent` vive en `renderers/` (co-located con los consumidores) y se exporta desde el barrel; (2) highlight se renderiza con `<mark>` sin color fijo, en paridad con el editor TipTap (que emite `<mark>` sin atributos de color cuando `multicolor: false`); (3) estilos estructurales (márgenes de headings, padding de listas) replican los del `EditorShell` de `rich-text-editor.tsx` para paridad visual edición/lectura; (4) en modo `inline` se devuelve solo el primer bloque de párrafo/heading aunque el validador de dominio ya garantice un único bloque, por robustez ante datos legacy; (5) sin ADR: decisiones locales de Presentation sin cambio arquitectónico.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-134 (Floating Word-style text toolbar).
 
 ## 2026-10-18 — TASK-132
 

@@ -1,11 +1,15 @@
 import { render, screen } from '@testing-library/react';
-import { createNoteElement, createTextElement } from '../../../../../domain/element';
-import type { TextElement } from '../../../../../domain/element';
+import {
+  createNoteElement,
+  createTextElement,
+  DEFAULT_TEXT_ALIGN,
+} from '../../../../../domain/element';
+import type { RichTextDocument, TextElement } from '../../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../../domain/shared';
 import { ElementView, TextRenderer } from '../../../../../presentation/canvas/renderers';
 
 function createElement(
-  content: string,
+  content: string | RichTextDocument,
   overrides: Partial<{ rotation: number }> = {},
 ): TextElement {
   return createTextElement({
@@ -69,6 +73,61 @@ describe('TextRenderer', () => {
     const { container } = render(<TextRenderer element={note} selected={false} />);
 
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it('renders heading blocks as heading elements', () => {
+    const doc: RichTextDocument = {
+      blocks: [
+        { type: 'heading', level: 1, align: DEFAULT_TEXT_ALIGN, spans: [{ text: 'Section' }] },
+      ],
+    };
+
+    render(<TextRenderer element={createElement(doc)} selected={false} />);
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Section' })).toBeInTheDocument();
+  });
+
+  it('renders list blocks as lists', () => {
+    const doc: RichTextDocument = {
+      blocks: [
+        {
+          type: 'bulletList',
+          items: [
+            {
+              type: 'listItem',
+              content: [
+                { type: 'paragraph', align: DEFAULT_TEXT_ALIGN, spans: [{ text: 'item one' }] },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const { container } = render(<TextRenderer element={createElement(doc)} selected={false} />);
+
+    expect(container.querySelector('ul li')).not.toBeNull();
+    expect(screen.getByText('item one')).toBeInTheDocument();
+  });
+
+  it('renders italic and highlight marks', () => {
+    const doc: RichTextDocument = {
+      blocks: [
+        {
+          type: 'paragraph',
+          align: DEFAULT_TEXT_ALIGN,
+          spans: [
+            { text: 'fancy', marks: { italic: true } },
+            { text: 'glow', marks: { highlight: true } },
+          ],
+        },
+      ],
+    };
+
+    const { container } = render(<TextRenderer element={createElement(doc)} selected={false} />);
+
+    expect(screen.getByText('fancy')).toHaveStyle({ fontStyle: 'italic' });
+    expect(container.querySelector('mark')).toHaveTextContent('glow');
   });
 
   it('delegates to the renderer through ElementView', () => {

@@ -1,8 +1,9 @@
 import type { ReactElement } from 'react';
 import styled from 'styled-components';
-import { isTaskElement, richTextToPlain } from '../../../domain/element';
+import { isTaskElement } from '../../../domain/element';
 import type { TaskStatus } from '../../../domain/element';
 import type { ElementRendererProps } from './element-renderer';
+import { RichTextContent } from './rich-text-content';
 
 const STATUS_LABELS: Record<TaskStatus, string> = {
   todo: 'Todo',
@@ -64,7 +65,9 @@ export function TaskRenderer({ element }: ElementRendererProps): ReactElement | 
 
   return (
     <Content data-element-content="true" data-element-type="task" data-task-status={element.status}>
-      <Title>{richTextToPlain(element.title)}</Title>
+      <Title>
+        <RichTextContent document={element.title} mode="inline" />
+      </Title>
       <StatusBadge>{STATUS_LABELS[element.status]}</StatusBadge>
       {element.assigneeId === undefined ? null : (
         <Meta data-task-assignee="true">{element.assigneeId.value}</Meta>

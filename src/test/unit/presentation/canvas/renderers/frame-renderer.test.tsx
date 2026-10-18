@@ -1,11 +1,15 @@
 import { render, screen } from '@testing-library/react';
-import { createFrameElement, createTextElement } from '../../../../../domain/element';
-import type { FrameElement } from '../../../../../domain/element';
+import {
+  createFrameElement,
+  createTextElement,
+  DEFAULT_TEXT_ALIGN,
+} from '../../../../../domain/element';
+import type { FrameElement, RichTextDocument } from '../../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../../domain/shared';
 import { ElementView, FrameRenderer } from '../../../../../presentation/canvas/renderers';
 
 function createElement(
-  title: string,
+  title: string | RichTextDocument,
   overrides: Partial<{ parentFrameId: string }> = {},
 ): FrameElement {
   return createFrameElement({
@@ -67,6 +71,51 @@ describe('FrameRenderer', () => {
     const { container } = render(<FrameRenderer element={text} selected={false} />);
 
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it('renders the title with inline marks', () => {
+    const doc: RichTextDocument = {
+      blocks: [
+        {
+          type: 'paragraph',
+          align: DEFAULT_TEXT_ALIGN,
+          spans: [{ text: 'Planning', marks: { italic: true } }],
+        },
+      ],
+    };
+
+    render(<FrameRenderer element={createElement(doc)} selected={false} />);
+
+    const title = document.querySelector('[data-frame-title]');
+    expect(title).not.toBeNull();
+    expect(screen.getByText('Planning')).toHaveStyle({ fontStyle: 'italic' });
+  });
+
+  it('renders only the first text block and never lists in the title', () => {
+    const doc: RichTextDocument = {
+      blocks: [
+        {
+          type: 'bulletList',
+          items: [
+            {
+              type: 'listItem',
+              content: [
+                { type: 'paragraph', align: DEFAULT_TEXT_ALIGN, spans: [{ text: 'listed' }] },
+              ],
+            },
+          ],
+        },
+        { type: 'heading', level: 1, align: DEFAULT_TEXT_ALIGN, spans: [{ text: 'Board' }] },
+      ],
+    };
+    const element: FrameElement = { ...createElement('placeholder'), title: doc };
+
+    const { container } = render(<FrameRenderer element={element} selected={false} />);
+
+    expect(screen.getByText('Board')).toBeInTheDocument();
+    expect(screen.queryByText('listed')).toBeNull();
+    expect(container.querySelector('ul')).toBeNull();
+    expect(container.querySelector('h1')).toBeNull();
   });
 
   it('delegates to the renderer through ElementView', () => {
