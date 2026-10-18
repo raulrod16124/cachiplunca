@@ -26,7 +26,6 @@ import styled from 'styled-components';
 import type { UpdateElementInput } from '../../../application/commands';
 import type { TextElement } from '../../../domain/element';
 import { docToEditorJson, editorJsonToDoc } from '../text-format/rich-text-adapter';
-import { TextFormatToolbar } from '../text-format/text-format-toolbar';
 
 const EditorShell = styled.div`
   position: absolute;
