@@ -3,7 +3,11 @@ import { Position } from '../shared/value-objects/position';
 import { Size } from '../shared/value-objects/size';
 import { UserId } from '../shared/value-objects/user-id';
 import { WorkspaceId } from '../shared/value-objects/workspace-id';
-import { validateRichTextDocument } from './rich-text';
+import {
+  isEmptyRichText,
+  validateRichTextDocument,
+  validateTitleDocument,
+} from './rich-text';
 import type { RichTextDocument } from './rich-text';
 
 export const ELEMENT_TYPES = ['text', 'note', 'task', 'frame', 'connector', 'link'] as const;
@@ -30,7 +34,7 @@ export interface TextElement extends BaseElement {
 
 export interface NoteElement extends BaseElement {
   readonly type: 'note';
-  readonly content: string;
+  readonly content: RichTextDocument;
   readonly color?: string;
 }
 
@@ -40,7 +44,7 @@ export type TaskStatus = (typeof TASK_STATUSES)[number];
 
 export interface TaskElement extends BaseElement {
   readonly type: 'task';
-  readonly title: string;
+  readonly title: RichTextDocument;
   readonly status: TaskStatus;
   readonly assigneeId?: UserId;
   readonly dueDate?: Date;
@@ -48,7 +52,7 @@ export interface TaskElement extends BaseElement {
 
 export interface FrameElement extends BaseElement {
   readonly type: 'frame';
-  readonly title: string;
+  readonly title: RichTextDocument;
   readonly parentFrameId?: ElementId;
 }
 
@@ -61,7 +65,7 @@ export interface ConnectorElement extends BaseElement {
 export interface LinkElement extends BaseElement {
   readonly type: 'link';
   readonly url: string;
-  readonly title?: string;
+  readonly title?: RichTextDocument;
 }
 
 export type Element =
@@ -122,6 +126,7 @@ export function validateNoteElement(element: NoteElement): void {
   if (element.content === undefined || element.content === null) {
     throw new Error('NoteElement content must be defined');
   }
+  validateRichTextDocument(element.content);
   if (element.color !== undefined && element.color.trim().length === 0) {
     throw new Error('NoteElement color cannot be empty');
   }
@@ -129,7 +134,9 @@ export function validateNoteElement(element: NoteElement): void {
 
 export function validateTaskElement(element: TaskElement): void {
   validateBaseElementProps(element);
-  if (element.title.trim().length === 0) {
+  validateRichTextDocument(element.title);
+  validateTitleDocument(element.title);
+  if (isEmptyRichText(element.title)) {
     throw new Error('TaskElement title cannot be empty');
   }
   if (element.status.trim().length === 0) {
@@ -145,7 +152,9 @@ export function validateTaskElement(element: TaskElement): void {
 
 export function validateFrameElement(element: FrameElement): void {
   validateBaseElementProps(element);
-  if (element.title.trim().length === 0) {
+  validateRichTextDocument(element.title);
+  validateTitleDocument(element.title);
+  if (isEmptyRichText(element.title)) {
     throw new Error('FrameElement title cannot be empty');
   }
   if (element.parentFrameId !== undefined && element.parentFrameId.equals(element.id)) {
@@ -165,8 +174,12 @@ export function validateLinkElement(element: LinkElement): void {
   if (element.url.trim().length === 0) {
     throw new Error('LinkElement url cannot be empty');
   }
-  if (element.title !== undefined && element.title.trim().length === 0) {
-    throw new Error('LinkElement title cannot be empty');
+  if (element.title !== undefined) {
+    validateRichTextDocument(element.title);
+    validateTitleDocument(element.title);
+    if (isEmptyRichText(element.title)) {
+      throw new Error('LinkElement title cannot be empty');
+    }
   }
 }
 

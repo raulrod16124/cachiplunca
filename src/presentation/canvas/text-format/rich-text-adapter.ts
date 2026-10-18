@@ -1,6 +1,7 @@
 import type { JSONContent } from '@tiptap/core';
 import {
   DEFAULT_TEXT_ALIGN,
+  TEXT_BOOLEAN_MARKS,
   TEXT_FONT_SIZES,
   richTextFromPlain,
 } from '../../../domain/element';
@@ -17,14 +18,18 @@ import { FONT_FAMILY_OPTIONS, fontFamilyCss } from './font-families';
 
 const BOOLEAN_MARK_TO_EDITOR: Record<TextBooleanMark, string> = {
   bold: 'bold',
+  italic: 'italic',
   underline: 'underline',
   strikethrough: 'strike',
+  highlight: 'highlight',
 };
 
 const EDITOR_MARK_TO_BOOLEAN: Record<string, TextBooleanMark> = {
   bold: 'bold',
+  italic: 'italic',
   underline: 'underline',
   strike: 'strikethrough',
+  highlight: 'highlight',
 };
 
 const CSS_TO_FONT_FAMILY = new Map(
@@ -80,6 +85,14 @@ export function editorJsonToDoc(json: JSONContent | null | undefined): RichTextD
 }
 
 function blockToEditorNode(block: RichTextBlock): JSONContent {
+  if (block.type !== 'paragraph') {
+    return {
+      type: 'paragraph',
+      attrs: { textAlign: DEFAULT_TEXT_ALIGN },
+      content: undefined,
+    };
+  }
+
   return {
     type: 'paragraph',
     attrs: { textAlign: block.align },
@@ -97,7 +110,7 @@ function blockToEditorNode(block: RichTextBlock): JSONContent {
 function domainMarksToEditor(marks: RichTextMarks): JSONContent['marks'] {
   const editorMarks: JSONContent['marks'] = [];
 
-  for (const key of ['bold', 'underline', 'strikethrough'] as const) {
+  for (const key of TEXT_BOOLEAN_MARKS) {
     if (marks[key] === true) {
       editorMarks.push({ type: BOOLEAN_MARK_TO_EDITOR[key] });
     }

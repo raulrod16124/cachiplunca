@@ -1,4 +1,9 @@
-import { createNoteElement, withNoteColor, withNoteContent } from '../../../../domain/element';
+import {
+  createNoteElement,
+  richTextToPlain,
+  withNoteColor,
+  withNoteContent,
+} from '../../../../domain/element';
 import type { CreateNoteElementProps } from '../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
 
@@ -17,7 +22,7 @@ describe('NoteElement', () => {
     const element = createNoteElement(createProps());
 
     expect(element.type).toBe('note');
-    expect(element.content).toBe('note content');
+    expect(richTextToPlain(element.content)).toBe('note content');
     expect(element.color).toBeUndefined();
     expect(element.rotation).toBe(0);
     expect(element.createdAt).toBeInstanceOf(Date);
@@ -96,9 +101,9 @@ describe('NoteElement', () => {
     const updated = withNoteContent(original, 'updated note', updatedAt);
 
     expect(updated).not.toBe(original);
-    expect(updated.content).toBe('updated note');
+    expect(richTextToPlain(updated.content)).toBe('updated note');
     expect(updated.updatedAt).toBe(updatedAt);
-    expect(original.content).toBe('note content');
+    expect(richTextToPlain(original.content)).toBe('note content');
   });
 
   it('rejects an update whose updatedAt predates createdAt', () => {
@@ -116,7 +121,7 @@ describe('NoteElement', () => {
 
     const updated = withNoteContent(original, '');
 
-    expect(updated.content).toBe('');
+    expect(richTextToPlain(updated.content)).toBe('');
   });
 
   it('returns a new element when updating color without mutating the original', () => {

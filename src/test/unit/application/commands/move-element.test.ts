@@ -6,6 +6,7 @@ import {
   createNoteElement,
   createTaskElement,
   createTextElement,
+  richTextToPlain,
   type ConnectorElement,
   type Element,
   type FrameElement,
@@ -90,7 +91,7 @@ describe('createMoveElement', () => {
     const movedTask = expectOk({ element: taskElement(), position: Position.create(1, 2) });
     expect(movedTask.type).toBe('task');
     if (movedTask.type === 'task') {
-      expect(movedTask.title).toBe('Ship it');
+      expect(richTextToPlain(movedTask.title)).toBe('Ship it');
       expect(movedTask.status).toBe('todo');
     }
 

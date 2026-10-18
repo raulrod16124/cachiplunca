@@ -9,6 +9,7 @@ import {
   createNoteElement,
   createTaskElement,
   createTextElement,
+  richTextToPlain,
   type ConnectorElement,
   type Element,
   type FrameElement,
@@ -135,7 +136,7 @@ describe('createDuplicateElement', () => {
     const task = expectOk({ element: taskElement({ status: 'done' }) });
     expect(task.type).toBe('task');
     if (task.type === 'task') {
-      expect(task.title).toBe('Ship it');
+      expect(richTextToPlain(task.title)).toBe('Ship it');
       expect(task.status).toBe('done');
     }
 

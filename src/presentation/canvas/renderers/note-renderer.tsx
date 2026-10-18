@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react';
 import styled from 'styled-components';
-import { isNoteElement } from '../../../domain/element';
+import { isNoteElement, richTextToPlain } from '../../../domain/element';
 import type { ElementRendererProps } from './element-renderer';
 
 const Content = styled.div`
@@ -33,7 +33,7 @@ export function NoteRenderer({ element }: ElementRendererProps): ReactElement | 
       data-element-type="note"
       style={element.color === undefined ? undefined : { backgroundColor: element.color }}
     >
-      {element.content}
+      {richTextToPlain(element.content)}
     </Content>
   );
 }

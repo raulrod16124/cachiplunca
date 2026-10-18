@@ -22,6 +22,7 @@ import {
   isNoteElement,
   isTaskElement,
   isTextElement,
+  richTextToPlain,
 } from '../../../domain/element';
 
 const LazyRichTextEditor = lazy(() =>
@@ -188,7 +189,7 @@ function NoteContentEditor({
   onCommit,
   onCancel,
 }: FieldEditorProps<NoteElement>): ReactElement {
-  const [draft, setDraft] = useState(element.content);
+  const [draft, setDraft] = useState(richTextToPlain(element.content));
   const cancelledRef = useRef(false);
 
   const cancel = (): void => {
@@ -201,7 +202,7 @@ function NoteContentEditor({
       return;
     }
 
-    if (draft === element.content) {
+    if (draft === richTextToPlain(element.content)) {
       cancel();
       return;
     }
@@ -248,7 +249,7 @@ function TaskTitleEditor({
   onCommit,
   onCancel,
 }: FieldEditorProps<TaskElement>): ReactElement {
-  const [draft, setDraft] = useState(element.title);
+  const [draft, setDraft] = useState(richTextToPlain(element.title));
   const cancelledRef = useRef(false);
   const boxRef = useRef<HTMLDivElement | null>(null);
 
@@ -262,7 +263,7 @@ function TaskTitleEditor({
       return;
     }
 
-    if (draft === element.title) {
+    if (draft === richTextToPlain(element.title)) {
       cancel();
       return;
     }
@@ -313,7 +314,7 @@ function FrameTitleEditor({
   onCommit,
   onCancel,
 }: FieldEditorProps<FrameElement>): ReactElement {
-  const [draft, setDraft] = useState(element.title);
+  const [draft, setDraft] = useState(richTextToPlain(element.title));
   const cancelledRef = useRef(false);
   const boxRef = useRef<HTMLDivElement | null>(null);
 
@@ -327,7 +328,7 @@ function FrameTitleEditor({
       return;
     }
 
-    if (draft === element.title) {
+    if (draft === richTextToPlain(element.title)) {
       cancel();
       return;
     }
@@ -380,7 +381,9 @@ function LinkFieldsEditor({
   onCommit,
   onCancel,
 }: FieldEditorProps<LinkElement>): ReactElement {
-  const [titleDraft, setTitleDraft] = useState(element.title ?? '');
+  const [titleDraft, setTitleDraft] = useState(
+    element.title === undefined ? '' : richTextToPlain(element.title),
+  );
   const [urlDraft, setUrlDraft] = useState(element.url);
   const cancelledRef = useRef(false);
   const boxRef = useRef<HTMLDivElement | null>(null);
@@ -395,7 +398,9 @@ function LinkFieldsEditor({
       return;
     }
 
-    if (titleDraft === (element.title ?? '') && urlDraft === element.url) {
+    const currentTitle = element.title === undefined ? '' : richTextToPlain(element.title);
+
+    if (titleDraft === currentTitle && urlDraft === element.url) {
       cancel();
       return;
     }

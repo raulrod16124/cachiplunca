@@ -33,13 +33,13 @@ export interface TextElementDocument extends BaseElementDocument {
 
 export interface NoteElementDocument extends BaseElementDocument {
   readonly type: 'note';
-  readonly content: string;
+  readonly content: RichTextDocument;
   readonly color?: string;
 }
 
 export interface TaskElementDocument extends BaseElementDocument {
   readonly type: 'task';
-  readonly title: string;
+  readonly title: RichTextDocument;
   readonly status: 'todo' | 'in_progress' | 'done';
   readonly assigneeId?: string;
   readonly dueDate?: Date;
@@ -47,7 +47,7 @@ export interface TaskElementDocument extends BaseElementDocument {
 
 export interface FrameElementDocument extends BaseElementDocument {
   readonly type: 'frame';
-  readonly title: string;
+  readonly title: RichTextDocument;
   readonly parentFrameId?: string;
 }
 
@@ -60,7 +60,7 @@ export interface ConnectorElementDocument extends BaseElementDocument {
 export interface LinkElementDocument extends BaseElementDocument {
   readonly type: 'link';
   readonly url: string;
-  readonly title?: string;
+  readonly title?: RichTextDocument;
 }
 
 export type ElementDocument =
@@ -143,13 +143,13 @@ export function fromElementDocument(id: string, data: unknown): Element {
     case 'note':
       return createNoteElement({
         ...base,
-        content: readString(data.content, 'content'),
+        content: readRichText(data.content),
         ...(data.color === undefined ? {} : { color: readString(data.color, 'color') }),
       });
     case 'task':
       return createTaskElement({
         ...base,
-        title: readString(data.title, 'title'),
+        title: readRichText(data.title),
         status: readTaskStatus(data.status),
         ...(data.assigneeId === undefined
           ? {}
@@ -159,7 +159,7 @@ export function fromElementDocument(id: string, data: unknown): Element {
     case 'frame':
       return createFrameElement({
         ...base,
-        title: readString(data.title, 'title'),
+        title: readRichText(data.title),
         ...(data.parentFrameId === undefined
           ? {}
           : { parentFrameId: ElementId.create(readString(data.parentFrameId, 'parentFrameId')) }),
@@ -174,7 +174,7 @@ export function fromElementDocument(id: string, data: unknown): Element {
       return createLinkElement({
         ...base,
         url: readString(data.url, 'url'),
-        ...(data.title === undefined ? {} : { title: readString(data.title, 'title') }),
+        ...(data.title === undefined ? {} : { title: readRichText(data.title) }),
       });
   }
 }

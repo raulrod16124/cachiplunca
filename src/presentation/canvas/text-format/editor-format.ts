@@ -4,10 +4,12 @@ import type { TextBooleanMark, TextFontSize } from '../../../domain/element';
 import { FONT_FAMILY_OPTIONS, fontFamilyCss } from './font-families';
 import type { TextFormatAction, TextFormatState } from './text-format';
 
-const BOOLEAN_MARK_TO_COMMAND: Record<TextBooleanMark, 'bold' | 'underline' | 'strike'> = {
+const BOOLEAN_MARK_TO_COMMAND: Record<TextBooleanMark, string> = {
   bold: 'bold',
+  italic: 'italic',
   underline: 'underline',
   strikethrough: 'strike',
+  highlight: 'highlight',
 };
 
 export function applyFormatToEditor(editor: Editor, action: TextFormatAction): void {
@@ -37,8 +39,10 @@ export function getEditorFormatState(editor: Editor): TextFormatState {
 
   return {
     bold: editor.isActive('bold') ? 'on' : 'off',
+    italic: editor.isActive('italic') ? 'on' : 'off',
     underline: editor.isActive('underline') ? 'on' : 'off',
     strikethrough: editor.isActive('strike') ? 'on' : 'off',
+    highlight: editor.isActive('highlight') ? 'on' : 'off',
     ...readFontFamily(styleAttrs.fontFamily),
     ...readFontSize(styleAttrs.fontSize),
     ...(typeof styleAttrs.color === 'string' ? { color: styleAttrs.color } : {}),

@@ -57,23 +57,29 @@ export function TextRenderer({ element }: ElementRendererProps): ReactElement | 
 
   return (
     <Content data-element-content="true" data-element-type="text">
-      {element.content.blocks.map((block, blockIndex) => (
-        <Paragraph key={blockIndex} style={{ textAlign: block.align }}>
-          {block.spans.map((span, spanIndex) => {
-            const style = spanStyle(span.marks);
+      {element.content.blocks.map((block, blockIndex) => {
+        if (block.type !== 'paragraph') {
+          return null;
+        }
 
-            return (
-              <Fragment key={spanIndex}>
-                {Object.keys(style).length === 0 ? (
-                  span.text
-                ) : (
-                  <span style={style}>{span.text}</span>
-                )}
-              </Fragment>
-            );
-          })}
-        </Paragraph>
-      ))}
+        return (
+          <Paragraph key={blockIndex} style={{ textAlign: block.align }}>
+            {block.spans.map((span, spanIndex) => {
+              const style = spanStyle(span.marks);
+
+              return (
+                <Fragment key={spanIndex}>
+                  {Object.keys(style).length === 0 ? (
+                    span.text
+                  ) : (
+                    <span style={style}>{span.text}</span>
+                  )}
+                </Fragment>
+              );
+            })}
+          </Paragraph>
+        );
+      })}
     </Content>
   );
 }

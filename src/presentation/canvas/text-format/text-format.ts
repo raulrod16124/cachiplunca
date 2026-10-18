@@ -28,8 +28,10 @@ export type TextFormatAction =
 
 export interface TextFormatState {
   readonly bold: TextBooleanMarkState;
+  readonly italic: TextBooleanMarkState;
   readonly underline: TextBooleanMarkState;
   readonly strikethrough: TextBooleanMarkState;
+  readonly highlight: TextBooleanMarkState;
   readonly fontFamily?: TextFontFamily;
   readonly fontSize?: TextFontSize;
   readonly color?: string;
@@ -39,8 +41,10 @@ export interface TextFormatState {
 export function getTextFormatState(doc: RichTextDocument): TextFormatState {
   return {
     bold: getDocumentBooleanMarkState(doc, 'bold'),
+    italic: getDocumentBooleanMarkState(doc, 'italic'),
     underline: getDocumentBooleanMarkState(doc, 'underline'),
     strikethrough: getDocumentBooleanMarkState(doc, 'strikethrough'),
+    highlight: getDocumentBooleanMarkState(doc, 'highlight'),
     ...(getDocumentFontFamily(doc) === undefined
       ? {}
       : { fontFamily: getDocumentFontFamily(doc) }),

@@ -1,4 +1,10 @@
-import { createLinkElement, withLinkTitle, withLinkUrl } from '../../../../domain/element';
+import {
+  createLinkElement,
+  richTextFromPlain,
+  richTextToPlain,
+  withLinkTitle,
+  withLinkUrl,
+} from '../../../../domain/element';
 import type { CreateLinkElementProps, LinkElement } from '../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
 
@@ -30,7 +36,7 @@ describe('LinkElement', () => {
   it('creates a link element with an explicit title', () => {
     const element = createLinkElement(createProps({ title: 'Docs' }));
 
-    expect(element.title).toBe('Docs');
+    expect(richTextToPlain(element.title)).toBe('Docs');
   });
 
   it('keeps provided position, size, identity and timestamps', () => {
@@ -72,7 +78,7 @@ describe('LinkElement', () => {
 
   it('rejects a non-string title coming from untrusted data', () => {
     const untrusted = Object.assign(createProps(), { title: 123 });
-    expect(() => createLinkElement(untrusted)).toThrow(/title/);
+    expect(() => createLinkElement(untrusted)).toThrow(/rich text/);
   });
 
   it('rejects non-finite rotation', () => {
@@ -98,7 +104,7 @@ describe('LinkElement', () => {
 
     expect(updated).not.toBe(original);
     expect(updated.url).toBe('https://next.example.com');
-    expect(updated.title).toBe('Docs');
+    expect(updated.title === undefined ? '' : richTextToPlain(updated.title)).toBe('Docs');
     expect(updated.updatedAt).toBe(updatedAt);
     expect(original.url).toBe('https://example.com');
   });
@@ -116,10 +122,10 @@ describe('LinkElement', () => {
     const updated = withLinkTitle(original, 'Handbook', updatedAt);
 
     expect(updated).not.toBe(original);
-    expect(updated.title).toBe('Handbook');
+    expect(richTextToPlain(updated.title)).toBe('Handbook');
     expect(updated.url).toBe('https://example.com');
     expect(updated.updatedAt).toBe(updatedAt);
-    expect(original.title).toBe('Docs');
+    expect(richTextToPlain(original.title)).toBe('Docs');
   });
 
   it('clears the title when updated with undefined', () => {
@@ -134,7 +140,7 @@ describe('LinkElement', () => {
   it('rejects an invalid title on update', () => {
     const original = createSample();
 
-    expect(() => withLinkTitle(original, '   ')).toThrow(/title/);
+    expect(() => withLinkTitle(original, '   ')).toThrow(/LinkElement title/);
   });
 
   it('preserves unrelated fields across updates', () => {

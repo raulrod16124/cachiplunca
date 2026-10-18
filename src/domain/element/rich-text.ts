@@ -17,7 +17,13 @@ export const TEXT_ALIGNS = ['left', 'center', 'right', 'justify'] as const;
 
 export type TextAlign = (typeof TEXT_ALIGNS)[number];
 
-export const TEXT_BOOLEAN_MARKS = ['bold', 'underline', 'strikethrough'] as const;
+export const TEXT_BOOLEAN_MARKS = [
+  'bold',
+  'italic',
+  'underline',
+  'strikethrough',
+  'highlight',
+] as const;
 
 export type TextBooleanMark = (typeof TEXT_BOOLEAN_MARKS)[number];
 
@@ -27,12 +33,15 @@ export const RICH_TEXT_LIMITS = {
   maxBlocks: 200,
   maxSpansPerBlock: 2000,
   maxTextLength: 100_000,
+  maxListDepth: 10,
 } as const;
 
 export interface RichTextMarks {
   readonly bold?: boolean;
+  readonly italic?: boolean;
   readonly underline?: boolean;
   readonly strikethrough?: boolean;
+  readonly highlight?: boolean;
   readonly color?: string;
   readonly fontFamily?: TextFontFamily;
   readonly fontSize?: TextFontSize;
@@ -43,11 +52,45 @@ export interface RichTextSpan {
   readonly marks?: RichTextMarks;
 }
 
-export interface RichTextBlock {
+export interface RichTextParagraphBlock {
   readonly type: 'paragraph';
   readonly align: TextAlign;
   readonly spans: readonly RichTextSpan[];
 }
+
+export interface RichTextHeadingBlock {
+  readonly type: 'heading';
+  readonly level: 1 | 2 | 3;
+  readonly align: TextAlign;
+  readonly spans: readonly RichTextSpan[];
+}
+
+export interface RichTextBulletListBlock {
+  readonly type: 'bulletList';
+  readonly items: readonly RichTextListItem[];
+}
+
+export interface RichTextOrderedListBlock {
+  readonly type: 'orderedList';
+  readonly items: readonly RichTextListItem[];
+}
+
+export type RichTextListBlock = RichTextBulletListBlock | RichTextOrderedListBlock;
+
+export interface RichTextListItem {
+  readonly type: 'listItem';
+  readonly content: readonly RichTextListItemContentBlock[];
+}
+
+export type RichTextListItemContentBlock =
+  | RichTextParagraphBlock
+  | RichTextHeadingBlock
+  | RichTextListBlock;
+
+export type RichTextBlock =
+  | RichTextParagraphBlock
+  | RichTextHeadingBlock
+  | RichTextListBlock;
 
 export interface RichTextDocument {
   readonly blocks: readonly RichTextBlock[];
@@ -72,7 +115,22 @@ export function richTextFromPlain(plain: string): RichTextDocument {
 }
 
 export function richTextToPlain(doc: RichTextDocument): string {
-  return doc.blocks.map((block) => block.spans.map((span) => span.text).join('')).join('\n');
+  return doc.blocks.map((block) => blockToPlain(block)).join('\n');
+}
+
+function blockToPlain(block: RichTextBlock): string {
+  switch (block.type) {
+    case 'paragraph':
+    case 'heading':
+      return block.spans.map((span) => span.text).join('');
+    case 'bulletList':
+    case 'orderedList':
+      return block.items.map((item) => listItemToPlain(item)).join('\n');
+  }
+}
+
+function listItemToPlain(item: RichTextListItem): string {
+  return item.content.map((block) => blockToPlain(block)).join('\n');
 }
 
 export function isEmptyRichText(doc: RichTextDocument): boolean {
@@ -86,7 +144,7 @@ export function parseRichTextDocument(value: unknown): RichTextDocument {
 
 export function validateRichTextDocument(doc: unknown): asserts doc is RichTextDocument {
   if (!isRecord(doc)) {
-    throw new Error('TextElement content must be a rich text document');
+    throw new Error('Rich text content must be a rich text document');
   }
 
   const { blocks } = doc;
@@ -104,43 +162,153 @@ export function validateRichTextDocument(doc: unknown): asserts doc is RichTextD
   let totalLength = 0;
 
   for (const block of blocks) {
-    if (!isRecord(block) || block.type !== 'paragraph') {
-      throw new Error('Rich text content blocks must be paragraphs');
-    }
-
-    if (!isTextAlign(block.align)) {
-      throw new Error('Rich text content block "align" must be left, center, right or justify');
-    }
-
-    const { spans } = block;
-
-    if (!Array.isArray(spans)) {
-      throw new Error('Rich text content block "spans" must be an array');
-    }
-
-    if (spans.length > RICH_TEXT_LIMITS.maxSpansPerBlock) {
-      throw new Error(
-        `Rich text content blocks cannot exceed ${RICH_TEXT_LIMITS.maxSpansPerBlock} spans`,
-      );
-    }
-
-    for (const span of spans) {
-      if (!isRecord(span) || typeof span.text !== 'string') {
-        throw new Error('Rich text content spans must have a string "text"');
-      }
-
-      totalLength += span.text.length;
-
-      if (span.marks !== undefined) {
-        validateMarks(span.marks);
-      }
-    }
+    totalLength += validateBlock(block, 0, totalLength);
   }
 
   if (totalLength > RICH_TEXT_LIMITS.maxTextLength) {
     throw new Error(
       `Rich text content cannot exceed ${RICH_TEXT_LIMITS.maxTextLength} characters (${totalLength} given)`,
     );
+  }
+}
+
+function validateBlock(block: unknown, depth: number, runningLength: number): number {
+  if (!isRecord(block)) {
+    throw new Error('Rich text content blocks must be objects');
+  }
+
+  if (depth > RICH_TEXT_LIMITS.maxListDepth) {
+    throw new Error(
+      `Rich text content list nesting cannot exceed ${RICH_TEXT_LIMITS.maxListDepth} levels`,
+    );
+  }
+
+  switch (block.type) {
+    case 'paragraph':
+      return validateInlineBlock(block, runningLength);
+    case 'heading':
+      return validateHeadingBlock(block, runningLength);
+    case 'bulletList':
+    case 'orderedList':
+      return validateListBlock(block, depth, runningLength);
+    default:
+      throw new Error(
+        'Rich text content blocks must be paragraph, heading, bulletList or orderedList',
+      );
+  }
+}
+
+function validateInlineBlock(block: Record<string, unknown>, runningLength: number): number {
+  if (!isTextAlign(block.align)) {
+    throw new Error('Rich text content block "align" must be left, center, right or justify');
+  }
+
+  return validateSpans(block.spans, runningLength);
+}
+
+function validateHeadingBlock(block: Record<string, unknown>, runningLength: number): number {
+  if (!isHeadingLevel(block.level)) {
+    throw new Error('Rich text content heading "level" must be 1, 2 or 3');
+  }
+
+  return validateInlineBlock(block, runningLength);
+}
+
+function validateListBlock(
+  block: Record<string, unknown>,
+  depth: number,
+  runningLength: number,
+): number {
+  const { items } = block;
+
+  if (!Array.isArray(items) || items.length === 0) {
+    throw new Error('Rich text content list "items" must be a non-empty array');
+  }
+
+  let totalLength = 0;
+
+  for (const item of items) {
+    totalLength += validateListItem(item, depth + 1, runningLength + totalLength);
+  }
+
+  return totalLength;
+}
+
+function validateListItem(item: unknown, depth: number, runningLength: number): number {
+  if (!isRecord(item) || item.type !== 'listItem') {
+    throw new Error('Rich text content list items must be of type "listItem"');
+  }
+
+  const { content } = item;
+
+  if (!Array.isArray(content) || content.length === 0) {
+    throw new Error('Rich text content list item "content" must be a non-empty array');
+  }
+
+  let totalLength = 0;
+
+  for (const child of content) {
+    totalLength += validateBlock(child, depth, runningLength + totalLength);
+  }
+
+  return totalLength;
+}
+
+function validateSpans(spans: unknown, runningLength: number): number {
+  if (!Array.isArray(spans)) {
+    throw new Error('Rich text content block "spans" must be an array');
+  }
+
+  if (spans.length > RICH_TEXT_LIMITS.maxSpansPerBlock) {
+    throw new Error(
+      `Rich text content blocks cannot exceed ${RICH_TEXT_LIMITS.maxSpansPerBlock} spans`,
+    );
+  }
+
+  let totalLength = 0;
+
+  for (const span of spans) {
+    if (!isRecord(span) || typeof span.text !== 'string') {
+      throw new Error('Rich text content spans must have a string "text"');
+    }
+
+    totalLength += span.text.length;
+
+    const combinedLength = runningLength + totalLength;
+
+    if (combinedLength > RICH_TEXT_LIMITS.maxTextLength) {
+      throw new Error(
+        `Rich text content cannot exceed ${RICH_TEXT_LIMITS.maxTextLength} characters`,
+      );
+    }
+
+    if (span.marks !== undefined) {
+      validateMarks(span.marks);
+    }
+  }
+
+  return totalLength;
+}
+
+export function isSingleInlineBlockDocument(doc: RichTextDocument): boolean {
+  if (doc.blocks.length !== 1) {
+    return false;
+  }
+
+  const block = doc.blocks[0];
+
+  return block.type === 'paragraph' || block.type === 'heading';
+}
+
+export function validateTitleDocument(doc: RichTextDocument): void {
+  if (doc.blocks.length !== 1) {
+    throw new Error('Title must contain exactly one block');
+  }
+
+  const block = doc.blocks[0];
+
+  if (block.type !== 'paragraph' && block.type !== 'heading') {
+    throw new Error('Title must be a paragraph or heading');
   }
 }
 
@@ -205,8 +373,23 @@ export function setDocumentAlign(doc: RichTextDocument, align: TextAlign): RichT
   }
 
   return {
-    blocks: doc.blocks.map((block) => (block.align === align ? block : { ...block, align })),
+    blocks: doc.blocks.map((block) => setBlockAlign(block, align)),
   };
+}
+
+function setBlockAlign(block: RichTextBlock, align: TextAlign): RichTextBlock {
+  switch (block.type) {
+    case 'paragraph':
+    case 'heading':
+      return block.align === align ? block : { ...block, align };
+    case 'bulletList':
+    case 'orderedList':
+      return { ...block, items: block.items.map((item) => setListItemAlign(item, align)) };
+  }
+}
+
+function setListItemAlign(item: RichTextListItem, align: TextAlign): RichTextListItem {
+  return { ...item, content: item.content.map((block) => setBlockAlign(block, align)) };
 }
 
 export type TextBooleanMarkState = 'on' | 'off' | 'mixed';
@@ -218,15 +401,13 @@ export function getDocumentBooleanMarkState(
   let sawTrue = false;
   let sawFalse = false;
 
-  for (const block of doc.blocks) {
-    for (const span of block.spans) {
-      if (span.marks?.[mark] === true) {
-        sawTrue = true;
-      } else {
-        sawFalse = true;
-      }
+  forEachSpan(doc, (span) => {
+    if (span.marks?.[mark] === true) {
+      sawTrue = true;
+    } else {
+      sawFalse = true;
     }
-  }
+  });
 
   if (sawTrue && sawFalse) {
     return 'mixed';
@@ -247,8 +428,18 @@ export function getDocumentFontSize(doc: RichTextDocument): TextFontSize | undef
 }
 
 export function getDocumentAlign(doc: RichTextDocument): TextAlign | undefined {
-  const first = doc.blocks[0]?.align;
-  return doc.blocks.every((block) => block.align === first) ? first : undefined;
+  const alignments: TextAlign[] = [];
+
+  forEachInlineBlock(doc, (block) => {
+    alignments.push(block.align);
+  });
+
+  if (alignments.length === 0) {
+    return undefined;
+  }
+
+  const first = alignments[0];
+  return alignments.every((align) => align === first) ? first : undefined;
 }
 
 function validateMarks(marks: unknown): void {
@@ -256,7 +447,7 @@ function validateMarks(marks: unknown): void {
     throw new Error('Rich text content span "marks" must be an object');
   }
 
-  for (const key of ['bold', 'underline', 'strikethrough'] as const) {
+  for (const key of TEXT_BOOLEAN_MARKS) {
     if (marks[key] !== undefined && typeof marks[key] !== 'boolean') {
       throw new Error(`Rich text content mark "${key}" must be a boolean`);
     }
@@ -277,6 +468,10 @@ function validateMarks(marks: unknown): void {
   }
 }
 
+function isHeadingLevel(value: unknown): value is 1 | 2 | 3 {
+  return value === 1 || value === 2 || value === 3;
+}
+
 function isTextAlign(value: unknown): value is TextAlign {
   return typeof value === 'string' && (TEXT_ALIGNS as readonly string[]).includes(value);
 }
@@ -294,16 +489,20 @@ function applyBooleanMark(
 
   const withFlag: Record<TextBooleanMark, boolean | undefined> = {
     bold: next.bold,
+    italic: next.italic,
     underline: next.underline,
     strikethrough: next.strikethrough,
+    highlight: next.highlight,
   };
   withFlag[mark] = enabled;
 
   return normalizeMarks({
     ...next,
     bold: withFlag.bold,
+    italic: withFlag.italic,
     underline: withFlag.underline,
     strikethrough: withFlag.strikethrough,
+    highlight: withFlag.highlight,
   });
 }
 
@@ -326,8 +525,10 @@ function normalizeMarks(marks: RichTextMarks): RichTextMarks | undefined {
   } = {};
 
   if (marks.bold === true) normalized.bold = true;
+  if (marks.italic === true) normalized.italic = true;
   if (marks.underline === true) normalized.underline = true;
   if (marks.strikethrough === true) normalized.strikethrough = true;
+  if (marks.highlight === true) normalized.highlight = true;
   if (marks.color !== undefined) normalized.color = marks.color;
   if (marks.fontFamily !== undefined) normalized.fontFamily = marks.fontFamily;
   if (marks.fontSize !== undefined) normalized.fontSize = marks.fontSize;
@@ -340,10 +541,28 @@ function mapSpans(
   map: (span: RichTextSpan) => RichTextSpan,
 ): RichTextDocument {
   return {
-    blocks: doc.blocks.map((block) => ({
-      ...block,
-      spans: mergeSpans(block.spans.map(map)),
-    })),
+    blocks: doc.blocks.map((block) => mapBlockSpans(block, map)),
+  };
+}
+
+function mapBlockSpans(block: RichTextBlock, map: (span: RichTextSpan) => RichTextSpan): RichTextBlock {
+  switch (block.type) {
+    case 'paragraph':
+    case 'heading':
+      return { ...block, spans: mergeSpans(block.spans.map(map)) };
+    case 'bulletList':
+    case 'orderedList':
+      return { ...block, items: block.items.map((item) => mapListItemSpans(item, map)) };
+  }
+}
+
+function mapListItemSpans(
+  item: RichTextListItem,
+  map: (span: RichTextSpan) => RichTextSpan,
+): RichTextListItem {
+  return {
+    ...item,
+    content: item.content.map((block) => mapBlockSpans(block, map)),
   };
 }
 
@@ -372,6 +591,71 @@ function sameMarks(a: RichTextMarks | undefined, b: RichTextMarks | undefined): 
   return JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 }
 
+function forEachSpan(doc: RichTextDocument, visit: (span: RichTextSpan) => void): void {
+  for (const block of doc.blocks) {
+    forEachSpanInBlock(block, visit);
+  }
+}
+
+function forEachSpanInBlock(block: RichTextBlock, visit: (span: RichTextSpan) => void): void {
+  switch (block.type) {
+    case 'paragraph':
+    case 'heading':
+      for (const span of block.spans) {
+        visit(span);
+      }
+      break;
+    case 'bulletList':
+    case 'orderedList':
+      for (const item of block.items) {
+        forEachSpanInListItem(item, visit);
+      }
+      break;
+  }
+}
+
+function forEachSpanInListItem(item: RichTextListItem, visit: (span: RichTextSpan) => void): void {
+  for (const block of item.content) {
+    forEachSpanInBlock(block, visit);
+  }
+}
+
+function forEachInlineBlock(
+  doc: RichTextDocument,
+  visit: (block: RichTextParagraphBlock | RichTextHeadingBlock) => void,
+): void {
+  for (const block of doc.blocks) {
+    forEachInlineBlockInBlock(block, visit);
+  }
+}
+
+function forEachInlineBlockInBlock(
+  block: RichTextBlock,
+  visit: (block: RichTextParagraphBlock | RichTextHeadingBlock) => void,
+): void {
+  switch (block.type) {
+    case 'paragraph':
+    case 'heading':
+      visit(block);
+      break;
+    case 'bulletList':
+    case 'orderedList':
+      for (const item of block.items) {
+        forEachInlineBlockInListItem(item, visit);
+      }
+      break;
+  }
+}
+
+function forEachInlineBlockInListItem(
+  item: RichTextListItem,
+  visit: (block: RichTextParagraphBlock | RichTextHeadingBlock) => void,
+): void {
+  for (const block of item.content) {
+    forEachInlineBlockInBlock(block, visit);
+  }
+}
+
 function uniformSpanValue<T>(
   doc: RichTextDocument,
   read: (marks: RichTextMarks | undefined) => T | undefined,
@@ -379,35 +663,47 @@ function uniformSpanValue<T>(
   let found: T | undefined;
   let seen = false;
 
-  for (const block of doc.blocks) {
-    for (const span of block.spans) {
-      if (span.text.length === 0) {
-        continue;
-      }
-
-      const value = read(span.marks);
-
-      if (!seen) {
-        found = value;
-        seen = true;
-        continue;
-      }
-
-      if (found !== value) {
-        return undefined;
-      }
+  forEachSpan(doc, (span) => {
+    if (span.text.length === 0) {
+      return;
     }
-  }
+
+    const value = read(span.marks);
+
+    if (!seen) {
+      found = value;
+      seen = true;
+      return;
+    }
+
+    if (found !== value) {
+      found = undefined;
+    }
+  });
 
   return seen ? found : undefined;
 }
 
 function normalizeRichTextDocument(doc: RichTextDocument): RichTextDocument {
   return {
-    blocks: doc.blocks.map((block) => ({
-      type: 'paragraph' as const,
-      align: block.align,
-      spans: mergeSpans(block.spans),
-    })),
+    blocks: doc.blocks.map((block) => normalizeBlock(block)),
+  };
+}
+
+function normalizeBlock(block: RichTextBlock): RichTextBlock {
+  switch (block.type) {
+    case 'paragraph':
+    case 'heading':
+      return { ...block, spans: mergeSpans(block.spans) };
+    case 'bulletList':
+    case 'orderedList':
+      return { ...block, items: block.items.map((item) => normalizeListItem(item)) };
+  }
+}
+
+function normalizeListItem(item: RichTextListItem): RichTextListItem {
+  return {
+    ...item,
+    content: item.content.map((block) => normalizeBlock(block)),
   };
 }

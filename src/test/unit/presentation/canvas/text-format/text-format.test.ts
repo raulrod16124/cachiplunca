@@ -3,9 +3,9 @@ import {
   getTextFormatState,
 } from '../../../../../presentation/canvas/text-format/text-format';
 import { richTextFromPlain } from '../../../../../domain/element/rich-text';
-import type { RichTextDocument } from '../../../../../domain/element/rich-text';
+import type { RichTextDocument, RichTextSpan } from '../../../../../domain/element/rich-text';
 
-function doc(text: string, overrides?: Partial<RichTextDocument['blocks'][number]['spans'][number]>): RichTextDocument {
+function doc(text: string, overrides?: Partial<RichTextSpan>): RichTextDocument {
   return {
     blocks: [
       {
@@ -23,8 +23,10 @@ describe('text-format', () => {
 
     expect(state).toEqual({
       bold: 'off',
+      italic: 'off',
       underline: 'off',
       strikethrough: 'off',
+      highlight: 'off',
       align: 'left',
     });
   });

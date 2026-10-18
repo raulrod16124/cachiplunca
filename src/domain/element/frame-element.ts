@@ -3,6 +3,8 @@ import { Position } from '../shared/value-objects/position';
 import { Size } from '../shared/value-objects/size';
 import { UserId } from '../shared/value-objects/user-id';
 import { WorkspaceId } from '../shared/value-objects/workspace-id';
+import { parseRichTextDocument, richTextFromPlain } from './rich-text';
+import type { RichTextDocument } from './rich-text';
 import { validateFrameElement } from './element-types';
 import type { FrameElement } from './element-types';
 
@@ -12,7 +14,7 @@ export interface CreateFrameElementProps {
   readonly createdBy: UserId;
   readonly position: Position;
   readonly size: Size;
-  readonly title: string;
+  readonly title: RichTextDocument | string;
   readonly parentFrameId?: ElementId;
   readonly rotation?: number;
   readonly zIndex?: number;
@@ -21,7 +23,7 @@ export interface CreateFrameElementProps {
 }
 
 export function createFrameElement(props: CreateFrameElementProps): FrameElement {
-  assertTitle(props.title);
+  const title = toRichTextDocument(props.title);
   assertParentFrameId(props.parentFrameId);
 
   const now = new Date();
@@ -39,7 +41,7 @@ export function createFrameElement(props: CreateFrameElementProps): FrameElement
     createdBy: props.createdBy,
     createdAt,
     updatedAt,
-    title: props.title,
+    title,
     ...(props.parentFrameId === undefined ? {} : { parentFrameId: props.parentFrameId }),
   };
 
@@ -50,12 +52,10 @@ export function createFrameElement(props: CreateFrameElementProps): FrameElement
 
 export function withFrameTitle(
   element: FrameElement,
-  title: string,
+  title: RichTextDocument | string,
   updatedAt: Date = new Date(),
 ): FrameElement {
-  assertTitle(title);
-
-  return buildFrameElement(element, { title, updatedAt });
+  return buildFrameElement(element, { title: toRichTextDocument(title), updatedAt });
 }
 
 export function withFrameParent(
@@ -69,7 +69,7 @@ export function withFrameParent(
 }
 
 interface FrameElementOverrides {
-  readonly title?: string;
+  readonly title?: RichTextDocument;
   readonly parentFrameId?: ElementId;
   readonly updatedAt: Date;
 }
@@ -98,13 +98,19 @@ function buildFrameElement(element: FrameElement, overrides: FrameElementOverrid
   return next;
 }
 
-function assertTitle(title: string): void {
-  if (typeof title !== 'string') {
-    throw new Error('FrameElement title must be a string');
+function toRichTextDocument(title: RichTextDocument | string | undefined): RichTextDocument {
+  if (title === undefined) {
+    throw new Error('FrameElement title must be defined');
   }
-  if (title.trim().length === 0) {
-    throw new Error('FrameElement title cannot be empty');
+
+  if (typeof title === 'string') {
+    if (title.trim().length === 0) {
+      throw new Error('FrameElement title cannot be empty');
+    }
+    return richTextFromPlain(title);
   }
+
+  return parseRichTextDocument(title);
 }
 
 function assertParentFrameId(parentFrameId: ElementId | undefined): void {

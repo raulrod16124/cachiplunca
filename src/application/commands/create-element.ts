@@ -28,19 +28,19 @@ export type CreateElementInput =
     })
   | (CreateElementBaseInput & {
       readonly type: 'note';
-      readonly content: string;
+      readonly content: RichTextDocument | string;
       readonly color?: string;
     })
   | (CreateElementBaseInput & {
       readonly type: 'task';
-      readonly title: string;
+      readonly title: RichTextDocument | string;
       readonly status: TaskStatus;
       readonly assigneeId?: UserId;
       readonly dueDate?: Date;
     })
   | (CreateElementBaseInput & {
       readonly type: 'frame';
-      readonly title: string;
+      readonly title: RichTextDocument | string;
       readonly parentFrameId?: ElementId;
     })
   | (CreateElementBaseInput & {
@@ -51,7 +51,7 @@ export type CreateElementInput =
   | (CreateElementBaseInput & {
       readonly type: 'link';
       readonly url: string;
-      readonly title?: string;
+      readonly title?: RichTextDocument | string;
     });
 
 export interface CreateElementDeps {

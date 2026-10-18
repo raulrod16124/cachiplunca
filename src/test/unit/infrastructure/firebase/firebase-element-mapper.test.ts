@@ -79,7 +79,7 @@ describe('toElementDocument', () => {
     const document = toElementDocument(element);
 
     expect(document.type).toBe('note');
-    expect(asRecord(document).content).toBe('A note');
+    expect(asRecord(document).content).toEqual(richTextFromPlain('A note'));
     expect(asRecord(document).color).toBe('#ffcc00');
   });
 
@@ -104,7 +104,7 @@ describe('toElementDocument', () => {
     const document = toElementDocument(element);
 
     expect(document.type).toBe('task');
-    expect(asRecord(document).title).toBe('Do it');
+    expect(asRecord(document).title).toEqual(richTextFromPlain('Do it'));
     expect(asRecord(document).status).toBe('in_progress');
     expect(asRecord(document).assigneeId).toBe('user-2');
     expect(asRecord(document).dueDate).toEqual(new Date('2024-12-31T00:00:00.000Z'));
@@ -133,7 +133,7 @@ describe('toElementDocument', () => {
     const document = toElementDocument(element);
 
     expect(document.type).toBe('frame');
-    expect(asRecord(document).title).toBe('Section');
+    expect(asRecord(document).title).toEqual(richTextFromPlain('Section'));
     expect(asRecord(document).parentFrameId).toBe('el-parent');
   });
 
@@ -170,7 +170,7 @@ describe('toElementDocument', () => {
 
     expect(document.type).toBe('link');
     expect(asRecord(document).url).toBe('https://example.com');
-    expect(asRecord(document).title).toBe('Example');
+    expect(asRecord(document).title).toEqual(richTextFromPlain('Example'));
   });
 
   it('omits title from a LinkElement document when absent', () => {
@@ -282,7 +282,7 @@ describe('fromElementDocument', () => {
     };
 
     expect(() => fromElementDocument('el-text', document)).toThrow(
-      'TextElement content must be a rich text document',
+      'Rich text content must be a rich text document',
     );
   });
 

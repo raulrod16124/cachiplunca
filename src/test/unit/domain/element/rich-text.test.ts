@@ -251,7 +251,8 @@ describe('document formatting operations', () => {
     const input = richTextFromPlain('center me');
 
     const aligned = setDocumentAlign(input, 'center');
-    expect(aligned.blocks[0]?.align).toBe('center');
+    const firstBlock = aligned.blocks[0];
+    expect(firstBlock?.type === 'paragraph' ? firstBlock.align : null).toBe('center');
     expect(getDocumentAlign(aligned)).toBe('center');
   });
 

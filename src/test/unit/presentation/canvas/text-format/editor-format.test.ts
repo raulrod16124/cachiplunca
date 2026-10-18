@@ -113,8 +113,10 @@ describe('editor-format', () => {
 
     expect(getEditorFormatState(editor)).toEqual({
       bold: 'off',
+      italic: 'off',
       underline: 'off',
       strikethrough: 'off',
+      highlight: 'off',
       align: 'left',
     });
 

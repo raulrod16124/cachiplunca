@@ -58,14 +58,14 @@ const createTextElement = (overrides: Partial<TextElement> = {}): TextElement =>
 const createNoteElement = (overrides: Partial<NoteElement> = {}): NoteElement => ({
   ...createBaseElement(),
   type: 'note',
-  content: 'note content',
+  content: richTextFromPlain('note content'),
   ...overrides,
 });
 
 const createTaskElement = (overrides: Partial<TaskElement> = {}): TaskElement => ({
   ...createBaseElement(),
   type: 'task',
-  title: 'task title',
+  title: richTextFromPlain('task title'),
   status: 'todo',
   ...overrides,
 });
@@ -73,7 +73,7 @@ const createTaskElement = (overrides: Partial<TaskElement> = {}): TaskElement =>
 const createFrameElement = (overrides: Partial<FrameElement> = {}): FrameElement => ({
   ...createBaseElement(),
   type: 'frame',
-  title: 'frame title',
+  title: richTextFromPlain('frame title'),
   ...overrides,
 });
 
@@ -136,13 +136,13 @@ describe('Element types', () => {
         case 'text':
           return richTextToPlain(element.content);
         case 'task':
-          return `${element.title}:${element.status}`;
+          return `${richTextToPlain(element.title)}:${element.status}`;
         case 'link':
           return element.url;
         case 'frame':
-          return element.title;
+          return richTextToPlain(element.title);
         case 'note':
-          return element.content;
+          return richTextToPlain(element.content);
         case 'connector':
           return `${element.sourceElementId.value}->${element.targetElementId.value}`;
       }
@@ -224,7 +224,7 @@ describe('Element types', () => {
 
   it('validates task element', () => {
     expect(() => validateTaskElement(createTaskElement())).not.toThrow();
-    expect(() => validateTaskElement(createTaskElement({ title: '   ' }))).toThrow(/title/);
+    expect(() => validateTaskElement(createTaskElement({ title: richTextFromPlain('   ') }))).toThrow(/title/);
     expect(() => validateTaskElement(createTaskElement({ dueDate: new Date('invalid') }))).toThrow(
       /dueDate/,
     );
@@ -236,7 +236,7 @@ describe('Element types', () => {
 
   it('validates frame element', () => {
     expect(() => validateFrameElement(createFrameElement())).not.toThrow();
-    expect(() => validateFrameElement(createFrameElement({ title: '' }))).toThrow(/title/);
+    expect(() => validateFrameElement(createFrameElement({ title: richTextFromPlain('') }))).toThrow(/title/);
     expect(() =>
       validateFrameElement(
         createFrameElement({
@@ -262,7 +262,7 @@ describe('Element types', () => {
   it('validates link element', () => {
     expect(() => validateLinkElement(createLinkElement())).not.toThrow();
     expect(() => validateLinkElement(createLinkElement({ url: '' }))).toThrow(/url/);
-    expect(() => validateLinkElement(createLinkElement({ title: '   ' }))).toThrow(/title/);
+    expect(() => validateLinkElement(createLinkElement({ title: richTextFromPlain('   ') }))).toThrow(/title/);
   });
 
   it('rejects untrusted element data with an unknown type', () => {
@@ -553,7 +553,7 @@ describe('duplicateElement', () => {
   });
 
   it('rejects a source element that violates its invariants', () => {
-    const invalid = Object.assign(createTaskElement(), { title: '   ' });
+    const invalid = Object.assign(createTaskElement(), { title: richTextFromPlain('   ') });
 
     expect(() => duplicateElement(invalid, { id: ElementId.create('copy'), createdAt })).toThrow(
       /title/,

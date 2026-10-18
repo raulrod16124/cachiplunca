@@ -86,7 +86,7 @@ describe('createUpdateElement', () => {
 
     expect(element.type).toBe('note');
     if (element.type === 'note') {
-      expect(element.content).toBe('revised');
+      expect(richTextToPlain(element.content)).toBe('revised');
       expect(element.color).toBe('#ff0');
     }
   });
@@ -105,7 +105,7 @@ describe('createUpdateElement', () => {
 
     expect(element.type).toBe('task');
     if (element.type === 'task') {
-      expect(element.title).toBe('Ship it now');
+      expect(richTextToPlain(element.title)).toBe('Ship it now');
       expect(element.status).toBe('in_progress');
       expect(element.assigneeId?.value).toBe('user-2');
       expect(element.dueDate).toBe(dueDate);
@@ -137,7 +137,7 @@ describe('createUpdateElement', () => {
 
     expect(titled.type).toBe('frame');
     if (titled.type === 'frame') {
-      expect(titled.title).toBe('Phase 2');
+      expect(richTextToPlain(titled.title)).toBe('Phase 2');
       expect(titled.parentFrameId?.value).toBe('parent-1');
     }
 
@@ -163,7 +163,7 @@ describe('createUpdateElement', () => {
 
   it('updates link url and clears its title with null', () => {
     const element = expectOk({
-      element: linkElement({ title: 'Docs' }),
+      element: linkElement({ title: richTextFromPlain('Docs') }),
       type: 'link',
       url: 'https://example.org',
       title: null,

@@ -3,6 +3,8 @@ import { Position } from '../shared/value-objects/position';
 import { Size } from '../shared/value-objects/size';
 import { UserId } from '../shared/value-objects/user-id';
 import { WorkspaceId } from '../shared/value-objects/workspace-id';
+import { parseRichTextDocument, richTextFromPlain } from './rich-text';
+import type { RichTextDocument } from './rich-text';
 import { validateLinkElement } from './element-types';
 import type { LinkElement } from './element-types';
 
@@ -13,7 +15,7 @@ export interface CreateLinkElementProps {
   readonly position: Position;
   readonly size: Size;
   readonly url: string;
-  readonly title?: string;
+  readonly title?: RichTextDocument | string;
   readonly rotation?: number;
   readonly zIndex?: number;
   readonly createdAt?: Date;
@@ -22,7 +24,7 @@ export interface CreateLinkElementProps {
 
 export function createLinkElement(props: CreateLinkElementProps): LinkElement {
   assertUrl(props.url);
-  assertTitle(props.title);
+  const title = props.title === undefined ? undefined : toRichTextDocument(props.title);
 
   const now = new Date();
   const createdAt = props.createdAt ?? now;
@@ -40,7 +42,7 @@ export function createLinkElement(props: CreateLinkElementProps): LinkElement {
     createdAt,
     updatedAt,
     url: props.url,
-    ...(props.title === undefined ? {} : { title: props.title }),
+    ...(title === undefined ? {} : { title }),
   };
 
   validateLinkElement(element);
@@ -60,17 +62,17 @@ export function withLinkUrl(
 
 export function withLinkTitle(
   element: LinkElement,
-  title: string | undefined,
+  title: RichTextDocument | string | undefined,
   updatedAt: Date = new Date(),
 ): LinkElement {
-  assertTitle(title);
+  const nextTitle = title === undefined ? undefined : toRichTextDocument(title);
 
-  return buildLinkElement(element, { title, updatedAt });
+  return buildLinkElement(element, { title: nextTitle, updatedAt });
 }
 
 interface LinkElementOverrides {
   readonly url?: string;
-  readonly title?: string;
+  readonly title?: RichTextDocument;
   readonly updatedAt: Date;
 }
 
@@ -97,20 +99,26 @@ function buildLinkElement(element: LinkElement, overrides: LinkElementOverrides)
   return next;
 }
 
+function toRichTextDocument(title: RichTextDocument | string | undefined): RichTextDocument {
+  if (title === undefined) {
+    throw new Error('LinkElement title must be defined');
+  }
+
+  if (typeof title === 'string') {
+    if (title.trim().length === 0) {
+      throw new Error('LinkElement title cannot be empty');
+    }
+    return richTextFromPlain(title);
+  }
+
+  return parseRichTextDocument(title);
+}
+
 function assertUrl(url: string): void {
   if (typeof url !== 'string') {
     throw new Error('LinkElement url must be a string');
   }
   if (url.trim().length === 0) {
     throw new Error('LinkElement url cannot be empty');
-  }
-}
-
-function assertTitle(title: string | undefined): void {
-  if (title !== undefined && typeof title !== 'string') {
-    throw new Error('LinkElement title must be a string');
-  }
-  if (title !== undefined && title.trim().length === 0) {
-    throw new Error('LinkElement title cannot be empty');
   }
 }

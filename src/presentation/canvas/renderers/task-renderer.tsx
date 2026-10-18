@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react';
 import styled from 'styled-components';
-import { isTaskElement } from '../../../domain/element';
+import { isTaskElement, richTextToPlain } from '../../../domain/element';
 import type { TaskStatus } from '../../../domain/element';
 import type { ElementRendererProps } from './element-renderer';
 
@@ -64,7 +64,7 @@ export function TaskRenderer({ element }: ElementRendererProps): ReactElement | 
 
   return (
     <Content data-element-content="true" data-element-type="task" data-task-status={element.status}>
-      <Title>{element.title}</Title>
+      <Title>{richTextToPlain(element.title)}</Title>
       <StatusBadge>{STATUS_LABELS[element.status]}</StatusBadge>
       {element.assigneeId === undefined ? null : (
         <Meta data-task-assignee="true">{element.assigneeId.value}</Meta>

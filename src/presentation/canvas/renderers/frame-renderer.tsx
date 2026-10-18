@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react';
 import styled from 'styled-components';
-import { isFrameElement } from '../../../domain/element';
+import { isFrameElement, richTextToPlain } from '../../../domain/element';
 import type { ElementRendererProps } from './element-renderer';
 
 const Content = styled.div`
@@ -34,7 +34,7 @@ export function FrameRenderer({ element }: ElementRendererProps): ReactElement |
 
   return (
     <Content data-element-content="true" data-element-type="frame">
-      <Header data-frame-title="true">{element.title}</Header>
+      <Header data-frame-title="true">{richTextToPlain(element.title)}</Header>
     </Content>
   );
 }
