@@ -1,8 +1,14 @@
 import { EditorContent, useEditor } from '@tiptap/react';
 import type { Editor } from '@tiptap/core';
 import Bold from '@tiptap/extension-bold';
+import BulletList from '@tiptap/extension-bullet-list';
 import Document from '@tiptap/extension-document';
+import Heading from '@tiptap/extension-heading';
+import Highlight from '@tiptap/extension-highlight';
 import History from '@tiptap/extension-history';
+import Italic from '@tiptap/extension-italic';
+import ListItem from '@tiptap/extension-list-item';
+import OrderedList from '@tiptap/extension-ordered-list';
 import Paragraph from '@tiptap/extension-paragraph';
 import Strike from '@tiptap/extension-strike';
 import Text from '@tiptap/extension-text';
@@ -47,6 +53,32 @@ const EditorShell = styled.div`
   .ProseMirror p {
     margin: 0;
   }
+
+  .ProseMirror h1,
+  .ProseMirror h2,
+  .ProseMirror h3 {
+    margin: 0;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .ProseMirror h1 {
+    font-size: 1.5em;
+  }
+
+  .ProseMirror h2 {
+    font-size: 1.25em;
+  }
+
+  .ProseMirror h3 {
+    font-size: 1.1em;
+  }
+
+  .ProseMirror ul,
+  .ProseMirror ol {
+    margin: 0;
+    padding-left: 1.25em;
+  }
 `;
 
 export interface RichTextEditorProps {
@@ -86,14 +118,20 @@ export function RichTextEditor({
       Paragraph,
       Text,
       Bold,
+      Italic,
+      Highlight,
       Underline,
       Strike,
+      Heading.configure({ levels: [1, 2, 3] }),
+      BulletList,
+      OrderedList,
+      ListItem,
       History,
       TextStyle,
       Color,
       FontFamily,
       FontSize.configure({ types: ['textStyle'] }),
-      TextAlign.configure({ types: ['paragraph'] }),
+      TextAlign.configure({ types: ['paragraph', 'heading'] }),
     ],
     content: docToEditorJson(element.content),
     editorProps: {

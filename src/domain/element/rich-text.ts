@@ -388,6 +388,138 @@ function setListItemAlign(item: RichTextListItem, align: TextAlign): RichTextLis
   return { ...item, content: item.content.map((block) => setBlockAlign(block, align)) };
 }
 
+export type HeadingLevel = 1 | 2 | 3;
+
+export type ListKind = 'bulletList' | 'orderedList';
+
+export function setDocumentHeading(
+  doc: RichTextDocument,
+  level: HeadingLevel | null,
+): RichTextDocument {
+  return { blocks: doc.blocks.map((block) => setBlockHeading(block, level)) };
+}
+
+function setBlockHeading(block: RichTextBlock, level: HeadingLevel | null): RichTextBlock {
+  switch (block.type) {
+    case 'paragraph':
+      if (level === null) {
+        return block;
+      }
+      return { type: 'heading', level, align: block.align, spans: block.spans };
+    case 'heading':
+      if (level === null) {
+        return { type: 'paragraph', align: block.align, spans: block.spans };
+      }
+      return block.level === level ? block : { ...block, level };
+    case 'bulletList':
+    case 'orderedList':
+      return { ...block, items: block.items.map((item) => setListItemHeading(item, level)) };
+  }
+}
+
+function setListItemHeading(item: RichTextListItem, level: HeadingLevel | null): RichTextListItem {
+  return { ...item, content: item.content.map((block) => setBlockHeading(block, level)) };
+}
+
+export function setDocumentList(doc: RichTextDocument, kind: ListKind | null): RichTextDocument {
+  if (kind === null) {
+    return { blocks: doc.blocks.flatMap((block) => unwrapListBlock(block)) };
+  }
+
+  return { blocks: mergeBlocksIntoLists(doc.blocks, kind) };
+}
+
+function unwrapListBlock(block: RichTextBlock): RichTextBlock[] {
+  switch (block.type) {
+    case 'paragraph':
+    case 'heading':
+      return [block];
+    case 'bulletList':
+    case 'orderedList':
+      return block.items.flatMap((item) => item.content.flatMap((child) => unwrapListBlock(child)));
+  }
+}
+
+function mergeBlocksIntoLists(blocks: readonly RichTextBlock[], kind: ListKind): RichTextBlock[] {
+  const result: RichTextBlock[] = [];
+  let run: (RichTextParagraphBlock | RichTextHeadingBlock)[] = [];
+
+  const flushRun = (): void => {
+    if (run.length === 0) {
+      return;
+    }
+
+    pushList(result, {
+      type: kind,
+      items: run.map((block) => ({ type: 'listItem', content: [block] })),
+    });
+    run = [];
+  };
+
+  for (const block of blocks) {
+    if (block.type === 'paragraph' || block.type === 'heading') {
+      run.push(block);
+      continue;
+    }
+
+    flushRun();
+    pushList(result, convertListKind(block, kind));
+  }
+
+  flushRun();
+
+  return result;
+}
+
+function convertListKind(list: RichTextListBlock, kind: ListKind): RichTextListBlock {
+  return {
+    type: kind,
+    items: list.items.map((item) => ({
+      ...item,
+      content: item.content.map((block) =>
+        block.type === 'bulletList' || block.type === 'orderedList'
+          ? convertListKind(block, kind)
+          : block,
+      ),
+    })),
+  };
+}
+
+function pushList(result: RichTextBlock[], list: RichTextListBlock): void {
+  const last = result[result.length - 1];
+
+  if (last !== undefined && (last.type === 'bulletList' || last.type === 'orderedList')) {
+    result[result.length - 1] = { type: list.type, items: [...last.items, ...list.items] };
+    return;
+  }
+
+  result.push(list);
+}
+
+const DEFAULT_STEP_FONT_SIZE: TextFontSize = 14;
+
+export function stepDocumentFontSize(doc: RichTextDocument, direction: 1 | -1): RichTextDocument {
+  return mapSpans(doc, (span) => {
+    const current = span.marks?.fontSize;
+    const next = stepFontSize(current ?? DEFAULT_STEP_FONT_SIZE, direction);
+
+    if (next === current) {
+      return span;
+    }
+
+    return withMarks(span, { ...span.marks, fontSize: next });
+  });
+}
+
+function stepFontSize(current: TextFontSize, direction: 1 | -1): TextFontSize {
+  const sizes = TEXT_FONT_SIZES as readonly number[];
+  const index = sizes.indexOf(current);
+  const baseIndex = index === -1 ? sizes.indexOf(DEFAULT_STEP_FONT_SIZE) : index;
+  const nextIndex = Math.min(Math.max(baseIndex + direction, 0), sizes.length - 1);
+
+  return TEXT_FONT_SIZES[nextIndex];
+}
+
 export type TextBooleanMarkState = 'on' | 'off' | 'mixed';
 
 export function getDocumentBooleanMarkState(
@@ -436,6 +568,47 @@ export function getDocumentAlign(doc: RichTextDocument): TextAlign | undefined {
 
   const first = alignments[0];
   return alignments.every((align) => align === first) ? first : undefined;
+}
+
+export type TextHeadingState = HeadingLevel | 'off' | 'mixed';
+
+export function getDocumentHeadingState(doc: RichTextDocument): TextHeadingState {
+  let result: TextHeadingState = 'off';
+  let seen = false;
+
+  forEachInlineBlock(doc, (block) => {
+    const value: TextHeadingState = block.type === 'heading' ? block.level : 'off';
+
+    if (!seen) {
+      result = value;
+      seen = true;
+      return;
+    }
+
+    if (result !== value) {
+      result = 'mixed';
+    }
+  });
+
+  return result;
+}
+
+export function getDocumentListState(doc: RichTextDocument, kind: ListKind): TextBooleanMarkState {
+  let sawTrue = false;
+  let sawFalse = false;
+
+  for (const block of doc.blocks) {
+    if (block.type === kind) {
+      sawTrue = true;
+    } else {
+      sawFalse = true;
+    }
+  }
+
+  if (sawTrue && sawFalse) {
+    return 'mixed';
+  }
+  return sawTrue ? 'on' : 'off';
 }
 
 function validateMarks(marks: unknown): void {

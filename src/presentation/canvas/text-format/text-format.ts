@@ -4,27 +4,39 @@ import {
   getDocumentColor,
   getDocumentFontFamily,
   getDocumentFontSize,
+  getDocumentHeadingState,
+  getDocumentListState,
   setDocumentAlign,
   setDocumentBooleanMark,
   setDocumentColor,
   setDocumentFontFamily,
   setDocumentFontSize,
+  setDocumentHeading,
+  setDocumentList,
+  stepDocumentFontSize,
 } from '../../../domain/element';
 import type {
+  HeadingLevel,
+  ListKind,
   RichTextDocument,
   TextAlign,
   TextBooleanMark,
   TextBooleanMarkState,
   TextFontFamily,
   TextFontSize,
+  TextHeadingState,
 } from '../../../domain/element';
 
 export type TextFormatAction =
   | { readonly kind: 'fontFamily'; readonly value: TextFontFamily }
   | { readonly kind: 'fontSize'; readonly value: TextFontSize }
+  | { readonly kind: 'increaseFontSize' }
+  | { readonly kind: 'decreaseFontSize' }
   | { readonly kind: 'color'; readonly value: string }
   | { readonly kind: 'toggleMark'; readonly mark: TextBooleanMark }
-  | { readonly kind: 'align'; readonly value: TextAlign };
+  | { readonly kind: 'align'; readonly value: TextAlign }
+  | { readonly kind: 'heading'; readonly level: HeadingLevel | null }
+  | { readonly kind: 'list'; readonly value: ListKind | null };
 
 export interface TextFormatState {
   readonly bold: TextBooleanMarkState;
@@ -36,6 +48,9 @@ export interface TextFormatState {
   readonly fontSize?: TextFontSize;
   readonly color?: string;
   readonly align?: TextAlign;
+  readonly heading: TextHeadingState;
+  readonly bulletList: TextBooleanMarkState;
+  readonly orderedList: TextBooleanMarkState;
 }
 
 export function getTextFormatState(doc: RichTextDocument): TextFormatState {
@@ -49,6 +64,9 @@ export function getTextFormatState(doc: RichTextDocument): TextFormatState {
     ...(getDocumentFontSize(doc) === undefined ? {} : { fontSize: getDocumentFontSize(doc) }),
     ...(getDocumentColor(doc) === undefined ? {} : { color: getDocumentColor(doc) }),
     ...(getDocumentAlign(doc) === undefined ? {} : { align: getDocumentAlign(doc) }),
+    heading: getDocumentHeadingState(doc),
+    bulletList: getDocumentListState(doc, 'bulletList'),
+    orderedList: getDocumentListState(doc, 'orderedList'),
   };
 }
 
@@ -62,11 +80,19 @@ export function applyFormatToDocument(
       return setDocumentFontFamily(doc, action.value);
     case 'fontSize':
       return setDocumentFontSize(doc, action.value);
+    case 'increaseFontSize':
+      return stepDocumentFontSize(doc, 1);
+    case 'decreaseFontSize':
+      return stepDocumentFontSize(doc, -1);
     case 'color':
       return setDocumentColor(doc, action.value);
     case 'toggleMark':
       return setDocumentBooleanMark(doc, action.mark, state[action.mark] !== 'on');
     case 'align':
       return setDocumentAlign(doc, action.value);
+    case 'heading':
+      return setDocumentHeading(doc, action.level);
+    case 'list':
+      return setDocumentList(doc, action.value);
   }
 }

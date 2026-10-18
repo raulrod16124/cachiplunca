@@ -1,39 +1,8 @@
-import { Editor } from '@tiptap/core';
-import Bold from '@tiptap/extension-bold';
-import Document from '@tiptap/extension-document';
-import History from '@tiptap/extension-history';
-import Paragraph from '@tiptap/extension-paragraph';
-import Strike from '@tiptap/extension-strike';
-import Text from '@tiptap/extension-text';
-import TextAlign from '@tiptap/extension-text-align';
-import { Color, FontFamily, FontSize, TextStyle } from '@tiptap/extension-text-style';
-import Underline from '@tiptap/extension-underline';
 import {
   applyFormatToEditor,
   getEditorFormatState,
 } from '../../../../../presentation/canvas/text-format/editor-format';
-
-function createEditor(content?: object): Editor {
-  return new Editor({
-    extensions: [
-      Document,
-      Paragraph,
-      Text,
-      Bold,
-      Underline,
-      Strike,
-      History,
-      TextStyle,
-      Color,
-      FontFamily,
-      FontSize.configure({ types: ['textStyle'] }),
-      TextAlign.configure({ types: ['paragraph'] }),
-    ],
-    content,
-    autofocus: false,
-    editable: true,
-  });
-}
+import { createFormatTestEditor } from '../../../../fixtures/format-test-editor';
 
 describe('editor-format', () => {
   afterEach(() => {
@@ -42,7 +11,7 @@ describe('editor-format', () => {
   });
 
   it('toggles bold', () => {
-    const editor = createEditor({
+    const editor = createFormatTestEditor({
       type: 'doc',
       content: [{ type: 'paragraph', content: [{ type: 'text', text: 'hello' }] }],
     });
@@ -58,8 +27,46 @@ describe('editor-format', () => {
     editor.destroy();
   });
 
+  it('toggles italic and highlight', () => {
+    const editor = createFormatTestEditor({
+      type: 'doc',
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'hello' }] }],
+    });
+
+    editor.commands.selectAll();
+    applyFormatToEditor(editor, { kind: 'toggleMark', mark: 'italic' });
+    applyFormatToEditor(editor, { kind: 'toggleMark', mark: 'highlight' });
+
+    const state = getEditorFormatState(editor);
+    expect(state.italic).toBe('on');
+    expect(state.highlight).toBe('on');
+
+    editor.destroy();
+  });
+
+  it('reports mixed mark state for a partial selection', () => {
+    const editor = createFormatTestEditor({
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            { type: 'text', text: 'bold', marks: [{ type: 'bold' }] },
+            { type: 'text', text: ' plain' },
+          ],
+        },
+      ],
+    });
+
+    editor.commands.selectAll();
+
+    expect(getEditorFormatState(editor).bold).toBe('mixed');
+
+    editor.destroy();
+  });
+
   it('applies color', () => {
-    const editor = createEditor({
+    const editor = createFormatTestEditor({
       type: 'doc',
       content: [{ type: 'paragraph', content: [{ type: 'text', text: 'hello' }] }],
     });
@@ -73,7 +80,7 @@ describe('editor-format', () => {
   });
 
   it('applies font family and size', () => {
-    const editor = createEditor({
+    const editor = createFormatTestEditor({
       type: 'doc',
       content: [{ type: 'paragraph', content: [{ type: 'text', text: 'hello' }] }],
     });
@@ -89,8 +96,25 @@ describe('editor-format', () => {
     editor.destroy();
   });
 
+  it('increases and decreases font size from the default', () => {
+    const editor = createFormatTestEditor({
+      type: 'doc',
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'hello' }] }],
+    });
+
+    editor.commands.selectAll();
+
+    applyFormatToEditor(editor, { kind: 'increaseFontSize' });
+    expect(getEditorFormatState(editor).fontSize).toBe(16);
+
+    applyFormatToEditor(editor, { kind: 'decreaseFontSize' });
+    expect(getEditorFormatState(editor).fontSize).toBe(14);
+
+    editor.destroy();
+  });
+
   it('applies alignment', () => {
-    const editor = createEditor({
+    const editor = createFormatTestEditor({
       type: 'doc',
       content: [{ type: 'paragraph', content: [{ type: 'text', text: 'hello' }] }],
     });
@@ -103,8 +127,92 @@ describe('editor-format', () => {
     editor.destroy();
   });
 
+  it('applies and removes headings', () => {
+    const editor = createFormatTestEditor({
+      type: 'doc',
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'hello' }] }],
+    });
+
+    editor.commands.selectAll();
+    applyFormatToEditor(editor, { kind: 'heading', level: 1 });
+
+    expect(getEditorFormatState(editor).heading).toBe(1);
+
+    applyFormatToEditor(editor, { kind: 'heading', level: null });
+
+    expect(getEditorFormatState(editor).heading).toBe('off');
+
+    editor.destroy();
+  });
+
+  it('reports mixed heading state across blocks', () => {
+    const editor = createFormatTestEditor({
+      type: 'doc',
+      content: [
+        { type: 'heading', attrs: { level: 1 }, content: [{ type: 'text', text: 'title' }] },
+        { type: 'paragraph', content: [{ type: 'text', text: 'body' }] },
+      ],
+    });
+
+    editor.commands.selectAll();
+
+    expect(getEditorFormatState(editor).heading).toBe('mixed');
+
+    editor.destroy();
+  });
+
+  it('toggles bullet and ordered lists and lifts out of them', () => {
+    const editor = createFormatTestEditor({
+      type: 'doc',
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'hello' }] }],
+    });
+
+    editor.commands.selectAll();
+    applyFormatToEditor(editor, { kind: 'list', value: 'bulletList' });
+
+    expect(getEditorFormatState(editor).bulletList).toBe('on');
+
+    applyFormatToEditor(editor, { kind: 'list', value: 'orderedList' });
+
+    let state = getEditorFormatState(editor);
+    expect(state.bulletList).toBe('off');
+    expect(state.orderedList).toBe('on');
+
+    applyFormatToEditor(editor, { kind: 'list', value: null });
+
+    state = getEditorFormatState(editor);
+    expect(state.orderedList).toBe('off');
+    expect(editor.getJSON().content?.[0]?.type).toBe('paragraph');
+
+    editor.destroy();
+  });
+
+  it('reports mixed list state when the selection spans lists and paragraphs', () => {
+    const editor = createFormatTestEditor({
+      type: 'doc',
+      content: [
+        {
+          type: 'bulletList',
+          content: [
+            {
+              type: 'listItem',
+              content: [{ type: 'paragraph', content: [{ type: 'text', text: 'item' }] }],
+            },
+          ],
+        },
+        { type: 'paragraph', content: [{ type: 'text', text: 'body' }] },
+      ],
+    });
+
+    editor.commands.selectAll();
+
+    expect(getEditorFormatState(editor).bulletList).toBe('mixed');
+
+    editor.destroy();
+  });
+
   it('defaults marks to off and alignment to left when nothing is applied', () => {
-    const editor = createEditor({
+    const editor = createFormatTestEditor({
       type: 'doc',
       content: [{ type: 'paragraph', content: [{ type: 'text', text: 'plain' }] }],
     });
@@ -118,6 +226,9 @@ describe('editor-format', () => {
       strikethrough: 'off',
       highlight: 'off',
       align: 'left',
+      heading: 'off',
+      bulletList: 'off',
+      orderedList: 'off',
     });
 
     editor.destroy();

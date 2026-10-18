@@ -6,8 +6,11 @@ import {
   richTextFromPlain,
 } from '../../../domain/element';
 import type {
+  HeadingLevel,
   RichTextBlock,
   RichTextDocument,
+  RichTextListItem,
+  RichTextListItemContentBlock,
   RichTextMarks,
   RichTextSpan,
   TextAlign,
@@ -53,26 +56,11 @@ export function editorJsonToDoc(json: JSONContent | null | undefined): RichTextD
   const blocks: RichTextBlock[] = [];
 
   for (const node of json.content ?? []) {
-    if (node.type !== 'paragraph') {
-      continue;
+    const block = editorNodeToBlock(node);
+
+    if (block !== null) {
+      blocks.push(block);
     }
-
-    const spans: RichTextSpan[] = [];
-
-    for (const child of node.content ?? []) {
-      if (child.type !== 'text' || typeof child.text !== 'string') {
-        continue;
-      }
-
-      const marks = editorMarksToDomain(child.marks ?? []);
-      spans.push(marks === undefined ? { text: child.text } : { text: child.text, marks });
-    }
-
-    blocks.push({
-      type: 'paragraph',
-      align: readAlign(node.attrs?.textAlign),
-      spans,
-    });
   }
 
   if (blocks.length === 0) {
@@ -82,27 +70,116 @@ export function editorJsonToDoc(json: JSONContent | null | undefined): RichTextD
   return { blocks };
 }
 
-function blockToEditorNode(block: RichTextBlock): JSONContent {
-  if (block.type !== 'paragraph') {
-    return {
-      type: 'paragraph',
-      attrs: { textAlign: DEFAULT_TEXT_ALIGN },
-      content: undefined,
-    };
+function editorNodeToBlock(node: JSONContent): RichTextBlock | null {
+  switch (node.type) {
+    case 'paragraph':
+      return {
+        type: 'paragraph',
+        align: readAlign(node.attrs?.textAlign),
+        spans: editorContentToSpans(node.content),
+      };
+    case 'heading':
+      return {
+        type: 'heading',
+        level: readHeadingLevel(node.attrs?.level),
+        align: readAlign(node.attrs?.textAlign),
+        spans: editorContentToSpans(node.content),
+      };
+    case 'bulletList':
+    case 'orderedList': {
+      const items = editorContentToListItems(node.content);
+
+      if (items.length === 0) {
+        return null;
+      }
+
+      return { type: node.type, items };
+    }
+    default:
+      return null;
+  }
+}
+
+function editorContentToSpans(content: readonly JSONContent[] | undefined): RichTextSpan[] {
+  const spans: RichTextSpan[] = [];
+
+  for (const child of content ?? []) {
+    if (child.type !== 'text' || typeof child.text !== 'string') {
+      continue;
+    }
+
+    const marks = editorMarksToDomain(child.marks ?? []);
+    spans.push(marks === undefined ? { text: child.text } : { text: child.text, marks });
   }
 
-  return {
-    type: 'paragraph',
-    attrs: { textAlign: block.align },
-    content:
-      block.spans.length === 0
-        ? undefined
-        : block.spans.map((span) => ({
-            type: 'text',
-            text: span.text,
-            ...(span.marks === undefined ? {} : { marks: domainMarksToEditor(span.marks) }),
-          })),
-  };
+  return spans;
+}
+
+function editorContentToListItems(content: readonly JSONContent[] | undefined): RichTextListItem[] {
+  const items: RichTextListItem[] = [];
+
+  for (const node of content ?? []) {
+    if (node.type !== 'listItem') {
+      continue;
+    }
+
+    const itemBlocks: RichTextListItemContentBlock[] = [];
+
+    for (const child of node.content ?? []) {
+      const block = editorNodeToBlock(child);
+
+      if (block !== null) {
+        itemBlocks.push(block);
+      }
+    }
+
+    if (itemBlocks.length > 0) {
+      items.push({ type: 'listItem', content: itemBlocks });
+    }
+  }
+
+  return items;
+}
+
+function blockToEditorNode(block: RichTextBlock): JSONContent {
+  switch (block.type) {
+    case 'paragraph':
+      return {
+        type: 'paragraph',
+        attrs: { textAlign: block.align },
+        content: spansToEditorContent(block.spans),
+      };
+    case 'heading':
+      return {
+        type: 'heading',
+        attrs: { level: block.level, textAlign: block.align },
+        content: spansToEditorContent(block.spans),
+      };
+    case 'bulletList':
+    case 'orderedList':
+      return {
+        type: block.type,
+        content: block.items.map((item) => ({
+          type: 'listItem',
+          content:
+            item.content.length === 0
+              ? undefined
+              : item.content.map((child) => blockToEditorNode(child)),
+        })),
+      };
+  }
+}
+
+function spansToEditorContent(spans: readonly RichTextSpan[]): JSONContent[] | undefined {
+  if (spans.length === 0) {
+    return undefined;
+  }
+
+  return spans.map((span) => ({
+    type: 'text',
+    text: span.text,
+    ...(span.marks === undefined ? {} : { marks: domainMarksToEditor(span.marks) }),
+  }));
 }
 
 function domainMarksToEditor(marks: RichTextMarks): JSONContent['marks'] {
@@ -182,4 +259,8 @@ function readAlign(value: unknown): TextAlign {
   return value === 'center' || value === 'right' || value === 'justify'
     ? value
     : DEFAULT_TEXT_ALIGN;
+}
+
+function readHeadingLevel(value: unknown): HeadingLevel {
+  return value === 2 || value === 3 ? value : 1;
 }

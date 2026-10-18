@@ -4910,7 +4910,7 @@ Extender el modelo de dominio para que `note`, `task`, `frame` y `link` puedan a
 
 ### TASK-132 — TipTap adapter and extensions
 
-**Priority:** P1 · **Depends:** TASK-131 · **Status:** TODO
+**Priority:** P1 · **Depends:** TASK-131 · **Status:** DONE
 
 #### Objetivo
 
@@ -4927,12 +4927,12 @@ Hacer que TipTap pueda editar el rich text extendido (italic, highlight, heading
 
 #### Criterios de aceptación
 
-- [ ] TipTap round-trips headings, listas, italic y highlight.
-- [ ] `applyFormatToEditor` y `applyFormatToDocument` soportan las nuevas acciones.
-- [ ] `getEditorFormatState` reporta estados `on/off/mixed` para marcas y atributos de bloque.
-- [ ] `TextFormatTarget` permite aplicar formato sin saber si hay editor activo.
-- [ ] Los tests de adapter y formato pasan.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] TipTap round-trips headings, listas, italic y highlight.
+- [x] `applyFormatToEditor` y `applyFormatToDocument` soportan las nuevas acciones.
+- [x] `getEditorFormatState` reporta estados `on/off/mixed` para marcas y atributos de bloque.
+- [x] `TextFormatTarget` permite aplicar formato sin saber si hay editor activo.
+- [x] Los tests de adapter y formato pasan.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 
@@ -5186,6 +5186,14 @@ Añadir una entrada breve por sesión.
 - Bloqueos:
 - Siguiente tarea:
 -->
+
+## 2026-10-18 — TASK-132
+
+- Resultado: **TipTap adapter and extensions** completa. Dependencias `@tiptap/extension-{italic,highlight,heading,bullet-list,ordered-list,list-item}` instaladas a `^3.32.0`. `rich-text-adapter.ts` mapea headings (1–3), bullet/ordered lists, italic y highlight en ambas direcciones (con `readHeadingLevel` y `editorContentToListItems`), manteniendo el skipping de nodos desconocidos. `text-format.ts`/`editor-format.ts` amplían acciones (`italic`, `highlight`, `heading`, `list`, `increaseFontSize`, `decreaseFontSize`) y estado (`heading`, `bulletList`, `orderedList` + detección `mixed` recorriendo `nodesBetween` de la selección). Nuevos helpers puros en Domain `rich-text.ts`: `setDocumentHeading`, `setDocumentList`, `stepDocumentFontSize` y getters `getDocumentHeadingState`/`getDocumentListState`. Nueva abstracción `TextFormatTarget` (`text-format-target.ts`: `editorFormatTarget`/`documentFormatTarget`, commit sin-op) — creada y testeada, sin cablear en `canvas.tsx` (TASK-135). `rich-text-editor.tsx` registra las extensiones (`Heading` con levels 1–3, `TextAlign` types paragraph/heading) y añade estilos h1–h3/ul/ol. Fixture compartido `src/test/fixtures/format-test-editor.ts`.
+- Tests/quality gates: 192 suites / 2242 tests en verde (adapter 15, `rich-text` 60, formato 39, `text-format-target` 4). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase).
+- Decisiones: (1) transforms estructurales (heading/list/step de font-size) como helpers puros en Domain, no en el adapter; (2) `TextFormatTarget` solo creada + testeada, sin integración con Canvas (acordado con el usuario, llega en TASK-135); (3) `liftListItem` falla con NodeSelection en TipTap v3, así que `list: null` usa `toggleBulletList`/`toggleOrderedList` según estado activo; (4) estados de marca/bloque calculados con `nodesBetween` (no `isActive`) para detección `mixed` fiable; (5) paso de font-size por `TEXT_FONT_SIZES` con default 14; (6) sin ADR por ser decisiones locales de Presentation sobre el modelo ya documentado en TASK-131.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-133 (Rich text rendering for all elements).
 
 ## 2026-10-17 — Planificación rich text y toolbar flotante
 

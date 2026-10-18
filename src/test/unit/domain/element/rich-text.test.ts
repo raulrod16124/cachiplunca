@@ -11,12 +11,17 @@ import {
   setDocumentFontFamily,
   setDocumentFontSize,
   setDocumentAlign,
+  setDocumentHeading,
+  setDocumentList,
+  stepDocumentFontSize,
   validateTitleDocument,
   getDocumentBooleanMarkState,
   getDocumentColor,
   getDocumentFontFamily,
   getDocumentFontSize,
   getDocumentAlign,
+  getDocumentHeadingState,
+  getDocumentListState,
   type RichTextDocument,
   type RichTextMarks,
 } from '../../../../domain/element/rich-text';
@@ -473,5 +478,366 @@ describe('validateTitleDocument', () => {
 
     expect(() => validateTitleDocument(list)).toThrow(/paragraph or heading/);
     expect(isSingleInlineBlockDocument(list)).toBe(false);
+  });
+});
+
+describe('setDocumentHeading', () => {
+  it('converts a paragraph to a heading preserving spans and align', () => {
+    const input: RichTextDocument = {
+      blocks: [{ type: 'paragraph', align: 'center', spans: [{ text: 'Title' }] }],
+    };
+
+    expect(setDocumentHeading(input, 2)).toEqual({
+      blocks: [{ type: 'heading', level: 2, align: 'center', spans: [{ text: 'Title' }] }],
+    });
+  });
+
+  it('converts a heading back to a paragraph with null', () => {
+    const input: RichTextDocument = {
+      blocks: [{ type: 'heading', level: 3, align: 'left', spans: [{ text: 'Title' }] }],
+    };
+
+    expect(setDocumentHeading(input, null)).toEqual({
+      blocks: [{ type: 'paragraph', align: 'left', spans: [{ text: 'Title' }] }],
+    });
+  });
+
+  it('changes an existing heading level', () => {
+    const input: RichTextDocument = {
+      blocks: [{ type: 'heading', level: 1, align: 'left', spans: [{ text: 'Title' }] }],
+    };
+
+    expect(setDocumentHeading(input, 3)).toEqual({
+      blocks: [{ type: 'heading', level: 3, align: 'left', spans: [{ text: 'Title' }] }],
+    });
+  });
+
+  it('applies headings inside list items', () => {
+    const input: RichTextDocument = {
+      blocks: [
+        {
+          type: 'bulletList',
+          items: [
+            {
+              type: 'listItem',
+              content: [{ type: 'paragraph', align: 'left', spans: [{ text: 'item' }] }],
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(setDocumentHeading(input, 1)).toEqual({
+      blocks: [
+        {
+          type: 'bulletList',
+          items: [
+            {
+              type: 'listItem',
+              content: [{ type: 'heading', level: 1, align: 'left', spans: [{ text: 'item' }] }],
+            },
+          ],
+        },
+      ],
+    });
+  });
+});
+
+describe('setDocumentList', () => {
+  it('merges consecutive paragraphs into a single bullet list', () => {
+    const input: RichTextDocument = {
+      blocks: [
+        { type: 'paragraph', align: 'left', spans: [{ text: 'a' }] },
+        { type: 'paragraph', align: 'left', spans: [{ text: 'b' }] },
+      ],
+    };
+
+    expect(setDocumentList(input, 'bulletList')).toEqual({
+      blocks: [
+        {
+          type: 'bulletList',
+          items: [
+            {
+              type: 'listItem',
+              content: [{ type: 'paragraph', align: 'left', spans: [{ text: 'a' }] }],
+            },
+            {
+              type: 'listItem',
+              content: [{ type: 'paragraph', align: 'left', spans: [{ text: 'b' }] }],
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  it('keeps a single list block for all top-level paragraphs', () => {
+    const input: RichTextDocument = {
+      blocks: [
+        { type: 'paragraph', align: 'left', spans: [{ text: 'a' }] },
+        { type: 'paragraph', align: 'left', spans: [{ text: 'b' }] },
+        { type: 'paragraph', align: 'left', spans: [{ text: 'c' }] },
+      ],
+    };
+
+    const output = setDocumentList(input, 'orderedList');
+
+    expect(output.blocks).toHaveLength(1);
+    const block = output.blocks[0];
+    expect(block?.type).toBe('orderedList');
+  });
+
+  it('converts an existing bullet list to an ordered list', () => {
+    const input: RichTextDocument = {
+      blocks: [
+        {
+          type: 'bulletList',
+          items: [
+            {
+              type: 'listItem',
+              content: [{ type: 'paragraph', align: 'left', spans: [{ text: 'a' }] }],
+            },
+          ],
+        },
+      ],
+    };
+
+    const output = setDocumentList(input, 'orderedList');
+
+    expect(output.blocks[0]?.type).toBe('orderedList');
+  });
+
+  it('merges adjacent list blocks into one', () => {
+    const item = (text: string) => ({
+      type: 'listItem' as const,
+      content: [{ type: 'paragraph' as const, align: 'left' as const, spans: [{ text }] }],
+    });
+
+    const input: RichTextDocument = {
+      blocks: [
+        { type: 'bulletList', items: [item('a')] },
+        { type: 'bulletList', items: [item('b')] },
+      ],
+    };
+
+    const output = setDocumentList(input, 'bulletList');
+
+    expect(output.blocks).toHaveLength(1);
+    const block = output.blocks[0];
+    expect(block?.type).toBe('bulletList');
+    expect(block?.type === 'bulletList' ? block.items : []).toHaveLength(2);
+  });
+
+  it('unwraps lists back to top-level blocks with null', () => {
+    const input: RichTextDocument = {
+      blocks: [
+        { type: 'paragraph', align: 'left', spans: [{ text: 'before' }] },
+        {
+          type: 'orderedList',
+          items: [
+            {
+              type: 'listItem',
+              content: [{ type: 'paragraph', align: 'left', spans: [{ text: 'a' }] }],
+            },
+            {
+              type: 'listItem',
+              content: [{ type: 'paragraph', align: 'left', spans: [{ text: 'b' }] }],
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(setDocumentList(input, null)).toEqual({
+      blocks: [
+        { type: 'paragraph', align: 'left', spans: [{ text: 'before' }] },
+        { type: 'paragraph', align: 'left', spans: [{ text: 'a' }] },
+        { type: 'paragraph', align: 'left', spans: [{ text: 'b' }] },
+      ],
+    });
+  });
+
+  it('converts nested lists of the same kind', () => {
+    const input: RichTextDocument = {
+      blocks: [
+        {
+          type: 'bulletList',
+          items: [
+            {
+              type: 'listItem',
+              content: [
+                { type: 'paragraph', align: 'left', spans: [{ text: 'parent' }] },
+                {
+                  type: 'orderedList',
+                  items: [
+                    {
+                      type: 'listItem',
+                      content: [{ type: 'paragraph', align: 'left', spans: [{ text: 'child' }] }],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const output = setDocumentList(input, 'orderedList');
+    const top = output.blocks[0];
+
+    expect(top?.type).toBe('orderedList');
+    if (top?.type !== 'bulletList' && top?.type !== 'orderedList') {
+      throw new Error('expected a list block');
+    }
+
+    const nested = top.items[0]?.content.find((block) => block.type === 'orderedList');
+    expect(nested).toBeDefined();
+  });
+});
+
+describe('stepDocumentFontSize', () => {
+  it('steps unset font size relative to the default', () => {
+    const input = doc([{ text: 'hello' }]);
+
+    expect(getDocumentFontSize(stepDocumentFontSize(input, 1))).toBe(16);
+    expect(getDocumentFontSize(stepDocumentFontSize(input, -1))).toBe(12);
+  });
+
+  it('steps an existing font size', () => {
+    const input = doc([{ text: 'hello' }]);
+    const sized = setDocumentFontSize(input, 12);
+
+    expect(getDocumentFontSize(stepDocumentFontSize(sized, 1))).toBe(14);
+  });
+
+  it('clamps at the extremes', () => {
+    const maxSize = doc([{ text: 'hello' }]);
+    const sizedMax = setDocumentFontSize(maxSize, 72);
+    expect(getDocumentFontSize(stepDocumentFontSize(sizedMax, 1))).toBe(72);
+
+    const minSized = setDocumentFontSize(maxSize, 8);
+    expect(getDocumentFontSize(stepDocumentFontSize(minSized, -1))).toBe(8);
+  });
+
+  it('applies the stepped size to every span', () => {
+    const input: RichTextDocument = {
+      blocks: [
+        {
+          type: 'paragraph',
+          align: 'left',
+          spans: [{ text: 'a' }, { text: 'b' }],
+        },
+      ],
+    };
+
+    const stepped = stepDocumentFontSize(input, 1);
+
+    for (const block of stepped.blocks) {
+      if (block.type !== 'paragraph') {
+        throw new Error('expected a paragraph');
+      }
+      for (const span of block.spans) {
+        expect(span.marks?.fontSize).toBe(16);
+      }
+    }
+  });
+});
+
+describe('getDocumentHeadingState', () => {
+  it('reports off for paragraphs', () => {
+    expect(getDocumentHeadingState(richTextFromPlain('plain'))).toBe('off');
+  });
+
+  it('reports the level for a uniform heading document', () => {
+    const input: RichTextDocument = {
+      blocks: [{ type: 'heading', level: 2, align: 'left', spans: [{ text: 'Title' }] }],
+    };
+
+    expect(getDocumentHeadingState(input)).toBe(2);
+  });
+
+  it('reports mixed for headings and paragraphs together', () => {
+    const input: RichTextDocument = {
+      blocks: [
+        { type: 'heading', level: 1, align: 'left', spans: [{ text: 'a' }] },
+        { type: 'paragraph', align: 'left', spans: [{ text: 'b' }] },
+      ],
+    };
+
+    expect(getDocumentHeadingState(input)).toBe('mixed');
+  });
+
+  it('reports mixed for differing heading levels', () => {
+    const input: RichTextDocument = {
+      blocks: [
+        { type: 'heading', level: 1, align: 'left', spans: [{ text: 'a' }] },
+        { type: 'heading', level: 3, align: 'left', spans: [{ text: 'b' }] },
+      ],
+    };
+
+    expect(getDocumentHeadingState(input)).toBe('mixed');
+  });
+
+  it('includes headings inside list items', () => {
+    const input: RichTextDocument = {
+      blocks: [
+        {
+          type: 'bulletList',
+          items: [
+            {
+              type: 'listItem',
+              content: [{ type: 'heading', level: 1, align: 'left', spans: [{ text: 'a' }] }],
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(getDocumentHeadingState(input)).toBe(1);
+  });
+});
+
+describe('getDocumentListState', () => {
+  it('reports on for a single list kind', () => {
+    const input: RichTextDocument = {
+      blocks: [
+        {
+          type: 'bulletList',
+          items: [
+            {
+              type: 'listItem',
+              content: [{ type: 'paragraph', align: 'left', spans: [{ text: 'a' }] }],
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(getDocumentListState(input, 'bulletList')).toBe('on');
+    expect(getDocumentListState(input, 'orderedList')).toBe('off');
+  });
+
+  it('reports off when the document has no lists', () => {
+    expect(getDocumentListState(richTextFromPlain('plain'), 'bulletList')).toBe('off');
+  });
+
+  it('reports mixed when lists and paragraphs coexist', () => {
+    const input: RichTextDocument = {
+      blocks: [
+        {
+          type: 'bulletList',
+          items: [
+            {
+              type: 'listItem',
+              content: [{ type: 'paragraph', align: 'left', spans: [{ text: 'a' }] }],
+            },
+          ],
+        },
+        { type: 'paragraph', align: 'left', spans: [{ text: 'b' }] },
+      ],
+    };
+
+    expect(getDocumentListState(input, 'bulletList')).toBe('mixed');
   });
 });

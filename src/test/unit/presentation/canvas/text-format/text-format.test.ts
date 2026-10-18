@@ -28,6 +28,9 @@ describe('text-format', () => {
       strikethrough: 'off',
       highlight: 'off',
       align: 'left',
+      heading: 'off',
+      bulletList: 'off',
+      orderedList: 'off',
     });
   });
 
@@ -79,5 +82,43 @@ describe('text-format', () => {
       fontFamily: 'georgia',
       fontSize: 18,
     });
+  });
+
+  it('steps font size up and down on the document', () => {
+    const input = doc('hello');
+    const state = getTextFormatState(input);
+
+    const bigger = applyFormatToDocument(input, { kind: 'increaseFontSize' }, state);
+    expect(getTextFormatState(bigger).fontSize).toBe(16);
+
+    const smaller = applyFormatToDocument(bigger, { kind: 'decreaseFontSize' }, state);
+    expect(getTextFormatState(smaller).fontSize).toBe(14);
+  });
+
+  it('applies and removes headings on the document', () => {
+    const input = doc('hello');
+    const state = getTextFormatState(input);
+
+    const headed = applyFormatToDocument(input, { kind: 'heading', level: 1 }, state);
+    expect(getTextFormatState(headed).heading).toBe(1);
+
+    const plain = applyFormatToDocument(headed, { kind: 'heading', level: null }, state);
+    expect(getTextFormatState(plain).heading).toBe('off');
+  });
+
+  it('applies and removes lists on the document', () => {
+    const input = doc('hello');
+    const state = getTextFormatState(input);
+
+    const bulleted = applyFormatToDocument(input, { kind: 'list', value: 'bulletList' }, state);
+    expect(getTextFormatState(bulleted).bulletList).toBe('on');
+
+    const numbered = applyFormatToDocument(bulleted, { kind: 'list', value: 'orderedList' }, state);
+    expect(getTextFormatState(numbered).orderedList).toBe('on');
+    expect(getTextFormatState(numbered).bulletList).toBe('off');
+
+    const plain = applyFormatToDocument(numbered, { kind: 'list', value: null }, state);
+    expect(getTextFormatState(plain).orderedList).toBe('off');
+    expect(plain.blocks[0]?.type).toBe('paragraph');
   });
 });
