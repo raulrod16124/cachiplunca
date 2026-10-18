@@ -249,4 +249,46 @@ describe('rich-text-adapter', () => {
       ],
     });
   });
+
+  it('round-trips highlight color marks', () => {
+    const input: RichTextDocument = {
+      blocks: [
+        {
+          type: 'paragraph',
+          align: 'left',
+          spans: [{ text: 'glow', marks: { highlight: true, highlightColor: '#ffe119' } }],
+        },
+      ],
+    };
+
+    expect(roundTrip(input)).toEqual(input);
+  });
+
+  it('reads a highlight mark color attribute into highlightColor', () => {
+    const json = {
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            {
+              type: 'text',
+              text: 'plain',
+              marks: [{ type: 'highlight', attrs: { color: '#ff0000' } }],
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(editorJsonToDoc(json)).toEqual({
+      blocks: [
+        {
+          type: 'paragraph',
+          align: DEFAULT_TEXT_ALIGN,
+          spans: [{ text: 'plain', marks: { highlight: true, highlightColor: '#ff0000' } }],
+        },
+      ],
+    });
+  });
 });

@@ -92,7 +92,16 @@ function renderSpan(span: RichTextSpan): ReactElement | string {
   const styled =
     Object.keys(style).length === 0 ? span.text : <span style={style}>{span.text}</span>;
 
-  return span.marks?.highlight === true ? <mark>{styled}</mark> : styled;
+  if (span.marks?.highlight !== true) {
+    return styled;
+  }
+
+  const highlightColor = span.marks.highlightColor;
+  return (
+    <mark style={highlightColor === undefined ? undefined : { backgroundColor: highlightColor }}>
+      {styled}
+    </mark>
+  );
 }
 
 function renderSpans(spans: readonly RichTextSpan[]): ReactElement {

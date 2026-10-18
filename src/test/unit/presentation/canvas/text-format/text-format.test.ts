@@ -121,4 +121,40 @@ describe('text-format', () => {
     expect(getTextFormatState(plain).orderedList).toBe('off');
     expect(plain.blocks[0]?.type).toBe('paragraph');
   });
+
+  it('applies and removes highlight color on the document', () => {
+    const input = doc('hello');
+    const state = getTextFormatState(input);
+
+    const highlighted = applyFormatToDocument(
+      input,
+      { kind: 'highlightColor', value: '#ffe119' },
+      state,
+    );
+    expect(getTextFormatState(highlighted).highlightColor).toBe('#ffe119');
+    expect(getTextFormatState(highlighted).highlight).toBe('on');
+
+    const plain = applyFormatToDocument(
+      highlighted,
+      { kind: 'highlightColor', value: null },
+      getTextFormatState(highlighted),
+    );
+    expect(getTextFormatState(plain).highlightColor).toBeUndefined();
+    expect(getTextFormatState(plain).highlight).toBe('off');
+  });
+
+  it('reads highlight color as part of the format state', () => {
+    const input = doc('hello');
+
+    const highlighted = applyFormatToDocument(
+      input,
+      { kind: 'highlightColor', value: '#00ff00' },
+      getTextFormatState(input),
+    );
+
+    expect(getTextFormatState(highlighted)).toMatchObject({
+      highlight: 'on',
+      highlightColor: '#00ff00',
+    });
+  });
 });

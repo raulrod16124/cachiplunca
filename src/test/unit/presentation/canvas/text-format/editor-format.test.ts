@@ -233,4 +233,37 @@ describe('editor-format', () => {
 
     editor.destroy();
   });
+
+  it('applies highlight color and reports it in the state', () => {
+    const editor = createFormatTestEditor({
+      type: 'doc',
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'hello' }] }],
+    });
+
+    editor.commands.selectAll();
+    applyFormatToEditor(editor, { kind: 'highlightColor', value: '#ffe119' });
+
+    const state = getEditorFormatState(editor);
+    expect(state.highlight).toBe('on');
+    expect(state.highlightColor).toBe('#ffe119');
+
+    editor.destroy();
+  });
+
+  it('removes highlight and highlight color with a null action', () => {
+    const editor = createFormatTestEditor({
+      type: 'doc',
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'hello' }] }],
+    });
+
+    editor.commands.selectAll();
+    applyFormatToEditor(editor, { kind: 'highlightColor', value: '#ffe119' });
+    applyFormatToEditor(editor, { kind: 'highlightColor', value: null });
+
+    const state = getEditorFormatState(editor);
+    expect(state.highlight).toBe('off');
+    expect(state.highlightColor).toBeUndefined();
+
+    editor.destroy();
+  });
 });

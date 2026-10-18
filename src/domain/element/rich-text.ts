@@ -42,6 +42,7 @@ export interface RichTextMarks {
   readonly underline?: boolean;
   readonly strikethrough?: boolean;
   readonly highlight?: boolean;
+  readonly highlightColor?: string;
   readonly color?: string;
   readonly fontFamily?: TextFontFamily;
   readonly fontSize?: TextFontSize;
@@ -317,7 +318,11 @@ export function setDocumentBooleanMark(
   enabled: boolean,
 ): RichTextDocument {
   return mapSpans(doc, (span) => {
-    const marks = applyBooleanMark(span.marks, mark, enabled);
+    const applied = applyBooleanMark(span.marks, mark, enabled);
+    const marks =
+      mark === 'highlight' && !enabled && applied !== undefined
+        ? omitStyle(applied, 'highlightColor')
+        : applied;
     return marks === undefined ? { text: span.text } : { text: span.text, marks };
   });
 }
@@ -329,6 +334,23 @@ export function setDocumentColor(doc: RichTextDocument, color: string | null): R
 
   return mapSpans(doc, (span) => {
     const marks = color === null ? omitStyle(span.marks, 'color') : { ...span.marks, color };
+    return withMarks(span, marks);
+  });
+}
+
+export function setDocumentHighlightColor(
+  doc: RichTextDocument,
+  color: string | null,
+): RichTextDocument {
+  if (color !== null && !HEX_COLOR_PATTERN.test(color)) {
+    throw new Error('Text highlight color must be a hex color like #ff0000');
+  }
+
+  return mapSpans(doc, (span) => {
+    const marks =
+      color === null
+        ? omitStyle(span.marks, 'highlightColor')
+        : { ...span.marks, highlight: true, highlightColor: color };
     return withMarks(span, marks);
   });
 }
@@ -547,6 +569,10 @@ export function getDocumentColor(doc: RichTextDocument): string | undefined {
   return uniformSpanValue(doc, (marks) => marks?.color);
 }
 
+export function getDocumentHighlightColor(doc: RichTextDocument): string | undefined {
+  return uniformSpanValue(doc, (marks) => marks?.highlightColor);
+}
+
 export function getDocumentFontFamily(doc: RichTextDocument): TextFontFamily | undefined {
   return uniformSpanValue(doc, (marks) => marks?.fontFamily);
 }
@@ -628,6 +654,12 @@ function validateMarks(marks: unknown): void {
     }
   }
 
+  if (marks.highlightColor !== undefined) {
+    if (typeof marks.highlightColor !== 'string' || !HEX_COLOR_PATTERN.test(marks.highlightColor)) {
+      throw new Error('Rich text content mark "highlightColor" must be a hex color like #ff0000');
+    }
+  }
+
   if (marks.fontFamily !== undefined && !TEXT_FONT_FAMILIES.includes(marks.fontFamily as never)) {
     throw new Error('Rich text content mark "fontFamily" is not a known font family');
   }
@@ -677,7 +709,7 @@ function applyBooleanMark(
 
 function omitStyle(
   marks: RichTextMarks | undefined,
-  key: 'color' | 'fontFamily' | 'fontSize',
+  key: 'color' | 'fontFamily' | 'fontSize' | 'highlightColor',
 ): RichTextMarks | undefined {
   const next: Record<string, unknown> = { ...marks };
   delete next[key];
@@ -698,6 +730,7 @@ function normalizeMarks(marks: RichTextMarks): RichTextMarks | undefined {
   if (marks.underline === true) normalized.underline = true;
   if (marks.strikethrough === true) normalized.strikethrough = true;
   if (marks.highlight === true) normalized.highlight = true;
+  if (marks.highlightColor !== undefined) normalized.highlightColor = marks.highlightColor;
   if (marks.color !== undefined) normalized.color = marks.color;
   if (marks.fontFamily !== undefined) normalized.fontFamily = marks.fontFamily;
   if (marks.fontSize !== undefined) normalized.fontSize = marks.fontSize;

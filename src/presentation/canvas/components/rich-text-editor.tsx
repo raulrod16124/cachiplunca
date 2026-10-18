@@ -119,7 +119,7 @@ export function RichTextEditor({
       Text,
       Bold,
       Italic,
-      Highlight,
+      Highlight.configure({ multicolor: true }),
       Underline,
       Strike,
       Heading.configure({ levels: [1, 2, 3] }),

@@ -4983,7 +4983,7 @@ Renderizar el contenido enriquecido en `note`, `task`, `frame` y `link` de forma
 
 ### TASK-134 — Floating Word-style text toolbar
 
-**Priority:** P1 · **Depends:** TASK-132 · **Status:** TODO
+**Priority:** P1 · **Depends:** TASK-132 · **Status:** DONE
 
 #### Objetivo
 
@@ -5008,14 +5008,14 @@ Implementar una barra de herramientas contextual flotante, visual y funcionalmen
 
 #### Criterios de aceptación
 
-- [ ] La barra aparece al hacer clic derecho sobre texto seleccionado.
-- [ ] Se posiciona junto a la selección sin salirse del viewport.
-- [ ] Aplica formato inmediatamente sin perder la selección.
-- [ ] Los controles reflejan el estado actual incluyendo `mixed`.
-- [ ] Format painter copia y aplica formato entre selecciones.
-- [ ] Los estilos aplican headings/paragraph semánticamente.
-- [ ] Los tests del toolbar pasan.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] La barra aparece al hacer clic derecho sobre texto seleccionado.
+- [x] Se posiciona junto a la selección sin salirse del viewport.
+- [x] Aplica formato inmediatamente sin perder la selección.
+- [x] Los controles reflejan el estado actual incluyendo `mixed`.
+- [x] Format painter copia y aplica formato entre selecciones.
+- [x] Los estilos aplican headings/paragraph semánticamente.
+- [x] Los tests del toolbar pasan.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 

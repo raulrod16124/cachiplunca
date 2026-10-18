@@ -5,6 +5,7 @@ import {
   getDocumentFontFamily,
   getDocumentFontSize,
   getDocumentHeadingState,
+  getDocumentHighlightColor,
   getDocumentListState,
   setDocumentAlign,
   setDocumentBooleanMark,
@@ -12,6 +13,7 @@ import {
   setDocumentFontFamily,
   setDocumentFontSize,
   setDocumentHeading,
+  setDocumentHighlightColor,
   setDocumentList,
   stepDocumentFontSize,
 } from '../../../domain/element';
@@ -32,7 +34,8 @@ export type TextFormatAction =
   | { readonly kind: 'fontSize'; readonly value: TextFontSize }
   | { readonly kind: 'increaseFontSize' }
   | { readonly kind: 'decreaseFontSize' }
-  | { readonly kind: 'color'; readonly value: string }
+  | { readonly kind: 'color'; readonly value: string | null }
+  | { readonly kind: 'highlightColor'; readonly value: string | null }
   | { readonly kind: 'toggleMark'; readonly mark: TextBooleanMark }
   | { readonly kind: 'align'; readonly value: TextAlign }
   | { readonly kind: 'heading'; readonly level: HeadingLevel | null }
@@ -47,6 +50,7 @@ export interface TextFormatState {
   readonly fontFamily?: TextFontFamily;
   readonly fontSize?: TextFontSize;
   readonly color?: string;
+  readonly highlightColor?: string;
   readonly align?: TextAlign;
   readonly heading: TextHeadingState;
   readonly bulletList: TextBooleanMarkState;
@@ -63,6 +67,9 @@ export function getTextFormatState(doc: RichTextDocument): TextFormatState {
     ...(getDocumentFontFamily(doc) === undefined ? {} : { fontFamily: getDocumentFontFamily(doc) }),
     ...(getDocumentFontSize(doc) === undefined ? {} : { fontSize: getDocumentFontSize(doc) }),
     ...(getDocumentColor(doc) === undefined ? {} : { color: getDocumentColor(doc) }),
+    ...(getDocumentHighlightColor(doc) === undefined
+      ? {}
+      : { highlightColor: getDocumentHighlightColor(doc) }),
     ...(getDocumentAlign(doc) === undefined ? {} : { align: getDocumentAlign(doc) }),
     heading: getDocumentHeadingState(doc),
     bulletList: getDocumentListState(doc, 'bulletList'),
@@ -86,6 +93,11 @@ export function applyFormatToDocument(
       return stepDocumentFontSize(doc, -1);
     case 'color':
       return setDocumentColor(doc, action.value);
+    case 'highlightColor':
+      if (action.value === null) {
+        return setDocumentBooleanMark(doc, 'highlight', false);
+      }
+      return setDocumentHighlightColor(doc, action.value);
     case 'toggleMark':
       return setDocumentBooleanMark(doc, action.mark, state[action.mark] !== 'on');
     case 'align':

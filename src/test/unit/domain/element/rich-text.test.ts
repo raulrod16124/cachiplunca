@@ -10,6 +10,7 @@ import {
   setDocumentColor,
   setDocumentFontFamily,
   setDocumentFontSize,
+  setDocumentHighlightColor,
   setDocumentAlign,
   setDocumentHeading,
   setDocumentList,
@@ -21,6 +22,7 @@ import {
   getDocumentFontSize,
   getDocumentAlign,
   getDocumentHeadingState,
+  getDocumentHighlightColor,
   getDocumentListState,
   type RichTextDocument,
   type RichTextMarks,
@@ -839,5 +841,43 @@ describe('getDocumentListState', () => {
     };
 
     expect(getDocumentListState(input, 'bulletList')).toBe('mixed');
+  });
+
+  it('applies and removes highlight color', () => {
+    const input = doc([{ text: 'a' }]);
+
+    const highlighted = setDocumentHighlightColor(input, '#ffe119');
+    expect(getDocumentHighlightColor(highlighted)).toBe('#ffe119');
+    expect(getDocumentBooleanMarkState(highlighted, 'highlight')).toBe('on');
+
+    const cleared = setDocumentHighlightColor(highlighted, null);
+    expect(getDocumentHighlightColor(cleared)).toBeUndefined();
+    expect(getDocumentBooleanMarkState(cleared, 'highlight')).toBe('on');
+  });
+
+  it('strips highlight color when the highlight mark is removed', () => {
+    const highlighted = setDocumentHighlightColor(doc([{ text: 'a' }]), '#ffe119');
+
+    const plain = setDocumentBooleanMark(highlighted, 'highlight', false);
+
+    expect(getDocumentHighlightColor(plain)).toBeUndefined();
+  });
+
+  it('rejects an invalid highlight color', () => {
+    expect(() => setDocumentHighlightColor(richTextFromPlain('x'), 'yellow')).toThrow(/hex color/);
+  });
+
+  it('rejects an invalid highlightColor mark through validation', () => {
+    expect(() =>
+      parseRichTextDocument({
+        blocks: [
+          {
+            type: 'paragraph',
+            align: 'left',
+            spans: [{ text: 'x', marks: { highlight: true, highlightColor: 'nope' } }],
+          },
+        ],
+      }),
+    ).toThrow(/highlightColor.*hex color/);
   });
 });

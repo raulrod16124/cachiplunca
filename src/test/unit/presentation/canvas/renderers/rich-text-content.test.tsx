@@ -231,6 +231,42 @@ describe('RichTextContent', () => {
     expect(mark).toHaveTextContent('glow');
   });
 
+  it('renders highlight color as a background style', () => {
+    const doc: RichTextDocument = {
+      blocks: [
+        {
+          type: 'paragraph',
+          align: DEFAULT_TEXT_ALIGN,
+          spans: [{ text: 'glow', marks: { highlight: true, highlightColor: '#ffe119' } }],
+        },
+      ],
+    };
+
+    const { container } = render(<RichTextContent document={doc} />);
+
+    const mark = container.querySelector('mark');
+    expect(mark).not.toBeNull();
+    expect(mark).toHaveStyle({ backgroundColor: '#ffe119' });
+  });
+
+  it('renders a plain highlight mark without a background style', () => {
+    const doc: RichTextDocument = {
+      blocks: [
+        {
+          type: 'paragraph',
+          align: DEFAULT_TEXT_ALIGN,
+          spans: [{ text: 'glow', marks: { highlight: true } }],
+        },
+      ],
+    };
+
+    const { container } = render(<RichTextContent document={doc} />);
+
+    const mark = container.querySelector('mark');
+    expect(mark).not.toBeNull();
+    expect(mark).not.toHaveAttribute('style');
+  });
+
   it('renders color, font family and font size marks', () => {
     const doc: RichTextDocument = {
       blocks: [

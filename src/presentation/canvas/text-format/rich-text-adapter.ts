@@ -186,9 +186,16 @@ function domainMarksToEditor(marks: RichTextMarks): JSONContent['marks'] {
   const editorMarks: JSONContent['marks'] = [];
 
   for (const key of TEXT_BOOLEAN_MARKS) {
-    if (marks[key] === true) {
-      editorMarks.push({ type: BOOLEAN_MARK_TO_EDITOR[key] });
+    if (marks[key] !== true) {
+      continue;
     }
+
+    if (key === 'highlight' && marks.highlightColor !== undefined) {
+      editorMarks.push({ type: 'highlight', attrs: { color: marks.highlightColor } });
+      continue;
+    }
+
+    editorMarks.push({ type: BOOLEAN_MARK_TO_EDITOR[key] });
   }
 
   const styleAttrs: Record<string, string> = {};
@@ -216,6 +223,11 @@ function editorMarksToDomain(editorMarks: readonly JSONContent[]): RichTextMarks
 
     if (booleanMark !== undefined) {
       marks[booleanMark] = true;
+
+      if (booleanMark === 'highlight') {
+        readHighlightColorAttr(marks, mark.attrs ?? {});
+      }
+
       continue;
     }
 
@@ -227,8 +239,16 @@ function editorMarksToDomain(editorMarks: readonly JSONContent[]): RichTextMarks
   return Object.keys(marks).length === 0 ? undefined : marks;
 }
 
+const HEX_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+
+function readHighlightColorAttr(marks: MutableMarks, attrs: Record<string, unknown>): void {
+  if (typeof attrs.color === 'string' && HEX_COLOR_PATTERN.test(attrs.color)) {
+    marks.highlightColor = attrs.color;
+  }
+}
+
 function applyTextStyleAttrs(marks: MutableMarks, attrs: Record<string, unknown>): void {
-  if (typeof attrs.color === 'string' && /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(attrs.color)) {
+  if (typeof attrs.color === 'string' && HEX_COLOR_PATTERN.test(attrs.color)) {
     marks.color = attrs.color;
   }
 

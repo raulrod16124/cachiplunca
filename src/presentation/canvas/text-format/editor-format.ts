@@ -38,7 +38,18 @@ export function applyFormatToEditor(editor: Editor, action: TextFormatAction): v
       chain.setFontSize(`${stepEditorFontSize(editor, -1)}px`).run();
       return;
     case 'color':
+      if (action.value === null) {
+        chain.unsetColor().run();
+        return;
+      }
       chain.setColor(action.value).run();
+      return;
+    case 'highlightColor':
+      if (action.value === null) {
+        chain.unsetHighlight().run();
+        return;
+      }
+      chain.setHighlight({ color: action.value }).run();
       return;
     case 'toggleMark':
       chain.toggleMark(BOOLEAN_MARK_TO_COMMAND[action.mark]).run();
@@ -87,6 +98,7 @@ export function getEditorFormatState(editor: Editor): TextFormatState {
     ...readFontFamily(styleAttrs.fontFamily),
     ...readFontSize(styleAttrs.fontSize),
     ...(typeof styleAttrs.color === 'string' ? { color: styleAttrs.color } : {}),
+    ...readHighlightColor(editor),
     ...readAlign(editor),
     heading: blockStates.heading,
     bulletList: blockStates.bulletList,
@@ -187,6 +199,30 @@ function stepEditorFontSize(editor: Editor, direction: 1 | -1): TextFontSize {
   const nextIndex = Math.min(Math.max(baseIndex + direction, 0), sizes.length - 1);
 
   return TEXT_FONT_SIZES[nextIndex];
+}
+
+function readHighlightColor(editor: Editor): { highlightColor: string } | Record<string, never> {
+  const { from, to } = editor.state.selection;
+  const colors = new Set<string>();
+
+  editor.state.doc.nodesBetween(from, to, (node) => {
+    if (!node.isText || typeof node.text !== 'string' || node.text.length === 0) {
+      return;
+    }
+
+    for (const mark of node.marks) {
+      if (mark.type.name === 'highlight' && typeof mark.attrs.color === 'string') {
+        colors.add(mark.attrs.color);
+      }
+    }
+  });
+
+  if (colors.size !== 1) {
+    return {};
+  }
+
+  const first = colors.values().next();
+  return first.done === true ? {} : { highlightColor: first.value };
 }
 
 function readFontFamily(

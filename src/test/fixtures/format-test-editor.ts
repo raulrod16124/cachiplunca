@@ -23,7 +23,7 @@ export function createFormatTestEditor(content?: object): Editor {
       Text,
       Bold,
       Italic,
-      Highlight,
+      Highlight.configure({ multicolor: true }),
       Underline,
       Strike,
       Heading.configure({ levels: [1, 2, 3] }),
