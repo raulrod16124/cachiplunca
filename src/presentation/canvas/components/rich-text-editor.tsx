@@ -200,11 +200,10 @@ export function RichTextEditor({
   };
 
   const handleBlur = (event: FocusEvent<HTMLDivElement>): void => {
-    if (commitGuardRef?.current === true) {
-      return;
-    }
-
     if (event.relatedTarget instanceof Node && surfaceRef.current?.contains(event.relatedTarget)) {
+      if (commitGuardRef?.current === true) {
+        return;
+      }
       return;
     }
 
