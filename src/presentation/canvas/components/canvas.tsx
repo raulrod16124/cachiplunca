@@ -5,7 +5,12 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import styled from 'styled-components';
 import { Bounds, Grid, Position, Size } from '../../../domain/shared';
 import type { Element, ElementType } from '../../../domain/element';
-import { isConnectorElement, isTaskElement, richTextToPlain } from '../../../domain/element';
+import {
+  isConnectorElement,
+  isNoteElement,
+  isTaskElement,
+  richTextToPlain,
+} from '../../../domain/element';
 import type { ElementId } from '../../../domain/shared';
 import type {
   CanvasViewportStore,
@@ -757,6 +762,37 @@ export function Canvas({
     onReorderElements?.(result.elements);
   }, [closeContextMenu, elements, selection.selectedIds, onReorderElements]);
 
+  const contextMenuTarget = useMemo(() => {
+    if (contextMenuTargetId === null) {
+      return null;
+    }
+
+    return elements.find((element) => element.id.value === contextMenuTargetId) ?? null;
+  }, [contextMenuTargetId, elements]);
+
+  const noteColorMenu = useMemo(() => {
+    if (
+      readOnly ||
+      onUpdateElement === undefined ||
+      contextMenuTarget === null ||
+      !isNoteElement(contextMenuTarget)
+    ) {
+      return undefined;
+    }
+
+    return {
+      currentColor: contextMenuTarget.color,
+      onSelect: (color: string): void => {
+        closeContextMenu();
+        onUpdateElement({ type: 'note', element: contextMenuTarget, color });
+      },
+      onClear: (): void => {
+        closeContextMenu();
+        onUpdateElement({ type: 'note', element: contextMenuTarget, color: null });
+      },
+    };
+  }, [readOnly, onUpdateElement, contextMenuTarget, closeContextMenu]);
+
   const handleCreateElement = useCallback(
     (type: ElementType): void => {
       if (type === 'task' && onCreateTask !== undefined) {
@@ -1052,6 +1088,7 @@ export function Canvas({
         position={contextMenu}
         onBringToFront={handleBringToFront}
         onSendToBack={handleSendToBack}
+        noteColor={noteColorMenu}
         onClose={closeContextMenu}
       />
       <CanvasToolbar

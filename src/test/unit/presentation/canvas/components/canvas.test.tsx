@@ -4,11 +4,13 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { Position, ElementId, Size, UserId, WorkspaceId } from '../../../../../domain/shared';
 import {
   createConnectorElement,
+  createNoteElement,
   createTaskElement,
   createTextElement,
   richTextFromPlain,
 } from '../../../../../domain/element';
 import type { Element, ElementType, TaskElement } from '../../../../../domain/element';
+import { NOTE_COLOR_PALETTE } from '../../../../../presentation/canvas/note-colors';
 import {
   createCanvasViewportStore,
   createCommandHistory,
@@ -31,6 +33,25 @@ function createElement(id: string, x: number, y: number, width: number, height: 
     position: Position.create(x, y),
     size: Size.create(width, height),
     content: 'hello',
+  });
+}
+
+function createNote(
+  id: string,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  color?: string,
+): Element {
+  return createNoteElement({
+    id: ElementId.create(id),
+    workspaceId: WorkspaceId.create('ws-1'),
+    createdBy: UserId.create('user-1'),
+    position: Position.create(x, y),
+    size: Size.create(width, height),
+    content: 'note',
+    ...(color === undefined ? {} : { color }),
   });
 }
 
@@ -1212,6 +1233,87 @@ describe('Canvas', () => {
       fireEvent.contextMenu(canvas, { clientX: 700, clientY: 550 });
 
       expect(screen.queryByRole('menuitem', { name: 'Bring to front' })).not.toBeInTheDocument();
+    });
+
+    it('applies a note color from the context menu', async () => {
+      const note = createNote('note-1', 100, 100, 120, 80);
+      const onUpdateElement = jest.fn();
+      renderCanvas(
+        [note],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        onUpdateElement,
+      );
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const user = userEvent.setup();
+
+      fireEvent.contextMenu(canvas, { clientX: 150, clientY: 130 });
+
+      const noteColor = await screen.findByRole('menuitem', { name: 'Note color' });
+      await user.hover(noteColor);
+
+      await user.click(await screen.findByRole('menuitem', { name: 'Green' }));
+
+      expect(onUpdateElement).toHaveBeenCalledWith({
+        type: 'note',
+        element: note,
+        color: NOTE_COLOR_PALETTE[0].color,
+      });
+    });
+
+    it('resets a note color to the default from the context menu', async () => {
+      const color = NOTE_COLOR_PALETTE[1].color;
+      const note = createNote('note-1', 100, 100, 120, 80, color);
+      const onUpdateElement = jest.fn();
+      renderCanvas(
+        [note],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        onUpdateElement,
+      );
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const user = userEvent.setup();
+
+      fireEvent.contextMenu(canvas, { clientX: 150, clientY: 130 });
+
+      const noteColor = await screen.findByRole('menuitem', { name: 'Note color' });
+      await user.hover(noteColor);
+
+      await user.click(await screen.findByRole('menuitem', { name: 'Default' }));
+
+      expect(onUpdateElement).toHaveBeenCalledWith({
+        type: 'note',
+        element: note,
+        color: null,
+      });
+    });
+
+    it('does not offer note colors for non-note elements', async () => {
+      renderCanvas([FIRST_ITEM]);
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      fireEvent.contextMenu(canvas, { clientX: 150, clientY: 130 });
+
+      expect(await screen.findByRole('menuitem', { name: 'Bring to front' })).toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'Note color' })).not.toBeInTheDocument();
     });
 
     it('shows text formatting options when right-clicking a text element', async () => {

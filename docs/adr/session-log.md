@@ -1,5 +1,17 @@
 # Session Log
 
+## 2026-10-19 — PBL-003 Paleta de colores de nota
+
+- Siguiente tarea del backlog: PBL-003 (R1, P1, S, Quick win; PBL-001 y PBL-002 DONE). Sin IN PROGRESS ni BLOCKED.
+- Domain: `withNoteColor` acepta `undefined` para eliminar el color (omite la propiedad), mantiene la validación de string no vacío y la inmutabilidad.
+- Application: `UpdateElementInput` de nota admite `color: string | null`; `null` limpia el color siguiendo el convenio de `assigneeId`, `dueDate`, `parentFrameId` y `link.title`.
+- Presentation: nuevo `canvas/note-colors.ts` con 5 colores semánticos del tema (`background.success`, `warning`, `info`, `destructive`, `sunken`); contraste con `color.text.primary` ≥14:1 en light y ≥11:1 en dark. El menú contextual de nota añade un submenú "Note color" con acción "Default", swatches, check del color activo y navegación por teclado de `DropdownMenu`. El handler reutiliza `onUpdateElement`, por lo que hereda historial, undo/redo, persistencia y realtime. Solo se muestra para notas escribibles.
+- Persistencia: sin cambios; el mapper ya omite `color` cuando es `undefined` y `setDoc` sobrescribe el documento, de modo que limpiar el color elimina el campo.
+- i18n: claves nuevas en inglés y español.
+- Tests: dominio (limpiar color), Application (null), Presentation (aplicar, reset y menú solo para notas) y E2E de aplicar color, undo/redo, recarga y reset. Total `npm test`: 220 suites / 2558 tests; `test:e2e`: 19 tests.
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test`, `npm run build` y `npm run test:e2e` en verde.
+- Sin ADR nuevo: decisión local de Presentation y extensión mínima coherente con los convenios existentes.
+
 ## 2026-10-19 — PBL-001 Lecturas acotadas y verificación de email
 
 - Rules: `workspaces.read` exige membership; `invitations.read` se limita a miembros o al email destinatario; `email_verified` obligatorio en membership create desde invitación y en el accept de la invitación.

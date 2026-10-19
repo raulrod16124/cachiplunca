@@ -42,7 +42,7 @@ export type UpdateElementInput =
   | (UpdateElementBaseInput & {
       readonly type: 'note';
       readonly content?: RichTextDocument | string;
-      readonly color?: string;
+      readonly color?: string | null;
     })
   | (UpdateElementBaseInput & {
       readonly type: 'task';
@@ -144,7 +144,7 @@ function applyNote(input: NotePatch, updatedAt: Date): Element {
     updated = withNoteContent(updated, input.content, updatedAt);
   }
   if (input.color !== undefined) {
-    updated = withNoteColor(updated, input.color, updatedAt);
+    updated = withNoteColor(updated, input.color ?? undefined, updatedAt);
   }
   return applyRotation(input, updated, updatedAt);
 }

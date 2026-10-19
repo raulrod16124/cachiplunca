@@ -91,6 +91,19 @@ describe('createUpdateElement', () => {
     }
   });
 
+  it('clears the note color when null is provided', () => {
+    const element = expectOk({
+      element: noteElement({ color: '#ff0' }),
+      type: 'note',
+      color: null,
+    });
+
+    expect(element.type).toBe('note');
+    if (element.type === 'note') {
+      expect(element.color).toBeUndefined();
+    }
+  });
+
   it('updates task title, status, assignee and due date', () => {
     const assigneeId = UserId.create('user-2');
     const dueDate = new Date('2024-03-01T00:00:00Z');

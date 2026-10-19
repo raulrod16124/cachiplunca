@@ -88,7 +88,7 @@ Definition of Done:
 | ------- | -------------------------------------------- | ------- | --------- | -------- | -------------- | --- | ------ |
 | PBL-001 | Seguridad de lectura y verificación de email | R1      | P0        | M        | `mvp TASK-127` | No  | DONE   |
 | PBL-002 | Borrar workspace desde la UI                 | R1      | P0        | S        | —              | Sí  | DONE   |
-| PBL-003 | Paleta de colores de nota                    | R1      | P1        | S        | —              | Sí  | TODO   |
+| PBL-003 | Paleta de colores de nota                    | R1      | P1        | S        | —              | Sí  | DONE   |
 | PBL-004 | Ayuda de atajos                              | R1      | P2        | S        | —              | Sí  | TODO   |
 | PBL-005 | Export JSON y PDF del tablero                | R1      | P1        | S        | —              | Sí  | TODO   |
 | PBL-006 | Duplicar workspace                           | R1      | P1        | M        | —              | No  | TODO   |
@@ -205,7 +205,7 @@ Permitir que el owner elimine un workspace desde la interfaz con confirmación d
 
 ### PBL-003 — Paleta de colores de nota
 
-**Priority:** P1 · **Effort:** S · **Depends:** — · **Status:** TODO · **Quick win**
+**Priority:** P1 · **Effort:** S · **Depends:** — · **Status:** DONE · **Quick win**
 
 #### Objetivo
 
@@ -220,11 +220,11 @@ Aprovechar el color ya soportado por `NoteElement` para organizar visualmente la
 
 #### Criterios de aceptación
 
-- [ ] El color se aplica y persiste tras recargar.
-- [ ] Undo/redo restauran el color anterior.
-- [ ] La UI es navegable con teclado y tiene etiquetas accesibles.
-- [ ] Los colores mantienen contraste legible con el texto.
-- [ ] Tests de Presentation y del flujo de actualización.
+- [x] El color se aplica y persiste tras recargar.
+- [x] Undo/redo restauran el color anterior.
+- [x] La UI es navegable con teclado y tiene etiquetas accesibles.
+- [x] Los colores mantienen contraste legible con el texto.
+- [x] Tests de Presentation y del flujo de actualización.
 
 #### Fuera de alcance
 
@@ -806,6 +806,7 @@ Añadir una línea por sesión. El detalle técnico extenso sigue viviendo en `d
 | 2026-10-19 | —       | Creado    | Creación del backlog post-MVP y priorización inicial.                                                                                                                            |
 | 2026-10-19 | PBL-002 | DONE      | Borrado de workspace desde la card con confirmación; roles por workspace desde `ListWorkspaces`; unit, integración y E2E.                                                        |
 | 2026-10-19 | PBL-001 | DONE      | Lecturas de workspaces/invitations acotadas por membership/destinatario; accept con `email_verified`; flujo de verificación con envío y refresh; rules, unit, integración y E2E. |
+| 2026-10-19 | PBL-003 | DONE      | Paleta de 5 colores de tema en el menú contextual de nota, reset a por defecto, `color: null` en `UpdateElement`, undo/redo, persistencia y E2E.                                 |
 
 ---
 

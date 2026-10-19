@@ -168,4 +168,18 @@ describe('NoteElement', () => {
 
     expect(() => withNoteColor(original, '   ')).toThrow(/color/);
   });
+
+  it('clears the color when undefined is provided without mutating the original', () => {
+    const original = createNoteElement(
+      createProps({ color: '#fff', createdAt: new Date('2024-01-01T00:00:00Z') }),
+    );
+    const updatedAt = new Date('2024-01-02T00:00:00Z');
+
+    const updated = withNoteColor(original, undefined, updatedAt);
+
+    expect(updated).not.toBe(original);
+    expect(updated.color).toBeUndefined();
+    expect(updated.updatedAt).toBe(updatedAt);
+    expect(original.color).toBe('#fff');
+  });
 });
