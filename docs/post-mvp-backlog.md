@@ -89,7 +89,7 @@ Definition of Done:
 | PBL-001 | Seguridad de lectura y verificación de email | R1      | P0        | M        | `mvp TASK-127` | No  | DONE   |
 | PBL-002 | Borrar workspace desde la UI                 | R1      | P0        | S        | —              | Sí  | DONE   |
 | PBL-003 | Paleta de colores de nota                    | R1      | P1        | S        | —              | Sí  | DONE   |
-| PBL-004 | Ayuda de atajos                              | R1      | P2        | S        | —              | Sí  | TODO   |
+| PBL-004 | Ayuda de atajos                              | R1      | P2        | S        | —              | Sí  | DONE   |
 | PBL-005 | Export JSON y PDF del tablero                | R1      | P1        | S        | —              | Sí  | TODO   |
 | PBL-006 | Duplicar workspace                           | R1      | P1        | M        | —              | No  | TODO   |
 | PBL-007 | Plantillas de arranque y empty states        | R1      | P0        | M        | —              | No  | TODO   |
@@ -240,7 +240,7 @@ Aprovechar el color ya soportado por `NoteElement` para organizar visualmente la
 
 ### PBL-004 — Ayuda de atajos
 
-**Priority:** P2 · **Effort:** S · **Depends:** — · **Status:** TODO · **Quick win**
+**Priority:** P2 · **Effort:** S · **Depends:** — · **Status:** DONE · **Quick win**
 
 #### Objetivo
 
@@ -255,10 +255,10 @@ Hacer descubribles los atajos existentes sin añadir funcionalidad nueva al canv
 
 #### Criterios de aceptación
 
-- [ ] La lista coincide exactamente con los atajos implementados.
-- [ ] Se abre y cierra con teclado; el foco queda atrapado mientras está abierto.
-- [ ] `Escape` cierra sin efectos colaterales.
-- [ ] Tests de apertura, cierre y contenido mínimo.
+- [x] La lista coincide exactamente con los atajos implementados.
+- [x] Se abre y cierra con teclado; el foco queda atrapado mientras está abierto.
+- [x] `Escape` cierra sin efectos colaterales.
+- [x] Tests de apertura, cierre y contenido mínimo.
 
 #### Fuera de alcance
 
@@ -268,6 +268,8 @@ Hacer descubribles los atajos existentes sin añadir funcionalidad nueva al canv
 #### Notas técnicas
 
 - Extraer etiquetas desde las constantes de teclado existentes si es viable; evitar dos fuentes de verdad.
+- No hay atajos propios de colaboración implementados; el catálogo omite grupos vacíos y queda listo para PBL-008.
+- Catálogo puro en `src/presentation/canvas/keyboard-shortcuts.ts`; el diálogo solo renderiza datos y la apertura con `?` ignora campos editables y modales abiertos.
 
 ---
 
@@ -807,6 +809,7 @@ Añadir una línea por sesión. El detalle técnico extenso sigue viviendo en `d
 | 2026-10-19 | PBL-002 | DONE      | Borrado de workspace desde la card con confirmación; roles por workspace desde `ListWorkspaces`; unit, integración y E2E.                                                        |
 | 2026-10-19 | PBL-001 | DONE      | Lecturas de workspaces/invitations acotadas por membership/destinatario; accept con `email_verified`; flujo de verificación con envío y refresh; rules, unit, integración y E2E. |
 | 2026-10-19 | PBL-003 | DONE      | Paleta de 5 colores de tema en el menú contextual de nota, reset a por defecto, `color: null` en `UpdateElement`, undo/redo, persistencia y E2E.                                 |
+| 2026-10-19 | PBL-004 | DONE      | Ayuda de atajos accesible desde `?` y la top bar; catálogo puro por contextos, i18n en/es, foco atrapado, cierre con `Escape` y tests de contenido.                              |
 
 ---
 

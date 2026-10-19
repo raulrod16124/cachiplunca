@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { Button, Text } from '@raulrod/ui';
 import type { Workspace } from '../../../../domain/workspace';
@@ -23,6 +23,7 @@ import type { AuthUser, RealtimeConnectionStatus } from '../../../../application
 import { createPresenceColorAssigner } from '../../../collaboration';
 import { Canvas, type ConnectorEndpointDragInput } from '../../../canvas';
 import type { TaskFormValues } from '../../../canvas/components/task-form-dialog';
+import { KeyboardShortcutsDialog } from './keyboard-shortcuts-dialog';
 import { WorkspaceTopBar } from './workspace-top-bar';
 
 const Shell = styled.div`
@@ -130,6 +131,7 @@ export function WorkspaceShellLayout({
   accessErrorMessage = null,
   onRetryRole,
 }: WorkspaceShellLayoutProps): ReactNode {
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const colorAssignerRef = useRef(createPresenceColorAssigner());
   const userIds = useMemo(() => {
     const ids = new Set<string>();
@@ -178,6 +180,7 @@ export function WorkspaceShellLayout({
           currentUser={currentUser}
           logoutUser={logoutUser}
           onShare={onShare}
+          onShowShortcuts={() => setShortcutsOpen(true)}
           onRename={onRename}
           persistenceErrorMessage={persistenceErrorMessage}
           collaborationErrorMessage={collaborationErrorMessage}
@@ -209,6 +212,7 @@ export function WorkspaceShellLayout({
           readOnly={readOnly}
         />
       </CanvasArea>
+      <KeyboardShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
     </Shell>
   );
 }

@@ -9,7 +9,7 @@ import {
   Tooltip,
   VisuallyHidden,
 } from '@raulrod/ui';
-import { ArrowLeft, Share2 } from '@raulrod/icons';
+import { ArrowLeft, CircleQuestionMark, Share2 } from '@raulrod/icons';
 import type { ReactNode } from 'react';
 import styled from 'styled-components';
 import type { AuthUser, RealtimeConnectionStatus } from '../../../../application/ports';
@@ -189,6 +189,10 @@ const ShareButton = styled(IconButton)`
   flex: none;
 `;
 
+const HelpButton = styled(IconButton)`
+  flex: none;
+`;
+
 export interface WorkspaceTopBarProps {
   readonly workspace: Workspace;
   readonly role: MembershipRole | undefined;
@@ -200,6 +204,7 @@ export interface WorkspaceTopBarProps {
   readonly currentUser: AuthUser | null;
   readonly logoutUser: LogoutUser;
   readonly onShare?: () => void;
+  readonly onShowShortcuts?: () => void;
   readonly onRename?: (name: string) => Promise<UpdateWorkspaceResult>;
   readonly readOnly?: boolean;
   readonly persistenceErrorMessage: string | null;
@@ -218,6 +223,7 @@ export function WorkspaceTopBar({
   currentUser,
   logoutUser,
   onShare,
+  onShowShortcuts,
   onRename,
   readOnly = false,
   persistenceErrorMessage,
@@ -368,6 +374,20 @@ export function WorkspaceTopBar({
               >
                 <Share2 aria-hidden="true" size={16} />
               </ShareButton>
+            </Tooltip>
+          )}
+          {onShowShortcuts === undefined ? null : (
+            <Tooltip content={t('shortcuts.open')} placement="bottom">
+              <HelpButton
+                type="button"
+                variant="secondary"
+                size="sm"
+                label={t('shortcuts.open')}
+                aria-keyshortcuts="?"
+                onClick={onShowShortcuts}
+              >
+                <CircleQuestionMark aria-hidden="true" size={16} />
+              </HelpButton>
             </Tooltip>
           )}
           <AccountMenu currentUser={currentUser} logoutUser={logoutUser} />

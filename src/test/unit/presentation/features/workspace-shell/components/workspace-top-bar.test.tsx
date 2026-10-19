@@ -236,6 +236,33 @@ describe('WorkspaceTopBar', () => {
     expect(screen.queryByRole('button', { name: 'Share' })).not.toBeInTheDocument();
   });
 
+  it('opens the keyboard shortcuts help from the top bar', () => {
+    const onShowShortcuts = jest.fn();
+    render(
+      <WorkspaceTopBar
+        workspace={WORKSPACE}
+        role={undefined}
+        onBack={jest.fn()}
+        syncStatus="idle"
+        connectionStatus="connected"
+        connectedUsers={[]}
+        currentUser={CURRENT_USER}
+        logoutUser={LOGOUT_USER}
+        onShowShortcuts={onShowShortcuts}
+        persistenceErrorMessage={null}
+        collaborationErrorMessage={null}
+        creationErrorMessage={null}
+      />,
+    );
+
+    const helpButton = screen.getByRole('button', { name: 'Keyboard shortcuts' });
+    expect(helpButton).toHaveAttribute('aria-keyshortcuts', '?');
+
+    fireEvent.click(helpButton);
+
+    expect(onShowShortcuts).toHaveBeenCalledTimes(1);
+  });
+
   it('announces persistence and collaboration errors', () => {
     render(
       <WorkspaceTopBar
