@@ -92,7 +92,7 @@ Definition of Done:
 | PBL-004 | Ayuda de atajos                              | R1      | P2        | S        | —              | Sí  | DONE   |
 | PBL-005 | Export JSON y PDF del tablero                | R1      | P1        | S        | —              | Sí  | DONE   |
 | PBL-006 | Duplicar workspace                           | R1      | P1        | M        | —              | No  | DONE   |
-| PBL-007 | Plantillas de arranque y empty states        | R1      | P0        | M        | —              | No  | TODO   |
+| PBL-007 | Plantillas de arranque y empty states        | R1      | P0        | M        | —              | No  | DONE   |
 | PBL-008 | Command palette (Cmd/Ctrl + K)               | R1      | P1        | M        | —              | No  | TODO   |
 | PBL-009 | Vista Plan de tareas                         | R2      | P0        | M        | —              | No  | TODO   |
 | PBL-010 | Crear tarea desde nota o frame               | R2      | P1        | S        | PBL-009        | Sí  | TODO   |
@@ -350,7 +350,7 @@ Permitir reutilizar un tablero como punto de partida sin reconstruirlo.
 
 ### PBL-007 — Plantillas de arranque y empty states
 
-**Priority:** P0 · **Effort:** M · **Depends:** — · **Status:** TODO
+**Priority:** P0 · **Effort:** M · **Depends:** — · **Status:** DONE
 
 #### Objetivo
 
@@ -367,11 +367,11 @@ Reducir el canvas vacío y acelerar el primer valor con estructuras de planifica
 
 #### Criterios de aceptación
 
-- [ ] Cada plantilla crea frames, notas y tareas coherentes.
-- [ ] La opción "Blank" mantiene el comportamiento actual.
-- [ ] No se añaden tipos de elemento ni entidades de dominio nuevas.
-- [ ] La generación de una plantilla está cubierta por tests puros.
-- [ ] E2E de creación con al menos una plantilla.
+- [x] Cada plantilla crea frames, notas y tareas coherentes.
+- [x] La opción "Blank" mantiene el comportamiento actual.
+- [x] No se añaden tipos de elemento ni entidades de dominio nuevas.
+- [x] La generación de una plantilla está cubierta por tests puros.
+- [x] E2E de creación con al menos una plantilla.
 
 #### Fuera de alcance
 
@@ -813,6 +813,7 @@ Añadir una línea por sesión. El detalle técnico extenso sigue viviendo en `d
 | 2026-10-19 | PBL-005 | DONE      | Export JSON versionado y descarga desde browser; vista imprimible escalada con `window.print()`; disponible para Owner, Editor y Viewer; serializer puro, i18n, unit, integración y E2E.                                    |
 | 2026-10-19 | PBL-006 | DONE      | Duplicado owner-only desde la card con actualización del listado y apertura manual; copia de metadatos y elementos con IDs nuevos, remapeo de conectores y frames, compensación best-effort, i18n, unit, integración y E2E. |
 | 2026-10-19 | PBL-006 | DONE      | Follow-up: edición de nombre y descripción desde la card con icono y diálogo; acciones de card compactadas en iconos accesibles; unit, integración y E2E.                                                                   |
+| 2026-10-19 | PBL-007 | DONE      | Plantillas puras de retrospectiva, kickoff y brainstorming; selector Blank/Template en el diálogo; elementos con IDs nuevos y rollback best-effort; empty state del board con CTA; i18n en/es, unit, integración y E2E.     |
 
 ---
 

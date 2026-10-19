@@ -2,12 +2,14 @@ import type { UserId } from '../../domain/shared';
 import type { Workspace } from '../../domain/workspace';
 import { toAppError, type AppError } from '../../shared/errors';
 import type { WorkspaceRepository } from '../ports';
+import type { WorkspaceTemplateId } from '../services/workspace-templates';
 import { validateWorkspaceName } from './validate-workspace-name';
 
 export interface CreateWorkspaceInput {
   readonly name: string;
   readonly createdBy: UserId;
   readonly description?: string | null;
+  readonly templateId?: WorkspaceTemplateId | null;
 }
 
 export type CreateWorkspaceFieldName = 'name';

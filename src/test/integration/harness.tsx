@@ -118,6 +118,7 @@ export function createAppHarness(): AppHarness {
 
   let elementSequence = 0;
   let currentUser: AuthUser | null = null;
+  const generateElementId = () => ElementId.create(`el-${++elementSequence}`);
 
   authPort.observeSession((user) => {
     currentUser = user;
@@ -132,7 +133,10 @@ export function createAppHarness(): AppHarness {
     listWorkspaces: createListWorkspaces(workspaceRepository, membershipRepository),
     createWorkspaceWithOwner: createCreateWorkspaceWithOwner({
       workspaceRepository,
+      membershipRepository,
+      elementRepository,
       createOwnerMembership: createCreateOwnerMembership(membershipRepository),
+      generateId: generateElementId,
     }),
     deleteWorkspace: createDeleteWorkspace({ workspaceRepository, membershipRepository }),
     updateWorkspace: createUpdateWorkspace(workspaceRepository),
@@ -143,9 +147,12 @@ export function createAppHarness(): AppHarness {
       loadWorkspaceElements: createLoadWorkspaceElements(elementRepository),
       createWorkspaceWithOwner: createCreateWorkspaceWithOwner({
         workspaceRepository,
+        membershipRepository,
+        elementRepository,
         createOwnerMembership: createCreateOwnerMembership(membershipRepository),
+        generateId: generateElementId,
       }),
-      generateId: () => ElementId.create(`el-${++elementSequence}`),
+      generateId: generateElementId,
     }),
     getWorkspace: createGetWorkspace(workspaceRepository),
     getWorkspaceRole: createGetWorkspaceRole(membershipRepository),
@@ -178,7 +185,7 @@ export function createAppHarness(): AppHarness {
       createElementPersistence(elementRepository),
     ),
     realtimeSubscriptionManager: createRealtimeSubscriptionManager(realtimePort),
-    generateElementId: () => ElementId.create(`el-${++elementSequence}`),
+    generateElementId,
     presencePort,
   };
 

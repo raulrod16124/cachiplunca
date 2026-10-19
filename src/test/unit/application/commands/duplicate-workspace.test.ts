@@ -60,7 +60,10 @@ function setup() {
   const generateId = sequentialIds();
   const createWorkspaceWithOwner = createCreateWorkspaceWithOwner({
     workspaceRepository,
+    membershipRepository,
+    elementRepository,
     createOwnerMembership: createCreateOwnerMembership(membershipRepository),
+    generateId,
   });
   const duplicateWorkspace = createDuplicateWorkspace({
     workspaceRepository,

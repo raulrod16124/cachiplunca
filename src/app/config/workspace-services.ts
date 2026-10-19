@@ -60,9 +60,13 @@ export function createWorkspaceServices(deps: WorkspaceServicesDeps = {}): Works
   const workspaceRepository: WorkspaceRepository = createFirebaseWorkspaceRepository(db);
   const membershipRepository: MembershipRepository = createFirebaseMembershipRepository(db);
   const elementRepository: ElementRepository = createFirebaseElementRepository(db);
+  const generateElementId = deps.generateElementId ?? (() => ElementId.create(crypto.randomUUID()));
   const createWorkspaceWithOwner = createCreateWorkspaceWithOwner({
     workspaceRepository,
+    membershipRepository,
+    elementRepository,
     createOwnerMembership: createCreateOwnerMembership(membershipRepository),
+    generateId: generateElementId,
   });
 
   return {
@@ -74,7 +78,7 @@ export function createWorkspaceServices(deps: WorkspaceServicesDeps = {}): Works
       elementRepository,
       loadWorkspaceElements: createLoadWorkspaceElements(elementRepository),
       createWorkspaceWithOwner,
-      generateId: deps.generateElementId ?? (() => ElementId.create(crypto.randomUUID())),
+      generateId: generateElementId,
     }),
     getWorkspace: createGetWorkspace(workspaceRepository),
     getWorkspaceRole: createGetWorkspaceRole(membershipRepository),

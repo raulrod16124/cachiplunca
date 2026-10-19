@@ -58,6 +58,7 @@ import { useZoom } from '../hooks/use-zoom';
 import { ElementView } from '../renderers';
 import type { ElementRendererRegistry } from '../renderers';
 import { EmptyState } from '../../components/empty-state';
+import { useI18n } from '../../i18n';
 import { CanvasToolbar } from './canvas-toolbar';
 import { ElementContextMenu } from './element-context-menu';
 import { ElementEditorOverlay } from './element-editor-overlay';
@@ -140,7 +141,7 @@ const Hint = styled.div`
   left: 50%;
   transform: translate(-50%, -50%);
   text-align: center;
-  pointer-events: none;
+  pointer-events: auto;
   max-width: 480px;
   color: ${({ theme }) => theme.canvas.hintText};
   font-size: ${({ theme }) => theme.font.size.sm};
@@ -224,6 +225,7 @@ export function Canvas({
   onCursorMove,
   readOnly = false,
 }: CanvasProps): ReactElement {
+  const { t } = useI18n();
   const viewport = useSyncExternalStore(store.subscribe, store.getSnapshot);
   const selection = useSyncExternalStore(selectionStore.subscribe, selectionStore.getSnapshot);
   const spacePressed = useSpacePressed();
@@ -1069,12 +1071,26 @@ export function Canvas({
             textCommitGuardRef={floatingToolbarOpenRef}
           />
         )}
-        {elements.length === 0 ? (
-          <Hint>
-            <EmptyState title="This board is empty" titleAs="h2" description={CANVAS_SHORTCUTS} />
-          </Hint>
-        ) : null}
       </World>
+      {elements.length === 0 ? (
+        <Hint onPointerDown={(event) => event.stopPropagation()}>
+          <EmptyState
+            title={t('canvas.empty.title')}
+            titleAs="h2"
+            description={CANVAS_SHORTCUTS}
+            actionLabel={
+              readOnly || onCreateElement === undefined ? undefined : t('canvas.empty.action')
+            }
+            onAction={
+              readOnly || onCreateElement === undefined
+                ? undefined
+                : () => {
+                    onCreateElement('note');
+                  }
+            }
+          />
+        </Hint>
+      ) : null}
       <RemoteCursorsOverlay cursors={remoteCursors} viewport={viewport} userColors={userColors} />
       <FloatingTextToolbar
         scopeRef={containerRef}

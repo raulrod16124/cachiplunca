@@ -42,6 +42,8 @@ async function renderAuthenticatedApp(initialPath = '/workspaces') {
     role: 'owner',
   });
   const elementRepository = new FakeElementRepository();
+  let elementSequence = 0;
+  const generateElementId = () => ElementId.create(`el-${++elementSequence}`);
 
   const view = renderAppRoutes({
     authPort,
@@ -53,7 +55,10 @@ async function renderAuthenticatedApp(initialPath = '/workspaces') {
       listWorkspaces: createListWorkspaces(repository, membershipRepository),
       createWorkspaceWithOwner: createCreateWorkspaceWithOwner({
         workspaceRepository: repository,
+        membershipRepository,
+        elementRepository,
         createOwnerMembership: createCreateOwnerMembership(membershipRepository),
+        generateId: generateElementId,
       }),
       getWorkspace: createGetWorkspace(repository),
       loadWorkspaceElements: createLoadWorkspaceElements(elementRepository),
@@ -61,7 +66,7 @@ async function renderAuthenticatedApp(initialPath = '/workspaces') {
         createElementPersistence(elementRepository),
       ),
       realtimeSubscriptionManager: createRealtimeSubscriptionManager(new FakeRealtimePort()),
-      generateElementId: () => ElementId.create('generated'),
+      generateElementId,
     },
   });
 

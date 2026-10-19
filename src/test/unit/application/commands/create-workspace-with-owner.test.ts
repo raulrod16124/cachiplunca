@@ -3,8 +3,9 @@ import {
   createCreateWorkspaceWithOwner,
   type CreateWorkspaceWithOwnerResult,
 } from '../../../../application/commands';
-import { UserId, WorkspaceId } from '../../../../domain/shared';
+import { UserId, ElementId, WorkspaceId } from '../../../../domain/shared';
 import { ERROR_CODES } from '../../../../shared/errors';
+import { FakeElementRepository } from '../../../fixtures/fake-element-repository';
 import { FakeMembershipRepository } from '../../../fixtures/fake-membership-repository';
 import { FakeWorkspaceRepository } from '../../../fixtures/fake-workspace-repository';
 
@@ -13,11 +14,22 @@ const OWNER = UserId.create('user-1');
 function setup() {
   const workspaceRepository = new FakeWorkspaceRepository();
   const membershipRepository = new FakeMembershipRepository();
+  const elementRepository = new FakeElementRepository();
+  let sequence = 0;
+  const generateId = () => ElementId.create(`el-${++sequence}`);
   const createWorkspaceWithOwner = createCreateWorkspaceWithOwner({
     workspaceRepository,
+    membershipRepository,
+    elementRepository,
     createOwnerMembership: createCreateOwnerMembership(membershipRepository),
+    generateId,
   });
-  return { workspaceRepository, membershipRepository, createWorkspaceWithOwner };
+  return {
+    workspaceRepository,
+    membershipRepository,
+    elementRepository,
+    createWorkspaceWithOwner,
+  };
 }
 
 describe('createCreateWorkspaceWithOwner', () => {
@@ -158,5 +170,100 @@ describe('createCreateWorkspaceWithOwner', () => {
     expect(memberships).toHaveLength(1);
     expect(memberships[0].workspaceId.equals(result.workspace.id)).toBe(true);
     expect(memberships[0].workspaceId.equals(WorkspaceId.create('ws-unknown'))).toBe(false);
+  });
+
+  it('keeps the board empty when no template is selected', async () => {
+    const { elementRepository, createWorkspaceWithOwner } = setup();
+
+    const result = await createWorkspaceWithOwner({ name: 'Blank board', ownerId: OWNER });
+
+    expect(result.status).toBe('ok');
+    if (result.status !== 'ok') {
+      return;
+    }
+    await expect(elementRepository.listByWorkspace(result.workspace.id)).resolves.toHaveLength(0);
+  });
+
+  it('creates the template elements with new ids for the new workspace', async () => {
+    const { elementRepository, createWorkspaceWithOwner } = setup();
+
+    const result = await createWorkspaceWithOwner({
+      name: 'Sprint retro',
+      ownerId: OWNER,
+      templateId: 'retrospective',
+    });
+
+    expect(result.status).toBe('ok');
+    if (result.status !== 'ok') {
+      return;
+    }
+
+    const elements = await elementRepository.listByWorkspace(result.workspace.id);
+    expect(elements.length).toBeGreaterThan(0);
+    expect(new Set(elements.map((element) => element.id.value)).size).toBe(elements.length);
+    expect(elements.some((element) => element.type === 'frame')).toBe(true);
+    expect(elements.some((element) => element.type === 'note')).toBe(true);
+    expect(elements.some((element) => element.type === 'task')).toBe(true);
+    for (const element of elements) {
+      expect(element.workspaceId.equals(result.workspace.id)).toBe(true);
+      expect(element.createdBy.equals(OWNER)).toBe(true);
+    }
+  });
+
+  it('rolls back the workspace, membership and elements when saving the template fails', async () => {
+    const {
+      workspaceRepository,
+      membershipRepository,
+      elementRepository,
+      createWorkspaceWithOwner,
+    } = setup();
+    jest.spyOn(elementRepository, 'saveMany').mockRejectedValue({
+      kind: 'persistence',
+      code: ERROR_CODES.PERSISTENCE_WRITE_FAILED,
+      message: 'Could not write the elements.',
+    });
+
+    const result = await createWorkspaceWithOwner({
+      name: 'Sprint retro',
+      ownerId: OWNER,
+      templateId: 'retrospective',
+    });
+
+    expect(result.status).toBe('error');
+    if (result.status === 'error') {
+      expect(result.error.code).toBe(ERROR_CODES.PERSISTENCE_WRITE_FAILED);
+      expect(result.error.details?.workspaceRollbackFailed).toBeUndefined();
+    }
+    await expect(workspaceRepository.list()).resolves.toHaveLength(0);
+    await expect(membershipRepository.listByUser(OWNER)).resolves.toHaveLength(0);
+  });
+
+  it('annotates the error when rolling back the template creation fails', async () => {
+    const {
+      workspaceRepository,
+      membershipRepository,
+      elementRepository,
+      createWorkspaceWithOwner,
+    } = setup();
+    jest.spyOn(elementRepository, 'saveMany').mockRejectedValue({
+      kind: 'persistence',
+      code: ERROR_CODES.PERSISTENCE_WRITE_FAILED,
+      message: 'Could not write the elements.',
+    });
+    jest
+      .spyOn(workspaceRepository, 'delete')
+      .mockRejectedValue(new Error('Could not delete the workspace.'));
+
+    const result = await createWorkspaceWithOwner({
+      name: 'Sprint retro',
+      ownerId: OWNER,
+      templateId: 'retrospective',
+    });
+
+    expect(result.status).toBe('error');
+    if (result.status === 'error') {
+      expect(result.error.details?.workspaceRollbackFailed).toBe(true);
+    }
+    await expect(membershipRepository.listByUser(OWNER)).resolves.toHaveLength(0);
   });
 });

@@ -8,19 +8,58 @@ import {
   DialogTitle,
   FormField,
   FormFieldControl,
+  FormFieldDescription,
   FormFieldError,
   FormFieldLabel,
   Input,
+  Radio,
+  RadioGroup,
   Stack,
   Text,
   Textarea,
 } from '@raulrod/ui';
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useId, useState, type FormEvent, type ReactNode } from 'react';
 import type { CreateWorkspace, CreateWorkspaceFieldErrors } from '../../../../application/commands';
+import type { WorkspaceTemplateId } from '../../../../application/services/workspace-templates';
 import type { UserId } from '../../../../domain/shared';
 import { toAppError } from '../../../../shared/errors';
 import { describeCreateWorkspaceError } from '../workspace-error-messages';
-import { localizeFieldError, localizeMessage, useI18n } from '../../../i18n';
+import { localizeFieldError, localizeMessage, useI18n, type TranslationKey } from '../../../i18n';
+
+type TemplateSelection = 'blank' | WorkspaceTemplateId;
+
+interface TemplateOption {
+  readonly id: TemplateSelection;
+  readonly nameKey: TranslationKey;
+  readonly descriptionKey: TranslationKey;
+}
+
+const TEMPLATE_OPTIONS: readonly TemplateOption[] = [
+  {
+    id: 'blank',
+    nameKey: 'workspaces.createDialog.templateBlank',
+    descriptionKey: 'workspaces.createDialog.templateBlankDescription',
+  },
+  {
+    id: 'retrospective',
+    nameKey: 'workspaces.createDialog.templateRetrospective',
+    descriptionKey: 'workspaces.createDialog.templateRetrospectiveDescription',
+  },
+  {
+    id: 'project-kickoff',
+    nameKey: 'workspaces.createDialog.templateKickoff',
+    descriptionKey: 'workspaces.createDialog.templateKickoffDescription',
+  },
+  {
+    id: 'brainstorming',
+    nameKey: 'workspaces.createDialog.templateBrainstorming',
+    descriptionKey: 'workspaces.createDialog.templateBrainstormingDescription',
+  },
+];
+
+function isTemplateSelection(value: string): value is TemplateSelection {
+  return TEMPLATE_OPTIONS.some((option) => option.id === value);
+}
 
 export interface CreateWorkspaceDialogProps {
   readonly open: boolean;
@@ -38,16 +77,21 @@ export function CreateWorkspaceDialog({
   onCreated,
 }: CreateWorkspaceDialogProps): ReactNode {
   const { t } = useI18n();
+  const templateLabelId = useId();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [template, setTemplate] = useState<TemplateSelection>('blank');
   const [fieldErrors, setFieldErrors] = useState<CreateWorkspaceFieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const selectedTemplate =
+    TEMPLATE_OPTIONS.find((option) => option.id === template) ?? TEMPLATE_OPTIONS[0];
 
   useEffect(() => {
     if (open) {
       setName('');
       setDescription('');
+      setTemplate('blank');
       setFieldErrors({});
       setFormError(null);
     }
@@ -69,6 +113,7 @@ export function CreateWorkspaceDialog({
         name,
         createdBy,
         description: trimmedDescription === '' ? undefined : trimmedDescription,
+        ...(template === 'blank' ? {} : { templateId: template }),
       });
       switch (result.status) {
         case 'ok':
@@ -128,6 +173,32 @@ export function CreateWorkspaceDialog({
                   />
                 )}
               </FormFieldControl>
+            </FormField>
+            <FormField>
+              <FormFieldLabel id={templateLabelId}>
+                {t('workspaces.createDialog.template')}
+              </FormFieldLabel>
+              <FormFieldControl>
+                {(field) => (
+                  <RadioGroup
+                    {...field}
+                    aria-labelledby={templateLabelId}
+                    value={template}
+                    onValueChange={(value) => {
+                      if (isTemplateSelection(value)) {
+                        setTemplate(value);
+                      }
+                    }}
+                  >
+                    {TEMPLATE_OPTIONS.map((option) => (
+                      <Radio key={option.id} value={option.id}>
+                        {t(option.nameKey)}
+                      </Radio>
+                    ))}
+                  </RadioGroup>
+                )}
+              </FormFieldControl>
+              <FormFieldDescription>{t(selectedTemplate.descriptionKey)}</FormFieldDescription>
             </FormField>
             {formError !== null && (
               <Text role="alert" color="color.text.danger">

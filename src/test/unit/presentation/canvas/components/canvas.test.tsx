@@ -196,6 +196,42 @@ describe('Canvas', () => {
     expect(screen.queryByRole('heading', { name: 'This board is empty' })).not.toBeInTheDocument();
   });
 
+  it('offers a CTA to add the first note when the board is empty', () => {
+    const store = createCanvasViewportStore(Size.create(800, 600));
+    const selectionStore = createSelectionStore();
+    const onCreateElement = jest.fn();
+
+    render(
+      <Canvas
+        store={store}
+        selectionStore={selectionStore}
+        elements={[]}
+        onCreateElement={onCreateElement}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add a note' }));
+
+    expect(onCreateElement).toHaveBeenCalledWith('note');
+  });
+
+  it('hides the empty board CTA in read-only mode', () => {
+    const store = createCanvasViewportStore(Size.create(800, 600));
+    const selectionStore = createSelectionStore();
+
+    render(
+      <Canvas
+        store={store}
+        selectionStore={selectionStore}
+        elements={[]}
+        onCreateElement={jest.fn()}
+        readOnly
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Add a note' })).not.toBeInTheDocument();
+  });
+
   it('exposes the canvas as a focusable region with keyboard shortcuts', () => {
     renderCanvas();
 
