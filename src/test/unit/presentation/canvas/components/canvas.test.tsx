@@ -1768,6 +1768,11 @@ describe('Canvas', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Create task' }));
     }
 
+    function selectStatus(label: string): void {
+      fireEvent.click(screen.getByRole('combobox', { name: 'Status' }));
+      fireEvent.click(screen.getByRole('option', { name: label }));
+    }
+
     it('opens the create dialog from the toolbar without creating anything yet', () => {
       const onCreateTask = jest.fn();
       renderTaskFormCanvas({ onCreateTask });
@@ -1837,6 +1842,23 @@ describe('Canvas', () => {
         type: 'task',
         element: task,
         title: 'Final spec',
+      });
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    it('commits the status changed from the edit dialog', () => {
+      const task = createTask('task-1', { status: 'in_progress', notes: 'Draft notes' });
+      const onUpdateElement = jest.fn();
+      renderTaskFormCanvas({ elements: [task], onUpdateElement });
+
+      fireEvent.doubleClick(screen.getByTestId('canvas-item-task-1'));
+      selectStatus('Completed');
+      fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+
+      expect(onUpdateElement).toHaveBeenCalledWith({
+        type: 'task',
+        element: task,
+        status: 'completed',
       });
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });

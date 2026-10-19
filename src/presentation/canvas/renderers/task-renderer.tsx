@@ -1,9 +1,11 @@
-import { Badge, DropdownMenu } from '@raulrod/ui';
+import { Badge, Button, DropdownMenu } from '@raulrod/ui';
+import { useId, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ReactElement } from 'react';
 import styled from 'styled-components';
 import type { UpdateElementInput } from '../../../application/commands';
 import { isEmptyRichText, isTaskElement, TASK_STATUSES } from '../../../domain/element';
-import type { TaskElement, TaskStatus } from '../../../domain/element';
+import type { RichTextDocument, TaskElement, TaskStatus } from '../../../domain/element';
+import { Size } from '../../../domain/shared';
 import type { ElementRendererProps } from './element-renderer';
 import { RichTextContent } from './rich-text-content';
 import { TASK_STATUS_META } from './task-status-meta';
@@ -56,10 +58,23 @@ const Caret = styled.span`
   font-size: ${({ theme }) => theme.font.size['2xs']};
 `;
 
-const NotesBox = styled.div`
+const NotesToggle = styled(Button)`
+  align-self: flex-start;
+  gap: 4px;
+  padding: 0;
+  color: ${({ theme }) => theme.color.text.muted};
+  font-size: ${({ theme }) => theme.font.size['2xs']};
+  font-weight: ${({ theme }) => theme.font.weight.medium};
+
+  &:hover {
+    color: ${({ theme }) => theme.color.text.primary};
+  }
+`;
+
+const NotesPanel = styled.div`
   flex: 1 1 auto;
   min-height: 0;
-  overflow: hidden;
+  overflow: auto;
   padding: 6px 8px;
   border-radius: ${({ theme }) => theme.radius.sm};
   background-color: ${({ theme }) => theme.color.background.sunken};
@@ -137,13 +152,119 @@ function TaskStatusControl({
   );
 }
 
+interface TaskNotesProps {
+  readonly element: TaskElement;
+  readonly document: RichTextDocument;
+  readonly onResizeElement?: (element: TaskElement, size: Size) => void;
+}
+
+function TaskNotes({ element, document, onResizeElement }: TaskNotesProps): ReactElement {
+  const [open, setOpen] = useState(false);
+  const panelId = useId();
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const originalHeightRef = useRef<number | null>(null);
+  const openRef = useRef(false);
+  const latestRef = useRef({ element, onResizeElement });
+  latestRef.current = { element, onResizeElement };
+
+  useLayoutEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const panel = panelRef.current;
+
+    if (panel === null) {
+      return;
+    }
+
+    const overflow = panel.scrollHeight - panel.clientHeight;
+
+    if (overflow <= 0) {
+      return;
+    }
+
+    const { element: current, onResizeElement: resize } = latestRef.current;
+
+    resize?.(current, Size.create(current.size.width, current.size.height + overflow));
+  }, [open]);
+
+  useEffect(() => {
+    return () => {
+      const originalHeight = originalHeightRef.current;
+      const { element: current, onResizeElement: resize } = latestRef.current;
+
+      if (openRef.current && originalHeight !== null && resize !== undefined) {
+        resize(current, Size.create(current.size.width, originalHeight));
+      }
+    };
+  }, []);
+
+  const toggle = (): void => {
+    const { element: current, onResizeElement: resize } = latestRef.current;
+
+    if (open) {
+      const originalHeight = originalHeightRef.current;
+
+      openRef.current = false;
+      setOpen(false);
+      originalHeightRef.current = null;
+
+      if (originalHeight !== null && resize !== undefined) {
+        resize(current, Size.create(current.size.width, originalHeight));
+      }
+
+      return;
+    }
+
+    originalHeightRef.current = current.size.height;
+    openRef.current = true;
+    setOpen(true);
+  };
+
+  return (
+    <>
+      <NotesToggle
+        type="button"
+        variant="ghost"
+        size="sm"
+        aria-expanded={open}
+        aria-controls={panelId}
+        endIcon={
+          <Caret aria-hidden="true" style={{ transform: open ? 'rotate(180deg)' : undefined }}>
+            ▾
+          </Caret>
+        }
+        data-testid={`task-notes-toggle-${element.id.value}`}
+        onClick={toggle}
+      >
+        Notes
+      </NotesToggle>
+      {open ? (
+        <NotesPanel
+          ref={panelRef}
+          id={panelId}
+          role="region"
+          aria-label="Task notes"
+          data-task-notes="true"
+        >
+          <RichTextContent document={document} />
+        </NotesPanel>
+      ) : null}
+    </>
+  );
+}
+
 export function TaskRenderer({
   element,
   onUpdateElement,
+  onResizeElement,
 }: ElementRendererProps): ReactElement | null {
   if (!isTaskElement(element)) {
     return null;
   }
+
+  const notes = element.notes;
 
   return (
     <Content data-element-content="true" data-element-type="task" data-task-status={element.status}>
@@ -153,10 +274,8 @@ export function TaskRenderer({
       <StatusRow>
         <TaskStatusControl element={element} onUpdateElement={onUpdateElement} />
       </StatusRow>
-      {element.notes === undefined || isEmptyRichText(element.notes) ? null : (
-        <NotesBox data-task-notes="true">
-          <RichTextContent document={element.notes} />
-        </NotesBox>
+      {notes === undefined || isEmptyRichText(notes) ? null : (
+        <TaskNotes element={element} document={notes} onResizeElement={onResizeElement} />
       )}
       {element.assigneeId === undefined ? null : (
         <Meta data-task-assignee="true">{element.assigneeId.value}</Meta>

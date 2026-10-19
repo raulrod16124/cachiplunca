@@ -40,6 +40,8 @@ const CREATE_DEFAULTS: TaskFormValues = { title: '', status: 'todo', notes: '' }
 
 const EMPTY_TITLE_ERROR = 'Title is required';
 
+const MODAL_SELECT_Z_INDEX = 'calc(var(--rr-z-modal) + 1)';
+
 export function TaskFormDialog({
   open,
   mode,
@@ -123,7 +125,10 @@ export function TaskFormDialog({
                     <Select.Trigger {...field} aria-label="Status">
                       <Select.Value />
                     </Select.Trigger>
-                    <Select.Content>
+                    <Select.Content
+                      placement="bottom-start"
+                      style={{ zIndex: MODAL_SELECT_Z_INDEX }}
+                    >
                       {TASK_STATUSES.map((option) => (
                         <Select.Item key={option} value={option}>
                           {TASK_STATUS_META[option].label}
