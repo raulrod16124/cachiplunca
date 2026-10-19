@@ -1190,14 +1190,40 @@ describe('Canvas', () => {
     });
 
     it('shows text formatting options when right-clicking a text element', async () => {
-      renderCanvas([FIRST_ITEM]);
-      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const { selectionStore } = renderCanvas(
+        [FIRST_ITEM],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        jest.fn(),
+      );
+      act(() => {
+        selectionStore.select('first');
+      });
 
+      const text = screen.getByText('hello');
+      const range = document.createRange();
+      range.selectNodeContents(text);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
       fireEvent.contextMenu(canvas, { clientX: 150, clientY: 130 });
 
-      expect(await screen.findByRole('menuitem', { name: 'Font' })).toBeInTheDocument();
-      expect(screen.getByRole('menuitem', { name: 'Bold' })).toBeInTheDocument();
-      expect(screen.getByRole('menuitem', { name: 'Alignment' })).toBeInTheDocument();
+      expect(await screen.findByRole('toolbar', { name: 'Text formatting' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Font' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Bold' })).toBeInTheDocument();
+
+      window.getSelection()?.removeAllRanges();
     });
   });
 
@@ -1578,12 +1604,13 @@ describe('Canvas', () => {
 
       fireEvent.doubleClick(screen.getByTestId('canvas-item-first'));
 
-      const editor = await screen.findByTestId('element-editor');
-      expect(getComputedStyle(editor).position).toBe('absolute');
-      expect(editor.style.left).toBe('100px');
-      expect(editor.style.top).toBe('100px');
-      expect(editor.style.width).toBe('120px');
-      expect(editor.style.height).toBe('80px');
+      const box = await screen.findByTestId('element-editor-box');
+      expect(getComputedStyle(box).position).toBe('absolute');
+      expect(box.style.left).toBe('100px');
+      expect(box.style.top).toBe('100px');
+      expect(box.style.width).toBe('120px');
+      expect(box.style.height).toBe('80px');
+      expect(box).toContainElement(await screen.findByTestId('element-editor'));
     });
 
     it('opens the editor when the double-click is retargeted to the canvas surface', async () => {
