@@ -257,7 +257,12 @@ const LEGACY_TASK_STATUSES: Record<string, TaskStatus> = {
 function readTaskStatus(value: unknown): TaskStatus {
   const status = readString(value, 'status');
 
-  if (status === 'todo' || status === 'in_progress' || status === 'completed' || status === 'blocked') {
+  if (
+    status === 'todo' ||
+    status === 'in_progress' ||
+    status === 'completed' ||
+    status === 'blocked'
+  ) {
     return status;
   }
 
