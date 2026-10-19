@@ -104,7 +104,7 @@ const allElements = (): Element[] => [
 describe('Element types', () => {
   it('declares the six MVP element types and task statuses', () => {
     expect(ELEMENT_TYPES).toEqual(['text', 'note', 'task', 'frame', 'connector', 'link']);
-    expect(TASK_STATUSES).toEqual(['todo', 'in_progress', 'done']);
+    expect(TASK_STATUSES).toEqual(['todo', 'in_progress', 'completed', 'blocked']);
   });
 
   it('distinguishes types with type narrowing', () => {

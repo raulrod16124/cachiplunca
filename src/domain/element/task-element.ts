@@ -16,6 +16,7 @@ export interface CreateTaskElementProps {
   readonly size: Size;
   readonly title: RichTextDocument | string;
   readonly status: TaskStatus;
+  readonly notes?: RichTextDocument | string;
   readonly assigneeId?: UserId;
   readonly dueDate?: Date;
   readonly rotation?: number;
@@ -26,6 +27,7 @@ export interface CreateTaskElementProps {
 
 export function createTaskElement(props: CreateTaskElementProps): TaskElement {
   const title = toRichTextDocument(props.title);
+  const notes = toOptionalRichTextDocument(props.notes);
   assertStatus(props.status);
   assertAssignee(props.assigneeId);
   assertDueDate(props.dueDate);
@@ -47,6 +49,7 @@ export function createTaskElement(props: CreateTaskElementProps): TaskElement {
     updatedAt,
     title,
     status: props.status,
+    ...(notes === undefined ? {} : { notes }),
     ...(props.assigneeId === undefined ? {} : { assigneeId: props.assigneeId }),
     ...(props.dueDate === undefined ? {} : { dueDate: props.dueDate }),
   };
@@ -74,6 +77,14 @@ export function withTaskStatus(
   return buildTaskElement(element, { status, updatedAt });
 }
 
+export function withTaskNotes(
+  element: TaskElement,
+  notes: RichTextDocument | string | undefined,
+  updatedAt: Date = new Date(),
+): TaskElement {
+  return buildTaskElement(element, { notes: toOptionalRichTextDocument(notes), updatedAt });
+}
+
 export function withTaskAssignee(
   element: TaskElement,
   assigneeId: UserId | undefined,
@@ -93,16 +104,17 @@ export function withTaskDueDate(
 
   return buildTaskElement(element, { dueDate, updatedAt });
 }
-
 interface TaskElementOverrides {
   readonly title?: RichTextDocument;
   readonly status?: TaskStatus;
+  readonly notes?: RichTextDocument;
   readonly assigneeId?: UserId;
   readonly dueDate?: Date;
   readonly updatedAt: Date;
 }
 
 function buildTaskElement(element: TaskElement, overrides: TaskElementOverrides): TaskElement {
+  const notes = 'notes' in overrides ? overrides.notes : element.notes;
   const assigneeId = 'assigneeId' in overrides ? overrides.assigneeId : element.assigneeId;
   const dueDate = 'dueDate' in overrides ? overrides.dueDate : element.dueDate;
 
@@ -119,6 +131,7 @@ function buildTaskElement(element: TaskElement, overrides: TaskElementOverrides)
     updatedAt: overrides.updatedAt,
     title: overrides.title ?? element.title,
     status: overrides.status ?? element.status,
+    ...(notes === undefined ? {} : { notes }),
     ...(assigneeId === undefined ? {} : { assigneeId }),
     ...(dueDate === undefined ? {} : { dueDate }),
   };
@@ -137,10 +150,25 @@ function toRichTextDocument(title: RichTextDocument | string | undefined): RichT
     if (title.trim().length === 0) {
       throw new Error('TaskElement title cannot be empty');
     }
+
     return richTextFromPlain(title);
   }
 
   return parseRichTextDocument(title);
+}
+
+function toOptionalRichTextDocument(
+  notes: RichTextDocument | string | undefined,
+): RichTextDocument | undefined {
+  if (notes === undefined) {
+    return undefined;
+  }
+
+  if (typeof notes === 'string') {
+    return richTextFromPlain(notes);
+  }
+
+  return parseRichTextDocument(notes);
 }
 
 function assertStatus(status: TaskStatus): void {

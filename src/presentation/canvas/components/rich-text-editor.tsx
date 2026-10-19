@@ -70,7 +70,7 @@ const Surface = styled.div`
 export interface RichTextEditorProps {
   readonly document: RichTextDocument;
   readonly ariaLabel: string;
-  readonly dataField: 'content' | 'title';
+  readonly dataField: 'content' | 'title' | 'notes';
   readonly singleLine?: boolean;
   readonly autoFocus?: boolean;
   readonly selectAllOnFocus?: boolean;

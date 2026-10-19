@@ -77,8 +77,20 @@ const TaskBox = styled(EditorBox)`
 `;
 
 const TaskTitle = styled.div`
+  flex: 0 0 auto;
   font-weight: ${({ theme }) => theme.font.weight.semibold};
   word-break: break-word;
+`;
+
+const TaskNotes = styled.div`
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 6px 8px;
+  border-radius: ${({ theme }) => theme.radius.sm};
+  background-color: ${({ theme }) => theme.color.background.sunken};
+  color: ${({ theme }) => theme.color.text.primary};
+  font-size: ${({ theme }) => theme.font.size['2xs']};
 `;
 
 const FrameBox = styled(EditorBox)`
@@ -127,7 +139,7 @@ type FieldEditorProps<TElement extends Element> = {
 type RichTextFieldEditorProps = {
   readonly document: RichTextDocument;
   readonly ariaLabel: string;
-  readonly dataField: 'content' | 'title';
+  readonly dataField: 'content' | 'title' | 'notes';
   readonly singleLine?: boolean;
   readonly autoFocus?: boolean;
   readonly selectAllOnFocus?: boolean;
@@ -260,7 +272,7 @@ function NoteContentEditor({
   );
 }
 
-function TaskTitleEditor({
+function TaskEditor({
   element,
   onCommit,
   onCancel,
@@ -270,17 +282,79 @@ function TaskTitleEditor({
   readonly onEditorReady?: (editor: Editor | null) => void;
   readonly commitGuardRef?: { readonly current: boolean };
 }): ReactElement {
-  const handleCommit = (document: RichTextDocument): void => {
-    if (JSON.stringify(document) === JSON.stringify(element.title)) {
-      onCancel();
+  const initialTitle = element.title;
+  const initialNotes = element.notes ?? richTextFromPlain('');
+  const titleDraftRef = useRef<RichTextDocument>(element.title);
+  const notesDraftRef = useRef<RichTextDocument>(initialNotes);
+  const cancelledRef = useRef(false);
+  const boxRef = useRef<HTMLDivElement | null>(null);
+
+  const cancel = (): void => {
+    if (cancelledRef.current) {
       return;
     }
 
-    onCommit({ type: 'task', element, title: document });
+    cancelledRef.current = true;
+    onCancel();
+  };
+
+  const commit = (): void => {
+    if (cancelledRef.current) {
+      return;
+    }
+
+    const title = titleDraftRef.current;
+    const notes = notesDraftRef.current;
+    const titleChanged = JSON.stringify(title) !== JSON.stringify(initialTitle);
+    const notesChanged = JSON.stringify(notes) !== JSON.stringify(initialNotes);
+
+    if (!titleChanged && !notesChanged) {
+      cancel();
+      return;
+    }
+
+    onCommit({
+      type: 'task',
+      element,
+      ...(titleChanged ? { title } : {}),
+      ...(notesChanged ? { notes } : {}),
+    });
+  };
+
+  const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>): void => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      cancel();
+      return;
+    }
+
+    if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+      event.preventDefault();
+      commit();
+    }
+  };
+
+  const handleBlur = (event: FocusEvent<HTMLDivElement>): void => {
+    if (isContainedFocus(event, boxRef.current)) {
+      return;
+    }
+
+    if (commitGuardRef?.current === true) {
+      return;
+    }
+
+    commit();
   };
 
   return (
-    <TaskBox style={boxStyle(element)} data-testid="element-editor-box">
+    <TaskBox
+      ref={boxRef}
+      style={boxStyle(element)}
+      data-testid="element-editor-box"
+      onKeyDown={handleKeyDown}
+      onBlur={handleBlur}
+    >
       <TaskTitle>
         <RichTextFieldEditor
           document={element.title}
@@ -289,12 +363,33 @@ function TaskTitleEditor({
           singleLine
           autoFocus
           selectAllOnFocus
-          onCommit={handleCommit}
-          onCancel={onCancel}
+          onChange={(document) => {
+            titleDraftRef.current = document;
+          }}
+          onCommit={(document) => {
+            titleDraftRef.current = document;
+            commit();
+          }}
+          onCancel={cancel}
           onEditorReady={onEditorReady}
           commitGuardRef={commitGuardRef}
         />
       </TaskTitle>
+      <TaskNotes>
+        <RichTextFieldEditor
+          document={initialNotes}
+          ariaLabel="Task notes"
+          dataField="notes"
+          onChange={(document) => {
+            notesDraftRef.current = document;
+          }}
+          onCommit={(document) => {
+            notesDraftRef.current = document;
+            commit();
+          }}
+          onCancel={cancel}
+        />
+      </TaskNotes>
     </TaskBox>
   );
 }
@@ -486,7 +581,7 @@ export function ElementEditorOverlay({
 
   if (isTaskElement(element)) {
     return (
-      <TaskTitleEditor
+      <TaskEditor
         element={element}
         onCommit={onCommit}
         onCancel={onCancel}

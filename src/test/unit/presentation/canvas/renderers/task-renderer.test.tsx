@@ -52,7 +52,8 @@ describe('TaskRenderer', () => {
     const cases: ReadonlyArray<readonly [TaskStatus, string]> = [
       ['todo', 'Todo'],
       ['in_progress', 'In progress'],
-      ['done', 'Done'],
+      ['completed', 'Completed'],
+      ['blocked', 'Blocked'],
     ];
 
     for (const [status, label] of cases) {

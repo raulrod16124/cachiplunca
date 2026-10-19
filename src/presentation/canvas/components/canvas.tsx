@@ -797,6 +797,7 @@ export function Canvas({
               selected={selectedIdSet.has(element.id.value)}
               renderers={renderers}
               ariaLabel={ariaLabels.get(element.id.value)}
+              onUpdateElement={readOnly ? undefined : onUpdateElement}
             />
           );
         })}

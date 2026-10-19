@@ -189,7 +189,7 @@ describe('fromElementDocument', () => {
   it('round-trips every MVP element type', () => {
     expectRoundTrip(createTextElement({ ...buildBase('el-text'), content: 'Hello' }));
     expectRoundTrip(createNoteElement({ ...buildBase('el-note'), content: 'Note' }));
-    expectRoundTrip(createTaskElement({ ...buildBase('el-task'), title: 'Task', status: 'done' }));
+    expectRoundTrip(createTaskElement({ ...buildBase('el-task'), title: 'Task', status: 'completed' }));
     expectRoundTrip(createFrameElement({ ...buildBase('el-frame'), title: 'Frame' }));
     expectRoundTrip(
       createConnectorElement({
@@ -324,7 +324,7 @@ describe('fromElementDocument', () => {
       ...toElementDocument(
         createTaskElement({ ...buildBase('el-task'), title: 'Task', status: 'todo' }),
       ),
-      status: 'blocked',
+      status: 'archived',
     };
 
     expect(() => fromElementDocument('el-task', document)).toThrow(

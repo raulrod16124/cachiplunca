@@ -4,7 +4,8 @@ import type { Element, ElementType, TaskStatus } from '../../../domain/element';
 const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
   todo: 'to do',
   in_progress: 'in progress',
-  done: 'done',
+  completed: 'completed',
+  blocked: 'blocked',
 };
 
 const ELEMENT_TYPE_LABELS: Record<ElementType, string> = {

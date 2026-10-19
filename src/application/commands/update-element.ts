@@ -10,6 +10,7 @@ import {
   withRotation,
   withTaskAssignee,
   withTaskDueDate,
+  withTaskNotes,
   withTaskStatus,
   withTaskTitle,
   withTextContent,
@@ -45,8 +46,9 @@ export type UpdateElementInput =
       readonly type: 'task';
       readonly title?: RichTextDocument | string;
       readonly status?: TaskStatus;
-      readonly assigneeId?: UserId | null;
-      readonly dueDate?: Date | null;
+      readonly notes?: RichTextDocument | string | null;
+      readonly assigneeId?: UserId;
+      readonly dueDate?: Date;
     })
   | (UpdateElementBaseInput & {
       readonly type: 'frame';
@@ -150,6 +152,7 @@ function applyTask(input: TaskPatch, updatedAt: Date): Element {
   const hasField =
     input.title !== undefined ||
     input.status !== undefined ||
+    input.notes !== undefined ||
     input.assigneeId !== undefined ||
     input.dueDate !== undefined ||
     input.rotation !== undefined;
@@ -163,6 +166,9 @@ function applyTask(input: TaskPatch, updatedAt: Date): Element {
   }
   if (input.status !== undefined) {
     updated = withTaskStatus(updated, input.status, updatedAt);
+  }
+  if (input.notes !== undefined) {
+    updated = withTaskNotes(updated, input.notes ?? undefined, updatedAt);
   }
   if (input.assigneeId !== undefined) {
     updated = withTaskAssignee(updated, input.assigneeId ?? undefined, updatedAt);

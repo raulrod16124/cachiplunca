@@ -34,7 +34,7 @@ export interface NoteElement extends BaseElement {
   readonly color?: string;
 }
 
-export const TASK_STATUSES = ['todo', 'in_progress', 'done'] as const;
+export const TASK_STATUSES = ['todo', 'in_progress', 'completed', 'blocked'] as const;
 
 export type TaskStatus = (typeof TASK_STATUSES)[number];
 
@@ -42,6 +42,7 @@ export interface TaskElement extends BaseElement {
   readonly type: 'task';
   readonly title: RichTextDocument;
   readonly status: TaskStatus;
+  readonly notes?: RichTextDocument;
   readonly assigneeId?: UserId;
   readonly dueDate?: Date;
 }
@@ -137,6 +138,9 @@ export function validateTaskElement(element: TaskElement): void {
   }
   if (element.status.trim().length === 0) {
     throw new Error('TaskElement status cannot be empty');
+  }
+  if (element.notes !== undefined) {
+    validateRichTextDocument(element.notes);
   }
   if (element.dueDate !== undefined && !(element.dueDate instanceof Date)) {
     throw new Error('TaskElement dueDate must be a Date');

@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactElement } from 'react';
 import { memo, useMemo } from 'react';
 import styled from 'styled-components';
+import type { UpdateElementInput } from '../../../application/commands';
 import type { Element } from '../../../domain/element';
 import { describeElement } from '../accessibility';
 import type { ElementRendererRegistry } from './element-renderer';
@@ -20,6 +21,7 @@ export interface ElementViewProps {
   readonly renderers?: ElementRendererRegistry;
   readonly ariaLabel?: string;
   readonly zIndex?: number;
+  readonly onUpdateElement?: (input: UpdateElementInput) => void;
 }
 
 function ElementViewComponent({
@@ -28,6 +30,7 @@ function ElementViewComponent({
   renderers,
   ariaLabel,
   zIndex,
+  onUpdateElement,
 }: ElementViewProps): ReactElement {
   const Renderer = resolveElementRenderer(renderers, element.type);
 
@@ -63,7 +66,7 @@ function ElementViewComponent({
       data-testid={`canvas-item-${element.id.value}`}
       style={style}
     >
-      <Renderer element={element} selected={selected} />
+      <Renderer element={element} selected={selected} onUpdateElement={onUpdateElement} />
     </Wrapper>
   );
 }
