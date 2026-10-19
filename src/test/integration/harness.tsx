@@ -19,6 +19,7 @@ import {
   createLogoutUser,
   createRegisterUser,
   createRemoveMember,
+  createUpdateWorkspace,
 } from '../../application/commands';
 import {
   createGetWorkspace,
@@ -134,6 +135,7 @@ export function createAppHarness(): AppHarness {
       createOwnerMembership: createCreateOwnerMembership(membershipRepository),
     }),
     deleteWorkspace: createDeleteWorkspace({ workspaceRepository, membershipRepository }),
+    updateWorkspace: createUpdateWorkspace(workspaceRepository),
     duplicateWorkspace: createDuplicateWorkspace({
       workspaceRepository,
       membershipRepository,

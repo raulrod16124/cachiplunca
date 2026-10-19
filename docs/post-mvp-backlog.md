@@ -324,7 +324,7 @@ Permitir reutilizar un tablero como punto de partida sin reconstruirlo.
 - Remapear conectores para que apunten a los elementos copiados.
 - Nombre inicial `Copy of <original>`.
 - Crear membership de owner para el usuario actual.
-- Navegar al workspace duplicado.
+- Mantener al usuario en la lista de workspaces y mostrar el duplicado para que lo abra cuando quiera.
 
 #### Criterios de aceptación
 
@@ -803,15 +803,16 @@ Cerrar el bucle de invitaciones sin introducir email ni backend nuevo.
 
 Añadir una línea por sesión. El detalle técnico extenso sigue viviendo en `docs/adr/session-log.md` cuando haya decisiones relevantes.
 
-| Fecha      | Tarea   | Resultado | Notas                                                                                                                                                                                                   |
-| ---------- | ------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-10-19 | —       | Creado    | Creación del backlog post-MVP y priorización inicial.                                                                                                                                                   |
-| 2026-10-19 | PBL-002 | DONE      | Borrado de workspace desde la card con confirmación; roles por workspace desde `ListWorkspaces`; unit, integración y E2E.                                                                               |
-| 2026-10-19 | PBL-001 | DONE      | Lecturas de workspaces/invitations acotadas por membership/destinatario; accept con `email_verified`; flujo de verificación con envío y refresh; rules, unit, integración y E2E.                        |
-| 2026-10-19 | PBL-003 | DONE      | Paleta de 5 colores de tema en el menú contextual de nota, reset a por defecto, `color: null` en `UpdateElement`, undo/redo, persistencia y E2E.                                                        |
-| 2026-10-19 | PBL-004 | DONE      | Ayuda de atajos accesible desde `?` y la top bar; catálogo puro por contextos, i18n en/es, foco atrapado, cierre con `Escape` y tests de contenido.                                                     |
-| 2026-10-19 | PBL-005 | DONE      | Export JSON versionado y descarga desde browser; vista imprimible escalada con `window.print()`; disponible para Owner, Editor y Viewer; serializer puro, i18n, unit, integración y E2E.                |
-| 2026-10-19 | PBL-006 | DONE      | Duplicado owner-only desde la card con navegación al duplicado; copia de metadatos y elementos con IDs nuevos, remapeo de conectores y frames, compensación best-effort, i18n, unit, integración y E2E. |
+| Fecha      | Tarea   | Resultado | Notas                                                                                                                                                                                                                       |
+| ---------- | ------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-19 | —       | Creado    | Creación del backlog post-MVP y priorización inicial.                                                                                                                                                                       |
+| 2026-10-19 | PBL-002 | DONE      | Borrado de workspace desde la card con confirmación; roles por workspace desde `ListWorkspaces`; unit, integración y E2E.                                                                                                   |
+| 2026-10-19 | PBL-001 | DONE      | Lecturas de workspaces/invitations acotadas por membership/destinatario; accept con `email_verified`; flujo de verificación con envío y refresh; rules, unit, integración y E2E.                                            |
+| 2026-10-19 | PBL-003 | DONE      | Paleta de 5 colores de tema en el menú contextual de nota, reset a por defecto, `color: null` en `UpdateElement`, undo/redo, persistencia y E2E.                                                                            |
+| 2026-10-19 | PBL-004 | DONE      | Ayuda de atajos accesible desde `?` y la top bar; catálogo puro por contextos, i18n en/es, foco atrapado, cierre con `Escape` y tests de contenido.                                                                         |
+| 2026-10-19 | PBL-005 | DONE      | Export JSON versionado y descarga desde browser; vista imprimible escalada con `window.print()`; disponible para Owner, Editor y Viewer; serializer puro, i18n, unit, integración y E2E.                                    |
+| 2026-10-19 | PBL-006 | DONE      | Duplicado owner-only desde la card con actualización del listado y apertura manual; copia de metadatos y elementos con IDs nuevos, remapeo de conectores y frames, compensación best-effort, i18n, unit, integración y E2E. |
+| 2026-10-19 | PBL-006 | DONE      | Follow-up: edición de nombre y descripción desde la card con icono y diálogo; acciones de card compactadas en iconos accesibles; unit, integración y E2E.                                                                   |
 
 ---
 

@@ -2,11 +2,16 @@ import { Stack, Text } from '@raulrod/ui';
 import type { ReactNode } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { DeleteWorkspace, DuplicateWorkspace } from '../../../../application/commands';
+import type {
+  DeleteWorkspace,
+  DuplicateWorkspace,
+  UpdateWorkspace,
+} from '../../../../application/commands';
 import type {
   ListWorkspaces,
   ListWorkspacesResult,
 } from '../../../../application/queries/list-workspaces';
+import { sortWorkspacesForList } from '../../../../application/queries';
 import type { MembershipRole } from '../../../../domain/membership';
 import type { Workspace } from '../../../../domain/workspace';
 import { toAppError } from '../../../../shared/errors';
@@ -16,6 +21,7 @@ import {
 } from '../workspace-error-messages';
 import { localizeMessage, useI18n } from '../../../i18n';
 import { DeleteWorkspaceDialog } from './delete-workspace-dialog';
+import { EditWorkspaceDialog } from './edit-workspace-dialog';
 import { WorkspacesList } from './workspaces-list';
 
 export interface WorkspacesListContainerProps {
@@ -23,6 +29,7 @@ export interface WorkspacesListContainerProps {
   readonly listWorkspaces: ListWorkspaces;
   readonly deleteWorkspace?: DeleteWorkspace;
   readonly duplicateWorkspace?: DuplicateWorkspace;
+  readonly updateWorkspace?: UpdateWorkspace;
   readonly onCreateWorkspace: () => void;
   readonly refreshToken?: number;
 }
@@ -32,6 +39,7 @@ export function WorkspacesListContainer({
   listWorkspaces,
   deleteWorkspace,
   duplicateWorkspace,
+  updateWorkspace,
   onCreateWorkspace,
   refreshToken = 0,
 }: WorkspacesListContainerProps): ReactNode {
@@ -40,6 +48,7 @@ export function WorkspacesListContainer({
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [result, setResult] = useState<ListWorkspacesResult | null>(null);
   const [workspaceToDelete, setWorkspaceToDelete] = useState<Workspace | null>(null);
+  const [workspaceToEdit, setWorkspaceToEdit] = useState<Workspace | null>(null);
   const [duplicatingWorkspaceId, setDuplicatingWorkspaceId] = useState<string | null>(null);
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
 
@@ -88,6 +97,35 @@ export function WorkspacesListContainer({
     void fetchWorkspaces();
   }, [fetchWorkspaces]);
 
+  const handleRequestEdit = useCallback(
+    (workspace: Workspace): void => {
+      if (updateWorkspace === undefined) {
+        return;
+      }
+      setWorkspaceToEdit(workspace);
+    },
+    [updateWorkspace],
+  );
+
+  const handleEdited = useCallback((workspace: Workspace): void => {
+    setWorkspaceToEdit(null);
+    setResult((previous) => {
+      if (previous === null || previous.status !== 'ok') {
+        return previous;
+      }
+
+      return {
+        status: 'ok',
+        workspaces: sortWorkspacesForList(
+          previous.workspaces.map((candidate) =>
+            candidate.id.equals(workspace.id) ? workspace : candidate,
+          ),
+        ),
+        rolesByWorkspaceId: previous.rolesByWorkspaceId,
+      };
+    });
+  }, []);
+
   const handleDuplicate = useCallback(
     async (workspace: Workspace): Promise<void> => {
       if (duplicateWorkspace === undefined || duplicatingWorkspaceId !== null) {
@@ -104,7 +142,20 @@ export function WorkspacesListContainer({
         });
         switch (response.status) {
           case 'ok':
-            navigate(`/workspaces/${response.workspace.id.value}`);
+            setResult((previous) => {
+              if (previous === null || previous.status !== 'ok') {
+                return previous;
+              }
+
+              const roles = new Map(previous.rolesByWorkspaceId);
+              roles.set(response.workspace.id.value, 'owner');
+
+              return {
+                status: 'ok',
+                workspaces: sortWorkspacesForList([...previous.workspaces, response.workspace]),
+                rolesByWorkspaceId: roles,
+              };
+            });
             break;
           case 'invalid-input':
             setDuplicateError(t('errors.duplicateWorkspaceFailed'));
@@ -119,7 +170,7 @@ export function WorkspacesListContainer({
         setDuplicatingWorkspaceId(null);
       }
     },
-    [duplicateWorkspace, duplicatingWorkspaceId, navigate, t, userId],
+    [duplicateWorkspace, duplicatingWorkspaceId, t, userId],
   );
 
   return (
@@ -140,6 +191,7 @@ export function WorkspacesListContainer({
           onSelect={handleSelectWorkspace}
           onRequestDelete={deleteWorkspace === undefined ? undefined : handleRequestDelete}
           onDuplicate={duplicateWorkspace === undefined ? undefined : handleDuplicate}
+          onEdit={updateWorkspace === undefined ? undefined : handleRequestEdit}
           duplicatingWorkspaceId={duplicatingWorkspaceId}
         />
       </Stack>
@@ -155,6 +207,19 @@ export function WorkspacesListContainer({
           deleteWorkspace={deleteWorkspace}
           actorUserId={userId}
           onDeleted={handleDeleted}
+        />
+      )}
+      {workspaceToEdit !== null && updateWorkspace !== undefined && (
+        <EditWorkspaceDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) {
+              setWorkspaceToEdit(null);
+            }
+          }}
+          workspace={workspaceToEdit}
+          updateWorkspace={updateWorkspace}
+          onUpdated={handleEdited}
         />
       )}
     </>

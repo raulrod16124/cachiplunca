@@ -1,5 +1,5 @@
-import { Button, Heading, Input, Skeleton, Stack, Text } from '@raulrod/ui';
-import { ArrowUpRight, Copy, LayoutGrid, Search, Trash2 } from '@raulrod/icons';
+import { Button, Heading, IconButton, Input, Skeleton, Stack, Text, Tooltip } from '@raulrod/ui';
+import { ArrowUpRight, Copy, LayoutGrid, Pencil, Search, Trash2 } from '@raulrod/icons';
 import { useMemo, useState, type ReactNode } from 'react';
 import styled from 'styled-components';
 import { can } from '../../../../domain/membership';
@@ -74,6 +74,12 @@ const CardFooter = styled.div`
   flex-wrap: wrap;
 `;
 
+const CardActions = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.space[1]};
+`;
+
 const SearchRow = styled.div`
   display: flex;
   align-items: center;
@@ -110,6 +116,7 @@ export interface WorkspacesListProps {
   readonly onRetry: () => void;
   readonly onCreate: () => void;
   readonly onSelect?: (workspace: Workspace) => void;
+  readonly onEdit?: (workspace: Workspace) => void;
   readonly onRequestDelete?: (workspace: Workspace) => void;
   readonly onDuplicate?: (workspace: Workspace) => void;
   readonly duplicatingWorkspaceId?: string | null;
@@ -123,6 +130,7 @@ export function WorkspacesList({
   onRetry,
   onCreate,
   onSelect,
+  onEdit,
   onRequestDelete,
   onDuplicate,
   duplicatingWorkspaceId,
@@ -222,10 +230,13 @@ export function WorkspacesList({
         <ListGrid>
           {filtered.map((workspace) => {
             const role = rolesByWorkspaceId.get(workspace.id.value);
+            const canEdit =
+              onEdit !== undefined && role !== undefined && can(role, 'workspace:update');
             const canDelete =
               onRequestDelete !== undefined && role !== undefined && can(role, 'workspace:delete');
             const canDuplicate = onDuplicate !== undefined && role === 'owner';
             const isDuplicating = duplicatingWorkspaceId === workspace.id.value;
+            const hasActions = onSelect !== undefined || canEdit || canDelete || canDuplicate;
 
             return (
               <CardShell key={workspace.id.value} as="article">
@@ -248,7 +259,7 @@ export function WorkspacesList({
                       {workspace.description ?? t('workspaces.card.noDescription')}
                     </Description>
                   </Stack>
-                  {(onSelect !== undefined || canDelete || canDuplicate) && (
+                  {hasActions && (
                     <CardFooter>
                       {onSelect !== undefined && (
                         <Button
@@ -261,31 +272,48 @@ export function WorkspacesList({
                           <ArrowUpRight aria-hidden="true" size={14} />
                         </Button>
                       )}
-                      {canDuplicate && onDuplicate !== undefined && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          loading={isDuplicating}
-                          aria-label={`${t('workspaces.card.duplicate')} ${workspace.name}`}
-                          onClick={() => onDuplicate(workspace)}
-                        >
-                          <Copy aria-hidden="true" size={14} />
-                          {t('workspaces.card.duplicate')}
-                        </Button>
-                      )}
-                      {canDelete && onRequestDelete !== undefined && (
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          aria-label={`${t('workspaces.card.delete')} ${workspace.name}`}
-                          onClick={() => onRequestDelete(workspace)}
-                        >
-                          <Trash2 aria-hidden="true" size={14} />
-                          {t('workspaces.card.delete')}
-                        </Button>
-                      )}
+                      <CardActions>
+                        {canEdit && onEdit !== undefined && (
+                          <Tooltip content={t('workspaces.card.edit')}>
+                            <IconButton
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              label={`${t('workspaces.card.edit')} ${workspace.name}`}
+                              onClick={() => onEdit(workspace)}
+                            >
+                              <Pencil aria-hidden="true" size={15} />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                        {canDuplicate && onDuplicate !== undefined && (
+                          <Tooltip content={t('workspaces.card.duplicate')}>
+                            <IconButton
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              loading={isDuplicating}
+                              label={`${t('workspaces.card.duplicate')} ${workspace.name}`}
+                              onClick={() => onDuplicate(workspace)}
+                            >
+                              <Copy aria-hidden="true" size={15} />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                        {canDelete && onRequestDelete !== undefined && (
+                          <Tooltip content={t('workspaces.card.delete')}>
+                            <IconButton
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              label={`${t('workspaces.card.delete')} ${workspace.name}`}
+                              onClick={() => onRequestDelete(workspace)}
+                            >
+                              <Trash2 aria-hidden="true" size={15} />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                      </CardActions>
                     </CardFooter>
                   )}
                 </CardContent>

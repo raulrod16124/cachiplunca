@@ -7,7 +7,11 @@ import type {
   ListWorkspaces,
   ListWorkspacesResult,
 } from '../../../../../../application/queries/list-workspaces';
-import type { DeleteWorkspace, DuplicateWorkspace } from '../../../../../../application/commands';
+import type {
+  DeleteWorkspace,
+  DuplicateWorkspace,
+  UpdateWorkspace,
+} from '../../../../../../application/commands';
 import { Workspace } from '../../../../../../domain/workspace';
 import { UserId, WorkspaceId } from '../../../../../../domain/shared';
 import { createAppError, ERROR_CODES } from '../../../../../../shared/errors';
@@ -212,7 +216,7 @@ describe('WorkspacesListContainer', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('duplicates a workspace and navigates to the copy', async () => {
+  it('duplicates a workspace and shows the copy in the list without navigating', async () => {
     const workspace = createWorkspace('Alpha');
     const copy = Workspace.create({
       id: WorkspaceId.create('ws-copy'),
@@ -255,8 +259,11 @@ describe('WorkspacesListContainer', () => {
         sourceWorkspaceId: workspace.id.value,
         actorUserId: 'user-1',
       });
-      expect(screen.getByTestId('location')).toHaveTextContent('/workspaces/ws-copy');
+      expect(screen.getByRole('heading', { name: 'Copy of Alpha' })).toBeInTheDocument();
     });
+    expect(screen.getByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
+    expect(screen.getByTestId('location').textContent).toBe('/');
+    expect(listWorkspaces).toHaveBeenCalledTimes(1);
   });
 
   it('shows a duplicate error and allows retrying without touching the list', async () => {
@@ -296,5 +303,59 @@ describe('WorkspacesListContainer', () => {
     await user.click(screen.getByRole('button', { name: 'Duplicate Alpha' }));
     await waitFor(() => expect(duplicateWorkspace).toHaveBeenCalledTimes(2));
     expect(listWorkspaces).toHaveBeenCalledTimes(1);
+  });
+
+  it('edits a workspace from the card and updates the list', async () => {
+    const workspace = createWorkspace('Alpha');
+    const updated = Workspace.create({
+      id: workspace.id,
+      name: 'Renamed',
+      description: 'New description',
+      createdBy: CREATED_BY,
+    });
+    const result: ListWorkspacesResult = {
+      status: 'ok',
+      workspaces: [workspace],
+      rolesByWorkspaceId: new Map([[workspace.id.value, 'owner']]),
+    };
+    const listWorkspaces: ListWorkspaces = jest.fn().mockResolvedValue(result);
+    const updateWorkspace: UpdateWorkspace = jest.fn().mockResolvedValue({
+      status: 'ok',
+      workspace: updated,
+    });
+    const user = userEvent.setup();
+
+    renderWithRouter(
+      <WorkspacesListContainer
+        userId="user-1"
+        listWorkspaces={listWorkspaces}
+        updateWorkspace={updateWorkspace}
+        onCreateWorkspace={onCreate}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Edit Alpha' }));
+    expect(await screen.findByRole('dialog')).toHaveTextContent('Edit workspace');
+    expect(screen.getByLabelText('Name')).toHaveValue('Alpha');
+
+    await user.clear(screen.getByLabelText('Name'));
+    await user.type(screen.getByLabelText('Name'), 'Renamed');
+    await user.type(screen.getByLabelText('Description'), 'New description');
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    await waitFor(() => {
+      expect(updateWorkspace).toHaveBeenCalledWith({
+        id: workspace.id.value,
+        name: 'Renamed',
+        description: 'New description',
+      });
+      expect(screen.getByRole('heading', { name: 'Renamed' })).toBeInTheDocument();
+    });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Alpha' })).not.toBeInTheDocument();
   });
 });

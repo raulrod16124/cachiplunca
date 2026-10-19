@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import { createConnectorElement, createTextElement, richTextToPlain } from '../../domain/element';
 import { ElementId, Position, Size, UserId } from '../../domain/shared';
 import { createAppHarness } from './harness';
@@ -20,7 +20,7 @@ function textElement(
 }
 
 describe('duplicate workspace flow', () => {
-  it('duplicates a board and opens the copy with remapped elements', async () => {
+  it('duplicates a board and shows the copy in the list with remapped elements', async () => {
     const harness = createAppHarness();
     const user = await harness.register();
     const userId = UserId.create(user.uid);
@@ -46,9 +46,12 @@ describe('duplicate workspace flow', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Duplicate Roadmap Q4' }));
 
-    await waitFor(() => {
-      expect(screen.getByTestId('location')).toHaveTextContent('/workspaces/ws-2');
+    const copyHeading = await screen.findByRole('heading', {
+      level: 3,
+      name: 'Copy of Roadmap Q4',
     });
+    expect(screen.getByTestId('location')).toHaveTextContent('/workspaces');
+    expect(screen.getByRole('heading', { level: 3, name: 'Roadmap Q4' })).toBeInTheDocument();
 
     const workspaces = await harness.workspaceRepository.list();
     expect(workspaces).toHaveLength(2);
@@ -83,6 +86,12 @@ describe('duplicate workspace flow', () => {
       'text-2',
       'connector-1',
     ]);
+
+    const copyCard = copyHeading.closest('article');
+    expect(copyCard).not.toBeNull();
+    if (copyCard !== null) {
+      fireEvent.click(within(copyCard).getByRole('button', { name: 'Open' }));
+    }
     expect(await screen.findByRole('application', { name: 'Canvas' })).toBeInTheDocument();
   });
 });

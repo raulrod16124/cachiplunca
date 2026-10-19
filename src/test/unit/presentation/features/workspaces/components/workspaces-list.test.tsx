@@ -187,6 +187,54 @@ describe('WorkspacesList', () => {
     expect(onDuplicate).toHaveBeenCalledWith(workspace);
   });
 
+  it('offers editing to owners only', () => {
+    const workspaces = [createWorkspace('Alpha', new Date())];
+    const onEdit = jest.fn();
+
+    const { rerender } = render(
+      <WorkspacesList
+        {...baseProps}
+        status="success"
+        workspaces={workspaces}
+        rolesByWorkspaceId={new Map<string, MembershipRole>([['ws-Alpha', 'editor']])}
+        onEdit={onEdit}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: /edit/i })).not.toBeInTheDocument();
+
+    rerender(
+      <WorkspacesList
+        {...baseProps}
+        status="success"
+        workspaces={workspaces}
+        rolesByWorkspaceId={new Map<string, MembershipRole>([['ws-Alpha', 'owner']])}
+        onEdit={onEdit}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Edit Alpha' })).toBeInTheDocument();
+  });
+
+  it('requests editing of the selected workspace', async () => {
+    const user = userEvent.setup();
+    const workspace = createWorkspace('Alpha', new Date());
+    const onEdit = jest.fn();
+
+    render(
+      <WorkspacesList
+        {...baseProps}
+        status="success"
+        workspaces={[workspace]}
+        rolesByWorkspaceId={new Map<string, MembershipRole>([['ws-Alpha', 'owner']])}
+        onEdit={onEdit}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Edit Alpha' }));
+    expect(onEdit).toHaveBeenCalledWith(workspace);
+  });
+
   it('disables the duplicate action while the workspace is being copied', () => {
     const workspace = createWorkspace('Alpha', new Date());
 

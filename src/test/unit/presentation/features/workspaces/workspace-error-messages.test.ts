@@ -3,6 +3,7 @@ import {
   describeDeleteWorkspaceError,
   describeDuplicateWorkspaceError,
   describeListWorkspacesError,
+  describeUpdateWorkspaceError,
 } from '../../../../../presentation/features/workspaces/workspace-error-messages';
 import { createAppError, ERROR_CODES } from '../../../../../shared/errors';
 
@@ -88,6 +89,52 @@ describe('describeCreateWorkspaceError', () => {
     );
 
     expect(describeCreateWorkspaceError(error)).toBe('Something else broke.');
+  });
+});
+
+describe('describeUpdateWorkspaceError', () => {
+  it('maps network, persistence and session failures', () => {
+    expect(
+      describeUpdateWorkspaceError(
+        createAppError('network', ERROR_CODES.NETWORK_REQUEST_FAILED, 'raw'),
+      ),
+    ).toBe('We could not reach the server. Check your connection and try again.');
+    expect(
+      describeUpdateWorkspaceError(
+        createAppError('persistence', ERROR_CODES.PERSISTENCE_WRITE_FAILED, 'raw'),
+      ),
+    ).toBe('The service is temporarily unavailable. Please try again.');
+    expect(
+      describeUpdateWorkspaceError(
+        createAppError('authorization', ERROR_CODES.AUTH_UNAUTHENTICATED, 'raw'),
+      ),
+    ).toBe('Your session has expired. Sign in again to continue.');
+  });
+
+  it('maps forbidden, missing and invalid workspaces to specific messages', () => {
+    expect(
+      describeUpdateWorkspaceError(
+        createAppError('authorization', ERROR_CODES.AUTH_FORBIDDEN, 'raw'),
+      ),
+    ).toBe('You do not have permission to edit this workspace.');
+    expect(
+      describeUpdateWorkspaceError(
+        createAppError('notFound', ERROR_CODES.NOT_FOUND_RESOURCE, 'raw'),
+      ),
+    ).toBe('The workspace does not exist.');
+    expect(
+      describeUpdateWorkspaceError(
+        createAppError('validation', ERROR_CODES.VALIDATION_INVALID_INPUT, 'raw'),
+      ),
+    ).toBe('Check the workspace details and try again.');
+  });
+
+  it('does not leak the underlying message for unknown errors', () => {
+    const error = createAppError('unknown', ERROR_CODES.UNKNOWN_UNEXPECTED, 'internal-secret');
+
+    expect(describeUpdateWorkspaceError(error)).toBe(
+      'We could not update this workspace. Please try again.',
+    );
   });
 });
 

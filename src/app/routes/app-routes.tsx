@@ -136,6 +136,7 @@ export function AppRoutes({
               createWorkspaceWithOwner={createWorkspaceWithOwner}
               deleteWorkspace={deleteWorkspace}
               duplicateWorkspace={duplicateWorkspace}
+              updateWorkspace={updateWorkspace}
               listPendingInvitationsForUser={listPendingInvitationsForUser}
               acceptInvitationById={acceptInvitationById}
               sendEmailVerification={sendEmailVerification}

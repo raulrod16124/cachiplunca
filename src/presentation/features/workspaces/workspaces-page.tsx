@@ -13,6 +13,7 @@ import type {
   DeleteWorkspace,
   DuplicateWorkspace,
   LogoutUser,
+  UpdateWorkspace,
   RefreshUser,
   SendEmailVerification,
 } from '../../../application/commands';
@@ -57,6 +58,7 @@ export interface WorkspacesPageProps {
   readonly createWorkspaceWithOwner: CreateWorkspaceWithOwner;
   readonly deleteWorkspace?: DeleteWorkspace;
   readonly duplicateWorkspace?: DuplicateWorkspace;
+  readonly updateWorkspace?: UpdateWorkspace;
   readonly listPendingInvitationsForUser?: ListPendingInvitationsForUser;
   readonly acceptInvitationById?: AcceptInvitationById;
   readonly sendEmailVerification?: SendEmailVerification;
@@ -69,6 +71,7 @@ export function WorkspacesPage({
   createWorkspaceWithOwner,
   deleteWorkspace,
   duplicateWorkspace,
+  updateWorkspace,
   listPendingInvitationsForUser,
   acceptInvitationById,
   sendEmailVerification,
@@ -147,6 +150,7 @@ export function WorkspacesPage({
                 listWorkspaces={listWorkspaces}
                 deleteWorkspace={deleteWorkspace}
                 duplicateWorkspace={duplicateWorkspace}
+                updateWorkspace={updateWorkspace}
                 onCreateWorkspace={handleCreateWorkspace}
                 refreshToken={refreshToken}
               />
