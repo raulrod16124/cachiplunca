@@ -137,6 +137,8 @@ describe('collaboration', () => {
     const { harness, workspace } = await openBoard('Conflict board');
 
     fireEvent.click(screen.getByRole('button', { name: 'Add task' }));
+    fireEvent.change(await screen.findByLabelText('Title'), { target: { value: 'Local task' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create task' }));
     await waitFor(() => expect(boardItems()).toHaveLength(1));
 
     const [local] = await harness.elementRepository.listByWorkspace(workspace.id);

@@ -23,6 +23,41 @@ test.describe('Board (MVP happy path)', () => {
     await expect(page.locator('[data-testid^="canvas-item-"]')).toHaveCount(3);
   });
 
+  test('creates and edits a task through the task form', async ({ page }) => {
+    await registerUser(page);
+    await createWorkspace(page, 'Task board');
+
+    await page.getByRole('button', { name: 'Add task' }).click();
+
+    const createDialog = page.getByRole('dialog');
+    await createDialog.getByLabel('Title').fill('Plan launch');
+    await createDialog.getByRole('combobox', { name: 'Status' }).click();
+    await page.getByRole('option', { name: 'In progress' }).click();
+    await createDialog.getByLabel('Notes').fill('Ship the MVP');
+    await createDialog.getByRole('button', { name: 'Create task' }).click();
+
+    const item = page.locator('[data-testid^="canvas-item-"]').last();
+    await expect(item).toContainText('Plan launch');
+    await expect(item).toContainText('In progress');
+    await expect(item).toContainText('Ship the MVP');
+
+    await item.dblclick();
+
+    const editDialog = page.getByRole('dialog');
+    await expect(editDialog.getByLabel('Title')).toHaveValue('Plan launch');
+    await expect(editDialog.getByLabel('Notes')).toHaveValue('Ship the MVP');
+    await editDialog.getByLabel('Title').fill('Launch plan');
+    await editDialog.getByRole('button', { name: 'Save changes' }).click();
+
+    await expect(item).toContainText('Launch plan');
+
+    await page.reload();
+    await expect(page.getByRole('application', { name: 'Canvas' })).toBeVisible({ timeout: 20000 });
+    const reloaded = page.locator('[data-testid^="canvas-item-"]').first();
+    await expect(reloaded).toContainText('Launch plan', { timeout: 20000 });
+    await expect(reloaded).toContainText('Ship the MVP');
+  });
+
   test('undo, redo and delete drive element state', async ({ page }) => {
     await registerUser(page);
     await createWorkspace(page, 'Undo board');

@@ -67,11 +67,6 @@ const NotesBox = styled.div`
   font-size: ${({ theme }) => theme.font.size['2xs']};
 `;
 
-const NotesPlaceholder = styled.span`
-  color: ${({ theme }) => theme.color.text.muted};
-  font-style: italic;
-`;
-
 const Meta = styled.div`
   flex: 0 0 auto;
   color: ${({ theme }) => theme.color.text.muted};
@@ -158,13 +153,11 @@ export function TaskRenderer({
       <StatusRow>
         <TaskStatusControl element={element} onUpdateElement={onUpdateElement} />
       </StatusRow>
-      <NotesBox data-task-notes="true">
-        {element.notes === undefined || isEmptyRichText(element.notes) ? (
-          <NotesPlaceholder>Add a note…</NotesPlaceholder>
-        ) : (
+      {element.notes === undefined || isEmptyRichText(element.notes) ? null : (
+        <NotesBox data-task-notes="true">
           <RichTextContent document={element.notes} />
-        )}
-      </NotesBox>
+        </NotesBox>
+      )}
       {element.assigneeId === undefined ? null : (
         <Meta data-task-assignee="true">{element.assigneeId.value}</Meta>
       )}

@@ -15,6 +15,14 @@ export async function createWorkspace(page: Page, name = 'Roadmap Q4'): Promise<
 
 export async function addElement(page: Page, kind: 'text' | 'note' | 'task' | 'frame' | 'link') {
   await page.getByRole('button', { name: `Add ${kind}` }).click();
+
+  if (kind === 'task') {
+    const dialog = page.getByRole('dialog');
+    await dialog.getByLabel('Title').fill('New task');
+    await dialog.getByRole('button', { name: 'Create task' }).click();
+    await expect(dialog).toBeHidden();
+  }
+
   const item = page.locator('[data-testid^="canvas-item-"]').last();
   await expect(item).toBeVisible({ timeout: 15000 });
   return item;

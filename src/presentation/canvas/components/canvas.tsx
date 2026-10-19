@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import styled from 'styled-components';
 import { Bounds, Grid, Position, Size } from '../../../domain/shared';
 import type { Element, ElementType } from '../../../domain/element';
+import { isTaskElement, richTextToPlain } from '../../../domain/element';
 import type { ElementId } from '../../../domain/shared';
 import type {
   CanvasViewportStore,
@@ -50,6 +51,7 @@ import { ElementContextMenu } from './element-context-menu';
 import { ElementEditorOverlay } from './element-editor-overlay';
 import { RemoteCursorsOverlay } from './remote-cursors-overlay';
 import { SelectionOverlay } from './selection-overlay';
+import { TaskFormDialog, type TaskFormValues } from './task-form-dialog';
 import { ViewportControls } from './viewport-controls';
 import {
   getEditableRichTextTarget,
@@ -145,10 +147,12 @@ const CANVAS_SHORTCUTS =
 const EDITABLE_ELEMENT_TYPES: ReadonlySet<ElementType> = new Set<ElementType>([
   'text',
   'note',
-  'task',
   'frame',
   'link',
 ]);
+
+type TaskFormState =
+  { readonly mode: 'create' } | { readonly mode: 'edit'; readonly elementId: string };
 
 export interface CanvasProps {
   readonly store: CanvasViewportStore;
@@ -170,6 +174,7 @@ export interface CanvasProps {
   readonly onUndoElements?: (elements: readonly Element[]) => void;
   readonly onRedoElements?: (elements: readonly Element[]) => void;
   readonly onCreateElement?: (type: ElementType) => ElementId | void;
+  readonly onCreateTask?: (values: TaskFormValues) => ElementId | void;
   readonly onUpdateElement?: (input: UpdateElementInput) => void;
   readonly remoteCursors?: readonly RemoteCursor[];
   readonly onCursorMove?: (position: Position) => void;
@@ -193,6 +198,7 @@ export function Canvas({
   onUndoElements,
   onRedoElements,
   onCreateElement,
+  onCreateTask,
   onUpdateElement,
   remoteCursors = [],
   onCursorMove,
@@ -394,6 +400,7 @@ export function Canvas({
   const { ref: elementRedoRef } = useElementRedo({ history, onRedoElements, disabled: readOnly });
 
   const [editingElementId, setEditingElementId] = useState<string | null>(null);
+  const [taskForm, setTaskForm] = useState<TaskFormState | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const editingElement = useMemo(
@@ -404,11 +411,40 @@ export function Canvas({
     [elements, editingElementId],
   );
 
+  const editingTaskElement = useMemo(() => {
+    if (taskForm?.mode !== 'edit') {
+      return null;
+    }
+
+    const element = elements.find((candidate) => candidate.id.value === taskForm.elementId);
+
+    return element !== undefined && isTaskElement(element) ? element : null;
+  }, [elements, taskForm]);
+
+  const taskFormInitialValues = useMemo<TaskFormValues | undefined>(() => {
+    if (taskForm === null || taskForm.mode !== 'edit' || editingTaskElement === null) {
+      return undefined;
+    }
+
+    return {
+      title: richTextToPlain(editingTaskElement.title),
+      status: editingTaskElement.status,
+      notes:
+        editingTaskElement.notes === undefined ? '' : richTextToPlain(editingTaskElement.notes),
+    };
+  }, [taskForm, editingTaskElement]);
+
   useEffect(() => {
     if (editingElementId !== null && editingElement === null) {
       setEditingElementId(null);
     }
   }, [editingElementId, editingElement]);
+
+  useEffect(() => {
+    if (taskForm?.mode === 'edit' && editingTaskElement === null) {
+      setTaskForm(null);
+    }
+  }, [taskForm, editingTaskElement]);
 
   const beginEditing = useCallback(
     (id: string): void => {
@@ -418,7 +454,16 @@ export function Canvas({
 
       const target = elements.find((element) => element.id.value === id);
 
-      if (target === undefined || !EDITABLE_ELEMENT_TYPES.has(target.type)) {
+      if (target === undefined) {
+        return;
+      }
+
+      if (target.type === 'task') {
+        setTaskForm({ mode: 'edit', elementId: id });
+        return;
+      }
+
+      if (!EDITABLE_ELEMENT_TYPES.has(target.type)) {
         return;
       }
 
@@ -641,6 +686,11 @@ export function Canvas({
 
   const handleCreateElement = useCallback(
     (type: ElementType): void => {
+      if (type === 'task' && onCreateTask !== undefined) {
+        setTaskForm({ mode: 'create' });
+        return;
+      }
+
       const created = onCreateElement?.(type);
 
       if (created === undefined) {
@@ -649,7 +699,48 @@ export function Canvas({
 
       setEditingElementId(created.value);
     },
-    [onCreateElement],
+    [onCreateElement, onCreateTask],
+  );
+
+  const handleTaskFormSubmit = useCallback(
+    (values: TaskFormValues): void => {
+      if (taskForm === null) {
+        return;
+      }
+
+      if (taskForm.mode === 'create') {
+        onCreateTask?.(values);
+        setTaskForm(null);
+        return;
+      }
+
+      const element = elements.find((candidate) => candidate.id.value === taskForm.elementId);
+
+      setTaskForm(null);
+
+      if (element === undefined || !isTaskElement(element) || onUpdateElement === undefined) {
+        return;
+      }
+
+      const currentTitle = richTextToPlain(element.title);
+      const currentNotes = element.notes === undefined ? '' : richTextToPlain(element.notes);
+      const titleChanged = currentTitle !== values.title;
+      const statusChanged = element.status !== values.status;
+      const notesChanged = currentNotes !== values.notes;
+
+      if (!titleChanged && !statusChanged && !notesChanged) {
+        return;
+      }
+
+      onUpdateElement({
+        type: 'task',
+        element,
+        ...(titleChanged ? { title: values.title } : {}),
+        ...(statusChanged ? { status: values.status } : {}),
+        ...(notesChanged ? { notes: values.notes === '' ? null : values.notes } : {}),
+      });
+    },
+    [taskForm, elements, onCreateTask, onUpdateElement],
   );
 
   const setContainerRef = useCallback(
@@ -741,13 +832,15 @@ export function Canvas({
     return new Set(getVisibleElementIds(items, visibleWorld, CULLING_MARGIN));
   }, [measuredSize, viewport, items]);
 
-  const canCreateElement = !readOnly && onCreateElement !== undefined;
+  const canCreateElement =
+    !readOnly && (onCreateElement !== undefined || onCreateTask !== undefined);
   const canUndo =
     !readOnly && history !== undefined && onUndoElements !== undefined && history.canUndo();
   const canRedo =
     !readOnly && history !== undefined && onRedoElements !== undefined && history.canRedo();
   const hasSelection = !readOnly && selection.selectedIds.length > 0;
-  const canCreateConnector = canCreateElement && selection.selectedIds.length === 2;
+  const canCreateConnector =
+    canCreateElement && onCreateElement !== undefined && selection.selectedIds.length === 2;
 
   return (
     <CanvasContainer
@@ -840,6 +933,17 @@ export function Canvas({
         canCreate={canCreateElement}
         hasSelection={hasSelection}
         canCreateConnector={canCreateConnector}
+      />
+      <TaskFormDialog
+        open={taskForm !== null}
+        mode={taskForm?.mode ?? 'create'}
+        initialValues={taskFormInitialValues}
+        onOpenChange={(open) => {
+          if (!open) {
+            setTaskForm(null);
+          }
+        }}
+        onSubmit={handleTaskFormSubmit}
       />
       {marqueeRect !== null ? (
         <Marquee

@@ -2,8 +2,12 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Position, ElementId, Size, UserId, WorkspaceId } from '../../../../../domain/shared';
-import { createTextElement, richTextFromPlain } from '../../../../../domain/element';
-import type { Element, ElementType } from '../../../../../domain/element';
+import {
+  createTaskElement,
+  createTextElement,
+  richTextFromPlain,
+} from '../../../../../domain/element';
+import type { Element, ElementType, TaskElement } from '../../../../../domain/element';
 import {
   createCanvasViewportStore,
   createCommandHistory,
@@ -108,6 +112,26 @@ function sequentialIds(): () => ElementId {
 const FIRST_ITEM = createElement('first', 100, 100, 120, 80);
 
 const SECOND_ITEM = createElement('second', 300, 200, 100, 100);
+
+function createTask(
+  id: string,
+  options: {
+    readonly title?: string;
+    readonly status?: 'todo' | 'in_progress';
+    readonly notes?: string;
+  } = {},
+): TaskElement {
+  return createTaskElement({
+    id: ElementId.create(id),
+    workspaceId: WorkspaceId.create('ws-1'),
+    createdBy: UserId.create('user-1'),
+    position: Position.create(100, 100),
+    size: Size.create(120, 80),
+    title: options.title ?? 'Draft spec',
+    status: options.status ?? 'todo',
+    notes: options.notes,
+  });
+}
 
 describe('Canvas', () => {
   beforeAll(() => {
@@ -1708,6 +1732,163 @@ describe('Canvas', () => {
       await user.click(screen.getByRole('button', { name: 'Add text' }));
 
       expect(await screen.findByTestId('element-editor')).toBeInTheDocument();
+    });
+  });
+
+  describe('task form', () => {
+    interface TaskFormCanvasOptions {
+      readonly elements?: readonly Element[];
+      readonly onCreateTask?: (values: {
+        title: string;
+        status: 'todo' | 'in_progress' | 'completed' | 'blocked';
+        notes: string;
+      }) => ElementId | void;
+      readonly onUpdateElement?: (input: UpdateElementInput) => void;
+      readonly readOnly?: boolean;
+    }
+
+    function renderTaskFormCanvas(options: TaskFormCanvasOptions = {}) {
+      render(
+        <Canvas
+          store={createCanvasViewportStore(Size.create(800, 600))}
+          selectionStore={createSelectionStore()}
+          elements={options.elements}
+          onCreateTask={options.onCreateTask}
+          onUpdateElement={options.onUpdateElement}
+          readOnly={options.readOnly}
+        />,
+      );
+    }
+
+    function fillTitle(title: string): void {
+      fireEvent.change(screen.getByLabelText('Title'), { target: { value: title } });
+    }
+
+    function submitCreate(): void {
+      fireEvent.click(screen.getByRole('button', { name: 'Create task' }));
+    }
+
+    it('opens the create dialog from the toolbar without creating anything yet', () => {
+      const onCreateTask = jest.fn();
+      renderTaskFormCanvas({ onCreateTask });
+
+      fireEvent.click(screen.getByRole('button', { name: 'Add task' }));
+
+      expect(screen.getByRole('heading', { level: 2, name: 'New task' })).toBeInTheDocument();
+      expect(onCreateTask).not.toHaveBeenCalled();
+    });
+
+    it('creates the task with the form values and closes the dialog', () => {
+      const onCreateTask = jest.fn();
+      renderTaskFormCanvas({ onCreateTask });
+
+      fireEvent.click(screen.getByRole('button', { name: 'Add task' }));
+      fillTitle('Ship the MVP');
+      fireEvent.click(screen.getByRole('combobox', { name: 'Status' }));
+      fireEvent.click(screen.getByRole('option', { name: 'In progress' }));
+      fireEvent.change(screen.getByLabelText('Notes'), {
+        target: { value: 'Wait for review' },
+      });
+      submitCreate();
+
+      expect(onCreateTask).toHaveBeenCalledWith({
+        title: 'Ship the MVP',
+        status: 'in_progress',
+        notes: 'Wait for review',
+      });
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    it('does not create the task when the title is empty', () => {
+      const onCreateTask = jest.fn();
+      renderTaskFormCanvas({ onCreateTask });
+
+      fireEvent.click(screen.getByRole('button', { name: 'Add task' }));
+      fillTitle('   ');
+      submitCreate();
+
+      expect(onCreateTask).not.toHaveBeenCalled();
+      expect(screen.getByText('Title is required')).toBeInTheDocument();
+    });
+
+    it('opens the edit dialog pre-filled when double-clicking a task', () => {
+      const task = createTask('task-1', { status: 'in_progress', notes: 'Draft notes' });
+      renderTaskFormCanvas({ elements: [task], onUpdateElement: jest.fn() });
+
+      fireEvent.doubleClick(screen.getByTestId('canvas-item-task-1'));
+
+      expect(screen.getByRole('heading', { level: 2, name: 'Edit task' })).toBeInTheDocument();
+      expect(screen.getByLabelText('Title')).toHaveValue('Draft spec');
+      expect(screen.getByRole('combobox', { name: 'Status' })).toHaveTextContent('In progress');
+      expect(screen.getByLabelText('Notes')).toHaveValue('Draft notes');
+      expect(screen.queryByTestId('element-editor')).not.toBeInTheDocument();
+    });
+
+    it('commits only the changed fields on save', () => {
+      const task = createTask('task-1', { status: 'in_progress', notes: 'Draft notes' });
+      const onUpdateElement = jest.fn();
+      renderTaskFormCanvas({ elements: [task], onUpdateElement });
+
+      fireEvent.doubleClick(screen.getByTestId('canvas-item-task-1'));
+      fillTitle('Final spec');
+      fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+
+      expect(onUpdateElement).toHaveBeenCalledWith({
+        type: 'task',
+        element: task,
+        title: 'Final spec',
+      });
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    it('clears the notes when they are emptied', () => {
+      const task = createTask('task-1', { notes: 'Draft notes' });
+      const onUpdateElement = jest.fn();
+      renderTaskFormCanvas({ elements: [task], onUpdateElement });
+
+      fireEvent.doubleClick(screen.getByTestId('canvas-item-task-1'));
+      fireEvent.change(screen.getByLabelText('Notes'), { target: { value: '' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+
+      expect(onUpdateElement).toHaveBeenCalledWith({
+        type: 'task',
+        element: task,
+        notes: null,
+      });
+    });
+
+    it('does not call onUpdateElement when nothing changed', () => {
+      const task = createTask('task-1', { notes: 'Draft notes' });
+      const onUpdateElement = jest.fn();
+      renderTaskFormCanvas({ elements: [task], onUpdateElement });
+
+      fireEvent.doubleClick(screen.getByTestId('canvas-item-task-1'));
+      fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+
+      expect(onUpdateElement).not.toHaveBeenCalled();
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    it('closes the edit dialog through cancel without committing', () => {
+      const task = createTask('task-1');
+      const onUpdateElement = jest.fn();
+      renderTaskFormCanvas({ elements: [task], onUpdateElement });
+
+      fireEvent.doubleClick(screen.getByTestId('canvas-item-task-1'));
+      fillTitle('Discarded title');
+      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+      expect(onUpdateElement).not.toHaveBeenCalled();
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    it('does not open the task dialog when the canvas is read-only', () => {
+      const task = createTask('task-1');
+      renderTaskFormCanvas({ elements: [task], onUpdateElement: jest.fn(), readOnly: true });
+
+      fireEvent.doubleClick(screen.getByTestId('canvas-item-task-1'));
+
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
   });
 });

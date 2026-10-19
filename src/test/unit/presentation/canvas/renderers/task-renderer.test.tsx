@@ -12,6 +12,7 @@ interface TaskOverrides {
   readonly status: TaskStatus;
   readonly assigneeId: string;
   readonly dueDate: Date;
+  readonly notes: string;
 }
 
 function createElement(
@@ -26,6 +27,7 @@ function createElement(
     size: Size.create(120, 80),
     title,
     status: overrides.status ?? 'todo',
+    notes: overrides.notes,
     assigneeId:
       overrides.assigneeId === undefined ? undefined : UserId.create(overrides.assigneeId),
     dueDate: overrides.dueDate,
@@ -107,6 +109,33 @@ describe('TaskRenderer', () => {
     render(<TaskRenderer element={createElement('Ship the MVP')} selected={false} />);
 
     expect(document.querySelector('[data-task-due-date]')).toBeNull();
+  });
+
+  it('renders the notes when present', () => {
+    render(
+      <TaskRenderer
+        element={createElement('Ship the MVP', { notes: 'Wait for review' })}
+        selected={false}
+      />,
+    );
+
+    const notes = document.querySelector('[data-task-notes]');
+    expect(notes).not.toBeNull();
+    expect(notes).toHaveTextContent('Wait for review');
+  });
+
+  it('does not render the notes block when absent', () => {
+    render(<TaskRenderer element={createElement('Ship the MVP')} selected={false} />);
+
+    expect(document.querySelector('[data-task-notes]')).toBeNull();
+  });
+
+  it('does not render the notes block when they are empty', () => {
+    render(
+      <TaskRenderer element={createElement('Ship the MVP', { notes: '' })} selected={false} />,
+    );
+
+    expect(document.querySelector('[data-task-notes]')).toBeNull();
   });
 
   it('delimits the container with a soft border', () => {

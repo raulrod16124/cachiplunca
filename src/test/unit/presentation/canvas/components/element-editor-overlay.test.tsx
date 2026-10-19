@@ -4,7 +4,6 @@ import {
   createFrameElement,
   createLinkElement,
   createNoteElement,
-  createTaskElement,
   createTextElement,
   richTextFromPlain,
 } from '../../../../../domain/element';
@@ -37,18 +36,6 @@ function createNote(content: string) {
     position: Position.create(10, 20),
     size: Size.create(160, 80),
     content,
-  });
-}
-
-function createTask(title: string) {
-  return createTaskElement({
-    id: ElementId.create('task-1'),
-    workspaceId: WORKSPACE_ID,
-    createdBy: USER_ID,
-    position: Position.create(10, 20),
-    size: Size.create(160, 80),
-    title,
-    status: 'todo',
   });
 }
 
@@ -235,55 +222,6 @@ describe('ElementEditorOverlay', () => {
       await user.tab();
 
       // commitGuardRef should prevent the commit (overlay forwards to commitGuardRef in child)
-      expect(onCommit).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('task', () => {
-    it('edits the title', async () => {
-      const user = userEvent.setup();
-      const element = createTask('New task');
-      const onCommit = jest.fn();
-
-      render(<ElementEditorOverlay element={element} onCommit={onCommit} onCancel={jest.fn()} />);
-
-      const title = screen.getByLabelText('Task title');
-      expect(title).toHaveValue('New task');
-
-      await user.clear(title);
-      await user.type(title, 'Ship it');
-      await user.tab();
-
-      expect(onCommit).toHaveBeenCalledWith({
-        type: 'task',
-        element,
-        title: richTextFromPlain('Ship it'),
-      });
-    });
-
-    it('onEditorReady is invoked and commitGuardRef prevents commit on blur', async () => {
-      const user = userEvent.setup();
-      const onTextEditorReady = jest.fn();
-      const textCommitGuardRef = { current: true };
-      const onCommit = jest.fn();
-
-      render(
-        <ElementEditorOverlay
-          element={createTask('New task')}
-          onCommit={onCommit}
-          onCancel={jest.fn()}
-          onTextEditorReady={onTextEditorReady}
-          textCommitGuardRef={textCommitGuardRef}
-        />,
-      );
-
-      expect(onTextEditorReady).toHaveBeenCalled();
-
-      const title = screen.getByLabelText('Task title');
-      await user.clear(title);
-      await user.type(title, 'Ship it');
-      await user.tab();
-
       expect(onCommit).not.toHaveBeenCalled();
     });
   });

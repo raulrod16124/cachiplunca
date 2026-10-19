@@ -14,14 +14,12 @@ import type {
   LinkElement,
   NoteElement,
   RichTextDocument,
-  TaskElement,
   TextElement,
 } from '../../../domain/element';
 import {
   isFrameElement,
   isLinkElement,
   isNoteElement,
-  isTaskElement,
   isTextElement,
   richTextFromPlain,
   richTextToPlain,
@@ -67,30 +65,6 @@ const UrlField = styled.input`
   &::placeholder {
     color: ${({ theme }) => theme.color.text.muted};
   }
-`;
-
-const TaskBox = styled(EditorBox)`
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 12px;
-`;
-
-const TaskTitle = styled.div`
-  flex: 0 0 auto;
-  font-weight: ${({ theme }) => theme.font.weight.semibold};
-  word-break: break-word;
-`;
-
-const TaskNotes = styled.div`
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: auto;
-  padding: 6px 8px;
-  border-radius: ${({ theme }) => theme.radius.sm};
-  background-color: ${({ theme }) => theme.color.background.sunken};
-  color: ${({ theme }) => theme.color.text.primary};
-  font-size: ${({ theme }) => theme.font.size['2xs']};
 `;
 
 const FrameBox = styled(EditorBox)`
@@ -272,128 +246,6 @@ function NoteContentEditor({
   );
 }
 
-function TaskEditor({
-  element,
-  onCommit,
-  onCancel,
-  onEditorReady,
-  commitGuardRef,
-}: FieldEditorProps<TaskElement> & {
-  readonly onEditorReady?: (editor: Editor | null) => void;
-  readonly commitGuardRef?: { readonly current: boolean };
-}): ReactElement {
-  const initialTitle = element.title;
-  const initialNotes = element.notes ?? richTextFromPlain('');
-  const titleDraftRef = useRef<RichTextDocument>(element.title);
-  const notesDraftRef = useRef<RichTextDocument>(initialNotes);
-  const cancelledRef = useRef(false);
-  const boxRef = useRef<HTMLDivElement | null>(null);
-
-  const cancel = (): void => {
-    if (cancelledRef.current) {
-      return;
-    }
-
-    cancelledRef.current = true;
-    onCancel();
-  };
-
-  const commit = (): void => {
-    if (cancelledRef.current) {
-      return;
-    }
-
-    const title = titleDraftRef.current;
-    const notes = notesDraftRef.current;
-    const titleChanged = JSON.stringify(title) !== JSON.stringify(initialTitle);
-    const notesChanged = JSON.stringify(notes) !== JSON.stringify(initialNotes);
-
-    if (!titleChanged && !notesChanged) {
-      cancel();
-      return;
-    }
-
-    onCommit({
-      type: 'task',
-      element,
-      ...(titleChanged ? { title } : {}),
-      ...(notesChanged ? { notes } : {}),
-    });
-  };
-
-  const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>): void => {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      event.stopPropagation();
-      cancel();
-      return;
-    }
-
-    if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
-      event.preventDefault();
-      commit();
-    }
-  };
-
-  const handleBlur = (event: FocusEvent<HTMLDivElement>): void => {
-    if (isContainedFocus(event, boxRef.current)) {
-      return;
-    }
-
-    if (commitGuardRef?.current === true) {
-      return;
-    }
-
-    commit();
-  };
-
-  return (
-    <TaskBox
-      ref={boxRef}
-      style={boxStyle(element)}
-      data-testid="element-editor-box"
-      onKeyDown={handleKeyDown}
-      onBlur={handleBlur}
-    >
-      <TaskTitle>
-        <RichTextFieldEditor
-          document={element.title}
-          ariaLabel="Task title"
-          dataField="title"
-          singleLine
-          autoFocus
-          selectAllOnFocus
-          onChange={(document) => {
-            titleDraftRef.current = document;
-          }}
-          onCommit={(document) => {
-            titleDraftRef.current = document;
-            commit();
-          }}
-          onCancel={cancel}
-          onEditorReady={onEditorReady}
-          commitGuardRef={commitGuardRef}
-        />
-      </TaskTitle>
-      <TaskNotes>
-        <RichTextFieldEditor
-          document={initialNotes}
-          ariaLabel="Task notes"
-          dataField="notes"
-          onChange={(document) => {
-            notesDraftRef.current = document;
-          }}
-          onCommit={(document) => {
-            notesDraftRef.current = document;
-            commit();
-          }}
-          onCancel={cancel}
-        />
-      </TaskNotes>
-    </TaskBox>
-  );
-}
-
 function FrameTitleEditor({
   element,
   onCommit,
@@ -570,18 +422,6 @@ export function ElementEditorOverlay({
   if (isNoteElement(element)) {
     return (
       <NoteContentEditor
-        element={element}
-        onCommit={onCommit}
-        onCancel={onCancel}
-        onEditorReady={onTextEditorReady}
-        commitGuardRef={textCommitGuardRef}
-      />
-    );
-  }
-
-  if (isTaskElement(element)) {
-    return (
-      <TaskEditor
         element={element}
         onCommit={onCommit}
         onCancel={onCancel}
