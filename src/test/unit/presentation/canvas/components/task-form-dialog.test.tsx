@@ -81,6 +81,14 @@ describe('TaskFormDialog', () => {
     });
   });
 
+  it('renders the status options above the dialog overlay', () => {
+    renderDialog({});
+
+    fireEvent.click(screen.getByRole('combobox', { name: 'Status' }));
+
+    expect(screen.getByRole('listbox').style.zIndex).toBe('calc(var(--rr-z-modal) + 1)');
+  });
+
   it('shows a validation error for an empty title and does not submit', () => {
     const { onSubmit } = renderDialog({});
 

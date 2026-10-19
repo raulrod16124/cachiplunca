@@ -28,12 +28,18 @@ const CREDENTIALS = { email: 'user@example.com', password: 'secret123' };
 
 async function renderAuthenticatedApp(initialPath = '/workspaces') {
   const authPort = new FakeAuthPort();
-  await authPort.signUp(CREDENTIALS);
+  const user = await authPort.signUp(CREDENTIALS);
 
   const repository = new FakeWorkspaceRepository();
+  const membershipRepository = new FakeMembershipRepository();
   const workspace = await repository.create({
     name: 'Roadmap Q4',
-    createdBy: UserId.create('user-1'),
+    createdBy: UserId.create(user.uid),
+  });
+  await membershipRepository.create({
+    userId: UserId.create(user.uid),
+    workspaceId: workspace.id,
+    role: 'owner',
   });
   const elementRepository = new FakeElementRepository();
 
@@ -44,10 +50,10 @@ async function renderAuthenticatedApp(initialPath = '/workspaces') {
       registerUser: createRegisterUser(authPort),
       loginUser: createLoginUser(authPort),
       logoutUser: createLogoutUser(authPort),
-      listWorkspaces: createListWorkspaces(repository),
+      listWorkspaces: createListWorkspaces(repository, membershipRepository),
       createWorkspaceWithOwner: createCreateWorkspaceWithOwner({
         workspaceRepository: repository,
-        createOwnerMembership: createCreateOwnerMembership(new FakeMembershipRepository()),
+        createOwnerMembership: createCreateOwnerMembership(membershipRepository),
       }),
       getWorkspace: createGetWorkspace(repository),
       loadWorkspaceElements: createLoadWorkspaceElements(elementRepository),

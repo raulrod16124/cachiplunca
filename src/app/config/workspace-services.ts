@@ -46,7 +46,7 @@ export function createWorkspaceServices(): WorkspaceServices {
   const workspaceRepository: WorkspaceRepository = createFirebaseWorkspaceRepository(db);
   const membershipRepository: MembershipRepository = createFirebaseMembershipRepository(db);
   return {
-    listWorkspaces: createListWorkspaces(workspaceRepository),
+    listWorkspaces: createListWorkspaces(workspaceRepository, membershipRepository),
     createWorkspaceWithOwner: createCreateWorkspaceWithOwner({
       workspaceRepository,
       createOwnerMembership: createCreateOwnerMembership(membershipRepository),

@@ -48,20 +48,47 @@ export function describeInvitationRepositoryContract(
 
     it('starts with empty pending listings', async () => {
       await expect(repository.listPendingByWorkspace(WORKSPACE)).resolves.toEqual([]);
+      await expect(repository.listPendingByEmail('invitee@example.com')).resolves.toEqual([]);
     });
 
-    it('stores a created invitation and exposes it through findByTokenHash', async () => {
+    it('stores a created invitation and exposes it through findById and findByTokenHash', async () => {
       const invitation = makeInvitation();
 
       const created = await repository.create(invitation);
-      const found = await repository.findByTokenHash('hash-1');
+      const foundById = await repository.findById(invitation.id);
+      const foundByToken = await repository.findByTokenHash('hash-1');
 
       expect(created).toBeInstanceOf(Invitation);
-      expect(requireInvitation(found).id.equals(invitation.id)).toBe(true);
+      expect(requireInvitation(foundById).id.equals(invitation.id)).toBe(true);
+      expect(requireInvitation(foundByToken).id.equals(invitation.id)).toBe(true);
     });
 
-    it('returns null from findByTokenHash for an unknown hash', async () => {
+    it('returns null from findById and findByTokenHash for unknown values', async () => {
+      expect(await repository.findById(InvitationId.create('missing'))).toBeNull();
       expect(await repository.findByTokenHash('missing')).toBeNull();
+    });
+
+    it('lists pending invitations by normalized email', async () => {
+      const pending = makeInvitation();
+      const otherEmail = makeInvitation({
+        id: InvitationId.create('inv-2'),
+        email: 'other@example.com',
+        tokenHash: 'hash-2',
+      });
+      const accepted = makeInvitation({
+        id: InvitationId.create('inv-3'),
+        email: 'accepted@example.com',
+        tokenHash: 'hash-3',
+      }).accept(CREATED_AT);
+
+      await repository.create(pending);
+      await repository.create(otherEmail);
+      await repository.create(accepted);
+
+      const listed = await repository.listPendingByEmail('  INVITEE@example.com ');
+
+      expect(listed).toHaveLength(1);
+      expect(listed[0].id.equals(pending.id)).toBe(true);
     });
 
     it('lists only pending invitations of a workspace', async () => {

@@ -482,6 +482,26 @@ describe('firestore.rules — memberships', () => {
     );
   });
 
+  test('self-create succeeds when the auth email differs only in case', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), 'invitations', 'inv-case'),
+        invitationData(WS1, ROLE_UIDS.owner, 'pending', INVITEE_EMAIL, 'editor', 'inv-case'),
+      );
+    });
+
+    await assertSucceeds(
+      setDoc(
+        doc(
+          dbWithEmail(INVITEE_UID, 'INVITEE@EXAMPLE.COM'),
+          'memberships',
+          `${WS1}_${INVITEE_UID}`,
+        ),
+        membershipData(WS1, INVITEE_UID, 'editor', 'inv-case'),
+      ),
+    );
+  });
+
   test('self-create fails when the invitation role does not match', async () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await setDoc(
@@ -803,6 +823,15 @@ describe('firestore.rules — invitations', () => {
   test('the invitee whose email matches can accept a pending invitation', async () => {
     await assertSucceeds(
       updateDoc(doc(dbWithEmail(INVITEE_UID, INVITEE_EMAIL), 'invitations', 'inv1'), {
+        status: 'accepted',
+        updatedAt: now,
+      }),
+    );
+  });
+
+  test('a pending invitation can be accepted when the auth email differs only in case', async () => {
+    await assertSucceeds(
+      updateDoc(doc(dbWithEmail(INVITEE_UID, 'INVITEE@EXAMPLE.COM'), 'invitations', 'inv1'), {
         status: 'accepted',
         updatedAt: now,
       }),

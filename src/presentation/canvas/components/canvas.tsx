@@ -14,6 +14,7 @@ import type {
   SelectionStore,
 } from '../../../application/services';
 import type { UpdateElementInput } from '../../../application/commands';
+import { createResizeElement } from '../../../application/commands';
 import {
   bringElementsToFront,
   deleteElements,
@@ -135,6 +136,8 @@ const Hint = styled.div`
 `;
 
 const CANVAS_GRID = Grid.default();
+
+const resizeElement = createResizeElement();
 
 /** World-space margin kept mounted around the viewport to avoid flicker (TASK-114). */
 export const CULLING_MARGIN = 64;
@@ -743,6 +746,38 @@ export function Canvas({
     [taskForm, elements, onCreateTask, onUpdateElement],
   );
 
+  const handleResizeElement = useCallback(
+    (target: Element, size: Size): void => {
+      if (readOnly || onResizeElements === undefined) {
+        return;
+      }
+
+      const current = elements.find((element) => element.id.value === target.id.value);
+
+      if (current === undefined) {
+        return;
+      }
+
+      if (current.size.width === size.width && current.size.height === size.height) {
+        return;
+      }
+
+      const result = resizeElement({ element: current, size });
+
+      if (result.status === 'error') {
+        return;
+      }
+
+      onResizeElements(
+        elements.map((element) =>
+          element.id.value === current.id.value ? result.element : element,
+        ),
+      );
+      onTransformEnd?.();
+    },
+    [elements, onResizeElements, onTransformEnd, readOnly],
+  );
+
   const setContainerRef = useCallback(
     (node: HTMLDivElement | null) => {
       containerRef.current = node;
@@ -891,6 +926,7 @@ export function Canvas({
               renderers={renderers}
               ariaLabel={ariaLabels.get(element.id.value)}
               onUpdateElement={readOnly ? undefined : onUpdateElement}
+              onResizeElement={readOnly ? undefined : handleResizeElement}
             />
           );
         })}

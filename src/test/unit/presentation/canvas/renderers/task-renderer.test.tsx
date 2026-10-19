@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import {
   createTaskElement,
   createTextElement,
@@ -111,7 +111,7 @@ describe('TaskRenderer', () => {
     expect(document.querySelector('[data-task-due-date]')).toBeNull();
   });
 
-  it('renders the notes when present', () => {
+  it('renders a collapsed notes toggle when notes are present', () => {
     render(
       <TaskRenderer
         element={createElement('Ship the MVP', { notes: 'Wait for review' })}
@@ -119,23 +119,104 @@ describe('TaskRenderer', () => {
       />,
     );
 
+    const toggle = screen.getByTestId('task-notes-toggle-elem-1');
+
+    expect(toggle).toHaveTextContent('Notes');
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(document.querySelector('[data-task-notes]')).toBeNull();
+    expect(screen.queryByText('Wait for review')).toBeNull();
+  });
+
+  it('expands and collapses the notes when the toggle is clicked', () => {
+    render(
+      <TaskRenderer
+        element={createElement('Ship the MVP', { notes: 'Wait for review' })}
+        selected={false}
+      />,
+    );
+
+    const toggle = screen.getByTestId('task-notes-toggle-elem-1');
+
+    fireEvent.click(toggle);
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
     const notes = document.querySelector('[data-task-notes]');
     expect(notes).not.toBeNull();
     expect(notes).toHaveTextContent('Wait for review');
-  });
 
-  it('does not render the notes block when absent', () => {
-    render(<TaskRenderer element={createElement('Ship the MVP')} selected={false} />);
+    fireEvent.click(toggle);
 
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
     expect(document.querySelector('[data-task-notes]')).toBeNull();
   });
 
-  it('does not render the notes block when they are empty', () => {
+  it('grows the task when the notes overflow and restores it when collapsed', () => {
+    const scrollHeight = jest
+      .spyOn(HTMLElement.prototype, 'scrollHeight', 'get')
+      .mockReturnValue(160);
+    const clientHeight = jest
+      .spyOn(HTMLElement.prototype, 'clientHeight', 'get')
+      .mockReturnValue(40);
+    const element = createElement('Ship the MVP', { notes: 'Wait for review' });
+    const onResizeElement = jest.fn();
+
+    try {
+      render(<TaskRenderer element={element} selected={false} onResizeElement={onResizeElement} />);
+
+      const toggle = screen.getByTestId('task-notes-toggle-elem-1');
+
+      fireEvent.click(toggle);
+
+      expect(onResizeElement).toHaveBeenCalledWith(element, Size.create(120, 200));
+
+      fireEvent.click(toggle);
+
+      expect(onResizeElement).toHaveBeenLastCalledWith(element, Size.create(120, 80));
+    } finally {
+      scrollHeight.mockRestore();
+      clientHeight.mockRestore();
+    }
+  });
+
+  it('restores the original task size if it unmounts while notes are open', () => {
+    const scrollHeight = jest
+      .spyOn(HTMLElement.prototype, 'scrollHeight', 'get')
+      .mockReturnValue(160);
+    const clientHeight = jest
+      .spyOn(HTMLElement.prototype, 'clientHeight', 'get')
+      .mockReturnValue(40);
+    const element = createElement('Ship the MVP', { notes: 'Wait for review' });
+    const onResizeElement = jest.fn();
+
+    try {
+      const { unmount } = render(
+        <TaskRenderer element={element} selected={false} onResizeElement={onResizeElement} />,
+      );
+
+      fireEvent.click(screen.getByTestId('task-notes-toggle-elem-1'));
+      unmount();
+
+      expect(onResizeElement).toHaveBeenLastCalledWith(element, Size.create(120, 80));
+    } finally {
+      scrollHeight.mockRestore();
+      clientHeight.mockRestore();
+    }
+  });
+
+  it('does not render the notes toggle when notes are absent', () => {
+    render(<TaskRenderer element={createElement('Ship the MVP')} selected={false} />);
+
+    expect(document.querySelector('[data-task-notes]')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Notes' })).toBeNull();
+  });
+
+  it('does not render the notes toggle when notes are empty', () => {
     render(
       <TaskRenderer element={createElement('Ship the MVP', { notes: '' })} selected={false} />,
     );
 
     expect(document.querySelector('[data-task-notes]')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Notes' })).toBeNull();
   });
 
   it('delimits the container with a soft border', () => {

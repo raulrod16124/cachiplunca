@@ -3,6 +3,7 @@ import { memo, useMemo } from 'react';
 import styled from 'styled-components';
 import type { UpdateElementInput } from '../../../application/commands';
 import type { Element } from '../../../domain/element';
+import type { Size } from '../../../domain/shared';
 import { describeElement } from '../accessibility';
 import type { ElementRendererRegistry } from './element-renderer';
 import { resolveElementRenderer } from './resolve-element-renderer';
@@ -22,6 +23,7 @@ export interface ElementViewProps {
   readonly ariaLabel?: string;
   readonly zIndex?: number;
   readonly onUpdateElement?: (input: UpdateElementInput) => void;
+  readonly onResizeElement?: (element: Element, size: Size) => void;
 }
 
 function ElementViewComponent({
@@ -31,6 +33,7 @@ function ElementViewComponent({
   ariaLabel,
   zIndex,
   onUpdateElement,
+  onResizeElement,
 }: ElementViewProps): ReactElement {
   const Renderer = resolveElementRenderer(renderers, element.type);
 
@@ -66,7 +69,12 @@ function ElementViewComponent({
       data-testid={`canvas-item-${element.id.value}`}
       style={style}
     >
-      <Renderer element={element} selected={selected} onUpdateElement={onUpdateElement} />
+      <Renderer
+        element={element}
+        selected={selected}
+        onUpdateElement={onUpdateElement}
+        onResizeElement={onResizeElement}
+      />
     </Wrapper>
   );
 }

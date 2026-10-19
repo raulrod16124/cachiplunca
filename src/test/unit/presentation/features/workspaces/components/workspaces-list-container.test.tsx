@@ -38,7 +38,11 @@ describe('WorkspacesListContainer', () => {
     const listWorkspaces: ListWorkspaces = jest.fn().mockResolvedValue(result);
 
     renderWithRouter(
-      <WorkspacesListContainer listWorkspaces={listWorkspaces} onCreateWorkspace={onCreate} />,
+      <WorkspacesListContainer
+        userId="user-1"
+        listWorkspaces={listWorkspaces}
+        onCreateWorkspace={onCreate}
+      />,
     );
 
     expect(screen.getAllByTestId(/skeleton/i).length).toBeGreaterThan(0);
@@ -57,7 +61,11 @@ describe('WorkspacesListContainer', () => {
     const user = userEvent.setup();
 
     renderWithRouter(
-      <WorkspacesListContainer listWorkspaces={listWorkspaces} onCreateWorkspace={onCreate} />,
+      <WorkspacesListContainer
+        userId="user-1"
+        listWorkspaces={listWorkspaces}
+        onCreateWorkspace={onCreate}
+      />,
     );
 
     await waitFor(() => {
@@ -76,7 +84,11 @@ describe('WorkspacesListContainer', () => {
     const listWorkspaces: ListWorkspaces = jest.fn().mockResolvedValue(result);
 
     renderWithRouter(
-      <WorkspacesListContainer listWorkspaces={listWorkspaces} onCreateWorkspace={onCreate} />,
+      <WorkspacesListContainer
+        userId="user-1"
+        listWorkspaces={listWorkspaces}
+        onCreateWorkspace={onCreate}
+      />,
     );
 
     await waitFor(() => {
@@ -91,7 +103,11 @@ describe('WorkspacesListContainer', () => {
     const user = userEvent.setup();
 
     renderWithRouter(
-      <WorkspacesListContainer listWorkspaces={listWorkspaces} onCreateWorkspace={onCreate} />,
+      <WorkspacesListContainer
+        userId="user-1"
+        listWorkspaces={listWorkspaces}
+        onCreateWorkspace={onCreate}
+      />,
     );
 
     await waitFor(() => {
@@ -112,6 +128,7 @@ describe('WorkspacesListContainer', () => {
 
     const { rerender } = renderWithRouter(
       <WorkspacesListContainer
+        userId="user-1"
         listWorkspaces={listWorkspaces}
         onCreateWorkspace={onCreate}
         refreshToken={0}
@@ -125,6 +142,7 @@ describe('WorkspacesListContainer', () => {
     rerender(
       <MemoryRouter>
         <WorkspacesListContainer
+          userId="user-1"
           listWorkspaces={listWorkspaces}
           onCreateWorkspace={onCreate}
           refreshToken={1}

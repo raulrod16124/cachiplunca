@@ -11,12 +11,14 @@ import { describeListWorkspacesError } from '../workspace-error-messages';
 import { WorkspacesList } from './workspaces-list';
 
 export interface WorkspacesListContainerProps {
+  readonly userId: string;
   readonly listWorkspaces: ListWorkspaces;
   readonly onCreateWorkspace: () => void;
   readonly refreshToken?: number;
 }
 
 export function WorkspacesListContainer({
+  userId,
   listWorkspaces,
   onCreateWorkspace,
   refreshToken = 0,
@@ -28,14 +30,14 @@ export function WorkspacesListContainer({
   const fetchWorkspaces = useCallback(async (): Promise<void> => {
     setStatus('loading');
     try {
-      const response = await listWorkspaces();
+      const response = await listWorkspaces(userId);
       setResult(response);
       setStatus(response.status === 'ok' ? 'success' : 'error');
     } catch (error) {
       setResult({ status: 'error', error: toAppError(error) });
       setStatus('error');
     }
-  }, [listWorkspaces]);
+  }, [listWorkspaces, userId]);
 
   useEffect(() => {
     void fetchWorkspaces();

@@ -102,10 +102,12 @@ describe('createListPendingInvitations', () => {
       create: async () => {
         throw new Error('not used');
       },
+      findById: async () => null,
       findByTokenHash: async () => null,
       listPendingByWorkspace: async () => {
         throw error;
       },
+      listPendingByEmail: async () => [],
       updateStatus: async () => {
         throw new Error('not used');
       },

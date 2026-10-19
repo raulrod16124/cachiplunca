@@ -30,6 +30,14 @@ describe('describeAcceptInvitationError', () => {
     );
   });
 
+  it('maps an authorization failure while granting access', () => {
+    const error = createAppError('authorization', ERROR_CODES.AUTH_FORBIDDEN, 'raw');
+
+    expect(describeAcceptInvitationError(error)).toBe(
+      'We could not add you to this workspace. Please try again or ask for a new invitation.',
+    );
+  });
+
   it('maps an existing membership', () => {
     const error = createAppError('conflict', ERROR_CODES.MEMBERSHIP_ALREADY_EXISTS, 'raw');
 

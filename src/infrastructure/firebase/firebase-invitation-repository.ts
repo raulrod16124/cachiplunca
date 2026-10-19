@@ -35,6 +35,24 @@ export function createFirebaseInvitationRepository(db: Firestore): InvitationRep
     return snapshot.docs.map((document) => readInvitation(document.data()));
   }
 
+  async function listPendingByEmail(email: string): Promise<Invitation[]> {
+    const normalized = email.trim().toLowerCase();
+    if (normalized.length === 0) {
+      return [];
+    }
+
+    const snapshot = await withMappedErrors(() =>
+      getDocs(
+        query(
+          invitationsCollection,
+          where('email', '==', normalized),
+          where('status', '==', 'pending'),
+        ),
+      ),
+    );
+    return snapshot.docs.map((document) => readInvitation(document.data()));
+  }
+
   return {
     async create(invitation: Invitation): Promise<Invitation> {
       const reference = invitationRef(invitation.id);
@@ -57,6 +75,14 @@ export function createFirebaseInvitationRepository(db: Firestore): InvitationRep
       return invitation;
     },
 
+    async findById(id: InvitationId): Promise<Invitation | null> {
+      const snapshot = await withMappedErrors(() => getDoc(invitationRef(id)));
+      if (!snapshot.exists()) {
+        return null;
+      }
+      return readInvitation(snapshot.data());
+    },
+
     async findByTokenHash(tokenHash: string): Promise<Invitation | null> {
       const snapshot = await withMappedErrors(() =>
         getDocs(query(invitationsCollection, where('tokenHash', '==', tokenHash))),
@@ -69,6 +95,7 @@ export function createFirebaseInvitationRepository(db: Firestore): InvitationRep
     },
 
     listPendingByWorkspace,
+    listPendingByEmail,
 
     async updateStatus(id: InvitationId, status: InvitationStatus): Promise<Invitation> {
       const reference = invitationRef(id);

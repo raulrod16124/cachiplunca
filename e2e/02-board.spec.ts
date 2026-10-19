@@ -39,6 +39,9 @@ test.describe('Board (MVP happy path)', () => {
     const item = page.locator('[data-testid^="canvas-item-"]').last();
     await expect(item).toContainText('Plan launch');
     await expect(item).toContainText('In progress');
+    await expect(item).not.toContainText('Ship the MVP');
+
+    await item.locator('[data-testid^="task-notes-toggle-"]').click();
     await expect(item).toContainText('Ship the MVP');
 
     await item.dblclick();
@@ -47,14 +50,21 @@ test.describe('Board (MVP happy path)', () => {
     await expect(editDialog.getByLabel('Title')).toHaveValue('Plan launch');
     await expect(editDialog.getByLabel('Notes')).toHaveValue('Ship the MVP');
     await editDialog.getByLabel('Title').fill('Launch plan');
+    await editDialog.getByRole('combobox', { name: 'Status' }).click();
+    await page.getByRole('option', { name: 'Completed' }).click();
     await editDialog.getByRole('button', { name: 'Save changes' }).click();
 
     await expect(item).toContainText('Launch plan');
+    await expect(item).toContainText('Completed');
 
     await page.reload();
     await expect(page.getByRole('application', { name: 'Canvas' })).toBeVisible({ timeout: 20000 });
     const reloaded = page.locator('[data-testid^="canvas-item-"]').first();
     await expect(reloaded).toContainText('Launch plan', { timeout: 20000 });
+    await expect(reloaded).toContainText('Completed');
+    await expect(reloaded).not.toContainText('Ship the MVP');
+
+    await reloaded.locator('[data-testid^="task-notes-toggle-"]').click();
     await expect(reloaded).toContainText('Ship the MVP');
   });
 

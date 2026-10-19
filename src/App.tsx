@@ -56,7 +56,9 @@ function AppContent({
         presencePort={presenceServices.presencePort}
         inviteMember={invitationServices.inviteMember}
         listPendingInvitations={invitationServices.listPendingInvitations}
+        listPendingInvitationsForUser={invitationServices.listPendingInvitationsForUser}
         acceptInvitation={invitationServices.acceptInvitation}
+        acceptInvitationById={invitationServices.acceptInvitationById}
         listWorkspaceMembers={workspaceServices.listWorkspaceMembers}
         changeMemberRole={workspaceServices.changeMemberRole}
         removeMember={workspaceServices.removeMember}

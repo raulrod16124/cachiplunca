@@ -2,6 +2,50 @@ import { expect, test } from '@playwright/test';
 import { registerUser, uniqueEmail } from './helpers/auth';
 import { addElement, createWorkspace } from './helpers/workspace';
 
+test.describe('Sharing (editor accepts from the pending list)', () => {
+  test('an invited editor can accept from the workspaces list and edit the board', async ({
+    browser,
+  }) => {
+    const ownerContext = await browser.newContext();
+    const ownerPage = await ownerContext.newPage();
+    const editorEmail = uniqueEmail('editor');
+
+    await registerUser(ownerPage);
+    await createWorkspace(ownerPage, 'Editor board');
+    await addElement(ownerPage, 'text');
+
+    await ownerPage.getByRole('button', { name: 'Share' }).click();
+    const dialog = ownerPage.getByRole('dialog');
+    await expect(dialog.getByRole('heading', { name: 'Share workspace' })).toBeVisible();
+
+    await dialog.getByLabel('Email').fill(editorEmail);
+    await expect(dialog.getByLabel('Role')).toHaveText(/Editor/);
+    await dialog.getByRole('button', { name: 'Send invitation' }).click();
+    await expect(dialog.getByLabel('Invitation link')).toBeVisible({ timeout: 15000 });
+
+    const editorContext = await browser.newContext();
+    const editorPage = await editorContext.newPage();
+    await registerUser(editorPage, editorEmail);
+
+    await expect(
+      editorPage.getByRole('heading', { level: 2, name: 'Pending invitations' }),
+    ).toBeVisible({ timeout: 20000 });
+    await expect(editorPage.getByText('Editor board')).toBeVisible();
+    await editorPage.getByRole('button', { name: 'Accept invitation' }).click();
+
+    const canvas = editorPage.getByRole('application', { name: 'Canvas' });
+    await expect(canvas).toBeVisible({ timeout: 20000 });
+    await expect(editorPage.getByRole('button', { name: 'Add text' })).toBeEnabled();
+    await addElement(editorPage, 'note');
+    await expect(editorPage.locator('[data-testid^="canvas-item-"]')).toHaveCount(2, {
+      timeout: 20000,
+    });
+
+    await ownerContext.close();
+    await editorContext.close();
+  });
+});
+
 test.describe('Sharing (viewer happy path)', () => {
   test('owner invites a viewer; viewer gets read-only access to the board', async ({ browser }) => {
     const ownerContext = await browser.newContext();

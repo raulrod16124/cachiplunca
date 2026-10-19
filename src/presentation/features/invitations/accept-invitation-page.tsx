@@ -24,6 +24,7 @@ export function AcceptInvitationPage({ acceptInvitation }: AcceptInvitationPageP
   const session = useSession();
   const navigate = useNavigate();
   const [result, setResult] = useState<AcceptInvitationResult | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const startedRef = useRef(false);
 
   const currentToken = token ?? '';
@@ -41,7 +42,13 @@ export function AcceptInvitationPage({ acceptInvitation }: AcceptInvitationPageP
     }).then((next) => {
       setResult(next);
     });
-  }, [acceptInvitation, currentToken, session]);
+  }, [acceptInvitation, attempt, currentToken, session]);
+
+  const handleRetry = () => {
+    startedRef.current = false;
+    setResult(null);
+    setAttempt((value) => value + 1);
+  };
 
   if (session.status === 'loading') {
     return (
@@ -124,8 +131,10 @@ export function AcceptInvitationPage({ acceptInvitation }: AcceptInvitationPageP
         title="We could not accept the invitation"
         titleAs="h1"
         description={describeAcceptInvitationError(error)}
-        actionLabel="Back to your workspaces"
-        onAction={() => navigate('/workspaces')}
+        actionLabel="Try again"
+        onAction={handleRetry}
+        secondaryActionLabel="Back to your workspaces"
+        onSecondaryAction={() => navigate('/workspaces')}
       />
     </AuthLayout>
   );
