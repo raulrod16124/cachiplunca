@@ -1,5 +1,6 @@
 import {
   describeCreateWorkspaceError,
+  describeDeleteWorkspaceError,
   describeListWorkspacesError,
 } from '../../../../../presentation/features/workspaces/workspace-error-messages';
 import { createAppError, ERROR_CODES } from '../../../../../shared/errors';
@@ -86,5 +87,41 @@ describe('describeCreateWorkspaceError', () => {
     );
 
     expect(describeCreateWorkspaceError(error)).toBe('Something else broke.');
+  });
+});
+
+describe('describeDeleteWorkspaceError', () => {
+  it('maps network, persistence and session failures', () => {
+    expect(
+      describeDeleteWorkspaceError(
+        createAppError('network', ERROR_CODES.NETWORK_REQUEST_FAILED, 'raw'),
+      ),
+    ).toBe('We could not reach the server. Check your connection and try again.');
+    expect(
+      describeDeleteWorkspaceError(
+        createAppError('persistence', ERROR_CODES.PERSISTENCE_WRITE_FAILED, 'raw'),
+      ),
+    ).toBe('The service is temporarily unavailable. Please try again.');
+    expect(
+      describeDeleteWorkspaceError(
+        createAppError('authorization', ERROR_CODES.AUTH_UNAUTHENTICATED, 'raw'),
+      ),
+    ).toBe('Your session has expired. Sign in again to continue.');
+  });
+
+  it('maps authorization failures to a delete-specific message', () => {
+    const error = createAppError('authorization', ERROR_CODES.AUTH_FORBIDDEN, 'raw');
+
+    expect(describeDeleteWorkspaceError(error)).toBe(
+      'You do not have permission to delete this workspace.',
+    );
+  });
+
+  it('does not leak the underlying message for unknown errors', () => {
+    const error = createAppError('unknown', ERROR_CODES.UNKNOWN_UNEXPECTED, 'internal-secret');
+
+    expect(describeDeleteWorkspaceError(error)).toBe(
+      'We could not delete this workspace. Please try again.',
+    );
   });
 });

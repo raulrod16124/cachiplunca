@@ -10,6 +10,7 @@ import type {
   CreateWorkspaceInput,
   CreateWorkspaceResult,
   CreateWorkspaceWithOwner,
+  DeleteWorkspace,
   LogoutUser,
 } from '../../../application/commands';
 import type {
@@ -55,6 +56,7 @@ export interface WorkspacesPageProps {
   readonly logoutUser: LogoutUser;
   readonly listWorkspaces: ListWorkspaces;
   readonly createWorkspaceWithOwner: CreateWorkspaceWithOwner;
+  readonly deleteWorkspace?: DeleteWorkspace;
   readonly getWorkspace: GetWorkspace;
   readonly listPendingInvitationsForUser?: ListPendingInvitationsForUser;
   readonly acceptInvitationById?: AcceptInvitationById;
@@ -64,6 +66,7 @@ export function WorkspacesPage({
   logoutUser,
   listWorkspaces,
   createWorkspaceWithOwner,
+  deleteWorkspace,
   getWorkspace,
   listPendingInvitationsForUser,
   acceptInvitationById,
@@ -137,6 +140,7 @@ export function WorkspacesPage({
               <WorkspacesListContainer
                 userId={session.user.uid}
                 listWorkspaces={listWorkspaces}
+                deleteWorkspace={deleteWorkspace}
                 onCreateWorkspace={handleCreateWorkspace}
                 refreshToken={refreshToken}
               />

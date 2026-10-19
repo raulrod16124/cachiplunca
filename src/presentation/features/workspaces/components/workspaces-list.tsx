@@ -1,7 +1,9 @@
 import { Button, Heading, Input, Skeleton, Stack, Text } from '@raulrod/ui';
-import { ArrowUpRight, LayoutGrid, Search } from '@raulrod/icons';
+import { ArrowUpRight, LayoutGrid, Search, Trash2 } from '@raulrod/icons';
 import { useMemo, useState, type ReactNode } from 'react';
 import styled from 'styled-components';
+import { can } from '../../../../domain/membership';
+import type { MembershipRole } from '../../../../domain/membership';
 import type { Workspace } from '../../../../domain/workspace';
 import { EmptyState } from '../../../components/empty-state';
 import { ErrorState } from '../../../components/error-state';
@@ -103,19 +105,23 @@ const SearchWrapper = styled.div`
 export interface WorkspacesListProps {
   readonly status: 'idle' | 'loading' | 'success' | 'error';
   readonly workspaces: readonly Workspace[];
+  readonly rolesByWorkspaceId: ReadonlyMap<string, MembershipRole>;
   readonly errorMessage?: string;
   readonly onRetry: () => void;
   readonly onCreate: () => void;
   readonly onSelect?: (workspace: Workspace) => void;
+  readonly onRequestDelete?: (workspace: Workspace) => void;
 }
 
 export function WorkspacesList({
   status,
   workspaces,
+  rolesByWorkspaceId,
   errorMessage,
   onRetry,
   onCreate,
   onSelect,
+  onRequestDelete,
 }: WorkspacesListProps): ReactNode {
   const { t, locale } = useI18n();
   const [query, setQuery] = useState('');
@@ -210,43 +216,63 @@ export function WorkspacesList({
         </CardShell>
       ) : (
         <ListGrid>
-          {filtered.map((workspace) => (
-            <CardShell key={workspace.id.value} as="article">
-              <CardContent gap="space-4">
-                <Stack gap="space-3">
-                  <CardHeading>
-                    <CardIcon aria-hidden="true">
-                      <LayoutGrid size={16} />
-                    </CardIcon>
-                    <Stack gap="space-1">
-                      <Heading as="h3">{workspace.name}</Heading>
-                      <Text color="color.text.muted" size="font.size.sm">
-                        {t('workspaces.card.updated', {
-                          when: formatRelativeDate(workspace.updatedAt, locale),
-                        })}
-                      </Text>
-                    </Stack>
-                  </CardHeading>
-                  <Description color="color.text.muted" size="font.size.sm">
-                    {workspace.description ?? t('workspaces.card.noDescription')}
-                  </Description>
-                </Stack>
-                {onSelect !== undefined && (
-                  <CardFooter>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onSelect(workspace)}
-                    >
-                      {t('common.open')}
-                      <ArrowUpRight aria-hidden="true" size={14} />
-                    </Button>
-                  </CardFooter>
-                )}
-              </CardContent>
-            </CardShell>
-          ))}
+          {filtered.map((workspace) => {
+            const role = rolesByWorkspaceId.get(workspace.id.value);
+            const canDelete =
+              onRequestDelete !== undefined && role !== undefined && can(role, 'workspace:delete');
+
+            return (
+              <CardShell key={workspace.id.value} as="article">
+                <CardContent gap="space-4">
+                  <Stack gap="space-3">
+                    <CardHeading>
+                      <CardIcon aria-hidden="true">
+                        <LayoutGrid size={16} />
+                      </CardIcon>
+                      <Stack gap="space-1">
+                        <Heading as="h3">{workspace.name}</Heading>
+                        <Text color="color.text.muted" size="font.size.sm">
+                          {t('workspaces.card.updated', {
+                            when: formatRelativeDate(workspace.updatedAt, locale),
+                          })}
+                        </Text>
+                      </Stack>
+                    </CardHeading>
+                    <Description color="color.text.muted" size="font.size.sm">
+                      {workspace.description ?? t('workspaces.card.noDescription')}
+                    </Description>
+                  </Stack>
+                  {(onSelect !== undefined || canDelete) && (
+                    <CardFooter>
+                      {onSelect !== undefined && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onSelect(workspace)}
+                        >
+                          {t('common.open')}
+                          <ArrowUpRight aria-hidden="true" size={14} />
+                        </Button>
+                      )}
+                      {canDelete && onRequestDelete !== undefined && (
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          aria-label={`${t('workspaces.card.delete')} ${workspace.name}`}
+                          onClick={() => onRequestDelete(workspace)}
+                        >
+                          <Trash2 aria-hidden="true" size={14} />
+                          {t('workspaces.card.delete')}
+                        </Button>
+                      )}
+                    </CardFooter>
+                  )}
+                </CardContent>
+              </CardShell>
+            );
+          })}
         </ListGrid>
       )}
     </Stack>

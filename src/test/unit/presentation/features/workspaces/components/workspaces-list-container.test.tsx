@@ -7,6 +7,7 @@ import type {
   ListWorkspaces,
   ListWorkspacesResult,
 } from '../../../../../../application/queries/list-workspaces';
+import type { DeleteWorkspace } from '../../../../../../application/commands';
 import { Workspace } from '../../../../../../domain/workspace';
 import { UserId, WorkspaceId } from '../../../../../../domain/shared';
 import { createAppError, ERROR_CODES } from '../../../../../../shared/errors';
@@ -34,7 +35,11 @@ describe('WorkspacesListContainer', () => {
 
   it('transitions from loading to success and renders workspaces', async () => {
     const workspaces = [createWorkspace('Alpha')];
-    const result: ListWorkspacesResult = { status: 'ok', workspaces };
+    const result: ListWorkspacesResult = {
+      status: 'ok',
+      workspaces,
+      rolesByWorkspaceId: new Map([[workspaces[0].id.value, 'owner']]),
+    };
     const listWorkspaces: ListWorkspaces = jest.fn().mockResolvedValue(result);
 
     renderWithRouter(
@@ -80,7 +85,11 @@ describe('WorkspacesListContainer', () => {
   });
 
   it('shows empty state when no workspaces', async () => {
-    const result: ListWorkspacesResult = { status: 'ok', workspaces: [] };
+    const result: ListWorkspacesResult = {
+      status: 'ok',
+      workspaces: [],
+      rolesByWorkspaceId: new Map(),
+    };
     const listWorkspaces: ListWorkspaces = jest.fn().mockResolvedValue(result);
 
     renderWithRouter(
@@ -123,7 +132,11 @@ describe('WorkspacesListContainer', () => {
   });
 
   it('refetches when refreshToken changes', async () => {
-    const result: ListWorkspacesResult = { status: 'ok', workspaces: [] };
+    const result: ListWorkspacesResult = {
+      status: 'ok',
+      workspaces: [],
+      rolesByWorkspaceId: new Map(),
+    };
     const listWorkspaces: ListWorkspaces = jest.fn().mockResolvedValue(result);
 
     const { rerender } = renderWithRouter(
@@ -153,5 +166,44 @@ describe('WorkspacesListContainer', () => {
     await waitFor(() => {
       expect(listWorkspaces).toHaveBeenCalledTimes(2);
     });
+  });
+
+  it('deletes an owner workspace after confirmation and refetches the list', async () => {
+    const workspace = createWorkspace('Alpha');
+    const result: ListWorkspacesResult = {
+      status: 'ok',
+      workspaces: [workspace],
+      rolesByWorkspaceId: new Map([[workspace.id.value, 'owner']]),
+    };
+    const listWorkspaces: ListWorkspaces = jest.fn().mockResolvedValue(result);
+    const deleteWorkspace: DeleteWorkspace = jest.fn().mockResolvedValue({ status: 'ok' });
+    const user = userEvent.setup();
+
+    renderWithRouter(
+      <WorkspacesListContainer
+        userId="user-1"
+        listWorkspaces={listWorkspaces}
+        deleteWorkspace={deleteWorkspace}
+        onCreateWorkspace={onCreate}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Delete Alpha' }));
+    expect(screen.getByRole('dialog')).toHaveTextContent('Alpha');
+
+    await user.click(screen.getByRole('button', { name: 'Delete workspace' }));
+
+    await waitFor(() => {
+      expect(deleteWorkspace).toHaveBeenCalledWith({
+        id: workspace.id.value,
+        actorUserId: 'user-1',
+      });
+      expect(listWorkspaces).toHaveBeenCalledTimes(2);
+    });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

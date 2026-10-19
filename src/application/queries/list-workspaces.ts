@@ -1,10 +1,15 @@
 import type { Workspace } from '../../domain/workspace';
+import type { MembershipRole } from '../../domain/membership';
 import { UserId } from '../../domain/shared';
 import { toAppError, type AppError } from '../../shared/errors';
 import type { MembershipRepository, WorkspaceRepository } from '../ports';
 
 export type ListWorkspacesResult =
-  | { readonly status: 'ok'; readonly workspaces: Workspace[] }
+  | {
+      readonly status: 'ok';
+      readonly workspaces: Workspace[];
+      readonly rolesByWorkspaceId: ReadonlyMap<string, MembershipRole>;
+    }
   | { readonly status: 'error'; readonly error: AppError };
 
 export type ListWorkspaces = (userId: string) => Promise<ListWorkspacesResult>;
@@ -42,13 +47,25 @@ export function createListWorkspaces(
       );
 
       const unique = new Map<string, Workspace>();
+      const rolesByWorkspaceId = new Map<string, MembershipRole>();
       for (const workspace of resolved) {
         if (workspace !== null) {
           unique.set(workspace.id.value, workspace);
         }
       }
 
-      return { status: 'ok', workspaces: sortWorkspacesForList([...unique.values()]) };
+      for (const membership of memberships) {
+        const workspaceId = membership.workspaceId.value;
+        if (unique.has(workspaceId)) {
+          rolesByWorkspaceId.set(workspaceId, membership.role);
+        }
+      }
+
+      return {
+        status: 'ok',
+        workspaces: sortWorkspacesForList([...unique.values()]),
+        rolesByWorkspaceId,
+      };
     } catch (error) {
       return { status: 'error', error: toAppError(error) };
     }

@@ -25,7 +25,7 @@ test.describe('Authentication', () => {
 
     await page.goto('/login');
     await page.getByLabel('Email').fill(email);
-    await page.getByLabel('Password').fill('WrongPassword1');
+    await page.getByLabel('Password', { exact: true }).fill('WrongPassword1');
     await page.getByRole('button', { name: 'Sign in' }).click();
 
     await expect(page.getByRole('alert')).toBeVisible({ timeout: 15000 });

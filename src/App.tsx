@@ -57,6 +57,7 @@ function AppContent({
             logoutUser={authServices.logoutUser}
             listWorkspaces={workspaceServices.listWorkspaces}
             createWorkspaceWithOwner={workspaceServices.createWorkspaceWithOwner}
+            deleteWorkspace={workspaceServices.deleteWorkspace}
             getWorkspace={workspaceServices.getWorkspace}
             getWorkspaceRole={workspaceServices.getWorkspaceRole}
             loadWorkspaceElements={elementServices.loadWorkspaceElements}

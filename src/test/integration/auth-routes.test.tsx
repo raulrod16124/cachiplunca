@@ -28,7 +28,11 @@ function renderApp(
       registerUser: createRegisterUser(authPort),
       loginUser: createLoginUser(authPort),
       logoutUser: createLogoutUser(authPort),
-      listWorkspaces: jest.fn().mockResolvedValue({ status: 'ok' as const, workspaces: [] }),
+      listWorkspaces: jest.fn().mockResolvedValue({
+        status: 'ok' as const,
+        workspaces: [],
+        rolesByWorkspaceId: new Map(),
+      }),
       createWorkspaceWithOwner,
       getWorkspace: createGetWorkspace({
         async list() {

@@ -14,7 +14,7 @@ export async function registerUser(
 ): Promise<string> {
   await page.goto('/register');
   await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Password').fill(password);
+  await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Create account' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Your workspaces' })).toBeVisible({
     timeout: 30000,
@@ -25,7 +25,7 @@ export async function registerUser(
 export async function loginUser(page: Page, email: string, password = 'Secret123'): Promise<void> {
   await page.goto('/login');
   await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Password').fill(password);
+  await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Your workspaces' })).toBeVisible({
     timeout: 30000,

@@ -123,6 +123,28 @@ describe('createListWorkspaces', () => {
     }
   });
 
+  it('returns the role the user holds in each workspace', async () => {
+    const workspaces = new FakeWorkspaceRepository();
+    const memberships = new FakeMembershipRepository();
+    const owned = await workspaces.create({ createdBy: CREATED_BY, name: 'Owned' });
+    const shared = await workspaces.create({ createdBy: CREATED_BY, name: 'Shared' });
+    await seedMembership(memberships, owned.id.value);
+    await memberships.create({
+      userId: USER,
+      workspaceId: shared.id,
+      role: 'editor',
+    });
+    const listWorkspaces = createListWorkspaces(workspaces, memberships);
+
+    const result = await listWorkspaces(USER.value);
+
+    expect(result.status).toBe('ok');
+    if (result.status === 'ok') {
+      expect(result.rolesByWorkspaceId.get(owned.id.value)).toBe('owner');
+      expect(result.rolesByWorkspaceId.get(shared.id.value)).toBe('editor');
+    }
+  });
+
   it('ignores memberships whose workspace no longer exists', async () => {
     const workspaces = new FakeWorkspaceRepository();
     const memberships = new FakeMembershipRepository();
