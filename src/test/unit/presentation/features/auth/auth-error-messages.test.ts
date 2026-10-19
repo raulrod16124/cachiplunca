@@ -80,4 +80,26 @@ describe('describeLoginError', () => {
     const error = createAppError('unknown', 'custom/provider-issue', 'Provider issue.');
     expect(describeLoginError(error)).toBe('Provider issue.');
   });
+
+  it('surfaces an actionable message when the deployment is misconfigured', () => {
+    const error = createAppError(
+      'unknown',
+      ERROR_CODES.AUTH_APP_MISCONFIGURED,
+      'Sign-in is not configured correctly for this deployment.',
+    );
+    expect(describeLoginError(error)).toBe(
+      'Sign-in is not configured correctly for this deployment.',
+    );
+  });
+
+  it('surfaces the retry guidance when sign-in is rate limited', () => {
+    const error = createAppError(
+      'authorization',
+      ERROR_CODES.AUTH_TOO_MANY_REQUESTS,
+      'Too many sign-in attempts. Please wait a few minutes and try again.',
+    );
+    expect(describeLoginError(error)).toBe(
+      'Too many sign-in attempts. Please wait a few minutes and try again.',
+    );
+  });
 });
