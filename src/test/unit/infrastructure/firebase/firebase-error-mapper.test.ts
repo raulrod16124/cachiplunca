@@ -24,6 +24,12 @@ describe('mapFirebaseError', () => {
     ['auth/wrong-password', 'authorization', ERROR_CODES.AUTH_INVALID_CREDENTIALS],
     ['auth/user-not-found', 'authorization', ERROR_CODES.AUTH_INVALID_CREDENTIALS],
     ['auth/network-request-failed', 'network', ERROR_CODES.NETWORK_REQUEST_FAILED],
+    ['auth/invalid-api-key', 'unknown', ERROR_CODES.AUTH_APP_MISCONFIGURED],
+    ['auth/unauthorized-domain', 'unknown', ERROR_CODES.AUTH_APP_MISCONFIGURED],
+    ['auth/operation-not-allowed', 'unknown', ERROR_CODES.AUTH_APP_MISCONFIGURED],
+    ['auth/auth-domain-config-required', 'unknown', ERROR_CODES.AUTH_APP_MISCONFIGURED],
+    ['auth/too-many-requests', 'authorization', ERROR_CODES.AUTH_TOO_MANY_REQUESTS],
+    ['auth/user-disabled', 'authorization', ERROR_CODES.AUTH_ACCOUNT_DISABLED],
     ['permission-denied', 'authorization', ERROR_CODES.AUTH_FORBIDDEN],
     ['not-found', 'notFound', ERROR_CODES.NOT_FOUND_RESOURCE],
     ['unavailable', 'network', ERROR_CODES.NETWORK_REQUEST_FAILED],
@@ -52,6 +58,17 @@ describe('mapFirebaseError', () => {
 
     expect(result.message).not.toContain('Firebase');
     expect(result.message).toBe('The email address is already in use.');
+  });
+
+  it('describes a deployment configuration failure without leaking provider details', () => {
+    const cause = firebaseError('auth/invalid-api-key');
+
+    const result = mapFirebaseError(cause);
+
+    expect(result.code).toBe(ERROR_CODES.AUTH_APP_MISCONFIGURED);
+    expect(result.message).toBe('Sign-in is not configured correctly for this deployment.');
+    expect(result.message).not.toContain('Firebase');
+    expect(result.message).not.toContain('auth/invalid-api-key');
   });
 
   it('preserves an unknown provider code as an unknown error', () => {

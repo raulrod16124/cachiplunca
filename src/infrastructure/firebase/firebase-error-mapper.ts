@@ -48,6 +48,36 @@ const FIREBASE_ERROR_MAP: Readonly<Record<string, MappedError>> = {
     code: ERROR_CODES.NETWORK_REQUEST_FAILED,
     message: 'The network request failed.',
   },
+  'auth/invalid-api-key': {
+    kind: 'unknown',
+    code: ERROR_CODES.AUTH_APP_MISCONFIGURED,
+    message: 'Sign-in is not configured correctly for this deployment.',
+  },
+  'auth/unauthorized-domain': {
+    kind: 'unknown',
+    code: ERROR_CODES.AUTH_APP_MISCONFIGURED,
+    message: 'Sign-in is not configured correctly for this deployment.',
+  },
+  'auth/operation-not-allowed': {
+    kind: 'unknown',
+    code: ERROR_CODES.AUTH_APP_MISCONFIGURED,
+    message: 'Sign-in is not configured correctly for this deployment.',
+  },
+  'auth/auth-domain-config-required': {
+    kind: 'unknown',
+    code: ERROR_CODES.AUTH_APP_MISCONFIGURED,
+    message: 'Sign-in is not configured correctly for this deployment.',
+  },
+  'auth/too-many-requests': {
+    kind: 'authorization',
+    code: ERROR_CODES.AUTH_TOO_MANY_REQUESTS,
+    message: 'Too many sign-in attempts. Please wait a few minutes and try again.',
+  },
+  'auth/user-disabled': {
+    kind: 'authorization',
+    code: ERROR_CODES.AUTH_ACCOUNT_DISABLED,
+    message: 'This account has been disabled.',
+  },
   'permission-denied': {
     kind: 'authorization',
     code: ERROR_CODES.AUTH_FORBIDDEN,
