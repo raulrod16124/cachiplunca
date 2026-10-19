@@ -26,7 +26,7 @@ describe('accept invitation route', () => {
     harness.authPort.setSession({
       uid: 'invited-user',
       email: 'invited@example.com',
-      emailVerified: false,
+      emailVerified: true,
       displayName: null,
     });
 
@@ -68,13 +68,14 @@ describe('accept invitation route', () => {
       email: 'invited@example.com',
       password: 'Secret123',
     });
+    harness.authPort.setSession({ ...invitee, emailVerified: true });
 
     harness.render({ initialPath: '/workspaces' });
 
     expect(
       await screen.findByRole('heading', { level: 2, name: 'Pending invitations' }),
     ).toBeInTheDocument();
-    expect(await screen.findByText(/Invite board/)).toBeInTheDocument();
+    expect(await screen.findByText(/A workspace/)).toBeInTheDocument();
     expect(await screen.findByText(/editor/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Accept invitation' }));

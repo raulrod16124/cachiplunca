@@ -7,6 +7,7 @@ export interface AcceptInvitationByIdInput {
   readonly invitationId: InvitationId;
   readonly userId: UserId;
   readonly userEmail: string;
+  readonly userEmailVerified: boolean;
 }
 
 export type AcceptInvitationById = (

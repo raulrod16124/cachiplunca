@@ -59,6 +59,7 @@ describe('createAcceptInvitationById', () => {
       invitationId: invitation.id,
       userId: INVITEE,
       userEmail: 'invitee@example.com',
+      userEmailVerified: true,
     });
 
     expect(result.status).toBe('ok');
@@ -85,6 +86,7 @@ describe('createAcceptInvitationById', () => {
       invitationId: invitation.id,
       userId: INVITEE,
       userEmail: '  INVITEE@example.com ',
+      userEmailVerified: true,
     });
 
     expect(result.status).toBe('ok');
@@ -98,6 +100,7 @@ describe('createAcceptInvitationById', () => {
       invitationId: InvitationId.create('missing'),
       userId: INVITEE,
       userEmail: 'invitee@example.com',
+      userEmailVerified: true,
     });
 
     expect(result.status).toBe('error');
@@ -118,6 +121,7 @@ describe('createAcceptInvitationById', () => {
       invitationId: invitation.id,
       userId: INVITEE,
       userEmail: 'invitee@example.com',
+      userEmailVerified: true,
     });
 
     expect(result.status).toBe('error');
@@ -136,6 +140,7 @@ describe('createAcceptInvitationById', () => {
       invitationId: invitation.id,
       userId: INVITEE,
       userEmail: 'invitee@example.com',
+      userEmailVerified: true,
     });
 
     expect(result.status).toBe('error');
@@ -154,6 +159,7 @@ describe('createAcceptInvitationById', () => {
       invitationId: invitation.id,
       userId: INVITEE,
       userEmail: 'someone-else@example.com',
+      userEmailVerified: true,
     });
 
     expect(result.status).toBe('error');
@@ -177,6 +183,7 @@ describe('createAcceptInvitationById', () => {
       invitationId: invitation.id,
       userId: INVITEE,
       userEmail: 'invitee@example.com',
+      userEmailVerified: true,
     });
 
     expect(result.status).toBe('error');

@@ -10,8 +10,10 @@ import type {
   LeaveWorkspace,
   LoginUser,
   LogoutUser,
+  RefreshUser,
   RegisterUser,
   RemoveMember,
+  SendEmailVerification,
   UpdateWorkspace,
 } from '../../application/commands';
 import type {
@@ -41,6 +43,8 @@ export interface AppRoutesProps {
   readonly registerUser: RegisterUser;
   readonly loginUser: LoginUser;
   readonly logoutUser: LogoutUser;
+  readonly sendEmailVerification?: SendEmailVerification;
+  readonly refreshUser?: RefreshUser;
   readonly listWorkspaces: ListWorkspaces;
   readonly createWorkspaceWithOwner: CreateWorkspaceWithOwner;
   readonly deleteWorkspace?: DeleteWorkspace;
@@ -67,6 +71,8 @@ export function AppRoutes({
   registerUser,
   loginUser,
   logoutUser,
+  sendEmailVerification,
+  refreshUser,
   listWorkspaces,
   createWorkspaceWithOwner,
   deleteWorkspace,
@@ -94,12 +100,26 @@ export function AppRoutes({
       {acceptInvitation !== undefined && (
         <Route
           path="/invitations/:token"
-          element={<AcceptInvitationPage acceptInvitation={acceptInvitation} />}
+          element={
+            <AcceptInvitationPage
+              acceptInvitation={acceptInvitation}
+              sendEmailVerification={sendEmailVerification}
+              refreshUser={refreshUser}
+            />
+          }
         />
       )}
       <Route element={<RequireAnonymous />}>
         <Route path="/login" element={<LoginPage loginUser={loginUser} />} />
-        <Route path="/register" element={<RegisterPage registerUser={registerUser} />} />
+        <Route
+          path="/register"
+          element={
+            <RegisterPage
+              registerUser={registerUser}
+              sendEmailVerification={sendEmailVerification}
+            />
+          }
+        />
       </Route>
       <Route element={<RequireAuth />}>
         <Route
@@ -110,9 +130,10 @@ export function AppRoutes({
               listWorkspaces={listWorkspaces}
               createWorkspaceWithOwner={createWorkspaceWithOwner}
               deleteWorkspace={deleteWorkspace}
-              getWorkspace={getWorkspace}
               listPendingInvitationsForUser={listPendingInvitationsForUser}
               acceptInvitationById={acceptInvitationById}
+              sendEmailVerification={sendEmailVerification}
+              refreshUser={refreshUser}
             />
           }
         />

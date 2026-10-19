@@ -53,7 +53,12 @@ function setup(overrides: Partial<AcceptInvitationDeps> = {}): {
 describe('validateAcceptInvitationInput', () => {
   it('reports a missing token', () => {
     expect(
-      validateAcceptInvitationInput({ token: '   ', userId: INVITEE, userEmail: 'a@b.com' }),
+      validateAcceptInvitationInput({
+        token: '   ',
+        userId: INVITEE,
+        userEmail: 'a@b.com',
+        userEmailVerified: true,
+      }),
     ).toEqual({ token: 'This invitation link is missing its token.' });
   });
 });
@@ -70,6 +75,7 @@ describe('createAcceptInvitation', () => {
       token: 'token-1',
       userId: INVITEE,
       userEmail: 'invitee@example.com',
+      userEmailVerified: true,
     });
 
     expect(result.status).toBe('ok');
@@ -93,6 +99,27 @@ describe('createAcceptInvitation', () => {
     );
   });
 
+  it('rejects acceptance when the email is not verified', async () => {
+    const { invitations, memberships, deps } = setup();
+    await invitations.create(seedInvitation());
+    const createSpy = jest.spyOn(memberships, 'create');
+    const acceptInvitation = createAcceptInvitation(deps);
+
+    const result = await acceptInvitation({
+      token: 'token-1',
+      userId: INVITEE,
+      userEmail: 'invitee@example.com',
+      userEmailVerified: false,
+    });
+
+    expect(result.status).toBe('error');
+    if (result.status !== 'error') {
+      return;
+    }
+    expect(result.error.code).toBe(ERROR_CODES.INVITATION_EMAIL_NOT_VERIFIED);
+    expect(createSpy).not.toHaveBeenCalled();
+  });
+
   it('returns invalid-input without touching the repositories for a missing token', async () => {
     const { invitations, memberships, deps } = setup();
     const findSpy = jest.spyOn(invitations, 'findByTokenHash');
@@ -103,6 +130,7 @@ describe('createAcceptInvitation', () => {
       token: '',
       userId: INVITEE,
       userEmail: 'invitee@example.com',
+      userEmailVerified: true,
     });
 
     expect(result.status).toBe('invalid-input');
@@ -118,6 +146,7 @@ describe('createAcceptInvitation', () => {
       token: 'unknown',
       userId: INVITEE,
       userEmail: 'invitee@example.com',
+      userEmailVerified: true,
     });
 
     expect(result.status).toBe('error');
@@ -137,6 +166,7 @@ describe('createAcceptInvitation', () => {
       token: 'token-1',
       userId: INVITEE,
       userEmail: 'invitee@example.com',
+      userEmailVerified: true,
     });
 
     expect(result.status).toBe('error');
@@ -154,6 +184,7 @@ describe('createAcceptInvitation', () => {
       token: 'token-1',
       userId: INVITEE,
       userEmail: 'invitee@example.com',
+      userEmailVerified: true,
     });
 
     expect(result.status).toBe('error');
@@ -163,7 +194,7 @@ describe('createAcceptInvitation', () => {
     }
   });
 
-  it('rejects an accept from a different email', async () => {
+  it('does not find an invitation when the token belongs to a different email', async () => {
     const { invitations, deps } = setup();
     await invitations.create(seedInvitation());
     const acceptInvitation = createAcceptInvitation(deps);
@@ -172,16 +203,16 @@ describe('createAcceptInvitation', () => {
       token: 'token-1',
       userId: INVITEE,
       userEmail: 'someone-else@example.com',
+      userEmailVerified: true,
     });
 
     expect(result.status).toBe('error');
     if (result.status === 'error') {
-      expect(result.error.kind).toBe('authorization');
-      expect(result.error.code).toBe(ERROR_CODES.INVITATION_EMAIL_MISMATCH);
+      expect(result.error.code).toBe(ERROR_CODES.INVITATION_INVALID);
     }
   });
 
-  it('rejects an empty user email as an email mismatch', async () => {
+  it('does not find an invitation when the user email is empty', async () => {
     const { invitations, deps } = setup();
     await invitations.create(seedInvitation());
     const acceptInvitation = createAcceptInvitation(deps);
@@ -190,11 +221,12 @@ describe('createAcceptInvitation', () => {
       token: 'token-1',
       userId: INVITEE,
       userEmail: '',
+      userEmailVerified: true,
     });
 
     expect(result.status).toBe('error');
     if (result.status === 'error') {
-      expect(result.error.code).toBe(ERROR_CODES.INVITATION_EMAIL_MISMATCH);
+      expect(result.error.code).toBe(ERROR_CODES.INVITATION_INVALID);
     }
   });
 
@@ -208,6 +240,7 @@ describe('createAcceptInvitation', () => {
       token: 'token-1',
       userId: INVITEE,
       userEmail: 'invitee@example.com',
+      userEmailVerified: true,
     });
 
     expect(result.status).toBe('error');
@@ -231,6 +264,7 @@ describe('createAcceptInvitation', () => {
       token: 'token-1',
       userId: INVITEE,
       userEmail: 'invitee@example.com',
+      userEmailVerified: true,
     });
 
     expect(result.status).toBe('error');
@@ -256,6 +290,7 @@ describe('createAcceptInvitation', () => {
       token: 'token-1',
       userId: INVITEE,
       userEmail: 'invitee@example.com',
+      userEmailVerified: true,
     });
 
     expect(result.status).toBe('error');
@@ -274,6 +309,7 @@ describe('createAcceptInvitation', () => {
       token: 'token-1',
       userId: INVITEE,
       userEmail: 'invitee@example.com',
+      userEmailVerified: true,
     });
 
     expect(result.status).toBe('error');

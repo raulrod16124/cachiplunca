@@ -39,3 +39,57 @@ export async function logout(page: Page): Promise<void> {
     timeout: 20000,
   });
 }
+
+interface EmulatorOobCode {
+  readonly email?: string;
+  readonly requestType?: string;
+  readonly oobCode?: string;
+}
+
+function authEmulatorBaseUrl(): string {
+  return `http://${process.env.FIREBASE_AUTH_EMULATOR_HOST ?? '127.0.0.1:9099'}`;
+}
+
+export async function verifyEmail(email: string): Promise<void> {
+  const baseUrl = authEmulatorBaseUrl();
+  const projectId = 'demo-cachiplunca';
+
+  let oobCode: string | undefined;
+  await expect
+    .poll(
+      async () => {
+        const response = await fetch(`${baseUrl}/emulator/v1/projects/${projectId}/oobCodes`);
+        if (!response.ok) {
+          return null;
+        }
+        const body = (await response.json()) as { oobCodes?: EmulatorOobCode[] };
+        const match = body.oobCodes?.find(
+          (code) =>
+            code.email?.toLowerCase() === email.toLowerCase() &&
+            code.requestType === 'VERIFY_EMAIL' &&
+            code.oobCode !== undefined,
+        );
+        oobCode = match?.oobCode;
+        return oobCode ?? null;
+      },
+      { timeout: 20000 },
+    )
+    .not.toBeNull();
+
+  if (oobCode === undefined) {
+    throw new Error(`No verification code found for ${email}`);
+  }
+
+  const response = await fetch(
+    `${baseUrl}/identitytoolkit.googleapis.com/v1/accounts:update?key=demo-api-key`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ oobCode }),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Could not verify ${email}: ${await response.text()}`);
+  }
+}

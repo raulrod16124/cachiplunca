@@ -1,7 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { SessionProvider } from '../../../../../presentation/providers/session-provider';
-import type { AcceptInvitation } from '../../../../../application/commands';
+import type {
+  AcceptInvitation,
+  RefreshUser,
+  SendEmailVerification,
+} from '../../../../../application/commands';
 import { createSessionStore } from '../../../../../application/services';
 import type { AuthPort } from '../../../../../application/ports';
 import { WorkspaceId } from '../../../../../domain/shared';
@@ -15,6 +19,10 @@ const WORKSPACE = WorkspaceId.create('ws-1');
 function renderPage(
   authPort: AuthPort,
   acceptInvitation: AcceptInvitation,
+  options: {
+    readonly sendEmailVerification?: SendEmailVerification;
+    readonly refreshUser?: RefreshUser;
+  } = {},
 ): ReturnType<typeof render> {
   return render(
     <MemoryRouter initialEntries={['/invitations/token-1']}>
@@ -23,7 +31,11 @@ function renderPage(
           path="/invitations/:token"
           element={
             <SessionProvider store={createSessionStore(authPort)}>
-              <AcceptInvitationPage acceptInvitation={acceptInvitation} />
+              <AcceptInvitationPage
+                acceptInvitation={acceptInvitation}
+                sendEmailVerification={options.sendEmailVerification}
+                refreshUser={options.refreshUser}
+              />
             </SessionProvider>
           }
         />
@@ -53,6 +65,7 @@ describe('AcceptInvitationPage', () => {
   it('accepts the invitation for the authenticated user', async () => {
     const authPort = new FakeAuthPort();
     const user = await authPort.signUp({ email: 'invitee@example.com', password: 'secret123' });
+    authPort.setSession({ ...user, emailVerified: true });
     const acceptInvitation = jest
       .fn<ReturnType<AcceptInvitation>, Parameters<AcceptInvitation>>()
       .mockResolvedValue({ status: 'ok', workspaceId: WORKSPACE, role: 'editor' });
@@ -65,13 +78,15 @@ describe('AcceptInvitationPage', () => {
       token: 'token-1',
       userId: expect.objectContaining({ value: user.uid }),
       userEmail: 'invitee@example.com',
+      userEmailVerified: true,
     });
     expect(screen.getByRole('button', { name: 'Go to workspace' })).toBeInTheDocument();
   });
 
   it('shows a friendly message when the invitation cannot be accepted', async () => {
     const authPort = new FakeAuthPort();
-    await authPort.signUp({ email: 'invitee@example.com', password: 'secret123' });
+    const user = await authPort.signUp({ email: 'invitee@example.com', password: 'secret123' });
+    authPort.setSession({ ...user, emailVerified: true });
     const acceptInvitation = jest
       .fn<ReturnType<AcceptInvitation>, Parameters<AcceptInvitation>>()
       .mockResolvedValue({
@@ -84,5 +99,21 @@ describe('AcceptInvitationPage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'This invitation has expired. Ask the workspace owner for a new one.',
     );
+  });
+
+  it('asks the user to verify their email before accepting', async () => {
+    const authPort = new FakeAuthPort();
+    await authPort.signUp({ email: 'invitee@example.com', password: 'secret123' });
+    const acceptInvitation = jest.fn<ReturnType<AcceptInvitation>, Parameters<AcceptInvitation>>();
+    const sendEmailVerification = jest
+      .fn<ReturnType<SendEmailVerification>, Parameters<SendEmailVerification>>()
+      .mockResolvedValue({ status: 'ok' });
+
+    renderPage(authPort, acceptInvitation, { sendEmailVerification });
+
+    expect(await screen.findByRole('heading', { name: 'Verify your email' })).toBeInTheDocument();
+    expect(acceptInvitation).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Resend verification email' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: "I've verified my email" })).toBeInTheDocument();
   });
 });

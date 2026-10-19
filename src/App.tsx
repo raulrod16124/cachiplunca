@@ -55,6 +55,8 @@ function AppContent({
             registerUser={authServices.registerUser}
             loginUser={authServices.loginUser}
             logoutUser={authServices.logoutUser}
+            sendEmailVerification={authServices.sendEmailVerification}
+            refreshUser={authServices.refreshUser}
             listWorkspaces={workspaceServices.listWorkspaces}
             createWorkspaceWithOwner={workspaceServices.createWorkspaceWithOwner}
             deleteWorkspace={workspaceServices.deleteWorkspace}

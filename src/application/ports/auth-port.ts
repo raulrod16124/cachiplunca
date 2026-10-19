@@ -34,5 +34,7 @@ export interface AuthPort {
   updateDisplayName(displayName: string): Promise<AuthUser>;
   changeEmail(input: ChangeEmailInput): Promise<AuthUser>;
   changePassword(input: ChangePasswordInput): Promise<void>;
+  sendEmailVerification(): Promise<void>;
+  refreshUser(): Promise<AuthUser>;
   observeSession(listener: SessionListener, onError?: SessionErrorListener): Unsubscribe;
 }

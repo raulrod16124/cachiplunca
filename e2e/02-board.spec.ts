@@ -106,7 +106,7 @@ test.describe('Board (MVP happy path)', () => {
 
     const item = await addElement(page, 'text');
 
-    const editor = page.getByTestId('element-editor');
+    const editor = page.getByTestId('element-editor').getByRole('textbox');
     await expect(editor).toBeVisible();
     await editor.fill('Hola mundo');
     await editor.blur();
@@ -157,7 +157,7 @@ test.describe('Board (MVP happy path)', () => {
 
     const item = await addElement(page, 'text');
 
-    const editor = page.getByTestId('element-editor');
+    const editor = page.getByTestId('element-editor').getByRole('textbox');
     await expect(editor).toBeVisible();
     await editor.fill('First');
     await editor.blur();
@@ -165,9 +165,9 @@ test.describe('Board (MVP happy path)', () => {
 
     await item.dblclick();
 
-    const reopened = page.getByTestId('element-editor');
+    const reopened = page.getByTestId('element-editor').getByRole('textbox');
     await expect(reopened).toBeVisible();
-    await expect(reopened).toHaveValue('First');
+    await expect(reopened).toHaveText('First');
     await reopened.fill('Second');
     await reopened.blur();
 

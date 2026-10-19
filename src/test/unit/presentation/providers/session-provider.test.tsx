@@ -32,6 +32,8 @@ function createPendingAuthPort(): PendingAuthPort {
     updateDisplayName: () => Promise.reject(new Error('unexpected updateDisplayName call')),
     changeEmail: () => Promise.reject(new Error('unexpected changeEmail call')),
     changePassword: () => Promise.reject(new Error('unexpected changePassword call')),
+    sendEmailVerification: () => Promise.reject(new Error('unexpected sendEmailVerification call')),
+    refreshUser: () => Promise.reject(new Error('unexpected refreshUser call')),
     observeSession(listener) {
       listeners.add(listener);
       return () => {

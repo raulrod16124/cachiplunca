@@ -39,7 +39,11 @@ const en = {
   'auth.register.passwordHint': 'At least 6 characters.',
   'auth.register.submit': 'Create account',
   'auth.register.successTitle': 'Account created',
-  'auth.register.successDescription': 'Your account ({email}) is ready.',
+  'auth.register.successDescription':
+    'We created your account for {email}. Verify your email to accept invitations.',
+  'auth.register.verificationSent': 'Verification email sent. Check your inbox.',
+  'auth.register.resendVerification': 'Resend verification email',
+  'auth.register.verificationError': 'We could not send the verification email. Try again.',
   'auth.register.goToWorkspaces': 'Go to your workspaces',
   'auth.register.haveAccount': 'Already have an account?',
   'auth.register.signIn': 'Sign in',
@@ -55,6 +59,12 @@ const en = {
   'auth.accept.errorTitle': 'We could not accept the invitation',
   'auth.accept.tryAgain': 'Try again',
   'auth.accept.backToWorkspaces': 'Back to your workspaces',
+  'auth.accept.verifyTitle': 'Verify your email',
+  'auth.accept.verifyDescription':
+    'We sent a verification link to {email}. Open it and then continue to accept the invitation.',
+  'auth.accept.verificationSent': 'Verification email sent. Check your inbox.',
+  'auth.accept.resendVerification': 'Resend verification email',
+  'auth.accept.verifiedRetry': "I've verified my email",
 
   'workspaces.title': 'Your workspaces',
   'workspaces.create': 'Create workspace',
@@ -81,7 +91,10 @@ const en = {
   'workspaces.pending.title': 'Pending invitations',
   'workspaces.pending.description': 'Workspaces waiting for you.',
   'workspaces.pending.invited': '{workspace} invited you as {role}',
+  'workspaces.pending.workspaceLabel': 'A workspace',
   'workspaces.pending.accept': 'Accept invitation',
+  'workspaces.pending.resendVerification': 'Resend verification email',
+  'workspaces.pending.verificationSent': 'Verification email sent. Check your inbox.',
   'workspaces.pending.retry': 'Retry',
   'workspaces.pending.error': 'We could not load your invitations. Please try again.',
   'workspaces.createDialog.title': 'Create workspace',
@@ -227,6 +240,8 @@ const en = {
   'errors.invitationExpired': 'This invitation has expired. Ask the workspace owner for a new one.',
   'errors.invitationEmailMismatch':
     'This invitation was issued for a different email address. Sign in with the invited email.',
+  'errors.invitationEmailNotVerified':
+    'Verify your email address before accepting this invitation.',
   'errors.alreadyAccess': 'You already have access to this workspace.',
   'errors.invitationAcceptForbidden':
     'We could not add you to this workspace. Please try again or ask for a new invitation.',
@@ -300,7 +315,12 @@ const es: Record<TranslationKey, string> = {
   'auth.register.passwordHint': 'Al menos 6 caracteres.',
   'auth.register.submit': 'Crear cuenta',
   'auth.register.successTitle': 'Cuenta creada',
-  'auth.register.successDescription': 'Tu cuenta ({email}) está lista.',
+  'auth.register.successDescription':
+    'Hemos creado tu cuenta para {email}. Verifica tu email para aceptar invitaciones.',
+  'auth.register.verificationSent': 'Email de verificación enviado. Revisa tu bandeja de entrada.',
+  'auth.register.resendVerification': 'Reenviar email de verificación',
+  'auth.register.verificationError':
+    'No pudimos enviar el email de verificación. Inténtalo de nuevo.',
   'auth.register.goToWorkspaces': 'Ir a tus workspaces',
   'auth.register.haveAccount': '¿Ya tienes cuenta?',
   'auth.register.signIn': 'Iniciar sesión',
@@ -316,6 +336,12 @@ const es: Record<TranslationKey, string> = {
   'auth.accept.errorTitle': 'No pudimos aceptar la invitación',
   'auth.accept.tryAgain': 'Intentar de nuevo',
   'auth.accept.backToWorkspaces': 'Volver a tus workspaces',
+  'auth.accept.verifyTitle': 'Verifica tu email',
+  'auth.accept.verifyDescription':
+    'Enviamos un enlace de verificación a {email}. Ábrelo y continúa para aceptar la invitación.',
+  'auth.accept.verificationSent': 'Email de verificación enviado. Revisa tu bandeja de entrada.',
+  'auth.accept.resendVerification': 'Reenviar email de verificación',
+  'auth.accept.verifiedRetry': 'Ya he verificado mi email',
 
   'workspaces.title': 'Tus workspaces',
   'workspaces.create': 'Crear workspace',
@@ -342,7 +368,11 @@ const es: Record<TranslationKey, string> = {
   'workspaces.pending.title': 'Invitaciones pendientes',
   'workspaces.pending.description': 'Workspaces que te están esperando.',
   'workspaces.pending.invited': '{workspace} te invitó como {role}',
+  'workspaces.pending.workspaceLabel': 'Un workspace',
   'workspaces.pending.accept': 'Aceptar invitación',
+  'workspaces.pending.resendVerification': 'Reenviar email de verificación',
+  'workspaces.pending.verificationSent':
+    'Email de verificación enviado. Revisa tu bandeja de entrada.',
   'workspaces.pending.retry': 'Reintentar',
   'workspaces.pending.error': 'No pudimos cargar tus invitaciones. Inténtalo de nuevo.',
   'workspaces.createDialog.title': 'Crear workspace',
@@ -492,6 +522,7 @@ const es: Record<TranslationKey, string> = {
     'Esta invitación ha caducado. Pide al propietario del workspace una nueva.',
   'errors.invitationEmailMismatch':
     'Esta invitación se emitió para otro email. Inicia sesión con el email invitado.',
+  'errors.invitationEmailNotVerified': 'Verifica tu email antes de aceptar esta invitación.',
   'errors.alreadyAccess': 'Ya tienes acceso a este workspace.',
   'errors.invitationAcceptForbidden':
     'No pudimos añadirte a este workspace. Inténtalo de nuevo o pide otra invitación.',

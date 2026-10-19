@@ -4740,7 +4740,7 @@ Impedir que un usuario autenticado pueda auto-asignarse un rol (incluido `owner`
 
 ### TASK-127 — Acotar lecturas globales y verificación de email
 
-**Priority:** P1 · **Depends:** TASK-098 · **Status:** TODO
+**Priority:** P1 · **Depends:** TASK-098 · **Status:** DONE
 
 #### Objetivo
 
@@ -4754,10 +4754,10 @@ Reducir la exposición de datos de `workspaces`/`invitations` a los miembros y e
 
 #### Criterios de aceptación
 
-- [ ] Un autenticado no puede enumerar workspaces/invitaciones de los que no es miembro.
-- [ ] El accept solo procede con email verificado.
-- [ ] Los tests relevantes pasan sin regresiones.
-- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+- [x] Un autenticado no puede enumerar workspaces/invitaciones de los que no es miembro.
+- [x] El accept solo procede con email verificado.
+- [x] Los tests relevantes pasan sin regresiones.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
 
 #### Fuera de alcance
 

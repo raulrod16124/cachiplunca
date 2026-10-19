@@ -44,6 +44,8 @@ const MESSAGE_KEYS: Readonly<Record<string, TranslationKey>> = {
   'This invitation has expired. Ask the workspace owner for a new one.': 'errors.invitationExpired',
   'This invitation was issued for a different email address. Sign in with the invited email.':
     'errors.invitationEmailMismatch',
+  'Verify your email address before accepting this invitation.':
+    'errors.invitationEmailNotVerified',
   'You already have access to this workspace.': 'errors.alreadyAccess',
   'We could not add you to this workspace. Please try again or ask for a new invitation.':
     'errors.invitationAcceptForbidden',

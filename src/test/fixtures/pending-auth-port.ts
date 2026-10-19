@@ -40,6 +40,14 @@ export class PendingAuthPort implements AuthPort {
     throw new Error('unexpected changePassword call');
   }
 
+  async sendEmailVerification(): Promise<void> {
+    throw new Error('unexpected sendEmailVerification call');
+  }
+
+  async refreshUser(): Promise<AuthUser> {
+    throw new Error('unexpected refreshUser call');
+  }
+
   observeSession(listener: SessionListener): Unsubscribe {
     this.#listeners.add(listener);
     return () => {

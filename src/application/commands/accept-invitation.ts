@@ -8,6 +8,7 @@ export interface AcceptInvitationInput {
   readonly token: string;
   readonly userId: UserId;
   readonly userEmail: string;
+  readonly userEmailVerified: boolean;
 }
 
 export type AcceptInvitationFieldName = 'token';
@@ -53,7 +54,10 @@ export function createAcceptInvitation(deps: AcceptInvitationDeps): AcceptInvita
 
     try {
       const tokenHash = await deps.hashToken(input.token);
-      const invitation = await deps.invitationRepository.findByTokenHash(tokenHash);
+      const invitation = await deps.invitationRepository.findByTokenHash(
+        tokenHash,
+        input.userEmail,
+      );
 
       if (invitation === null) {
         return { status: 'error', error: invalidInvitationError() };
@@ -74,10 +78,18 @@ export function createAcceptInvitation(deps: AcceptInvitationDeps): AcceptInvita
 export async function acceptInvitationRecord(
   deps: InvitationAcceptanceDeps,
   invitation: Invitation,
-  input: { readonly userId: UserId; readonly userEmail: string },
+  input: {
+    readonly userId: UserId;
+    readonly userEmail: string;
+    readonly userEmailVerified: boolean;
+  },
 ): Promise<AcceptInvitationResult> {
   if (!invitation.isPending()) {
     return { status: 'error', error: invalidInvitationError() };
+  }
+
+  if (!input.userEmailVerified) {
+    return { status: 'error', error: emailNotVerifiedError() };
   }
 
   const now = deps.now?.() ?? new Date();
@@ -148,6 +160,14 @@ function emailMismatchError(): AppError {
     'authorization',
     ERROR_CODES.INVITATION_EMAIL_MISMATCH,
     'This invitation was issued for a different email address.',
+  );
+}
+
+function emailNotVerifiedError(): AppError {
+  return createAppError(
+    'authorization',
+    ERROR_CODES.INVITATION_EMAIL_NOT_VERIFIED,
+    'Verify your email address before accepting this invitation.',
   );
 }
 

@@ -48,3 +48,16 @@ TASK-097 pide aplicar las reglas para **workspaces, memberships y elementos**, v
 - TASK-098 (Security Rules tests) ampliará la cobertura sobre el mismo harness sin cambiar las reglas salvo defecto revelado.
 - Los tests de reglas son la base de regresión de la frontera de seguridad: cualquier cambio de `PERMISSION_MATRIX` exigirá revisar `firestore.rules` (la matriz sigue siendo la fuente única de verdad en Domain).
 - Mantener la paridad reglas ↔ matriz es manual (no hay import de TS a rules); se mitiga con el harness y revisión en cada cambio de permisos.
+
+## Actualización (2026-10-19) — PBL-001 / ADR-0034
+
+Las dos limitaciones de lectura del MVP quedan cerradas:
+
+- `workspaces.read` ya no es global: exige `isMember(workspaceId)`.
+- `invitations.read` se limita a miembros del workspace o al destinatario cuyo email
+  coincide. El lookup por `tokenHash` filtra por email (`findByTokenHash(tokenHash,
+email)`) para que la query sea autorizable.
+- El accept exige `request.auth.token.email_verified == true` en rules, con flujo de
+  verificación en la aplicación.
+
+Ver `docs/adr/0034-scoped-reads-email-verification.md`.

@@ -86,7 +86,7 @@ Definition of Done:
 
 | ID      | Tarea                                        | Release | Prioridad | Esfuerzo | Depende de     | QW  | Estado |
 | ------- | -------------------------------------------- | ------- | --------- | -------- | -------------- | --- | ------ |
-| PBL-001 | Seguridad de lectura y verificación de email | R1      | P0        | M        | `mvp TASK-127` | No  | TODO   |
+| PBL-001 | Seguridad de lectura y verificación de email | R1      | P0        | M        | `mvp TASK-127` | No  | DONE   |
 | PBL-002 | Borrar workspace desde la UI                 | R1      | P0        | S        | —              | Sí  | DONE   |
 | PBL-003 | Paleta de colores de nota                    | R1      | P1        | S        | —              | Sí  | TODO   |
 | PBL-004 | Ayuda de atajos                              | R1      | P2        | S        | —              | Sí  | TODO   |
@@ -133,7 +133,7 @@ Tareas que deberían resolverse primero dentro de su release por relación impac
 
 ### PBL-001 — Seguridad de lectura y verificación de email
 
-**Priority:** P0 · **Effort:** M · **Depends:** `mvp TASK-127` · **Status:** TODO
+**Priority:** P0 · **Effort:** M · **Depends:** `mvp TASK-127` · **Status:** DONE
 
 #### Objetivo
 
@@ -148,11 +148,11 @@ Cerrar el último gap de seguridad del MVP antes de abrir el producto a más usu
 
 #### Criterios de aceptación
 
-- [ ] Un usuario autenticado no puede leer un workspace del que no es miembro.
-- [ ] Una invitación no puede aceptarse con un email distinto al destinatario.
-- [ ] Los tests de rules cubren ambos casos.
-- [ ] No se rompe el flujo actual de invitación, aceptación ni board.
-- [ ] Quality gates aplicables en verde.
+- [x] Un usuario autenticado no puede leer un workspace del que no es miembro.
+- [x] Una invitación no puede aceptarse con un email distinto al destinatario.
+- [x] Los tests de rules cubren ambos casos.
+- [x] No se rompe el flujo actual de invitación, aceptación ni board.
+- [x] Quality gates aplicables en verde.
 
 #### Fuera de alcance
 
@@ -801,10 +801,11 @@ Cerrar el bucle de invitaciones sin introducir email ni backend nuevo.
 
 Añadir una línea por sesión. El detalle técnico extenso sigue viviendo en `docs/adr/session-log.md` cuando haya decisiones relevantes.
 
-| Fecha      | Tarea   | Resultado | Notas                                                                                                                     |
-| ---------- | ------- | --------- | ------------------------------------------------------------------------------------------------------------------------- |
-| 2026-10-19 | —       | Creado    | Creación del backlog post-MVP y priorización inicial.                                                                     |
-| 2026-10-19 | PBL-002 | DONE      | Borrado de workspace desde la card con confirmación; roles por workspace desde `ListWorkspaces`; unit, integración y E2E. |
+| Fecha      | Tarea   | Resultado | Notas                                                                                                                                                                            |
+| ---------- | ------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-19 | —       | Creado    | Creación del backlog post-MVP y priorización inicial.                                                                                                                            |
+| 2026-10-19 | PBL-002 | DONE      | Borrado de workspace desde la card con confirmación; roles por workspace desde `ListWorkspaces`; unit, integración y E2E.                                                        |
+| 2026-10-19 | PBL-001 | DONE      | Lecturas de workspaces/invitations acotadas por membership/destinatario; accept con `email_verified`; flujo de verificación con envío y refresh; rules, unit, integración y E2E. |
 
 ---
 

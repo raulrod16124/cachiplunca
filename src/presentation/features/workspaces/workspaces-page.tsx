@@ -12,12 +12,10 @@ import type {
   CreateWorkspaceWithOwner,
   DeleteWorkspace,
   LogoutUser,
+  RefreshUser,
+  SendEmailVerification,
 } from '../../../application/commands';
-import type {
-  GetWorkspace,
-  ListPendingInvitationsForUser,
-  ListWorkspaces,
-} from '../../../application/queries';
+import type { ListPendingInvitationsForUser, ListWorkspaces } from '../../../application/queries';
 import { UserId } from '../../../domain/shared';
 import { createAppError, ERROR_CODES } from '../../../shared/errors';
 import { useI18n } from '../../i18n';
@@ -57,9 +55,10 @@ export interface WorkspacesPageProps {
   readonly listWorkspaces: ListWorkspaces;
   readonly createWorkspaceWithOwner: CreateWorkspaceWithOwner;
   readonly deleteWorkspace?: DeleteWorkspace;
-  readonly getWorkspace: GetWorkspace;
   readonly listPendingInvitationsForUser?: ListPendingInvitationsForUser;
   readonly acceptInvitationById?: AcceptInvitationById;
+  readonly sendEmailVerification?: SendEmailVerification;
+  readonly refreshUser?: RefreshUser;
 }
 
 export function WorkspacesPage({
@@ -67,9 +66,10 @@ export function WorkspacesPage({
   listWorkspaces,
   createWorkspaceWithOwner,
   deleteWorkspace,
-  getWorkspace,
   listPendingInvitationsForUser,
   acceptInvitationById,
+  sendEmailVerification,
+  refreshUser,
 }: WorkspacesPageProps): ReactNode {
   const session = useSession();
   const navigate = useNavigate();
@@ -128,9 +128,11 @@ export function WorkspacesPage({
                 <PendingInvitationsPanel
                   userId={session.user.uid}
                   userEmail={session.user.email}
+                  userEmailVerified={session.user.emailVerified}
                   listPendingInvitationsForUser={listPendingInvitationsForUser}
                   acceptInvitationById={acceptInvitationById}
-                  getWorkspace={getWorkspace}
+                  sendEmailVerification={sendEmailVerification}
+                  refreshUser={refreshUser}
                   onAccepted={(workspaceId) => navigate(`/workspaces/${workspaceId}`)}
                 />
               </Section>

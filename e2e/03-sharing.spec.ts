@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { registerUser, uniqueEmail } from './helpers/auth';
+import { registerUser, uniqueEmail, verifyEmail } from './helpers/auth';
 import { addElement, createWorkspace } from './helpers/workspace';
 
 test.describe('Sharing (editor accepts from the pending list)', () => {
@@ -26,11 +26,12 @@ test.describe('Sharing (editor accepts from the pending list)', () => {
     const editorContext = await browser.newContext();
     const editorPage = await editorContext.newPage();
     await registerUser(editorPage, editorEmail);
+    await verifyEmail(editorEmail);
 
     await expect(
       editorPage.getByRole('heading', { level: 2, name: 'Pending invitations' }),
     ).toBeVisible({ timeout: 20000 });
-    await expect(editorPage.getByText('Editor board')).toBeVisible();
+    await expect(editorPage.getByText(/A workspace/)).toBeVisible();
     await editorPage.getByRole('button', { name: 'Accept invitation' }).click();
 
     const canvas = editorPage.getByRole('application', { name: 'Canvas' });
@@ -83,6 +84,12 @@ test.describe('Sharing (viewer happy path)', () => {
     await viewerPage.getByLabel('Email').fill(viewerEmail);
     await viewerPage.getByLabel('Password', { exact: true }).fill('Secret123');
     await viewerPage.getByRole('button', { name: 'Create account' }).click();
+
+    await expect(
+      viewerPage.getByRole('heading', { level: 1, name: 'Verify your email' }),
+    ).toBeVisible({ timeout: 30000 });
+    await verifyEmail(viewerEmail);
+    await viewerPage.getByRole('button', { name: "I've verified my email" }).click();
 
     await expect(
       viewerPage.getByRole('heading', { level: 1, name: 'Invitation accepted' }),

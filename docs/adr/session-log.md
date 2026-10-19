@@ -1,5 +1,15 @@
 # Session Log
 
+## 2026-10-19 — PBL-001 Lecturas acotadas y verificación de email
+
+- Rules: `workspaces.read` exige membership; `invitations.read` se limita a miembros o al email destinatario; `email_verified` obligatorio en membership create desde invitación y en el accept de la invitación.
+- Application: `findByTokenHash(tokenHash, email?)` filtra por email; `acceptInvitation`/`acceptInvitationById` reciben `userEmailVerified` y devuelven `INVITATION_EMAIL_NOT_VERIFIED`; nuevos comandos `SendEmailVerification` y `RefreshUser`.
+- Infrastructure: filtro por email en el repositorio Firestore de invitaciones; `sendEmailVerification` y `refreshUser` (reload + `getIdToken(true)`) en el adapter de Auth.
+- Presentation: registro envía verificación y permite reenvío; accept page verifica/refresca antes de aceptar; panel de pendientes refresca y ofrece reenvío, y deja de resolver nombres de workspaces ajenos.
+- Tests: rules (lecturas por membership/email/token y aceptación sin verificar), unit de comandos/adapters, integración de accept y E2E de sharing con verificación vía endpoints del emulador de Auth.
+- Docs: ADR-0034 nuevo, actualización de ADR-0023, PBL-001 y TASK-127 a DONE.
+- Quality gates: `lint`, `format:check`, `tsc -b --noEmit`, `test` (220 suites / 2553 tests), `build`, `test:rules` (89 tests) y `test:e2e` (18 tests) en verde. Se actualizaron dos aserciones E2E obsoletas del editor TipTap y una del menú de cuenta para mantener la suite verde.
+
 ## 2026-10-19 — Conectores libres y anclaje al borde
 
 - Connector domain extendido con extremos libres: `sourcePoint`/`targetPoint` locales, `sourceElementId`/`targetElementId` ligados. Validación XOR por extremo y helper union `ConnectorEndpoint`.

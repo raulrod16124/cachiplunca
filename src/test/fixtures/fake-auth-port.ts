@@ -109,6 +109,14 @@ export class FakeAuthPort implements AuthPort {
     return updated;
   }
 
+  async sendEmailVerification(): Promise<void> {
+    this.#requireSession();
+  }
+
+  async refreshUser(): Promise<AuthUser> {
+    return this.#requireSession();
+  }
+
   async changePassword(input: ChangePasswordInput): Promise<void> {
     const session = this.#requireSession();
     const key = normalizeEmail(session.email ?? '');

@@ -3,6 +3,8 @@ import {
   EmailAuthProvider,
   onAuthStateChanged,
   reauthenticateWithCredential,
+  reload,
+  sendEmailVerification as firebaseSendEmailVerification,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   updateEmail,
@@ -112,6 +114,26 @@ export function createFirebaseAuthAdapter(auth: Auth): AuthPort {
         const user = requireCurrentUser(auth);
         await reauthenticate(user, input.currentPassword);
         await updatePassword(user, input.newPassword);
+      } catch (error) {
+        throw mapFirebaseError(error);
+      }
+    },
+
+    async sendEmailVerification(): Promise<void> {
+      try {
+        const user = requireCurrentUser(auth);
+        await firebaseSendEmailVerification(user);
+      } catch (error) {
+        throw mapFirebaseError(error);
+      }
+    },
+
+    async refreshUser(): Promise<AuthUser> {
+      try {
+        const user = requireCurrentUser(auth);
+        await reload(user);
+        await user.getIdToken(true);
+        return mapFirebaseUserToAuthUser(user);
       } catch (error) {
         throw mapFirebaseError(error);
       }

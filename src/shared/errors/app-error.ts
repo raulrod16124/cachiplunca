@@ -25,6 +25,7 @@ export const ERROR_CODES = {
   INVITATION_INVALID: 'invitation/invalid',
   INVITATION_EXPIRED: 'invitation/expired',
   INVITATION_EMAIL_MISMATCH: 'invitation/email-mismatch',
+  INVITATION_EMAIL_NOT_VERIFIED: 'invitation/email-not-verified',
   MEMBERSHIP_ALREADY_EXISTS: 'membership/already-exists',
   NOT_FOUND_RESOURCE: 'not-found/resource',
   NETWORK_REQUEST_FAILED: 'network/request-failed',

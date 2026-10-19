@@ -83,9 +83,17 @@ export function createFirebaseInvitationRepository(db: Firestore): InvitationRep
       return readInvitation(snapshot.data());
     },
 
-    async findByTokenHash(tokenHash: string): Promise<Invitation | null> {
+    async findByTokenHash(tokenHash: string, email?: string): Promise<Invitation | null> {
+      const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+      if (typeof email === 'string' && normalizedEmail.length === 0) {
+        return null;
+      }
+      const constraints =
+        normalizedEmail.length > 0
+          ? [where('tokenHash', '==', tokenHash), where('email', '==', normalizedEmail)]
+          : [where('tokenHash', '==', tokenHash)];
       const snapshot = await withMappedErrors(() =>
-        getDocs(query(invitationsCollection, where('tokenHash', '==', tokenHash))),
+        getDocs(query(invitationsCollection, ...constraints)),
       );
       const document = snapshot.docs[0];
       if (document === undefined) {

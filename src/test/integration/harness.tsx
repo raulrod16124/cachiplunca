@@ -6,6 +6,8 @@ import { AppRoutes, type AppRoutesProps } from '../../app/routes/app-routes';
 import {
   createAcceptInvitation,
   createAcceptInvitationById,
+  createRefreshUser,
+  createSendEmailVerification,
   createChangeMemberRole,
   createCreateOwnerMembership,
   createCreateWorkspaceWithOwner,
@@ -123,6 +125,8 @@ export function createAppHarness(): AppHarness {
     registerUser: createRegisterUser(authPort),
     loginUser: createLoginUser(authPort),
     logoutUser: createLogoutUser(authPort),
+    sendEmailVerification: createSendEmailVerification(authPort),
+    refreshUser: createRefreshUser(authPort),
     listWorkspaces: createListWorkspaces(workspaceRepository, membershipRepository),
     createWorkspaceWithOwner: createCreateWorkspaceWithOwner({
       workspaceRepository,

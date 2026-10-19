@@ -53,7 +53,7 @@ describe('RegisterForm', () => {
     submit();
 
     expect(await screen.findByRole('heading', { name: 'Account created' })).toBeInTheDocument();
-    expect(screen.getByText(/Your account \(new@example\.com\) is ready\./)).toBeInTheDocument();
+    expect(screen.getByText(/We created your account for new@example\.com/)).toBeInTheDocument();
   });
 
   it('shows a friendly message when the email is already registered', async () => {

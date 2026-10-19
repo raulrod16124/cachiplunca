@@ -150,6 +150,19 @@ describe('createFirebaseInvitationRepository', () => {
     expect(invitation?.createdAt.getTime()).toBe(createdAt.getTime());
   });
 
+  it('filters findByTokenHash by normalized email when one is provided', async () => {
+    const repository = createFirebaseInvitationRepository(makeFirestore());
+    await repository.create(makeInvitation());
+
+    const matching = await repository.findByTokenHash('hash-1', '  INVITEE@example.com ');
+    const mismatched = await repository.findByTokenHash('hash-1', 'other@example.com');
+    const empty = await repository.findByTokenHash('hash-1', '   ');
+
+    expect(matching?.id.value).toBe('inv-1');
+    expect(mismatched).toBeNull();
+    expect(empty).toBeNull();
+  });
+
   it('rejects listPendingByWorkspace with a validation AppError when a stored document breaks invariants', async () => {
     firestoreMock.__seed('invitations/inv-1', {
       id: 'inv-1',

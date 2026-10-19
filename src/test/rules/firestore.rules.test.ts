@@ -174,7 +174,11 @@ function dbOf(uid: string) {
 }
 
 function dbWithEmail(uid: string, email: string) {
-  return testEnv.authenticatedContext(uid, { email }).firestore();
+  return testEnv.authenticatedContext(uid, { email, email_verified: true }).firestore();
+}
+
+function dbWithUnverifiedEmail(uid: string, email: string) {
+  return testEnv.authenticatedContext(uid, { email, email_verified: false }).firestore();
 }
 
 function unauthed(): RulesTestContext {
@@ -348,14 +352,20 @@ describe('firestore.rules — elements', () => {
 });
 
 describe('firestore.rules — workspaces', () => {
-  test('any authenticated user can read or create a workspace; anonymous cannot', async () => {
-    for (const uid of [...OTHER_ROLE_UIDS, OUTSIDER_UID]) {
+  test('members can read a workspace; outsiders and anonymous cannot', async () => {
+    for (const uid of OTHER_ROLE_UIDS) {
       await assertSucceeds(getDoc(doc(dbOf(uid), 'workspaces', WS1)));
+    }
+    await assertFails(getDoc(doc(dbOf(OUTSIDER_UID), 'workspaces', WS1)));
+    await assertFails(getDoc(doc(unauthed().firestore(), 'workspaces', WS1)));
+  });
+
+  test('an authenticated user can create a workspace; anonymous cannot', async () => {
+    for (const uid of [...OTHER_ROLE_UIDS, OUTSIDER_UID]) {
       await assertSucceeds(
         setDoc(doc(dbOf(uid), 'workspaces', `new-${uid}`), workspaceData('New', uid)),
       );
     }
-    await assertFails(getDoc(doc(unauthed().firestore(), 'workspaces', WS1)));
     await assertFails(
       setDoc(doc(unauthed().firestore(), 'workspaces', 'new-anon'), workspaceData('New', 'anon')),
     );
@@ -685,11 +695,55 @@ describe('firestore.rules — memberships', () => {
 });
 
 describe('firestore.rules — invitations', () => {
-  test('any authenticated user can read an invitation; anonymous cannot', async () => {
-    for (const uid of [...OTHER_ROLE_UIDS, OUTSIDER_UID]) {
+  test('workspace members and the matching invitee can read an invitation', async () => {
+    for (const uid of OTHER_ROLE_UIDS) {
       await assertSucceeds(getDoc(doc(dbOf(uid), 'invitations', 'inv1')));
     }
+    await assertSucceeds(
+      getDoc(doc(dbWithEmail(INVITEE_UID, INVITEE_EMAIL), 'invitations', 'inv1')),
+    );
+    await assertFails(getDoc(doc(dbWithEmail(OUTSIDER_UID, OTHER_EMAIL), 'invitations', 'inv1')));
+    await assertFails(getDoc(doc(dbOf(OUTSIDER_UID), 'invitations', 'inv1')));
     await assertFails(getDoc(doc(unauthed().firestore(), 'invitations', 'inv1')));
+  });
+
+  test('pending invitations can be listed by workspace members only', async () => {
+    await assertSucceeds(
+      getDocs(
+        query(collection(dbOf(ROLE_UIDS.owner), 'invitations'), where('workspaceId', '==', WS1)),
+      ),
+    );
+    await assertFails(
+      getDocs(
+        query(collection(dbOf(OUTSIDER_UID), 'invitations'), where('workspaceId', '==', WS1)),
+      ),
+    );
+  });
+
+  test('the invitee can list and lookup invitations filtered by their email', async () => {
+    const inviteeDb = dbWithEmail(INVITEE_UID, INVITEE_EMAIL);
+    const otherDb = dbWithEmail(OUTSIDER_UID, OTHER_EMAIL);
+
+    await assertSucceeds(
+      getDocs(query(collection(inviteeDb, 'invitations'), where('email', '==', INVITEE_EMAIL))),
+    );
+    await assertFails(
+      getDocs(query(collection(otherDb, 'invitations'), where('email', '==', INVITEE_EMAIL))),
+    );
+    await assertSucceeds(
+      getDocs(
+        query(
+          collection(inviteeDb, 'invitations'),
+          where('tokenHash', '==', '0a'.repeat(32)),
+          where('email', '==', INVITEE_EMAIL),
+        ),
+      ),
+    );
+    await assertFails(
+      getDocs(
+        query(collection(inviteeDb, 'invitations'), where('tokenHash', '==', '0a'.repeat(32))),
+      ),
+    );
   });
 
   test('owner and editor can invite; a viewer or anonymous user cannot', async () => {
@@ -835,6 +889,35 @@ describe('firestore.rules — invitations', () => {
         status: 'accepted',
         updatedAt: now,
       }),
+    );
+  });
+
+  test('an unverified email cannot accept a pending invitation', async () => {
+    await assertFails(
+      updateDoc(doc(dbWithUnverifiedEmail(INVITEE_UID, INVITEE_EMAIL), 'invitations', 'inv1'), {
+        status: 'accepted',
+        updatedAt: now,
+      }),
+    );
+  });
+
+  test('an unverified email cannot create the membership from an invitation', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), 'invitations', 'inv-unverified'),
+        invitationData(WS1, ROLE_UIDS.owner, 'pending', INVITEE_EMAIL, 'editor', 'inv-unverified'),
+      );
+    });
+
+    await assertFails(
+      setDoc(
+        doc(
+          dbWithUnverifiedEmail(INVITEE_UID, INVITEE_EMAIL),
+          'memberships',
+          `${WS1}_${INVITEE_UID}`,
+        ),
+        membershipData(WS1, INVITEE_UID, 'editor', 'inv-unverified'),
+      ),
     );
   });
 
