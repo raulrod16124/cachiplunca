@@ -5,12 +5,16 @@ import type {
   AcceptInvitationById,
   ChangeMemberRole,
   CreateWorkspaceWithOwner,
+  DeleteWorkspace,
+  DuplicateWorkspace,
   InviteMember,
   LeaveWorkspace,
   LoginUser,
   LogoutUser,
+  RefreshUser,
   RegisterUser,
   RemoveMember,
+  SendEmailVerification,
   UpdateWorkspace,
 } from '../../application/commands';
 import type {
@@ -22,7 +26,7 @@ import type {
   ListWorkspaces,
   LoadWorkspaceElements,
 } from '../../application/queries';
-import type { PresencePort } from '../../application/ports';
+import type { FileDownloadPort, PresencePort } from '../../application/ports';
 import type {
   ElementPersistenceOrchestrator,
   RealtimeSubscriptionManager,
@@ -40,8 +44,12 @@ export interface AppRoutesProps {
   readonly registerUser: RegisterUser;
   readonly loginUser: LoginUser;
   readonly logoutUser: LogoutUser;
+  readonly sendEmailVerification?: SendEmailVerification;
+  readonly refreshUser?: RefreshUser;
   readonly listWorkspaces: ListWorkspaces;
   readonly createWorkspaceWithOwner: CreateWorkspaceWithOwner;
+  readonly deleteWorkspace?: DeleteWorkspace;
+  readonly duplicateWorkspace?: DuplicateWorkspace;
   readonly getWorkspace: GetWorkspace;
   readonly loadWorkspaceElements: LoadWorkspaceElements;
   readonly elementPersistenceOrchestrator: ElementPersistenceOrchestrator;
@@ -59,14 +67,19 @@ export interface AppRoutesProps {
   readonly removeMember?: RemoveMember;
   readonly leaveWorkspace?: LeaveWorkspace;
   readonly updateWorkspace?: UpdateWorkspace;
+  readonly fileDownload?: FileDownloadPort;
 }
 
 export function AppRoutes({
   registerUser,
   loginUser,
   logoutUser,
+  sendEmailVerification,
+  refreshUser,
   listWorkspaces,
   createWorkspaceWithOwner,
+  deleteWorkspace,
+  duplicateWorkspace,
   getWorkspace,
   loadWorkspaceElements,
   elementPersistenceOrchestrator,
@@ -84,6 +97,7 @@ export function AppRoutes({
   removeMember,
   leaveWorkspace,
   updateWorkspace,
+  fileDownload,
 }: AppRoutesProps): ReactNode {
   return (
     <Routes>
@@ -91,12 +105,26 @@ export function AppRoutes({
       {acceptInvitation !== undefined && (
         <Route
           path="/invitations/:token"
-          element={<AcceptInvitationPage acceptInvitation={acceptInvitation} />}
+          element={
+            <AcceptInvitationPage
+              acceptInvitation={acceptInvitation}
+              sendEmailVerification={sendEmailVerification}
+              refreshUser={refreshUser}
+            />
+          }
         />
       )}
       <Route element={<RequireAnonymous />}>
         <Route path="/login" element={<LoginPage loginUser={loginUser} />} />
-        <Route path="/register" element={<RegisterPage registerUser={registerUser} />} />
+        <Route
+          path="/register"
+          element={
+            <RegisterPage
+              registerUser={registerUser}
+              sendEmailVerification={sendEmailVerification}
+            />
+          }
+        />
       </Route>
       <Route element={<RequireAuth />}>
         <Route
@@ -106,9 +134,13 @@ export function AppRoutes({
               logoutUser={logoutUser}
               listWorkspaces={listWorkspaces}
               createWorkspaceWithOwner={createWorkspaceWithOwner}
-              getWorkspace={getWorkspace}
+              deleteWorkspace={deleteWorkspace}
+              duplicateWorkspace={duplicateWorkspace}
+              updateWorkspace={updateWorkspace}
               listPendingInvitationsForUser={listPendingInvitationsForUser}
               acceptInvitationById={acceptInvitationById}
+              sendEmailVerification={sendEmailVerification}
+              refreshUser={refreshUser}
             />
           }
         />
@@ -131,6 +163,7 @@ export function AppRoutes({
               removeMember={removeMember}
               leaveWorkspace={leaveWorkspace}
               updateWorkspace={updateWorkspace}
+              fileDownload={fileDownload}
             />
           }
         />

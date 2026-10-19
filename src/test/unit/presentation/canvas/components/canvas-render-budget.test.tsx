@@ -7,14 +7,16 @@ import {
   UserId,
   WorkspaceId,
 } from '../../../../../domain/shared';
-import { createTextElement } from '../../../../../domain/element';
+import { createTextElement, isConnectorElement } from '../../../../../domain/element';
 import type { Element } from '../../../../../domain/element';
 import {
   createCanvasViewportStore,
   createSelectionStore,
   getVisibleElementIds,
+  resolveConnectorGeometry,
   toSelectableItems,
 } from '../../../../../application/services';
+import type { ConnectorGeometry } from '../../../../../application/services';
 import type { CanvasViewportStore } from '../../../../../application/services';
 import { CULLING_MARGIN, Canvas } from '../../../../../presentation/canvas/components/canvas';
 import { generateElements } from '../../../../fixtures/generate-elements';
@@ -65,7 +67,21 @@ function expectedVisibleCount(
     bottomRight.y - topLeft.y,
   );
 
-  return getVisibleElementIds(toSelectableItems(elements), visibleWorld, CULLING_MARGIN).length;
+  const elementsById = new Map(elements.map((element) => [element.id.value, element]));
+  const geometries = new Map<string, ConnectorGeometry>();
+
+  for (const element of elements) {
+    if (!isConnectorElement(element)) {
+      continue;
+    }
+    const geometry = resolveConnectorGeometry(element, elementsById);
+    if (geometry !== null) {
+      geometries.set(element.id.value, geometry);
+    }
+  }
+
+  return getVisibleElementIds(toSelectableItems(elements, geometries), visibleWorld, CULLING_MARGIN)
+    .length;
 }
 
 function renderCanvas(elements: readonly Element[]) {

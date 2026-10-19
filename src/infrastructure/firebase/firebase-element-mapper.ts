@@ -55,8 +55,10 @@ export interface FrameElementDocument extends BaseElementDocument {
 
 export interface ConnectorElementDocument extends BaseElementDocument {
   readonly type: 'connector';
-  readonly sourceElementId: string;
-  readonly targetElementId: string;
+  readonly sourceElementId?: string;
+  readonly targetElementId?: string;
+  readonly sourcePoint?: { readonly x: number; readonly y: number };
+  readonly targetPoint?: { readonly x: number; readonly y: number };
 }
 
 export interface LinkElementDocument extends BaseElementDocument {
@@ -119,8 +121,14 @@ export function toElementDocument(element: Element): ElementDocument {
       return {
         ...base,
         type: 'connector' as const,
-        sourceElementId: element.sourceElementId.value,
-        targetElementId: element.targetElementId.value,
+        ...(element.sourceElementId === undefined
+          ? {}
+          : { sourceElementId: element.sourceElementId.value }),
+        ...(element.targetElementId === undefined
+          ? {}
+          : { targetElementId: element.targetElementId.value }),
+        ...(element.sourcePoint === undefined ? {} : { sourcePoint: element.sourcePoint.toJSON() }),
+        ...(element.targetPoint === undefined ? {} : { targetPoint: element.targetPoint.toJSON() }),
       } as ConnectorElementDocument;
     case 'link':
       return {
@@ -171,8 +179,20 @@ export function fromElementDocument(id: string, data: unknown): Element {
     case 'connector':
       return createConnectorElement({
         ...base,
-        sourceElementId: ElementId.create(readString(data.sourceElementId, 'sourceElementId')),
-        targetElementId: ElementId.create(readString(data.targetElementId, 'targetElementId')),
+        ...(data.sourceElementId === undefined
+          ? { sourcePoint: readPosition(data.sourcePoint) }
+          : {
+              sourceElementId: ElementId.create(
+                readString(data.sourceElementId, 'sourceElementId'),
+              ),
+            }),
+        ...(data.targetElementId === undefined
+          ? { targetPoint: readPosition(data.targetPoint) }
+          : {
+              targetElementId: ElementId.create(
+                readString(data.targetElementId, 'targetElementId'),
+              ),
+            }),
       });
     case 'link':
       return createLinkElement({

@@ -3,11 +3,14 @@ import userEvent from '@testing-library/user-event';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Position, ElementId, Size, UserId, WorkspaceId } from '../../../../../domain/shared';
 import {
+  createConnectorElement,
+  createNoteElement,
   createTaskElement,
   createTextElement,
   richTextFromPlain,
 } from '../../../../../domain/element';
 import type { Element, ElementType, TaskElement } from '../../../../../domain/element';
+import { NOTE_COLOR_PALETTE } from '../../../../../presentation/canvas/note-colors';
 import {
   createCanvasViewportStore,
   createCommandHistory,
@@ -30,6 +33,25 @@ function createElement(id: string, x: number, y: number, width: number, height: 
     position: Position.create(x, y),
     size: Size.create(width, height),
     content: 'hello',
+  });
+}
+
+function createNote(
+  id: string,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  color?: string,
+): Element {
+  return createNoteElement({
+    id: ElementId.create(id),
+    workspaceId: WorkspaceId.create('ws-1'),
+    createdBy: UserId.create('user-1'),
+    position: Position.create(x, y),
+    size: Size.create(width, height),
+    content: 'note',
+    ...(color === undefined ? {} : { color }),
   });
 }
 
@@ -172,6 +194,42 @@ describe('Canvas', () => {
     renderCanvas([FIRST_ITEM]);
 
     expect(screen.queryByRole('heading', { name: 'This board is empty' })).not.toBeInTheDocument();
+  });
+
+  it('offers a CTA to add the first note when the board is empty', () => {
+    const store = createCanvasViewportStore(Size.create(800, 600));
+    const selectionStore = createSelectionStore();
+    const onCreateElement = jest.fn();
+
+    render(
+      <Canvas
+        store={store}
+        selectionStore={selectionStore}
+        elements={[]}
+        onCreateElement={onCreateElement}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add a note' }));
+
+    expect(onCreateElement).toHaveBeenCalledWith('note');
+  });
+
+  it('hides the empty board CTA in read-only mode', () => {
+    const store = createCanvasViewportStore(Size.create(800, 600));
+    const selectionStore = createSelectionStore();
+
+    render(
+      <Canvas
+        store={store}
+        selectionStore={selectionStore}
+        elements={[]}
+        onCreateElement={jest.fn()}
+        readOnly
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Add a note' })).not.toBeInTheDocument();
   });
 
   it('exposes the canvas as a focusable region with keyboard shortcuts', () => {
@@ -1213,6 +1271,87 @@ describe('Canvas', () => {
       expect(screen.queryByRole('menuitem', { name: 'Bring to front' })).not.toBeInTheDocument();
     });
 
+    it('applies a note color from the context menu', async () => {
+      const note = createNote('note-1', 100, 100, 120, 80);
+      const onUpdateElement = jest.fn();
+      renderCanvas(
+        [note],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        onUpdateElement,
+      );
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const user = userEvent.setup();
+
+      fireEvent.contextMenu(canvas, { clientX: 150, clientY: 130 });
+
+      const noteColor = await screen.findByRole('menuitem', { name: 'Note color' });
+      await user.hover(noteColor);
+
+      await user.click(await screen.findByRole('menuitem', { name: 'Green' }));
+
+      expect(onUpdateElement).toHaveBeenCalledWith({
+        type: 'note',
+        element: note,
+        color: NOTE_COLOR_PALETTE[0].color,
+      });
+    });
+
+    it('resets a note color to the default from the context menu', async () => {
+      const color = NOTE_COLOR_PALETTE[1].color;
+      const note = createNote('note-1', 100, 100, 120, 80, color);
+      const onUpdateElement = jest.fn();
+      renderCanvas(
+        [note],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        onUpdateElement,
+      );
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const user = userEvent.setup();
+
+      fireEvent.contextMenu(canvas, { clientX: 150, clientY: 130 });
+
+      const noteColor = await screen.findByRole('menuitem', { name: 'Note color' });
+      await user.hover(noteColor);
+
+      await user.click(await screen.findByRole('menuitem', { name: 'Default' }));
+
+      expect(onUpdateElement).toHaveBeenCalledWith({
+        type: 'note',
+        element: note,
+        color: null,
+      });
+    });
+
+    it('does not offer note colors for non-note elements', async () => {
+      renderCanvas([FIRST_ITEM]);
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      fireEvent.contextMenu(canvas, { clientX: 150, clientY: 130 });
+
+      expect(await screen.findByRole('menuitem', { name: 'Bring to front' })).toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'Note color' })).not.toBeInTheDocument();
+    });
+
     it('shows text formatting options when right-clicking a text element', async () => {
       const { selectionStore } = renderCanvas(
         [FIRST_ITEM],
@@ -1422,6 +1561,7 @@ describe('Canvas', () => {
     interface ToolbarCanvasOptions {
       readonly elements?: readonly Element[];
       readonly onCreateElement?: (type: ElementType) => void;
+      readonly onCreateConnector?: (mode: 'free' | 'bound') => void;
       readonly history?: CommandHistory<readonly Element[]>;
       readonly onUndoElements?: (elements: readonly Element[]) => void;
       readonly onRedoElements?: (elements: readonly Element[]) => void;
@@ -1438,6 +1578,7 @@ describe('Canvas', () => {
           selectionStore={selectionStore}
           elements={options.elements}
           onCreateElement={options.onCreateElement}
+          onCreateConnector={options.onCreateConnector}
           history={options.history}
           onUndoElements={options.onUndoElements}
           onRedoElements={options.onRedoElements}
@@ -1458,11 +1599,11 @@ describe('Canvas', () => {
       expect(onCreateElement).toHaveBeenCalledWith('note');
     });
 
-    it('enables the connector button only with two selected elements', async () => {
-      const onCreateElement = jest.fn();
+    it('enables the connect-selected button only with two selected elements', async () => {
+      const onCreateConnector = jest.fn();
       const { selectionStore } = renderToolbarCanvas({
         elements: [FIRST_ITEM, SECOND_ITEM],
-        onCreateElement,
+        onCreateConnector,
       });
       const user = userEvent.setup();
       const connector = screen.getByRole('button', { name: 'Connect selected elements' });
@@ -1477,7 +1618,7 @@ describe('Canvas', () => {
 
       await user.click(connector);
 
-      expect(onCreateElement).toHaveBeenCalledWith('connector');
+      expect(onCreateConnector).toHaveBeenCalledWith('bound');
     });
 
     it('undoes the last command through the viewport controls button', async () => {
@@ -1911,6 +2052,90 @@ describe('Canvas', () => {
       fireEvent.doubleClick(screen.getByTestId('canvas-item-task-1'));
 
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+  });
+});
+
+describe('Canvas connector endpoints', () => {
+  beforeAll(() => {
+    if (!('setPointerCapture' in Element.prototype)) {
+      Object.defineProperty(Element.prototype, 'setPointerCapture', {
+        value: jest.fn(),
+        configurable: true,
+      });
+      Object.defineProperty(Element.prototype, 'hasPointerCapture', {
+        value: jest.fn().mockReturnValue(true),
+        configurable: true,
+      });
+      Object.defineProperty(Element.prototype, 'releasePointerCapture', {
+        value: jest.fn(),
+        configurable: true,
+      });
+    }
+  });
+
+  function createFreeConnector() {
+    return createConnectorElement({
+      id: ElementId.create('free-connector'),
+      workspaceId: WorkspaceId.create('ws-1'),
+      createdBy: UserId.create('user-1'),
+      position: Position.create(100, 100),
+      size: Size.create(160, 40),
+      sourcePoint: Position.create(0, 20),
+      targetPoint: Position.create(160, 20),
+    });
+  }
+
+  it('renders endpoint handles for a selected free connector', () => {
+    const connector = createFreeConnector();
+    const store = createCanvasViewportStore(Size.create(800, 600));
+    const selectionStore = createSelectionStore();
+    render(<Canvas store={store} selectionStore={selectionStore} elements={[connector]} />);
+
+    act(() => {
+      selectionStore.select('free-connector');
+    });
+
+    expect(document.querySelectorAll('[data-connector-endpoint]')).toHaveLength(2);
+    expect(document.querySelector('[data-resize-handle]')).toBeNull();
+  });
+
+  it('reports endpoint drags in world coordinates', async () => {
+    const connector = createFreeConnector();
+    const onUpdateConnectorEndpoint = jest.fn();
+    const user = userEvent.setup();
+    const store = createCanvasViewportStore(Size.create(800, 600));
+    const selectionStore = createSelectionStore();
+
+    render(
+      <Canvas
+        store={store}
+        selectionStore={selectionStore}
+        elements={[connector]}
+        onUpdateConnectorEndpoint={onUpdateConnectorEndpoint}
+      />,
+    );
+
+    act(() => {
+      selectionStore.select('free-connector');
+    });
+
+    const handle = document.querySelector('[data-connector-endpoint-side="target"]');
+
+    expect(handle).not.toBeNull();
+
+    const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: handle as HTMLElement, coords: { x: 260, y: 120 } },
+      { target: canvas, coords: { x: 300, y: 180 } },
+      { keys: '[/MouseLeft]', target: canvas, coords: { x: 300, y: 180 } },
+    ]);
+
+    expect(onUpdateConnectorEndpoint).toHaveBeenCalledWith({
+      element: connector,
+      side: 'target',
+      point: expect.objectContaining({ x: 300, y: 180 }),
     });
   });
 });

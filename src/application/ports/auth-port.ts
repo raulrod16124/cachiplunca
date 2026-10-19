@@ -13,6 +13,16 @@ export interface AuthCredentials {
   readonly password: string;
 }
 
+export interface ChangeEmailInput {
+  readonly email: string;
+  readonly currentPassword: string;
+}
+
+export interface ChangePasswordInput {
+  readonly currentPassword: string;
+  readonly newPassword: string;
+}
+
 export type SessionListener = (user: AuthUser | null) => void;
 
 export type SessionErrorListener = (error: AppError) => void;
@@ -21,5 +31,10 @@ export interface AuthPort {
   signUp(credentials: AuthCredentials): Promise<AuthUser>;
   signIn(credentials: AuthCredentials): Promise<AuthUser>;
   signOut(): Promise<void>;
+  updateDisplayName(displayName: string): Promise<AuthUser>;
+  changeEmail(input: ChangeEmailInput): Promise<AuthUser>;
+  changePassword(input: ChangePasswordInput): Promise<void>;
+  sendEmailVerification(): Promise<void>;
+  refreshUser(): Promise<AuthUser>;
   observeSession(listener: SessionListener, onError?: SessionErrorListener): Unsubscribe;
 }

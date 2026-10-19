@@ -1,8 +1,10 @@
 import { DropdownMenu } from '@raulrod/ui';
-import { BringToFront, SendToBack } from '@raulrod/icons';
+import { BringToFront, Check, Palette, SendToBack } from '@raulrod/icons';
 import type { ReactElement } from 'react';
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
+import { useI18n } from '../../i18n';
+import { NOTE_COLOR_PALETTE } from '../note-colors';
 
 const AnchorTrigger = styled(DropdownMenu.Trigger)`
   position: absolute;
@@ -14,11 +16,37 @@ const AnchorTrigger = styled(DropdownMenu.Trigger)`
   pointer-events: none;
 `;
 
+const Swatch = styled.span<{ $color: string }>`
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 1px solid ${({ theme }) => theme.color.border.default};
+  border-radius: ${({ theme }) => theme.radius.sm};
+  background-color: ${({ $color }) => $color};
+`;
+
+const DefaultSwatch = styled.span`
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 1px solid ${({ theme }) => theme.color.border.default};
+  border-radius: ${({ theme }) => theme.radius.sm};
+  background-color: ${({ theme }) => theme.canvas.surface};
+`;
+
+export interface ElementContextMenuNoteColor {
+  readonly currentColor: string | undefined;
+  readonly onSelect: (color: string) => void;
+  readonly onClear: () => void;
+}
+
 export interface ElementContextMenuProps {
   /** Viewport-relative coordinates the menu should appear at. */
   readonly position: { readonly x: number; readonly y: number } | null;
   readonly onBringToFront: () => void;
   readonly onSendToBack: () => void;
+  /** Present only when the menu targets a writable note. */
+  readonly noteColor?: ElementContextMenuNoteColor;
   readonly onClose: () => void;
 }
 
@@ -26,8 +54,10 @@ export function ElementContextMenu({
   position,
   onBringToFront,
   onSendToBack,
+  noteColor,
   onClose,
 }: ElementContextMenuProps): ReactElement | null {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -57,6 +87,45 @@ export function ElementContextMenu({
         style={{ left: position.x, top: position.y }}
       />
       <DropdownMenu.Content placement="bottom-start">
+        {noteColor === undefined ? null : (
+          <>
+            <DropdownMenu.Sub>
+              <DropdownMenu.SubTrigger startIcon={<Palette aria-hidden="true" size={16} />}>
+                {t('canvas.contextMenu.noteColor')}
+              </DropdownMenu.SubTrigger>
+              <DropdownMenu.SubContent>
+                <DropdownMenu.Item
+                  onSelect={noteColor.onClear}
+                  startIcon={<DefaultSwatch aria-hidden="true" />}
+                  endIcon={
+                    noteColor.currentColor === undefined ? (
+                      <Check aria-hidden="true" size={16} />
+                    ) : undefined
+                  }
+                  aria-current={noteColor.currentColor === undefined ? 'true' : undefined}
+                >
+                  {t('canvas.contextMenu.noteColorDefault')}
+                </DropdownMenu.Item>
+                {NOTE_COLOR_PALETTE.map((option) => {
+                  const isCurrent = noteColor.currentColor === option.color;
+
+                  return (
+                    <DropdownMenu.Item
+                      key={option.id}
+                      onSelect={() => noteColor.onSelect(option.color)}
+                      startIcon={<Swatch aria-hidden="true" $color={option.color} />}
+                      endIcon={isCurrent ? <Check aria-hidden="true" size={16} /> : undefined}
+                      aria-current={isCurrent ? 'true' : undefined}
+                    >
+                      {t(option.labelKey)}
+                    </DropdownMenu.Item>
+                  );
+                })}
+              </DropdownMenu.SubContent>
+            </DropdownMenu.Sub>
+            <DropdownMenu.Separator />
+          </>
+        )}
         <DropdownMenu.Item
           onSelect={onBringToFront}
           startIcon={<BringToFront aria-hidden="true" size={16} />}

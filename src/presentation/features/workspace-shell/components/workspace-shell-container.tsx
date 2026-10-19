@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import styled from 'styled-components';
 import {
   createCreateElement,
+  createUpdateConnectorEndpoint,
   createUpdateElement,
   type ChangeMemberRole,
   type CreateElementInput,
@@ -25,9 +26,12 @@ import type {
 } from '../../../../application/queries';
 import {
   applyRemoteElementChanges,
+  boardExportToJson,
   buildConnectorCreateInput,
   buildElementCreateInput,
-  connectorEndpoints,
+  buildFreeConnectorCreateInput,
+  connectorCandidateIds,
+  createBoardExportFileName,
   createBoardWindowCommand,
   createCanvasViewportStore,
   createCommandHistory,
@@ -38,12 +42,14 @@ import {
   createRemoteCursorsStore,
   createSelectionStore,
   createSharedPresencePort,
+  DEFAULT_FREE_CONNECTOR_SIZE,
   defaultElementSize,
   elementContentBounds,
   EMPTY_CONNECTED_USERS_STORE,
   EMPTY_REMOTE_CURSORS_STORE,
   resolveElementCreatePosition,
   rollbackFailedMutation,
+  serializeBoardExport,
 } from '../../../../application/services';
 import type {
   CanvasViewportStore,
@@ -61,12 +67,14 @@ import type {
 } from '../../../../application/services';
 import type {
   AuthUser,
+  FileDownloadPort,
   PresencePort,
   RealtimeConnectionStatus,
 } from '../../../../application/ports';
-import type { Element, ElementType } from '../../../../domain/element';
+import { isConnectorElement } from '../../../../domain/element';
+import type { ConnectorElement, Element, ElementType } from '../../../../domain/element';
 import type { MembershipRole } from '../../../../domain/membership';
-import { Presence } from '../../../../domain/collaboration';
+import { Presence, resolveUserDisplayName } from '../../../../domain/collaboration';
 import { Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
 import { useWorkspacePermissions } from '../../../hooks';
 import type { ElementId } from '../../../../domain/shared';
@@ -74,9 +82,12 @@ import { toAppError, type AppError } from '../../../../shared/errors';
 import { EmptyState } from '../../../components/empty-state';
 import { ErrorState } from '../../../components/error-state';
 import { LoadingState } from '../../../components/loading-state';
+import type { ConnectorEndpointDragInput } from '../../../canvas/hooks';
 import type { TaskFormValues } from '../../../canvas/components/task-form-dialog';
 import { ShareDialog } from '../../sharing';
+import { localizeMessage, useI18n } from '../../../i18n';
 import { WorkspaceShellLayout } from './workspace-shell-layout';
+import { BoardPrintView } from './board-print-view';
 import {
   describeCollaborationSyncError,
   describeCreateElementError,
@@ -112,6 +123,7 @@ export interface WorkspaceShellContainerProps {
   readonly removeMember?: RemoveMember;
   readonly leaveWorkspace?: LeaveWorkspace;
   readonly updateWorkspace?: UpdateWorkspace;
+  readonly fileDownload?: FileDownloadPort;
 }
 
 interface TransformGesture {
@@ -142,7 +154,9 @@ export function WorkspaceShellContainer({
   removeMember,
   leaveWorkspace,
   updateWorkspace,
+  fileDownload,
 }: WorkspaceShellContainerProps): ReactNode {
+  const { t } = useI18n();
   const [status, setStatus] = useState<'loading' | 'notFound' | 'error' | 'success'>('loading');
   const [shareOpen, setShareOpen] = useState(false);
   const [role, setRole] = useState<MembershipRole | undefined>(undefined);
@@ -158,6 +172,8 @@ export function WorkspaceShellContainer({
   const [persistenceError, setPersistenceError] = useState<AppError | null>(null);
   const [collaborationError, setCollaborationError] = useState<AppError | null>(null);
   const [creationError, setCreationError] = useState<AppError | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [printRequest, setPrintRequest] = useState<Date | null>(null);
   const [syncStatus, setSyncStatus] = useState<PersistenceSyncStatus>('idle');
   const elementsRef = useRef<readonly Element[]>([]);
   const canvasViewportStoreRef = useRef<CanvasViewportStore>(
@@ -179,6 +195,11 @@ export function WorkspaceShellContainer({
     () => (presencePort === undefined ? undefined : createSharedPresencePort(presencePort)),
     [presencePort],
   );
+
+  const localDisplayName = resolveUserDisplayName({
+    displayName: currentUser?.displayName,
+    email: currentUser?.email,
+  });
 
   const remoteCursorsStore = useMemo<RemoteCursorsStore>(() => {
     if (sharedPresencePort === undefined || localUserId === undefined) {
@@ -220,12 +241,13 @@ export function WorkspaceShellContainer({
       basePresence: Presence.create({
         userId: UserId.create(localUserId),
         workspaceId: WorkspaceId.create(workspaceId),
+        displayName: localDisplayName,
       }),
       onError: (error) => {
         setCollaborationError(error);
       },
     });
-  }, [presencePort, localUserId, workspaceId]);
+  }, [sharedPresencePort, localUserId, localDisplayName, workspaceId]);
 
   const handleCursorMove = useCallback(
     (position: Position) => {
@@ -383,16 +405,67 @@ export function WorkspaceShellContainer({
 
   const handleCreateElement = useCallback(
     (type: ElementType): ElementId | void => {
+      if (localUserId === undefined || type === 'connector') {
+        return;
+      }
+
+      const workspace = WorkspaceId.create(workspaceId);
+      const createdBy = UserId.create(localUserId);
+      const size = defaultElementSize(type);
+      const position = resolveElementCreatePosition(
+        canvasViewportStoreRef.current.getSnapshot(),
+        size,
+      );
+
+      const input = buildElementCreateInput(type, {
+        workspaceId: workspace,
+        createdBy,
+        position,
+        size,
+      });
+
+      const result = createElement(input);
+
+      if (result.status === 'error') {
+        setCreationError(result.error);
+        return;
+      }
+
+      setCreationError(null);
+      commitElements([...elementsRef.current, result.element], `Create ${type}`);
+      selectionStoreRef.current.select(result.element.id.value);
+
+      return result.element.id;
+    },
+    [localUserId, workspaceId, createElement, commitElements],
+  );
+
+  const handleCreateConnector = useCallback(
+    (mode: 'free' | 'bound'): ElementId | void => {
       if (localUserId === undefined) {
         return;
       }
 
       const workspace = WorkspaceId.create(workspaceId);
       const createdBy = UserId.create(localUserId);
+      const viewport = canvasViewportStoreRef.current.getSnapshot();
       let input: CreateElementInput;
 
-      if (type === 'connector') {
-        const endpoints = connectorEndpoints(selectionStoreRef.current.getSnapshot().selectedIds);
+      if (mode === 'free') {
+        const size = DEFAULT_FREE_CONNECTOR_SIZE;
+        const position = resolveElementCreatePosition(viewport, size);
+
+        input = buildFreeConnectorCreateInput({
+          workspaceId: workspace,
+          createdBy,
+          position,
+          size,
+        });
+      } else {
+        const endpoints = connectorCandidateIds(
+          elementsRef.current,
+          selectionStoreRef.current.getSnapshot().selectedIds,
+        );
 
         if (endpoints === null) {
           return;
@@ -418,19 +491,6 @@ export function WorkspaceShellContainer({
           position: bounds.position,
           size: bounds.size,
         });
-      } else {
-        const size = defaultElementSize(type);
-        const position = resolveElementCreatePosition(
-          canvasViewportStoreRef.current.getSnapshot(),
-          size,
-        );
-
-        input = buildElementCreateInput(type, {
-          workspaceId: workspace,
-          createdBy,
-          position,
-          size,
-        });
       }
 
       const result = createElement(input);
@@ -441,12 +501,49 @@ export function WorkspaceShellContainer({
       }
 
       setCreationError(null);
-      commitElements([...elementsRef.current, result.element], `Create ${type}`);
+      commitElements([...elementsRef.current, result.element], 'Create connector');
       selectionStoreRef.current.select(result.element.id.value);
 
       return result.element.id;
     },
     [localUserId, workspaceId, createElement, commitElements],
+  );
+
+  const updateConnectorEndpointCommand = useMemo(() => createUpdateConnectorEndpoint(), []);
+
+  const handleUpdateConnectorEndpoint = useCallback(
+    (input: ConnectorEndpointDragInput): void => {
+      if (localUserId === undefined) {
+        return;
+      }
+
+      const current = elementsRef.current.find(
+        (element): element is ConnectorElement =>
+          element.id.value === input.element.id.value && isConnectorElement(element),
+      );
+
+      if (current === undefined) {
+        return;
+      }
+
+      const result = updateConnectorEndpointCommand({
+        element: current,
+        side: input.side,
+        point: input.point,
+      });
+
+      if (result.status === 'error') {
+        return;
+      }
+
+      const next = elementsRef.current.map((element) =>
+        element.id.value === current.id.value ? result.element : element,
+      );
+
+      transformGestureRef.current ??= { base: elementsRef.current, label: 'Update connector' };
+      persistElements(elementsRef.current, next);
+    },
+    [localUserId, updateConnectorEndpointCommand, persistElements],
   );
 
   const handleCreateTask = useCallback(
@@ -638,6 +735,65 @@ export function WorkspaceShellContainer({
     }
   }, [loadWorkspaceElements, workspaceId]);
 
+  const workspaceName = result?.status === 'ok' ? result.workspace.name : '';
+
+  const handleExportJson = useCallback((): void => {
+    if (fileDownload === undefined || workspaceName.length === 0) {
+      return;
+    }
+
+    try {
+      const exportedAt = new Date();
+      const boardExport = serializeBoardExport({
+        workspaceId,
+        exportedAt,
+        elements: elementsRef.current,
+      });
+
+      fileDownload.downloadTextFile({
+        fileName: createBoardExportFileName(workspaceName, exportedAt, 'json'),
+        content: boardExportToJson(boardExport),
+        mimeType: 'application/json',
+      });
+      setExportError(null);
+    } catch {
+      setExportError(t('canvas.export.error'));
+    }
+  }, [fileDownload, workspaceId, workspaceName, t]);
+
+  const handleExportPdf = useCallback((): void => {
+    setExportError(null);
+    setPrintRequest(new Date());
+  }, []);
+
+  useEffect(() => {
+    if (printRequest === null) {
+      return;
+    }
+
+    const originalTitle = document.title;
+
+    document.title = createBoardExportFileName(workspaceName, printRequest, 'pdf').replace(
+      /\.pdf$/,
+      '',
+    );
+
+    function handleAfterPrint(): void {
+      setPrintRequest(null);
+    }
+
+    window.addEventListener('afterprint', handleAfterPrint);
+    const frame = window.requestAnimationFrame(() => {
+      window.print();
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener('afterprint', handleAfterPrint);
+      document.title = originalTitle;
+    };
+  }, [printRequest, workspaceName]);
+
   useEffect(() => {
     void fetchWorkspace();
   }, [fetchWorkspace]);
@@ -757,7 +913,7 @@ export function WorkspaceShellContainer({
   if (status === 'error') {
     const errorMessage =
       result?.status === 'error'
-        ? describeGetWorkspaceError(result.error)
+        ? localizeMessage(t, describeGetWorkspaceError(result.error))
         : 'Something went wrong.';
 
     return (
@@ -793,7 +949,7 @@ export function WorkspaceShellContainer({
       const errorMessage =
         elementsError === null
           ? 'Something went wrong.'
-          : describeLoadWorkspaceElementsError(elementsError);
+          : localizeMessage(t, describeLoadWorkspaceElementsError(elementsError));
 
       return (
         <Container>
@@ -850,21 +1006,29 @@ export function WorkspaceShellContainer({
           onUndoElements={handleUndoElements}
           onRedoElements={handleRedoElements}
           onCreateElement={canCreateElement ? handleCreateElement : undefined}
+          onCreateConnector={canCreateElement ? handleCreateConnector : undefined}
           onCreateTask={canCreateElement ? handleCreateTask : undefined}
           onUpdateElement={canElementWrite ? handleUpdateElement : undefined}
+          onUpdateConnectorEndpoint={canElementWrite ? handleUpdateConnectorEndpoint : undefined}
           generateElementId={generateElementId}
           remoteCursors={remoteCursors}
           onCursorMove={cursorBroadcaster === null ? undefined : handleCursorMove}
           syncStatus={syncStatus}
           connectionStatus={connectionStatus}
           persistenceErrorMessage={
-            persistenceError === null ? null : describePersistElementsError(persistenceError)
+            persistenceError === null
+              ? null
+              : localizeMessage(t, describePersistElementsError(persistenceError))
           }
           collaborationErrorMessage={
-            collaborationError === null ? null : describeCollaborationSyncError(collaborationError)
+            collaborationError === null
+              ? null
+              : localizeMessage(t, describeCollaborationSyncError(collaborationError))
           }
           creationErrorMessage={
-            creationError === null ? null : describeCreateElementError(creationError)
+            creationError === null
+              ? null
+              : localizeMessage(t, describeCreateElementError(creationError))
           }
           readOnly={!canElementWrite}
           accessErrorMessage={
@@ -874,6 +1038,9 @@ export function WorkspaceShellContainer({
           }
           onRetryRole={roleStatus === 'failed' ? handleRetryRole : undefined}
           onShare={canShare ? () => setShareOpen(true) : undefined}
+          onExportJson={fileDownload === undefined ? undefined : handleExportJson}
+          onExportPdf={fileDownload === undefined ? undefined : handleExportPdf}
+          exportErrorMessage={exportError}
           onRename={canRename ? handleRenameWorkspace : undefined}
         />
         {canShare ? (
@@ -895,6 +1062,13 @@ export function WorkspaceShellContainer({
             onLeft={onBack}
           />
         ) : null}
+        {printRequest === null ? null : (
+          <BoardPrintView
+            workspaceName={result.workspace.name}
+            elements={elements}
+            exportedAt={printRequest}
+          />
+        )}
       </>
     );
   }

@@ -1,5 +1,36 @@
 # Session Log
 
+## 2026-10-19 — PBL-003 Paleta de colores de nota
+
+- Siguiente tarea del backlog: PBL-003 (R1, P1, S, Quick win; PBL-001 y PBL-002 DONE). Sin IN PROGRESS ni BLOCKED.
+- Domain: `withNoteColor` acepta `undefined` para eliminar el color (omite la propiedad), mantiene la validación de string no vacío y la inmutabilidad.
+- Application: `UpdateElementInput` de nota admite `color: string | null`; `null` limpia el color siguiendo el convenio de `assigneeId`, `dueDate`, `parentFrameId` y `link.title`.
+- Presentation: nuevo `canvas/note-colors.ts` con 5 colores semánticos del tema (`background.success`, `warning`, `info`, `destructive`, `sunken`); contraste con `color.text.primary` ≥14:1 en light y ≥11:1 en dark. El menú contextual de nota añade un submenú "Note color" con acción "Default", swatches, check del color activo y navegación por teclado de `DropdownMenu`. El handler reutiliza `onUpdateElement`, por lo que hereda historial, undo/redo, persistencia y realtime. Solo se muestra para notas escribibles.
+- Persistencia: sin cambios; el mapper ya omite `color` cuando es `undefined` y `setDoc` sobrescribe el documento, de modo que limpiar el color elimina el campo.
+- i18n: claves nuevas en inglés y español.
+- Tests: dominio (limpiar color), Application (null), Presentation (aplicar, reset y menú solo para notas) y E2E de aplicar color, undo/redo, recarga y reset. Total `npm test`: 220 suites / 2558 tests; `test:e2e`: 19 tests.
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test`, `npm run build` y `npm run test:e2e` en verde.
+- Sin ADR nuevo: decisión local de Presentation y extensión mínima coherente con los convenios existentes.
+
+## 2026-10-19 — PBL-001 Lecturas acotadas y verificación de email
+
+- Rules: `workspaces.read` exige membership; `invitations.read` se limita a miembros o al email destinatario; `email_verified` obligatorio en membership create desde invitación y en el accept de la invitación.
+- Application: `findByTokenHash(tokenHash, email?)` filtra por email; `acceptInvitation`/`acceptInvitationById` reciben `userEmailVerified` y devuelven `INVITATION_EMAIL_NOT_VERIFIED`; nuevos comandos `SendEmailVerification` y `RefreshUser`.
+- Infrastructure: filtro por email en el repositorio Firestore de invitaciones; `sendEmailVerification` y `refreshUser` (reload + `getIdToken(true)`) en el adapter de Auth.
+- Presentation: registro envía verificación y permite reenvío; accept page verifica/refresca antes de aceptar; panel de pendientes refresca y ofrece reenvío, y deja de resolver nombres de workspaces ajenos.
+- Tests: rules (lecturas por membership/email/token y aceptación sin verificar), unit de comandos/adapters, integración de accept y E2E de sharing con verificación vía endpoints del emulador de Auth.
+- Docs: ADR-0034 nuevo, actualización de ADR-0023, PBL-001 y TASK-127 a DONE.
+- Quality gates: `lint`, `format:check`, `tsc -b --noEmit`, `test` (220 suites / 2553 tests), `build`, `test:rules` (89 tests) y `test:e2e` (18 tests) en verde. Se actualizaron dos aserciones E2E obsoletas del editor TipTap y una del menú de cuenta para mantener la suite verde.
+
+## 2026-10-19 — Conectores libres y anclaje al borde
+
+- Connector domain extendido con extremos libres: `sourcePoint`/`targetPoint` locales, `sourceElementId`/`targetElementId` ligados. Validación XOR por extremo y helper union `ConnectorEndpoint`.
+- Application: `connector-geometry.ts` (intersección rayo-rectángulo con gap, geometría mixta, distance-to-segment), `createUpdateConnectorEndpoint`, `connectorCandidateIds`, `buildFreeConnectorCreateInput` y cascada de borrado de conectores ligados.
+- Presentation: renderer con coordenadas reales y hit path; ElementView usa la geometría resuelta y los conectores se pintan primero (detrás de los nodos); SelectionOverlay muestra handles de extremo para libres; hook `useConnectorEndpointDrag`; toolbar con “Add connector” y “Connect selected elements”; hit-test por segmento con prioridad de cajas.
+- Persistencia: mapper lee/escribe extremos libres y mantiene compatibilidad con documentos antiguos.
+- Tests: 211 suites / 2513 tests en verde (+2 suites nuevas: `connector-geometry`, `update-connector-endpoint`, y casos nuevos en dominio, mapper, hit-test, creación, borrado, toolbar, Canvas y contenedor). `npm run perf` en verde.
+- ADR-0033 (`docs/adr/0033-free-connectors.md`).
+
 ## 2026-10-18 — TASK-134 Floating Word-style text toolbar
 
 - Siguiente tarea del backlog: TASK-134 (P1, dependencias TASK-132 DONE; acordada con el usuario, que decretó el salto sobre TASK-127/128/130). Alcance: la mini-toolbar flotante completa en `src/presentation/canvas/text-format/`.

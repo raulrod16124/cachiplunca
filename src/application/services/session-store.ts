@@ -23,7 +23,12 @@ function sameSessionState(a: SessionState, b: SessionState): boolean {
     return false;
   }
   if (a.status === 'authenticated' && b.status === 'authenticated') {
-    return a.user.uid === b.user.uid;
+    return (
+      a.user.uid === b.user.uid &&
+      a.user.email === b.user.email &&
+      a.user.emailVerified === b.user.emailVerified &&
+      a.user.displayName === b.user.displayName
+    );
   }
   return true;
 }

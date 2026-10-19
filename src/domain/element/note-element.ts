@@ -64,16 +64,26 @@ export function withNoteContent(
 
 export function withNoteColor(
   element: NoteElement,
-  color: string,
+  color: string | undefined,
   updatedAt: Date = new Date(),
 ): NoteElement {
   assertColorIsString(color);
 
-  const next: NoteElement = { ...element, color, updatedAt };
+  const next: NoteElement =
+    color === undefined
+      ? { ...withoutNoteColor(element), updatedAt }
+      : { ...element, color, updatedAt };
 
   validateNoteElement(next);
 
   return next;
+}
+
+function withoutNoteColor(element: NoteElement): Omit<NoteElement, 'color'> {
+  const { color: _color, ...rest } = element;
+  void _color;
+
+  return rest;
 }
 
 function toRichTextDocument(content: RichTextDocument | string | undefined): RichTextDocument {

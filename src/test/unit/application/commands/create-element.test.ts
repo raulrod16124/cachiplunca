@@ -87,8 +87,8 @@ describe('createCreateElement', () => {
 
     expect(element.type).toBe('connector');
     if (element.type === 'connector') {
-      expect(element.sourceElementId.value).toBe('a');
-      expect(element.targetElementId.value).toBe('b');
+      expect(element.sourceElementId?.value).toBe('a');
+      expect(element.targetElementId?.value).toBe('b');
     }
   });
 

@@ -6,15 +6,20 @@ import { AppRoutes, type AppRoutesProps } from '../../app/routes/app-routes';
 import {
   createAcceptInvitation,
   createAcceptInvitationById,
+  createRefreshUser,
+  createSendEmailVerification,
   createChangeMemberRole,
   createCreateOwnerMembership,
   createCreateWorkspaceWithOwner,
+  createDeleteWorkspace,
+  createDuplicateWorkspace,
   createInviteMember,
   createLeaveWorkspace,
   createLoginUser,
   createLogoutUser,
   createRegisterUser,
   createRemoveMember,
+  createUpdateWorkspace,
 } from '../../application/commands';
 import {
   createGetWorkspace,
@@ -113,6 +118,7 @@ export function createAppHarness(): AppHarness {
 
   let elementSequence = 0;
   let currentUser: AuthUser | null = null;
+  const generateElementId = () => ElementId.create(`el-${++elementSequence}`);
 
   authPort.observeSession((user) => {
     currentUser = user;
@@ -122,10 +128,31 @@ export function createAppHarness(): AppHarness {
     registerUser: createRegisterUser(authPort),
     loginUser: createLoginUser(authPort),
     logoutUser: createLogoutUser(authPort),
+    sendEmailVerification: createSendEmailVerification(authPort),
+    refreshUser: createRefreshUser(authPort),
     listWorkspaces: createListWorkspaces(workspaceRepository, membershipRepository),
     createWorkspaceWithOwner: createCreateWorkspaceWithOwner({
       workspaceRepository,
+      membershipRepository,
+      elementRepository,
       createOwnerMembership: createCreateOwnerMembership(membershipRepository),
+      generateId: generateElementId,
+    }),
+    deleteWorkspace: createDeleteWorkspace({ workspaceRepository, membershipRepository }),
+    updateWorkspace: createUpdateWorkspace(workspaceRepository),
+    duplicateWorkspace: createDuplicateWorkspace({
+      workspaceRepository,
+      membershipRepository,
+      elementRepository,
+      loadWorkspaceElements: createLoadWorkspaceElements(elementRepository),
+      createWorkspaceWithOwner: createCreateWorkspaceWithOwner({
+        workspaceRepository,
+        membershipRepository,
+        elementRepository,
+        createOwnerMembership: createCreateOwnerMembership(membershipRepository),
+        generateId: generateElementId,
+      }),
+      generateId: generateElementId,
     }),
     getWorkspace: createGetWorkspace(workspaceRepository),
     getWorkspaceRole: createGetWorkspaceRole(membershipRepository),
@@ -158,7 +185,7 @@ export function createAppHarness(): AppHarness {
       createElementPersistence(elementRepository),
     ),
     realtimeSubscriptionManager: createRealtimeSubscriptionManager(realtimePort),
-    generateElementId: () => ElementId.create(`el-${++elementSequence}`),
+    generateElementId,
     presencePort,
   };
 

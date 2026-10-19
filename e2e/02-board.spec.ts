@@ -87,6 +87,46 @@ test.describe('Board (MVP happy path)', () => {
     await expect(page.locator('[data-testid^="canvas-item-"]')).toHaveCount(0);
   });
 
+  test('applies a note color, supports undo/redo and persists it', async ({ page }) => {
+    await registerUser(page);
+    await createWorkspace(page, 'Color board');
+
+    const item = await addElement(page, 'note');
+    const editor = page.getByTestId('element-editor').getByRole('textbox');
+    await expect(editor).toBeVisible();
+    await editor.focus();
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('element-editor-box')).toBeHidden();
+    const note = item.locator('[data-element-content="true"]');
+    const canvas = page.getByRole('application', { name: 'Canvas' });
+    const colorStyle = /background-color:\s*var\(--rr-color-background-success\)/;
+
+    await item.click({ button: 'right' });
+    await page.getByRole('menuitem', { name: 'Note color' }).hover();
+    await page.getByRole('menuitem', { name: 'Green' }).click();
+    await expect(note).toHaveAttribute('style', colorStyle);
+
+    await canvas.focus();
+    await page.keyboard.press('Control+z');
+    await expect(note).not.toHaveAttribute('style', colorStyle);
+
+    await page.keyboard.press('Control+Shift+z');
+    await expect(note).toHaveAttribute('style', colorStyle);
+
+    await page.waitForTimeout(1000);
+    await page.reload();
+    await expect(canvas).toBeVisible({ timeout: 20000 });
+
+    const reloaded = page.locator('[data-testid^="canvas-item-"]').first();
+    const reloadedNote = reloaded.locator('[data-element-content="true"]');
+    await expect(reloadedNote).toHaveAttribute('style', colorStyle, { timeout: 20000 });
+
+    await reloaded.click({ button: 'right' });
+    await page.getByRole('menuitem', { name: 'Note color' }).hover();
+    await page.getByRole('menuitem', { name: 'Default' }).click();
+    await expect(reloadedNote).not.toHaveAttribute('style', colorStyle);
+  });
+
   test('elements survive a page reload', async ({ page }) => {
     await registerUser(page);
     await createWorkspace(page, 'Persistence board');
@@ -106,7 +146,7 @@ test.describe('Board (MVP happy path)', () => {
 
     const item = await addElement(page, 'text');
 
-    const editor = page.getByTestId('element-editor');
+    const editor = page.getByTestId('element-editor').getByRole('textbox');
     await expect(editor).toBeVisible();
     await editor.fill('Hola mundo');
     await editor.blur();
@@ -157,7 +197,7 @@ test.describe('Board (MVP happy path)', () => {
 
     const item = await addElement(page, 'text');
 
-    const editor = page.getByTestId('element-editor');
+    const editor = page.getByTestId('element-editor').getByRole('textbox');
     await expect(editor).toBeVisible();
     await editor.fill('First');
     await editor.blur();
@@ -165,9 +205,9 @@ test.describe('Board (MVP happy path)', () => {
 
     await item.dblclick();
 
-    const reopened = page.getByTestId('element-editor');
+    const reopened = page.getByTestId('element-editor').getByRole('textbox');
     await expect(reopened).toBeVisible();
-    await expect(reopened).toHaveValue('First');
+    await expect(reopened).toHaveText('First');
     await reopened.fill('Second');
     await reopened.blur();
 

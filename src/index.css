@@ -22,3 +22,48 @@ body {
 .settings-select-content {
   z-index: calc(var(--rr-z-modal) + 1);
 }
+
+/* Profile modal is wider than the DS dialog default so the three tabs and
+ * the security forms can breathe without horizontal scrolling. */
+.profile-dialog-content {
+  max-width: 40rem;
+}
+
+/* Share modal uses the extra horizontal room for member rows and role selects. */
+.share-dialog-content {
+  max-width: 38rem;
+}
+
+/* Profile tabs share the dialog width and read as one segmented control. */
+.profile-dialog-content .rr-tabs-list {
+  display: flex;
+  width: 100%;
+  gap: var(--rr-space-1);
+}
+
+.profile-dialog-content .rr-tabs-trigger {
+  flex: 1 1 0;
+  text-align: center;
+}
+
+/* Board export: only the snapshot is printed, never the interactive shell. */
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 12mm;
+  }
+
+  #root {
+    display: none !important;
+  }
+
+  .board-print-root {
+    display: block !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .board-print-root button {
+    display: none !important;
+  }
+}

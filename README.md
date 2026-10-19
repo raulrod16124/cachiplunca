@@ -128,13 +128,14 @@ src/
 
 ## Documentación
 
-| Documento                                    | Contenido                                                  |
-| -------------------------------------------- | ---------------------------------------------------------- |
-| [`AGENTS.md`](AGENTS.md)                     | Reglas de ingeniería y convenciones del repo               |
-| [`docs/mvp-backlog.md`](docs/mvp-backlog.md) | Backlog operativo del MVP (fuente de verdad)               |
-| [`docs/adr/`](docs/adr/)                     | Architecture Decision Records + session log                |
-| [`docs/audits/`](docs/audits/)               | Auditorías: errores, seguridad, dependencias, arquitectura |
-| [`docs/performance/`](docs/performance/)     | Línea base, optimización y regression de rendimiento       |
+| Documento                                              | Contenido                                                  |
+| ------------------------------------------------------ | ---------------------------------------------------------- |
+| [`AGENTS.md`](AGENTS.md)                               | Reglas de ingeniería y convenciones del repo               |
+| [`docs/mvp-backlog.md`](docs/mvp-backlog.md)           | Backlog operativo del MVP (fuente de verdad)               |
+| [`docs/post-mvp-backlog.md`](docs/post-mvp-backlog.md) | Mini Jira post-MVP: tareas por sesión y quick wins         |
+| [`docs/adr/`](docs/adr/)                               | Architecture Decision Records + session log                |
+| [`docs/audits/`](docs/audits/)                         | Auditorías: errores, seguridad, dependencias, arquitectura |
+| [`docs/performance/`](docs/performance/)               | Línea base, optimización y regression de rendimiento       |
 
 ## Quality gates
 

@@ -32,12 +32,20 @@ async function renderAuthenticatedApp() {
 
   const repository = new FakeWorkspaceRepository();
   const membershipRepository = new FakeMembershipRepository();
-  const listWorkspaces = jest.fn(async (_userId: string): Promise<ListWorkspacesResult> => ({
-    status: 'ok',
-    workspaces: await repository.list(),
-  }));
+  const listWorkspaces = jest.fn(async (userId: string): Promise<ListWorkspacesResult> => {
+    const memberships = await membershipRepository.listByUser(UserId.create(userId));
+    return {
+      status: 'ok',
+      workspaces: await repository.list(),
+      rolesByWorkspaceId: new Map(
+        memberships.map((membership) => [membership.workspaceId.value, membership.role]),
+      ),
+    };
+  });
   const listWorkspacesQuery: ListWorkspaces = listWorkspaces;
   const elementRepository = new FakeElementRepository();
+  let elementSequence = 0;
+  const generateElementId = () => ElementId.create(`el-${++elementSequence}`);
 
   const view = renderAppRoutes({
     authPort,
@@ -49,7 +57,10 @@ async function renderAuthenticatedApp() {
       listWorkspaces: listWorkspacesQuery,
       createWorkspaceWithOwner: createCreateWorkspaceWithOwner({
         workspaceRepository: repository,
+        membershipRepository,
+        elementRepository,
         createOwnerMembership: createCreateOwnerMembership(membershipRepository),
+        generateId: generateElementId,
       }),
       getWorkspace: createGetWorkspace(repository),
       loadWorkspaceElements: createLoadWorkspaceElements(elementRepository),
@@ -57,11 +68,11 @@ async function renderAuthenticatedApp() {
         createElementPersistence(elementRepository),
       ),
       realtimeSubscriptionManager: createRealtimeSubscriptionManager(new FakeRealtimePort()),
-      generateElementId: () => ElementId.create('generated'),
+      generateElementId,
     },
   });
 
-  return { ...view, repository, membershipRepository, listWorkspaces };
+  return { ...view, repository, membershipRepository, elementRepository, listWorkspaces };
 }
 
 function openCreateDialog(): void {
@@ -115,5 +126,26 @@ describe('create workspace flow', () => {
       membershipRepository.listByUser(UserId.create('fake-uid-1')),
     ).resolves.toHaveLength(0);
     expect(screen.getByRole('heading', { name: 'No workspaces yet' })).toBeInTheDocument();
+  });
+
+  it('creates a workspace with the selected template and its elements', async () => {
+    const { repository, elementRepository } = await renderAuthenticatedApp();
+
+    openCreateDialog();
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Sprint retro' } });
+    fireEvent.click(screen.getByRole('radio', { name: 'Retrospective' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }));
+
+    const [workspace] = await waitFor(async () => {
+      const workspaces = await repository.list();
+      expect(workspaces).toHaveLength(1);
+      return workspaces;
+    });
+
+    const elements = await elementRepository.listByWorkspace(workspace.id);
+    expect(elements.length).toBeGreaterThan(0);
+    expect(elements.some((element) => element.type === 'frame')).toBe(true);
+    expect(elements.some((element) => element.type === 'note')).toBe(true);
+    expect(elements.some((element) => element.type === 'task')).toBe(true);
   });
 });

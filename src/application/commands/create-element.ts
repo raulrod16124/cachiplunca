@@ -46,8 +46,10 @@ export type CreateElementInput =
     })
   | (CreateElementBaseInput & {
       readonly type: 'connector';
-      readonly sourceElementId: ElementId;
-      readonly targetElementId: ElementId;
+      readonly sourceElementId?: ElementId;
+      readonly targetElementId?: ElementId;
+      readonly sourcePoint?: Position;
+      readonly targetPoint?: Position;
     })
   | (CreateElementBaseInput & {
       readonly type: 'link';
@@ -112,6 +114,8 @@ function buildElement(input: CreateElementInput, deps: CreateElementDeps): Eleme
         ...base,
         sourceElementId: input.sourceElementId,
         targetElementId: input.targetElementId,
+        sourcePoint: input.sourcePoint,
+        targetPoint: input.targetPoint,
       });
     case 'link':
       return createLinkElement({ ...base, url: input.url, title: input.title });

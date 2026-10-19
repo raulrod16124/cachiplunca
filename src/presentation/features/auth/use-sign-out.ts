@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import type { LogoutUser } from '../../../application/commands';
 import { toAppError } from '../../../shared/errors';
 import { describeLoginError } from './auth-error-messages';
+import { localizeMessage, useI18n } from '../../i18n';
 
 export interface SignOutController {
   readonly signingOut: boolean;
@@ -10,6 +11,7 @@ export interface SignOutController {
 }
 
 export function useSignOut(logoutUser: LogoutUser): SignOutController {
+  const { t } = useI18n();
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const inFlightRef = useRef(false);
@@ -26,15 +28,15 @@ export function useSignOut(logoutUser: LogoutUser): SignOutController {
     try {
       const result = await logoutUser();
       if (result.status === 'error') {
-        setSignOutError(describeLoginError(result.error));
+        setSignOutError(localizeMessage(t, describeLoginError(result.error)));
       }
     } catch (error) {
-      setSignOutError(describeLoginError(toAppError(error)));
+      setSignOutError(localizeMessage(t, describeLoginError(toAppError(error))));
     } finally {
       inFlightRef.current = false;
       setSigningOut(false);
     }
-  }, [logoutUser]);
+  }, [logoutUser, t]);
 
   return { signingOut, signOutError, signOut };
 }

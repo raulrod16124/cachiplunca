@@ -1,11 +1,13 @@
 import { Avatar, DropdownMenu, Inline, Text } from '@raulrod/ui';
-import { LogOut, Settings } from '@raulrod/icons';
+import { LogOut, Settings, UserRound } from '@raulrod/icons';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import styled from 'styled-components';
 import type { AuthUser } from '../../../application/ports';
 import type { LogoutUser } from '../../../application/commands';
-import { SettingsModal } from '../settings/settings-modal';
+import { useI18n } from '../../i18n';
+import { ProfileModal } from '../profile/profile-modal';
+import { useProfileServices } from '../profile/profile-services-provider';
 import { useSignOut } from './use-sign-out';
 
 const Trigger = styled(DropdownMenu.Trigger)`
@@ -41,9 +43,19 @@ export interface AccountMenuProps {
 }
 
 export function AccountMenu({ currentUser, logoutUser }: AccountMenuProps): ReactNode {
+  const { t } = useI18n();
   const { signingOut, signOutError, signOut } = useSignOut(logoutUser);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const name = currentUser?.displayName ?? currentUser?.email ?? 'Account';
+  const profileServices = useProfileServices();
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profileTab, setProfileTab] = useState<'profile' | 'security' | 'preferences'>('profile');
+  const avatarName = currentUser?.displayName ?? currentUser?.email ?? 'Account';
+  const identityName = currentUser?.displayName;
+  const identityLabel = identityName ?? t('shell.account.identity');
+
+  const openProfile = (tab: 'profile' | 'security' | 'preferences') => {
+    setProfileTab(tab);
+    setProfileOpen(true);
+  };
 
   return (
     <Inline gap="space-2" align="center">
@@ -53,33 +65,37 @@ export function AccountMenu({ currentUser, logoutUser }: AccountMenuProps): Reac
         </Text>
       )}
       <DropdownMenu>
-        <Trigger aria-label="Open account menu">
-          <Avatar name={name} size="sm" />
+        <Trigger aria-label={t('shell.account.open')}>
+          <Avatar name={avatarName} size="sm" />
         </Trigger>
         <DropdownMenu.Content placement="bottom-end">
           {currentUser === null ? null : (
             <>
               <Identity>
-                {currentUser.displayName === null ? null : (
-                  <Text weight="font.weight.medium">{currentUser.displayName}</Text>
-                )}
-                {currentUser.email === null ? null : (
-                  <Text color="color.text.muted" size="font.size.sm">
-                    {currentUser.email}
-                  </Text>
-                )}
+                <Text weight="font.weight.medium">{identityLabel}</Text>
               </Identity>
               <DropdownMenu.Separator />
             </>
           )}
+          {currentUser !== null && profileServices !== null ? (
+            <DropdownMenu.Item
+              onSelect={() => {
+                openProfile('profile');
+              }}
+              startIcon={<UserRound aria-hidden="true" size={16} />}
+            >
+              {t('shell.account.profile')}
+            </DropdownMenu.Item>
+          ) : null}
           <DropdownMenu.Item
             onSelect={() => {
-              setSettingsOpen(true);
+              openProfile('preferences');
             }}
             startIcon={<Settings aria-hidden="true" size={16} />}
           >
-            Settings
+            {t('shell.account.preferences')}
           </DropdownMenu.Item>
+          <DropdownMenu.Separator />
           <DropdownMenu.Item
             disabled={signingOut}
             onSelect={() => {
@@ -87,11 +103,16 @@ export function AccountMenu({ currentUser, logoutUser }: AccountMenuProps): Reac
             }}
             startIcon={<LogOut aria-hidden="true" size={16} />}
           >
-            {signingOut ? 'Signing out…' : 'Sign out'}
+            {signingOut ? t('shell.account.signingOut') : t('shell.account.signOut')}
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu>
-      <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <ProfileModal
+        open={profileOpen}
+        onOpenChange={setProfileOpen}
+        currentUser={currentUser}
+        initialTab={profileTab}
+      />
     </Inline>
   );
 }

@@ -15,7 +15,6 @@ test.describe('Authentication', () => {
     await loginUser(page, email);
     await expect(page.getByRole('heading', { level: 1, name: 'Your workspaces' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Open account menu' })).toBeVisible();
-    await expect(page.getByText(`${email} is ready to plan.`)).toBeVisible();
   });
 
   test('login with a wrong password shows an error and keeps the form usable', async ({ page }) => {
@@ -25,7 +24,7 @@ test.describe('Authentication', () => {
 
     await page.goto('/login');
     await page.getByLabel('Email').fill(email);
-    await page.getByLabel('Password').fill('WrongPassword1');
+    await page.getByLabel('Password', { exact: true }).fill('WrongPassword1');
     await page.getByRole('button', { name: 'Sign in' }).click();
 
     await expect(page.getByRole('alert')).toBeVisible({ timeout: 15000 });

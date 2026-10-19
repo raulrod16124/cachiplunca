@@ -20,11 +20,23 @@ describe('AccountMenu', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open account menu' }));
 
     expect(await screen.findByText('Ada Lovelace')).toBeInTheDocument();
-    expect(screen.getByText('ada@example.com')).toBeInTheDocument();
+    expect(screen.queryByText('ada@example.com')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('menuitem', { name: 'Sign out' }));
 
     await waitFor(() => expect(logoutUser).toHaveBeenCalledTimes(1));
+  });
+
+  it('falls back to the account label without exposing the email', async () => {
+    const logoutUser: LogoutUser = jest.fn(async () => ({ status: 'ok' as const }));
+    render(
+      <AccountMenu currentUser={{ ...CURRENT_USER, displayName: null }} logoutUser={logoutUser} />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open account menu' }));
+
+    expect(await screen.findByText('Your account')).toBeInTheDocument();
+    expect(screen.queryByText('ada@example.com')).not.toBeInTheDocument();
   });
 
   it('stays usable when no session user is available', async () => {

@@ -1,4 +1,11 @@
-import type { AuthCredentials, AuthPort, AuthUser, SessionListener } from '../../application/ports';
+import type {
+  AuthCredentials,
+  AuthPort,
+  AuthUser,
+  ChangeEmailInput,
+  ChangePasswordInput,
+  SessionListener,
+} from '../../application/ports';
 import type { Unsubscribe } from '../../shared/types';
 
 /**
@@ -19,6 +26,26 @@ export class PendingAuthPort implements AuthPort {
 
   async signOut(): Promise<void> {
     throw new Error('unexpected signOut call');
+  }
+
+  async updateDisplayName(_displayName: string): Promise<AuthUser> {
+    throw new Error('unexpected updateDisplayName call');
+  }
+
+  async changeEmail(_input: ChangeEmailInput): Promise<AuthUser> {
+    throw new Error('unexpected changeEmail call');
+  }
+
+  async changePassword(_input: ChangePasswordInput): Promise<void> {
+    throw new Error('unexpected changePassword call');
+  }
+
+  async sendEmailVerification(): Promise<void> {
+    throw new Error('unexpected sendEmailVerification call');
+  }
+
+  async refreshUser(): Promise<AuthUser> {
+    throw new Error('unexpected refreshUser call');
   }
 
   observeSession(listener: SessionListener): Unsubscribe {

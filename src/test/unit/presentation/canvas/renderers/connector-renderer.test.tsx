@@ -38,10 +38,10 @@ describe('ConnectorRenderer', () => {
 
     const line = document.querySelector('[data-connector-line]');
     expect(line).not.toBeNull();
-    expect(line).toHaveAttribute('x1', '2%');
-    expect(line).toHaveAttribute('y1', '2%');
-    expect(line).toHaveAttribute('x2', '98%');
-    expect(line).toHaveAttribute('y2', '98%');
+    expect(line).toHaveAttribute('x1', '0');
+    expect(line).toHaveAttribute('y1', '0');
+    expect(line).toHaveAttribute('x2', '240');
+    expect(line).toHaveAttribute('y2', '120');
   });
 
   it('wires the line to an arrow marker', () => {

@@ -37,6 +37,11 @@ import type {
   ElementPersistenceOrchestrator,
   RealtimeSubscriptionManager,
 } from '../../../../../../application/services';
+import type {
+  AuthUser,
+  FileDownloadPort,
+  TextFileDownload,
+} from '../../../../../../application/ports';
 import { createTextElement, richTextFromPlain } from '../../../../../../domain/element';
 import { Presence } from '../../../../../../domain/collaboration';
 import {
@@ -156,6 +161,7 @@ interface RenderOptions {
   readonly realtimeSubscriptionManager?: RealtimeSubscriptionManager;
   readonly presencePort?: FakePresencePort;
   readonly localUserId?: string;
+  readonly currentUser?: AuthUser | null;
   readonly selectionStore?: ReturnType<typeof createSelectionStore>;
   readonly inviteMember?: InviteMember;
   readonly listPendingInvitations?: ListPendingInvitations;
@@ -166,6 +172,7 @@ interface RenderOptions {
   readonly removeMember?: RemoveMember;
   readonly leaveWorkspace?: LeaveWorkspace;
   readonly updateWorkspace?: UpdateWorkspace;
+  readonly fileDownload?: FileDownloadPort;
 }
 
 function renderContainer(getWorkspace: GetWorkspace, options: RenderOptions = {}) {
@@ -191,6 +198,7 @@ function renderContainer(getWorkspace: GetWorkspace, options: RenderOptions = {}
         persistenceDebounceMs={options.persistenceDebounceMs}
         presencePort={options.presencePort}
         localUserId={options.localUserId}
+        currentUser={options.currentUser}
         selectionStore={options.selectionStore}
         inviteMember={options.inviteMember}
         listPendingInvitations={options.listPendingInvitations}
@@ -200,6 +208,7 @@ function renderContainer(getWorkspace: GetWorkspace, options: RenderOptions = {}
         removeMember={options.removeMember}
         leaveWorkspace={options.leaveWorkspace}
         updateWorkspace={options.updateWorkspace}
+        fileDownload={options.fileDownload}
       />
     </MemoryRouter>,
   );
@@ -1304,11 +1313,17 @@ describe('WorkspaceShellContainer', () => {
     const { unmount } = renderContainer(getWorkspace, {
       presencePort,
       localUserId: userId.value,
+      currentUser: {
+        uid: userId.value,
+        email: 'ada@example.com',
+        emailVerified: true,
+        displayName: null,
+      },
     });
 
     await screen.findByRole('application', { name: 'Canvas' });
 
-    expect(presencePort.presenceOf(workspaceId, userId)).toBeDefined();
+    expect(presencePort.presenceOf(workspaceId, userId)?.displayName).toBe('ada');
     expect(presencePort.activeSubscriptionCount(workspaceId)).toBe(1);
 
     act(() => {
@@ -1411,6 +1426,80 @@ describe('WorkspaceShellContainer', () => {
 
     expect(screen.getByTestId('connected-users')).toBeInTheDocument();
     expect(screen.getByText('1 connected')).toBeInTheDocument();
+  });
+
+  it('exports the current board as versioned JSON for a viewer', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const downloadTextFile = jest.fn<void, [TextFileDownload]>();
+    const fileDownload: FileDownloadPort = { downloadTextFile };
+
+    renderContainer(getWorkspace, {
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [TEXT_ELEMENT],
+      }),
+      localUserId: 'user-local',
+      role: 'viewer',
+      fileDownload,
+    });
+
+    await screen.findByTestId('canvas-item-el-1');
+    fireEvent.click(await screen.findByRole('button', { name: 'Export board' }));
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Export as JSON' }));
+
+    expect(downloadTextFile).toHaveBeenCalledTimes(1);
+
+    const file = downloadTextFile.mock.calls[0]?.[0];
+
+    if (file === undefined) {
+      throw new Error('Expected a downloaded file');
+    }
+
+    expect(file.fileName).toMatch(/^roadmap-q4-\d{4}-\d{2}-\d{2}\.json$/);
+    expect(file.mimeType).toBe('application/json');
+
+    const parsed = JSON.parse(file.content) as {
+      version: number;
+      workspaceId: string;
+      elements: readonly { readonly id: string; readonly type: string }[];
+    };
+
+    expect(parsed.version).toBe(1);
+    expect(parsed.workspaceId).toBe('ws-test');
+    expect(parsed.elements).toEqual([expect.objectContaining({ id: 'el-1', type: 'text' })]);
+    expect(file.content).not.toContain('createdBy');
+  });
+
+  it('prints a printable snapshot of the board from the export menu', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const print = jest.fn();
+    const originalPrint = window.print;
+
+    window.print = print;
+
+    try {
+      renderContainer(getWorkspace, {
+        loadWorkspaceElements: createLoadWorkspaceElements({
+          status: 'ok',
+          elements: [TEXT_ELEMENT],
+        }),
+        localUserId: 'user-local',
+        role: 'viewer',
+        fileDownload: { downloadTextFile: jest.fn() },
+      });
+
+      await screen.findByTestId('canvas-item-el-1');
+      fireEvent.click(await screen.findByRole('button', { name: 'Export board' }));
+      fireEvent.click(await screen.findByRole('menuitem', { name: 'Export as PDF' }));
+
+      await waitFor(() => expect(print).toHaveBeenCalledTimes(1));
+
+      const printView = await screen.findByTestId('board-print-view');
+      expect(printView).toHaveTextContent('Roadmap Q4');
+      expect(printView).toHaveTextContent('Hello');
+    } finally {
+      window.print = originalPrint;
+    }
   });
 
   it('does not render the share entry point when no share services are wired', async () => {
@@ -1769,10 +1858,10 @@ describe('WorkspaceShellContainer', () => {
     const connector = await screen.findByTestId('canvas-item-generated-1');
     expect(connector).toHaveAttribute('data-element-type', 'connector');
     expect(connector).toHaveStyle({
-      left: '30px',
-      top: '40px',
-      width: '290px',
-      height: '240px',
+      left: '136.75px',
+      top: '124px',
+      width: '76.5px',
+      height: '72px',
     });
   });
 
@@ -1826,5 +1915,26 @@ describe('WorkspaceShellContainer', () => {
 
     await screen.findByRole('heading', { level: 1, name: 'Roadmap Q4' });
     expect(screen.queryByRole('button', { name: 'Rename workspace' })).not.toBeInTheDocument();
+  });
+});
+
+describe('free connector creation', () => {
+  it('creates a standalone connector from the toolbar and selects it', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const user = userEvent.setup();
+
+    renderContainer(getWorkspace, {
+      localUserId: 'user-local',
+      loadWorkspaceElements: createLoadWorkspaceElements({ status: 'ok', elements: [] }),
+    });
+
+    await screen.findByRole('application', { name: 'Canvas' });
+    await user.click(screen.getByRole('button', { name: 'Add connector' }));
+
+    const connector = await screen.findByTestId('canvas-item-generated-1');
+
+    expect(connector).toHaveAttribute('data-element-type', 'connector');
+    expect(connector.querySelector('[data-connector-line]')).not.toBeNull();
+    expect(document.querySelector('[data-connector-endpoint]')).not.toBeNull();
   });
 });

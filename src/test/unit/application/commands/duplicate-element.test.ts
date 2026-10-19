@@ -152,8 +152,8 @@ describe('createDuplicateElement', () => {
     const copy = expectOk({ element: connectorElement() });
     expect(copy.type).toBe('connector');
     if (copy.type === 'connector') {
-      expect(copy.sourceElementId.value).toBe('a');
-      expect(copy.targetElementId.value).toBe('b');
+      expect(copy.sourceElementId?.value).toBe('a');
+      expect(copy.targetElementId?.value).toBe('b');
     }
   });
 

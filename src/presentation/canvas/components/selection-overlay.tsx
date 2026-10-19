@@ -21,6 +21,17 @@ const Handle = styled.span`
   pointer-events: auto;
 `;
 
+const ConnectorHandle = styled(Handle)`
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  cursor: grab;
+
+  &[data-dragging='true'] {
+    cursor: grabbing;
+  }
+`;
+
 const HANDLE_OFFSETS: Record<ResizeHandleAnchor, { readonly x: number; readonly y: number }> = {
   'top-left': { x: 0, y: 0 },
   top: { x: 0.5, y: 0 },
@@ -71,6 +82,8 @@ export function SelectionOverlay({ items }: SelectionOverlayProps): ReactElement
 
   const bounds = unionBounds(items);
   const isSingle = items.length === 1;
+  const connectorEndpoints = isSingle ? items[0]?.connectorEndpoints : undefined;
+  const isConnector = isSingle && items[0]?.segment !== undefined;
 
   return (
     <Overlay
@@ -86,7 +99,21 @@ export function SelectionOverlay({ items }: SelectionOverlayProps): ReactElement
         height: bounds.height,
       }}
     >
-      {isSingle
+      {connectorEndpoints !== undefined
+        ? connectorEndpoints.map((endpoint) => (
+            <ConnectorHandle
+              key={endpoint.side}
+              data-connector-endpoint="true"
+              data-connector-endpoint-side={endpoint.side}
+              aria-hidden="true"
+              style={{
+                left: endpoint.position.x - bounds.x - 5,
+                top: endpoint.position.y - bounds.y - 5,
+              }}
+            />
+          ))
+        : null}
+      {isSingle && !isConnector
         ? HANDLE_ANCHORS.map((anchor) => (
             <Handle
               key={anchor}

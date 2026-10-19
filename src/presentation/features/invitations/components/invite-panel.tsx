@@ -9,6 +9,7 @@ import { describePendingInvitationsError } from '../invitation-error-messages';
 import { InvitationLink } from './invitation-link';
 import { InviteMemberForm, type InvitedMemberResult } from './invite-member-form';
 import { PendingInvitationsList, type PendingInvitationsStatus } from './pending-invitations-list';
+import { useI18n } from '../../../i18n';
 
 export interface InvitePanelProps {
   readonly active: boolean;
@@ -25,6 +26,7 @@ export function InvitePanel({
   inviteMember,
   listPendingInvitations,
 }: InvitePanelProps): ReactNode {
+  const { t } = useI18n();
   const [token, setToken] = useState<string | null>(null);
   const [status, setStatus] = useState<PendingInvitationsStatus>('loading');
   const [invitations, setInvitations] = useState<readonly Invitation[]>([]);
@@ -73,7 +75,7 @@ export function InvitePanel({
       />
       {token !== null && <InvitationLink token={token} />}
       <Stack gap="space-3">
-        <Heading as="h3">Pending invitations</Heading>
+        <Heading as="h3">{t('share.invite.pendingTitle')}</Heading>
         <PendingInvitationsList
           status={status}
           invitations={invitations}

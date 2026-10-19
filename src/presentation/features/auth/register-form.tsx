@@ -11,22 +11,45 @@ import {
   Text,
 } from '@raulrod/ui';
 import { useState, type FormEvent, type ReactNode } from 'react';
-import type { RegisterFieldErrors, RegisterUser } from '../../../application/commands';
+import type {
+  RegisterFieldErrors,
+  RegisterUser,
+  SendEmailVerification,
+} from '../../../application/commands';
 import type { AuthUser } from '../../../application/ports';
 import { toAppError } from '../../../shared/errors';
+import { localizeFieldError, localizeMessage, useI18n } from '../../i18n';
+import { PasswordInput } from './password-input';
 import { describeRegisterError } from './auth-error-messages';
 
 export interface RegisterFormProps {
   readonly registerUser: RegisterUser;
+  readonly sendEmailVerification?: SendEmailVerification;
 }
 
-export function RegisterForm({ registerUser }: RegisterFormProps): ReactNode {
+export function RegisterForm({
+  registerUser,
+  sendEmailVerification,
+}: RegisterFormProps): ReactNode {
+  const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fieldErrors, setFieldErrors] = useState<RegisterFieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [registeredUser, setRegisteredUser] = useState<AuthUser | null>(null);
+  const [verificationStatus, setVerificationStatus] = useState<
+    'idle' | 'sending' | 'sent' | 'error'
+  >('idle');
+
+  async function sendVerification(): Promise<void> {
+    if (sendEmailVerification === undefined) {
+      return;
+    }
+    setVerificationStatus('sending');
+    const result = await sendEmailVerification();
+    setVerificationStatus(result.status === 'ok' ? 'sent' : 'error');
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
@@ -43,16 +66,17 @@ export function RegisterForm({ registerUser }: RegisterFormProps): ReactNode {
       switch (result.status) {
         case 'ok':
           setRegisteredUser(result.user);
+          void sendVerification();
           break;
         case 'invalid-input':
           setFieldErrors(result.fieldErrors);
           break;
         case 'error':
-          setFormError(describeRegisterError(result.error));
+          setFormError(localizeMessage(t, describeRegisterError(result.error)));
           break;
       }
     } catch (error) {
-      setFormError(describeRegisterError(toAppError(error)));
+      setFormError(localizeMessage(t, describeRegisterError(toAppError(error))));
     } finally {
       setSubmitting(false);
     }
@@ -61,10 +85,33 @@ export function RegisterForm({ registerUser }: RegisterFormProps): ReactNode {
   if (registeredUser !== null) {
     return (
       <Stack gap="space-3">
-        <Heading as="h2">Account created</Heading>
+        <Heading as="h2">{t('auth.register.successTitle')}</Heading>
         <Text color="color.text.success">
-          Your account{registeredUser.email !== null ? ` (${registeredUser.email})` : ''} is ready.
+          {t('auth.register.successDescription', { email: registeredUser.email ?? '' })}
         </Text>
+        {sendEmailVerification !== undefined && (
+          <>
+            {verificationStatus === 'sent' ? (
+              <Text role="status" color="color.text.muted">
+                {t('auth.register.verificationSent')}
+              </Text>
+            ) : (
+              <Button
+                type="button"
+                variant="secondary"
+                loading={verificationStatus === 'sending'}
+                onClick={() => void sendVerification()}
+              >
+                {t('auth.register.resendVerification')}
+              </Button>
+            )}
+            {verificationStatus === 'error' && (
+              <Text role="alert" color="color.text.danger">
+                {t('auth.register.verificationError')}
+              </Text>
+            )}
+          </>
+        )}
       </Stack>
     );
   }
@@ -72,13 +119,13 @@ export function RegisterForm({ registerUser }: RegisterFormProps): ReactNode {
   return (
     <Stack gap="space-5">
       <Stack gap="space-2">
-        <Heading as="h1">Create your account</Heading>
-        <Text color="color.text.muted">Turn scattered ideas into a shared plan.</Text>
+        <Heading as="h1">{t('auth.register.title')}</Heading>
+        <Text color="color.text.muted">{t('auth.register.subtitle')}</Text>
       </Stack>
       <form onSubmit={handleSubmit} noValidate>
         <Stack gap="space-4">
           <FormField>
-            <FormFieldLabel>Email</FormFieldLabel>
+            <FormFieldLabel>{t('auth.email')}</FormFieldLabel>
             <FormFieldControl>
               {(field) => (
                 <Input
@@ -93,17 +140,16 @@ export function RegisterForm({ registerUser }: RegisterFormProps): ReactNode {
               )}
             </FormFieldControl>
             {fieldErrors.email !== undefined && (
-              <FormFieldError>{fieldErrors.email}</FormFieldError>
+              <FormFieldError>{localizeFieldError(t, fieldErrors.email)}</FormFieldError>
             )}
           </FormField>
           <FormField>
-            <FormFieldLabel>Password</FormFieldLabel>
-            <FormFieldDescription>At least 6 characters.</FormFieldDescription>
+            <FormFieldLabel>{t('auth.password')}</FormFieldLabel>
+            <FormFieldDescription>{t('auth.register.passwordHint')}</FormFieldDescription>
             <FormFieldControl>
               {(field) => (
-                <Input
+                <PasswordInput
                   {...field}
-                  type="password"
                   name="password"
                   autoComplete="new-password"
                   value={password}
@@ -112,7 +158,7 @@ export function RegisterForm({ registerUser }: RegisterFormProps): ReactNode {
               )}
             </FormFieldControl>
             {fieldErrors.password !== undefined && (
-              <FormFieldError>{fieldErrors.password}</FormFieldError>
+              <FormFieldError>{localizeFieldError(t, fieldErrors.password)}</FormFieldError>
             )}
           </FormField>
           {formError !== null && (
@@ -121,7 +167,7 @@ export function RegisterForm({ registerUser }: RegisterFormProps): ReactNode {
             </Text>
           )}
           <Button type="submit" loading={submitting}>
-            Create account
+            {t('auth.register.submit')}
           </Button>
         </Stack>
       </form>

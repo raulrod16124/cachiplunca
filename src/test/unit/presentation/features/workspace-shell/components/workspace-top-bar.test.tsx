@@ -24,10 +24,11 @@ const CURRENT_USER: AuthUser = {
 
 const LOGOUT_USER: LogoutUser = jest.fn(async () => ({ status: 'ok' as const }));
 
-function presenceOf(userId: string): Presence {
+function presenceOf(userId: string, displayName: string | null = null): Presence {
   return Presence.create({
     userId: UserId.create(userId),
     workspaceId: WorkspaceId.create('ws-1'),
+    displayName,
   });
 }
 
@@ -100,6 +101,79 @@ describe('WorkspaceTopBar', () => {
     expect(screen.getByText('2 connected')).toBeInTheDocument();
   });
 
+  it('identifies collaborators by display name and falls back to the short id', () => {
+    render(
+      <WorkspaceTopBar
+        workspace={WORKSPACE}
+        role={undefined}
+        onBack={jest.fn()}
+        syncStatus="idle"
+        connectionStatus="connected"
+        connectedUsers={[
+          presenceOf('user-2', 'Ada Lovelace'),
+          presenceOf('abcdefghijklmnop', null),
+        ]}
+        userColors={
+          new Map([
+            ['user-2', '#111111'],
+            ['abcdefghijklmnop', '#222222'],
+          ])
+        }
+        currentUser={CURRENT_USER}
+        logoutUser={LOGOUT_USER}
+        persistenceErrorMessage={null}
+        collaborationErrorMessage={null}
+        creationErrorMessage={null}
+      />,
+    );
+
+    expect(screen.getByTestId('presence-avatar-user-2')).toHaveAttribute(
+      'aria-label',
+      'Ada Lovelace',
+    );
+    expect(screen.getByTestId('presence-avatar-abcdefghijklmnop')).toHaveAttribute(
+      'aria-label',
+      'ijklmnop',
+    );
+    expect(screen.getByTestId('presence-avatar-user-2')).toHaveAttribute(
+      'data-user-color',
+      '#111111',
+    );
+    expect(screen.getByTestId('presence-avatar-abcdefghijklmnop')).toHaveAttribute(
+      'data-user-color',
+      '#222222',
+    );
+  });
+
+  it('lists every collaborator with their name and short id', async () => {
+    render(
+      <WorkspaceTopBar
+        workspace={WORKSPACE}
+        role={undefined}
+        onBack={jest.fn()}
+        syncStatus="idle"
+        connectionStatus="connected"
+        connectedUsers={[
+          presenceOf('user-2', 'Ada Lovelace'),
+          presenceOf('abcdefghijklmnop', null),
+        ]}
+        currentUser={CURRENT_USER}
+        logoutUser={LOGOUT_USER}
+        persistenceErrorMessage={null}
+        collaborationErrorMessage={null}
+        creationErrorMessage={null}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Show list/ }));
+
+    expect(await screen.findByText('Connected people')).toBeInTheDocument();
+    expect(screen.getByText('Ada Lovelace')).toBeInTheDocument();
+    expect(screen.getByText('ID user-2')).toBeInTheDocument();
+    expect(screen.getByText('ijklmnop')).toBeInTheDocument();
+    expect(screen.queryByText('ID ijklmnop')).not.toBeInTheDocument();
+  });
+
   it('hides the presence summary when nobody else is connected', () => {
     render(
       <WorkspaceTopBar
@@ -160,6 +234,107 @@ describe('WorkspaceTopBar', () => {
     );
 
     expect(screen.queryByRole('button', { name: 'Share' })).not.toBeInTheDocument();
+  });
+
+  it('opens the keyboard shortcuts help from the top bar', () => {
+    const onShowShortcuts = jest.fn();
+    render(
+      <WorkspaceTopBar
+        workspace={WORKSPACE}
+        role={undefined}
+        onBack={jest.fn()}
+        syncStatus="idle"
+        connectionStatus="connected"
+        connectedUsers={[]}
+        currentUser={CURRENT_USER}
+        logoutUser={LOGOUT_USER}
+        onShowShortcuts={onShowShortcuts}
+        persistenceErrorMessage={null}
+        collaborationErrorMessage={null}
+        creationErrorMessage={null}
+      />,
+    );
+
+    const helpButton = screen.getByRole('button', { name: 'Keyboard shortcuts' });
+    expect(helpButton).toHaveAttribute('aria-keyshortcuts', '?');
+
+    fireEvent.click(helpButton);
+
+    expect(onShowShortcuts).toHaveBeenCalledTimes(1);
+  });
+
+  it('exposes JSON and PDF export actions to viewers', async () => {
+    const onExportJson = jest.fn();
+    const onExportPdf = jest.fn();
+
+    render(
+      <WorkspaceTopBar
+        workspace={WORKSPACE}
+        role="viewer"
+        onBack={jest.fn()}
+        syncStatus="idle"
+        connectionStatus="connected"
+        connectedUsers={[]}
+        currentUser={CURRENT_USER}
+        logoutUser={LOGOUT_USER}
+        onExportJson={onExportJson}
+        onExportPdf={onExportPdf}
+        persistenceErrorMessage={null}
+        collaborationErrorMessage={null}
+        creationErrorMessage={null}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Export board' }));
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Export as JSON' }));
+    expect(onExportJson).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Export board' }));
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Export as PDF' }));
+    expect(onExportPdf).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides the export action when no handlers are wired', () => {
+    render(
+      <WorkspaceTopBar
+        workspace={WORKSPACE}
+        role="editor"
+        onBack={jest.fn()}
+        syncStatus="idle"
+        connectionStatus="connected"
+        connectedUsers={[]}
+        currentUser={CURRENT_USER}
+        logoutUser={LOGOUT_USER}
+        persistenceErrorMessage={null}
+        collaborationErrorMessage={null}
+        creationErrorMessage={null}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Export board' })).not.toBeInTheDocument();
+  });
+
+  it('announces export errors next to the other board errors', () => {
+    render(
+      <WorkspaceTopBar
+        workspace={WORKSPACE}
+        role="editor"
+        onBack={jest.fn()}
+        syncStatus="idle"
+        connectionStatus="connected"
+        connectedUsers={[]}
+        currentUser={CURRENT_USER}
+        logoutUser={LOGOUT_USER}
+        persistenceErrorMessage={null}
+        collaborationErrorMessage={null}
+        creationErrorMessage={null}
+        exportErrorMessage="We could not export the board. Try again."
+      />,
+    );
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'We could not export the board. Try again.',
+    );
   });
 
   it('announces persistence and collaboration errors', () => {

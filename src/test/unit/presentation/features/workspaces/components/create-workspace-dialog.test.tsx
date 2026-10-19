@@ -74,6 +74,11 @@ describe('CreateWorkspaceDialog', () => {
     expect(screen.getByRole('heading', { level: 2, name: 'Create workspace' })).toBeInTheDocument();
     expect(screen.getByLabelText('Name')).toBeInTheDocument();
     expect(screen.getByLabelText('Description')).toBeInTheDocument();
+    expect(screen.getByRole('radiogroup', { name: 'Start from' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Blank' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Retrospective' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Project kickoff' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Brainstorming' })).toBeInTheDocument();
   });
 
   it('shows a field error for an empty name and keeps the dialog open', async () => {
@@ -110,6 +115,25 @@ describe('CreateWorkspaceDialog', () => {
     });
     const stored = await repository.list();
     expect(stored.map((workspace) => workspace.name)).toEqual(['Roadmap Q4']);
+  });
+
+  it('submits the selected template instead of a blank board', async () => {
+    const repository = new FakeWorkspaceRepository();
+    const createWorkspace = jest.fn(createCreateWorkspace(repository));
+    const { onCreated } = renderDialog(createWorkspace);
+
+    fillName('Sprint retro');
+    fireEvent.click(screen.getByRole('radio', { name: 'Retrospective' }));
+    submit();
+
+    await waitFor(() => expect(onCreated).toHaveBeenCalledTimes(1));
+    expect(createWorkspace).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Sprint retro',
+        createdBy: CREATED_BY,
+        templateId: 'retrospective',
+      }),
+    );
   });
 
   it('shows a friendly message when creation fails and stays open', async () => {
@@ -216,5 +240,6 @@ describe('CreateWorkspaceDialog', () => {
 
     expect(screen.getByLabelText('Name')).toHaveValue('');
     expect(screen.getByLabelText('Description')).toHaveValue('');
+    expect(screen.getByRole('radio', { name: 'Blank' })).toBeChecked();
   });
 });

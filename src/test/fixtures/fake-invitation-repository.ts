@@ -27,9 +27,15 @@ export class FakeInvitationRepository implements InvitationRepository {
     return this.#invitations.get(id.value) ?? null;
   }
 
-  async findByTokenHash(tokenHash: string): Promise<Invitation | null> {
+  async findByTokenHash(tokenHash: string, email?: string): Promise<Invitation | null> {
+    if (email !== undefined && email.trim().length === 0) {
+      return null;
+    }
     for (const invitation of this.#invitations.values()) {
-      if (invitation.tokenHash === tokenHash) {
+      if (
+        invitation.tokenHash === tokenHash &&
+        (email === undefined || invitation.isForEmail(email))
+      ) {
         return invitation;
       }
     }

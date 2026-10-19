@@ -5,6 +5,7 @@ import type { Membership, MembershipRole } from '../../../../domain/membership';
 import { EmptyState } from '../../../components/empty-state';
 import { ErrorState } from '../../../components/error-state';
 import { LoadingState } from '../../../components/loading-state';
+import { useI18n, type TranslationKey } from '../../../i18n';
 
 export type MembersStatus = 'loading' | 'error' | 'ready';
 
@@ -26,10 +27,10 @@ export interface MembersListProps {
 
 const MEMBER_LABEL_LENGTH = 8;
 
-const ROLE_LABELS: Record<MembershipRole, string> = {
-  owner: 'Owner',
-  editor: 'Editor',
-  viewer: 'Viewer',
+const ROLE_KEYS: Record<MembershipRole, TranslationKey> = {
+  owner: 'share.role.owner',
+  editor: 'share.role.editor',
+  viewer: 'share.role.viewer',
 };
 
 const ROLE_OPTIONS: readonly MembershipRole[] = ['owner', 'editor', 'viewer'];
@@ -40,7 +41,19 @@ const List = styled.ul`
   padding: 0;
   display: flex;
   flex-direction: column;
+  gap: ${({ theme }) => theme.space[2]};
+`;
+
+const MemberRow = styled.li`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: ${({ theme }) => theme.space[3]};
+  flex-wrap: wrap;
+  padding: ${({ theme }) => theme.space[3]};
+  border: 1px solid ${({ theme }) => theme.color.border.default};
+  border-radius: ${({ theme }) => theme.radius.md};
+  background: ${({ theme }) => theme.color.background.surface};
 `;
 
 export function memberLabel(userId: string): string {
@@ -62,12 +75,14 @@ export function MembersList({
   onLeave,
   onRetry,
 }: MembersListProps): ReactNode {
+  const { t } = useI18n();
+
   if (status === 'loading') {
     return (
       <LoadingState label="Loading members">
         <Stack gap="space-2">
-          <Skeleton style={{ height: '40px', width: '70%' }} />
-          <Skeleton style={{ height: '40px', width: '60%' }} />
+          <Skeleton style={{ height: '56px', width: '100%' }} />
+          <Skeleton style={{ height: '56px', width: '100%' }} />
         </Stack>
       </LoadingState>
     );
@@ -78,14 +93,14 @@ export function MembersList({
       <ErrorState
         title="Could not load members"
         description={errorMessage ?? 'Something went wrong.'}
-        actionLabel="Retry"
+        actionLabel={t('common.retry')}
         onAction={onRetry}
       />
     );
   }
 
   if (members.length === 0) {
-    return <EmptyState title="No members yet." titleAs="h3" />;
+    return <EmptyState title={t('share.membersEmpty')} titleAs="h3" />;
   }
 
   return (
@@ -103,59 +118,59 @@ export function MembersList({
           const isPending = pendingUserId === userId;
 
           return (
-            <li key={userId}>
-              <Inline justify="between" align="center" gap="space-3" wrap>
-                <Inline gap="space-2" align="center">
-                  <Avatar name={label} size="sm" />
-                  <Text>{label}</Text>
-                  {isSelf ? <Badge variant="info">You</Badge> : null}
-                </Inline>
-                <Inline gap="space-2" align="center">
-                  {isSelf || !canChangeRole ? (
-                    <Badge variant="neutral">{ROLE_LABELS[member.role]}</Badge>
-                  ) : (
-                    <Select
-                      value={member.role}
-                      onValueChange={(value) => onChangeRole(userId, value as MembershipRole)}
-                    >
-                      <Select.Trigger aria-label={`Role for ${label}`} disabled={isPending}>
-                        <Select.Value />
-                      </Select.Trigger>
-                      <Select.Content>
-                        {ROLE_OPTIONS.map((role) => (
-                          <Select.Item key={role} value={role}>
-                            {ROLE_LABELS[role]}
-                          </Select.Item>
-                        ))}
-                      </Select.Content>
-                    </Select>
-                  )}
-                  {isSelf
-                    ? canLeave && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          loading={isPending}
-                          onClick={onLeave}
-                        >
-                          Leave workspace
-                        </Button>
-                      )
-                    : canRemove && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          loading={isPending}
-                          onClick={() => onRemove(userId)}
-                        >
-                          Remove
-                        </Button>
-                      )}
+            <MemberRow key={userId}>
+              <Inline gap="space-2" align="center">
+                <Avatar name={label} size="sm" />
+                <Inline gap="space-2" align="center" wrap>
+                  <Text weight="font.weight.medium">{label}</Text>
+                  {isSelf ? <Badge variant="info">{t('share.you')}</Badge> : null}
                 </Inline>
               </Inline>
-            </li>
+              <Inline gap="space-2" align="center" wrap>
+                {isSelf || !canChangeRole ? (
+                  <Badge variant="neutral">{t(ROLE_KEYS[member.role])}</Badge>
+                ) : (
+                  <Select
+                    value={member.role}
+                    onValueChange={(value) => onChangeRole(userId, value as MembershipRole)}
+                  >
+                    <Select.Trigger aria-label={`Role for ${label}`} disabled={isPending}>
+                      <Select.Value />
+                    </Select.Trigger>
+                    <Select.Content>
+                      {ROLE_OPTIONS.map((role) => (
+                        <Select.Item key={role} value={role}>
+                          {t(ROLE_KEYS[role])}
+                        </Select.Item>
+                      ))}
+                    </Select.Content>
+                  </Select>
+                )}
+                {isSelf
+                  ? canLeave && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        loading={isPending}
+                        onClick={onLeave}
+                      >
+                        {t('share.leave')}
+                      </Button>
+                    )
+                  : canRemove && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        loading={isPending}
+                        onClick={() => onRemove(userId)}
+                      >
+                        {t('share.remove')}
+                      </Button>
+                    )}
+              </Inline>
+            </MemberRow>
           );
         })}
       </List>

@@ -6,6 +6,7 @@ import type { PresenceEvent, PresencePort } from '../ports';
 
 export interface RemoteCursor {
   readonly userId: string;
+  readonly displayName: string | null;
   readonly position: Position;
   readonly lastSeenAt: Date;
 }
@@ -34,9 +35,13 @@ function toRemoteCursor(presence: Presence): RemoteCursor | null {
     return null;
   }
 
-  return { userId: presence.userId.value, position: cursor, lastSeenAt: presence.lastSeenAt };
+  return {
+    userId: presence.userId.value,
+    displayName: presence.displayName,
+    position: cursor,
+    lastSeenAt: presence.lastSeenAt,
+  };
 }
-
 function sortCursors(cursors: readonly RemoteCursor[]): readonly RemoteCursor[] {
   return [...cursors].sort((a, b) => a.userId.localeCompare(b.userId));
 }
@@ -52,6 +57,7 @@ function sameCursors(a: readonly RemoteCursor[], b: readonly RemoteCursor[]): bo
 
     if (
       left.userId !== right.userId ||
+      left.displayName !== right.displayName ||
       left.lastSeenAt.getTime() !== right.lastSeenAt.getTime() ||
       !left.position.equals(right.position)
     ) {

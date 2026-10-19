@@ -5,8 +5,13 @@ import { RemoteCursorsOverlay } from '../../../../../presentation/canvas/compone
 
 const VIEWPORT = Viewport.default(Size.create(800, 600));
 
-function cursor(userId: string, x: number, y: number): RemoteCursor {
-  return { userId, position: Position.create(x, y), lastSeenAt: new Date() };
+function cursor(
+  userId: string,
+  x: number,
+  y: number,
+  displayName: string | null = null,
+): RemoteCursor {
+  return { userId, displayName, position: Position.create(x, y), lastSeenAt: new Date() };
 }
 
 describe('RemoteCursorsOverlay', () => {
@@ -41,11 +46,34 @@ describe('RemoteCursorsOverlay', () => {
     expect(element).toHaveAttribute('data-user-id', 'user-1');
   });
 
-  it('labels each cursor with a short form of the user id', () => {
+  it('labels each cursor with a short form of the user id when there is no name', () => {
     render(
       <RemoteCursorsOverlay cursors={[cursor('abcdefghijklmnop', 0, 0)]} viewport={VIEWPORT} />,
     );
 
     expect(screen.getByTestId('remote-cursor')).toHaveTextContent('ijklmnop');
+  });
+
+  it('labels each cursor with the resolved display name', () => {
+    render(
+      <RemoteCursorsOverlay
+        cursors={[cursor('user-1', 0, 0, 'Ada Lovelace')]}
+        viewport={VIEWPORT}
+      />,
+    );
+
+    expect(screen.getByTestId('remote-cursor')).toHaveTextContent('Ada Lovelace');
+  });
+
+  it('uses the shared session color when one is provided', () => {
+    render(
+      <RemoteCursorsOverlay
+        cursors={[cursor('user-1', 0, 0, 'Ada')]}
+        viewport={VIEWPORT}
+        userColors={new Map([['user-1', '#123456']])}
+      />,
+    );
+
+    expect(screen.getByTestId('remote-cursor')).toHaveAttribute('data-user-color', '#123456');
   });
 });

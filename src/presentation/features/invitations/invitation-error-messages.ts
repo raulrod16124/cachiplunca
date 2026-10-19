@@ -26,6 +26,8 @@ export function describeAcceptInvitationError(error: AppError): string {
       return 'This invitation has expired. Ask the workspace owner for a new one.';
     case ERROR_CODES.INVITATION_EMAIL_MISMATCH:
       return 'This invitation was issued for a different email address. Sign in with the invited email.';
+    case ERROR_CODES.INVITATION_EMAIL_NOT_VERIFIED:
+      return 'Verify your email address before accepting this invitation.';
     case ERROR_CODES.MEMBERSHIP_ALREADY_EXISTS:
       return 'You already have access to this workspace.';
     case ERROR_CODES.NETWORK_REQUEST_FAILED:

@@ -1,5 +1,6 @@
 import { Tooltip } from '@raulrod/ui';
 import {
+  ArrowUpRight,
   Frame,
   Link2,
   Scan,
@@ -14,6 +15,7 @@ import styled from 'styled-components';
 import type { ElementType } from '../../../domain/element';
 import { ToolbarButton } from '../../components';
 import { useRovingFocus } from '../../hooks';
+import { useI18n, type TranslationKey } from '../../i18n';
 
 const ICON_SIZE = 16;
 
@@ -47,20 +49,35 @@ const Separator = styled.span`
 
 interface ElementTool {
   readonly type: ElementType;
-  readonly label: string;
+  readonly label: TranslationKey;
   readonly icon: ReactNode;
 }
 
 const ELEMENT_TOOLS: readonly ElementTool[] = [
-  { type: 'text', label: 'Add text', icon: <Type aria-hidden="true" size={ICON_SIZE} /> },
-  { type: 'note', label: 'Add note', icon: <StickyNote aria-hidden="true" size={ICON_SIZE} /> },
-  { type: 'task', label: 'Add task', icon: <SquareCheck aria-hidden="true" size={ICON_SIZE} /> },
-  { type: 'frame', label: 'Add frame', icon: <Frame aria-hidden="true" size={ICON_SIZE} /> },
-  { type: 'link', label: 'Add link', icon: <Link2 aria-hidden="true" size={ICON_SIZE} /> },
   {
-    type: 'connector',
-    label: 'Connect selected elements',
-    icon: <Waypoints aria-hidden="true" size={ICON_SIZE} />,
+    type: 'text',
+    label: 'canvas.toolbar.addText',
+    icon: <Type aria-hidden="true" size={ICON_SIZE} />,
+  },
+  {
+    type: 'note',
+    label: 'canvas.toolbar.addNote',
+    icon: <StickyNote aria-hidden="true" size={ICON_SIZE} />,
+  },
+  {
+    type: 'task',
+    label: 'canvas.toolbar.addTask',
+    icon: <SquareCheck aria-hidden="true" size={ICON_SIZE} />,
+  },
+  {
+    type: 'frame',
+    label: 'canvas.toolbar.addFrame',
+    icon: <Frame aria-hidden="true" size={ICON_SIZE} />,
+  },
+  {
+    type: 'link',
+    label: 'canvas.toolbar.addLink',
+    icon: <Link2 aria-hidden="true" size={ICON_SIZE} />,
   },
 ];
 
@@ -88,55 +105,72 @@ function ToolbarAction({
 
 export interface CanvasToolbarProps {
   readonly onCreateElement: (type: ElementType) => void;
+  readonly onCreateConnector?: (mode: 'free' | 'bound') => void;
   readonly onDeleteSelection: () => void;
   readonly onFitView: () => void;
   readonly canCreate?: boolean;
+  readonly canCreateFreeConnector?: boolean;
   readonly hasSelection?: boolean;
   readonly canCreateConnector?: boolean;
 }
 
 export function CanvasToolbar({
   onCreateElement,
+  onCreateConnector,
   onDeleteSelection,
   onFitView,
   canCreate = false,
+  canCreateFreeConnector = false,
   hasSelection = false,
   canCreateConnector = false,
 }: CanvasToolbarProps): ReactElement {
   const { ref } = useRovingFocus<HTMLDivElement>();
+  const { t } = useI18n();
 
   return (
     <Bar
       ref={ref}
       role="toolbar"
-      aria-label="Canvas toolbar"
+      aria-label={t('canvas.toolbar.label')}
       aria-orientation="horizontal"
       data-testid="canvas-toolbar"
     >
       <Group>
         {ELEMENT_TOOLS.map((tool) => {
-          const disabled = !canCreate || (tool.type === 'connector' && !canCreateConnector);
+          const disabled = !canCreate;
 
           return (
             <ToolbarAction
               key={tool.type}
-              label={tool.label}
+              label={t(tool.label)}
               icon={tool.icon}
               disabled={disabled}
               onClick={() => onCreateElement(tool.type)}
             />
           );
         })}
+        <ToolbarAction
+          label={t('canvas.toolbar.addConnector')}
+          icon={<ArrowUpRight aria-hidden="true" size={ICON_SIZE} />}
+          disabled={!canCreateFreeConnector}
+          onClick={() => onCreateConnector?.('free')}
+        />
+        <ToolbarAction
+          label={t('canvas.toolbar.connectSelected')}
+          icon={<Waypoints aria-hidden="true" size={ICON_SIZE} />}
+          disabled={!canCreateConnector}
+          onClick={() => onCreateConnector?.('bound')}
+        />
       </Group>
       <Separator aria-hidden="true" />
       <Group>
         <ToolbarAction
-          label="Fit view"
+          label={t('canvas.toolbar.fitView')}
           icon={<Scan aria-hidden="true" size={ICON_SIZE} />}
           onClick={onFitView}
         />
         <ToolbarAction
-          label="Delete selection"
+          label={t('canvas.toolbar.deleteSelection')}
           icon={<Trash2 aria-hidden="true" size={ICON_SIZE} />}
           disabled={!hasSelection}
           onClick={onDeleteSelection}

@@ -1,10 +1,11 @@
 import { expect, test } from '@playwright/test';
-import { registerUser } from './helpers/auth';
+import { registerUser, verifyEmail } from './helpers/auth';
 import { createWorkspace } from './helpers/workspace';
 
 test.describe('Negative paths', () => {
   test('invalid invitation token shows a readable error', async ({ page }) => {
-    await registerUser(page);
+    const email = await registerUser(page);
+    await verifyEmail(email);
     await page.goto('/invitations/not-a-real-token');
     await expect(
       page.getByRole('heading', { level: 1, name: 'We could not accept the invitation' }),

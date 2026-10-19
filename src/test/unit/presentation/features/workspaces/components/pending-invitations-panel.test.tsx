@@ -1,18 +1,15 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { AcceptInvitationById } from '../../../../../../application/commands';
-import type {
-  GetWorkspace,
-  ListPendingInvitationsForUser,
-} from '../../../../../../application/queries';
+import type { ListPendingInvitationsForUser } from '../../../../../../application/queries';
 import { Invitation } from '../../../../../../domain/invitation';
 import { InvitationId, UserId, WorkspaceId } from '../../../../../../domain/shared';
-import { Workspace } from '../../../../../../domain/workspace';
 import { createAppError, ERROR_CODES } from '../../../../../../shared/errors';
 import { PendingInvitationsPanel } from '../../../../../../presentation/features/workspaces/components/pending-invitations-panel';
 
 const USER_ID = 'user-1';
 const USER_EMAIL = 'invitee@example.com';
+const USER_EMAIL_VERIFIED = true;
 const WORKSPACE = WorkspaceId.create('ws-1');
 
 function makeInvitation(): Invitation {
@@ -29,28 +26,16 @@ function makeInvitation(): Invitation {
   });
 }
 
-function makeWorkspace(): Workspace {
-  return Workspace.create({
-    id: WORKSPACE,
-    name: 'Shared board',
-    createdBy: UserId.create('owner-1'),
-  });
-}
-
 function setup(
   overrides: {
     list?: ListPendingInvitationsForUser;
     accept?: AcceptInvitationById;
-    getWorkspace?: GetWorkspace;
     onAccepted?: (workspaceId: string) => void;
   } = {},
 ) {
   const listPendingInvitationsForUser: ListPendingInvitationsForUser =
     overrides.list ??
     jest.fn().mockResolvedValue({ status: 'ok', invitations: [makeInvitation()] });
-  const getWorkspace: GetWorkspace =
-    overrides.getWorkspace ??
-    jest.fn().mockResolvedValue({ status: 'ok', workspace: makeWorkspace() });
   const acceptInvitationById: AcceptInvitationById =
     overrides.accept ??
     jest.fn().mockResolvedValue({ status: 'ok', workspaceId: WORKSPACE, role: 'editor' });
@@ -60,14 +45,14 @@ function setup(
     <PendingInvitationsPanel
       userId={USER_ID}
       userEmail={USER_EMAIL}
+      userEmailVerified={USER_EMAIL_VERIFIED}
       listPendingInvitationsForUser={listPendingInvitationsForUser}
       acceptInvitationById={acceptInvitationById}
-      getWorkspace={getWorkspace}
       onAccepted={onAccepted}
     />,
   );
 
-  return { listPendingInvitationsForUser, getWorkspace, acceptInvitationById, onAccepted };
+  return { listPendingInvitationsForUser, acceptInvitationById, onAccepted };
 }
 
 describe('PendingInvitationsPanel', () => {
@@ -77,7 +62,7 @@ describe('PendingInvitationsPanel', () => {
     expect(
       await screen.findByRole('heading', { level: 2, name: 'Pending invitations' }),
     ).toBeInTheDocument();
-    expect(await screen.findByText(/Shared board/)).toBeInTheDocument();
+    expect(await screen.findByText(/A workspace/)).toBeInTheDocument();
     expect(await screen.findByText(/editor/i)).toBeInTheDocument();
   });
 
@@ -93,6 +78,7 @@ describe('PendingInvitationsPanel', () => {
         invitationId: InvitationId.create('inv-1'),
         userId: UserId.create(USER_ID),
         userEmail: USER_EMAIL,
+        userEmailVerified: true,
       });
       expect(onAccepted).toHaveBeenCalledWith(WORKSPACE.value);
     });
@@ -103,12 +89,12 @@ describe('PendingInvitationsPanel', () => {
       <PendingInvitationsPanel
         userId={USER_ID}
         userEmail={USER_EMAIL}
+        userEmailVerified={USER_EMAIL_VERIFIED}
         listPendingInvitationsForUser={jest.fn().mockResolvedValue({
           status: 'ok',
           invitations: [],
         })}
         acceptInvitationById={jest.fn()}
-        getWorkspace={jest.fn()}
         onAccepted={jest.fn()}
       />,
     );
@@ -136,9 +122,9 @@ describe('PendingInvitationsPanel', () => {
       <PendingInvitationsPanel
         userId={USER_ID}
         userEmail={USER_EMAIL}
+        userEmailVerified={USER_EMAIL_VERIFIED}
         listPendingInvitationsForUser={listPendingInvitationsForUser}
         acceptInvitationById={jest.fn()}
-        getWorkspace={jest.fn().mockResolvedValue({ status: 'ok', workspace: makeWorkspace() })}
         onAccepted={jest.fn()}
       />,
     );

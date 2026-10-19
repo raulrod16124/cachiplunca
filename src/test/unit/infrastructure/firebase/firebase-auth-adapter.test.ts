@@ -1,6 +1,8 @@
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  reload,
+  sendEmailVerification,
   signInWithEmailAndPassword,
   signOut,
   type Auth,
@@ -18,6 +20,8 @@ jest.mock('firebase/auth', () => ({
   signInWithEmailAndPassword: jest.fn(),
   signOut: jest.fn(),
   onAuthStateChanged: jest.fn(),
+  reload: jest.fn(),
+  sendEmailVerification: jest.fn(),
 }));
 
 type AuthCallback = (user: User | null) => void;
@@ -25,6 +29,10 @@ type AuthErrorCallback = (error: Error) => void;
 
 function makeAuth(): Auth {
   return {} as unknown as Auth;
+}
+
+function makeAuthWithUser(user: User): Auth {
+  return { currentUser: user } as unknown as Auth;
 }
 
 function makeUser(
@@ -156,6 +164,48 @@ describe('createFirebaseAuthAdapter', () => {
       await expect(adapter.signOut()).rejects.toMatchObject({
         kind: 'network',
         code: ERROR_CODES.NETWORK_REQUEST_FAILED,
+      });
+    });
+  });
+
+  describe('sendEmailVerification', () => {
+    it('sends a verification email for the current user', async () => {
+      const user = makeUser();
+      jest.mocked(sendEmailVerification).mockResolvedValue(undefined);
+      const adapter = createFirebaseAuthAdapter(makeAuthWithUser(user));
+
+      await adapter.sendEmailVerification();
+
+      expect(sendEmailVerification).toHaveBeenCalledWith(user);
+    });
+
+    it('maps SDK failures into AppError', async () => {
+      jest.mocked(sendEmailVerification).mockRejectedValue({ code: 'auth/too-many-requests' });
+      const adapter = createFirebaseAuthAdapter(makeAuthWithUser(makeUser()));
+
+      await expect(adapter.sendEmailVerification()).rejects.toMatchObject({
+        code: ERROR_CODES.AUTH_TOO_MANY_REQUESTS,
+      });
+    });
+  });
+
+  describe('refreshUser', () => {
+    it('reloads the user, forces a fresh token and maps the result', async () => {
+      const user = makeUser({ emailVerified: true });
+      const getIdToken = jest.fn().mockResolvedValue('fresh-token');
+      Object.assign(user, { getIdToken });
+      jest.mocked(reload).mockResolvedValue(undefined);
+      const adapter = createFirebaseAuthAdapter(makeAuthWithUser(user));
+
+      const refreshed = await adapter.refreshUser();
+
+      expect(reload).toHaveBeenCalledWith(user);
+      expect(getIdToken).toHaveBeenCalledWith(true);
+      expect(refreshed).toEqual({
+        uid: 'uid-1',
+        email: 'user@example.com',
+        emailVerified: true,
+        displayName: null,
       });
     });
   });

@@ -5,6 +5,7 @@ import type { KeyboardEvent, ReactNode } from 'react';
 import styled from 'styled-components';
 import type { UpdateWorkspaceResult } from '../../../../application/commands';
 import { FieldError } from '../../../components';
+import { localizeFieldError, useI18n } from '../../../i18n';
 
 const TitleGroup = styled.span`
   display: inline-flex;
@@ -61,6 +62,7 @@ export interface WorkspaceTitleFieldProps {
 }
 
 export function WorkspaceTitleField({ name, onRename }: WorkspaceTitleFieldProps): ReactNode {
+  const { t } = useI18n();
   const [draft, setDraft] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -117,11 +119,11 @@ export function WorkspaceTitleField({ name, onRename }: WorkspaceTitleFieldProps
       return;
     }
     if (result.status === 'invalid-input') {
-      setError(result.fieldErrors.name ?? 'Enter a workspace name.');
+      setError(localizeFieldError(t, result.fieldErrors.name ?? 'Enter a workspace name.'));
       inputRef.current?.focus();
       return;
     }
-    setError('We could not rename this workspace.');
+    setError(t('errors.renameWorkspace'));
     inputRef.current?.focus();
   }
 
@@ -154,12 +156,12 @@ export function WorkspaceTitleField({ name, onRename }: WorkspaceTitleFieldProps
         ) : (
           <>
             <TruncatedHeading as="h1">{name}</TruncatedHeading>
-            <Tooltip content="Rename workspace" placement="bottom">
+            <Tooltip content={t('canvas.topbar.rename')} placement="bottom">
               <EditAffordance
                 type="button"
                 variant="ghost"
                 size="sm"
-                label="Rename workspace"
+                label={t('canvas.topbar.rename')}
                 onClick={beginEdit}
               >
                 <Pencil aria-hidden="true" size={14} />

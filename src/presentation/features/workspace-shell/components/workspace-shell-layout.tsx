@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { Button, Text } from '@raulrod/ui';
 import type { Workspace } from '../../../../domain/workspace';
@@ -19,8 +20,10 @@ import type {
   SelectionStore,
 } from '../../../../application/services';
 import type { AuthUser, RealtimeConnectionStatus } from '../../../../application/ports';
-import { Canvas } from '../../../canvas';
+import { createPresenceColorAssigner } from '../../../collaboration';
+import { Canvas, type ConnectorEndpointDragInput } from '../../../canvas';
 import type { TaskFormValues } from '../../../canvas/components/task-form-dialog';
+import { KeyboardShortcutsDialog } from './keyboard-shortcuts-dialog';
 import { WorkspaceTopBar } from './workspace-top-bar';
 
 const Shell = styled.div`
@@ -69,8 +72,10 @@ export interface WorkspaceShellLayoutProps {
   readonly onUndoElements: (elements: readonly Element[]) => void;
   readonly onRedoElements: (elements: readonly Element[]) => void;
   readonly onCreateElement?: (type: ElementType) => ElementId | void;
+  readonly onCreateConnector?: (mode: 'free' | 'bound') => ElementId | void;
   readonly onCreateTask?: (values: TaskFormValues) => ElementId | void;
   readonly onUpdateElement?: (input: UpdateElementInput) => void;
+  readonly onUpdateConnectorEndpoint?: (input: ConnectorEndpointDragInput) => void;
   readonly generateElementId: () => ElementId;
   readonly remoteCursors: readonly RemoteCursor[];
   readonly connectedUsers: readonly Presence[];
@@ -81,6 +86,9 @@ export interface WorkspaceShellLayoutProps {
   readonly collaborationErrorMessage: string | null;
   readonly creationErrorMessage: string | null;
   readonly onShare?: () => void;
+  readonly onExportJson?: () => void;
+  readonly onExportPdf?: () => void;
+  readonly exportErrorMessage?: string | null;
   readonly onRename?: (name: string) => Promise<UpdateWorkspaceResult>;
   readonly readOnly?: boolean;
   readonly accessErrorMessage?: string | null;
@@ -107,8 +115,10 @@ export function WorkspaceShellLayout({
   onUndoElements,
   onRedoElements,
   onCreateElement,
+  onCreateConnector,
   onCreateTask,
   onUpdateElement,
+  onUpdateConnectorEndpoint,
   generateElementId,
   remoteCursors,
   connectedUsers,
@@ -119,11 +129,38 @@ export function WorkspaceShellLayout({
   collaborationErrorMessage,
   creationErrorMessage,
   onShare,
+  onExportJson,
+  onExportPdf,
+  exportErrorMessage = null,
   onRename,
   readOnly = false,
   accessErrorMessage = null,
   onRetryRole,
 }: WorkspaceShellLayoutProps): ReactNode {
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const colorAssignerRef = useRef(createPresenceColorAssigner());
+  const userIds = useMemo(() => {
+    const ids = new Set<string>();
+
+    for (const presence of connectedUsers) {
+      ids.add(presence.userId.value);
+    }
+    for (const cursor of remoteCursors) {
+      ids.add(cursor.userId);
+    }
+
+    return [...ids].sort((left, right) => left.localeCompare(right));
+  }, [connectedUsers, remoteCursors]);
+  const userColors = useMemo(() => {
+    const colors = new Map<string, string>();
+
+    for (const userId of userIds) {
+      colors.set(userId, colorAssignerRef.current.colorFor(userId));
+    }
+
+    return colors;
+  }, [userIds]);
+
   return (
     <Shell>
       {accessErrorMessage === null ? null : (
@@ -145,13 +182,18 @@ export function WorkspaceShellLayout({
           syncStatus={syncStatus}
           connectionStatus={connectionStatus}
           connectedUsers={connectedUsers}
+          userColors={userColors}
           currentUser={currentUser}
           logoutUser={logoutUser}
           onShare={onShare}
+          onShowShortcuts={() => setShortcutsOpen(true)}
+          onExportJson={onExportJson}
+          onExportPdf={onExportPdf}
           onRename={onRename}
           persistenceErrorMessage={persistenceErrorMessage}
           collaborationErrorMessage={collaborationErrorMessage}
           creationErrorMessage={creationErrorMessage}
+          exportErrorMessage={exportErrorMessage}
         />
         <Canvas
           store={canvasViewportStore}
@@ -168,14 +210,18 @@ export function WorkspaceShellLayout({
           onUndoElements={onUndoElements}
           onRedoElements={onRedoElements}
           onCreateElement={onCreateElement}
+          onCreateConnector={onCreateConnector}
           onCreateTask={onCreateTask}
           onUpdateElement={onUpdateElement}
+          onUpdateConnectorEndpoint={onUpdateConnectorEndpoint}
           generateId={generateElementId}
           remoteCursors={remoteCursors}
+          userColors={userColors}
           onCursorMove={onCursorMove}
           readOnly={readOnly}
         />
       </CanvasArea>
+      <KeyboardShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
     </Shell>
   );
 }

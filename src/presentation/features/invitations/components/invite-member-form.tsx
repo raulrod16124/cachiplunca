@@ -16,12 +16,14 @@ import type { MembershipRole } from '../../../../domain/membership';
 import { UserId, WorkspaceId } from '../../../../domain/shared';
 import { toAppError } from '../../../../shared/errors';
 import { describeInviteMemberError } from '../invitation-error-messages';
+import { localizeMessage, useI18n, type TranslationKey } from '../../../i18n';
 
-const ROLE_OPTIONS: readonly { readonly value: MembershipRole; readonly label: string }[] = [
-  { value: 'editor', label: 'Editor' },
-  { value: 'viewer', label: 'Viewer' },
-  { value: 'owner', label: 'Owner' },
-];
+const ROLE_OPTIONS: readonly { readonly value: MembershipRole; readonly label: TranslationKey }[] =
+  [
+    { value: 'editor', label: 'share.role.editor' },
+    { value: 'viewer', label: 'share.role.viewer' },
+    { value: 'owner', label: 'share.role.owner' },
+  ];
 
 export interface InvitedMemberResult {
   readonly invitation: Invitation;
@@ -41,6 +43,7 @@ export function InviteMemberForm({
   inviteMember,
   onInvited,
 }: InviteMemberFormProps): ReactNode {
+  const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<MembershipRole>('editor');
   const [fieldErrors, setFieldErrors] = useState<InviteMemberFieldErrors>({});
@@ -74,11 +77,11 @@ export function InviteMemberForm({
           setFieldErrors(result.fieldErrors);
           break;
         case 'error':
-          setFormError(describeInviteMemberError(result.error));
+          setFormError(localizeMessage(t, describeInviteMemberError(result.error)));
           break;
       }
     } catch (error) {
-      setFormError(describeInviteMemberError(toAppError(error)));
+      setFormError(localizeMessage(t, describeInviteMemberError(toAppError(error))));
     } finally {
       setSubmitting(false);
     }
@@ -88,7 +91,7 @@ export function InviteMemberForm({
     <form onSubmit={handleSubmit} noValidate>
       <Stack gap="space-4">
         <FormField>
-          <FormFieldLabel>Email</FormFieldLabel>
+          <FormFieldLabel>{t('share.invite.email')}</FormFieldLabel>
           <FormFieldControl>
             {(field) => (
               <Input
@@ -104,17 +107,17 @@ export function InviteMemberForm({
           {fieldErrors.email !== undefined && <FormFieldError>{fieldErrors.email}</FormFieldError>}
         </FormField>
         <FormField>
-          <FormFieldLabel>Role</FormFieldLabel>
+          <FormFieldLabel>{t('share.invite.role')}</FormFieldLabel>
           <FormFieldControl>
             {(field) => (
               <Select value={role} onValueChange={(value) => setRole(value as MembershipRole)}>
-                <Select.Trigger {...field} aria-label="Role">
+                <Select.Trigger {...field} aria-label={t('share.invite.role')}>
                   <Select.Value />
                 </Select.Trigger>
                 <Select.Content>
                   {ROLE_OPTIONS.map((option) => (
                     <Select.Item key={option.value} value={option.value}>
-                      {option.label}
+                      {t(option.label)}
                     </Select.Item>
                   ))}
                 </Select.Content>
@@ -129,7 +132,7 @@ export function InviteMemberForm({
           </Text>
         )}
         <Button type="submit" loading={submitting}>
-          Send invitation
+          {t('share.invite.submit')}
         </Button>
       </Stack>
     </form>

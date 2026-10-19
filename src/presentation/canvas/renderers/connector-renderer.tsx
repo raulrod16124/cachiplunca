@@ -1,9 +1,12 @@
 import type { ReactElement } from 'react';
 import styled from 'styled-components';
 import { isConnectorElement } from '../../../domain/element';
+import { Position } from '../../../domain/shared';
 import type { ElementRendererProps } from './element-renderer';
 
 const STROKE_WIDTH = 2;
+const SELECTED_STROKE_WIDTH = 3;
+const HIT_STROKE_WIDTH = 14;
 const ARROW_SIZE = 8;
 
 const Content = styled.svg`
@@ -12,27 +15,55 @@ const Content = styled.svg`
   width: 100%;
   height: 100%;
   overflow: visible;
-  cursor: pointer;
+  pointer-events: none;
   color: ${({ theme }) => theme.canvas.elementBorderStrong};
+`;
+
+const HitLine = styled.line`
+  pointer-events: stroke;
+  cursor: pointer;
+  stroke: transparent;
 `;
 
 function toMarkerId(elementId: string): string {
   return `connector-arrow-${elementId.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
 }
 
-export function ConnectorRenderer({ element }: ElementRendererProps): ReactElement | null {
+function localPoint(point: Position, origin: Position): Position {
+  return point.subtract(origin);
+}
+
+export function ConnectorRenderer({
+  element,
+  selected,
+  connectorGeometry,
+}: ElementRendererProps): ReactElement | null {
   if (!isConnectorElement(element)) {
     return null;
   }
 
   const markerId = toMarkerId(element.id.value);
+  const origin = connectorGeometry?.origin ?? element.position;
+  const start = localPoint(connectorGeometry?.start ?? element.position, origin);
+  const end = localPoint(
+    connectorGeometry?.end ??
+      Position.create(
+        element.position.x + element.size.width,
+        element.position.y + element.size.height,
+      ),
+    origin,
+  );
 
   return (
     <Content
       data-element-content="true"
       data-element-type="connector"
-      data-connector-source={element.sourceElementId.value}
-      data-connector-target={element.targetElementId.value}
+      data-connector-source={
+        element.sourceElementId?.value ?? element.sourcePoint?.toString() ?? ''
+      }
+      data-connector-target={
+        element.targetElementId?.value ?? element.targetPoint?.toString() ?? ''
+      }
       width="100%"
       height="100%"
       aria-hidden="true"
@@ -54,14 +85,23 @@ export function ConnectorRenderer({ element }: ElementRendererProps): ReactEleme
           />
         </marker>
       </defs>
+      <HitLine
+        data-connector-hit-line="true"
+        x1={start.x}
+        y1={start.y}
+        x2={end.x}
+        y2={end.y}
+        strokeWidth={HIT_STROKE_WIDTH}
+      />
       <line
         data-connector-line="true"
-        x1="2%"
-        y1="2%"
-        x2="98%"
-        y2="98%"
+        x1={start.x}
+        y1={start.y}
+        x2={end.x}
+        y2={end.y}
         stroke="currentColor"
-        strokeWidth={STROKE_WIDTH}
+        strokeWidth={selected ? SELECTED_STROKE_WIDTH : STROKE_WIDTH}
+        strokeLinecap="round"
         markerEnd={`url(#${markerId})`}
       />
     </Content>

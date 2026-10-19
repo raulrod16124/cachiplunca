@@ -55,8 +55,38 @@ export interface FrameElement extends BaseElement {
 
 export interface ConnectorElement extends BaseElement {
   readonly type: 'connector';
-  readonly sourceElementId: ElementId;
-  readonly targetElementId: ElementId;
+  readonly sourceElementId?: ElementId;
+  readonly targetElementId?: ElementId;
+  readonly sourcePoint?: Position;
+  readonly targetPoint?: Position;
+}
+
+export type ConnectorEndpoint =
+  | { readonly kind: 'element'; readonly elementId: ElementId }
+  | { readonly kind: 'point'; readonly point: Position };
+
+export function connectorSourceEndpoint(element: ConnectorElement): ConnectorEndpoint {
+  if (element.sourceElementId !== undefined) {
+    return { kind: 'element', elementId: element.sourceElementId };
+  }
+
+  if (element.sourcePoint === undefined) {
+    throw new Error('ConnectorElement source endpoint is not defined');
+  }
+
+  return { kind: 'point', point: element.sourcePoint };
+}
+
+export function connectorTargetEndpoint(element: ConnectorElement): ConnectorEndpoint {
+  if (element.targetElementId !== undefined) {
+    return { kind: 'element', elementId: element.targetElementId };
+  }
+
+  if (element.targetPoint === undefined) {
+    throw new Error('ConnectorElement target endpoint is not defined');
+  }
+
+  return { kind: 'point', point: element.targetPoint };
 }
 
 export interface LinkElement extends BaseElement {
@@ -164,8 +194,43 @@ export function validateFrameElement(element: FrameElement): void {
 
 export function validateConnectorElement(element: ConnectorElement): void {
   validateBaseElementProps(element);
-  if (element.sourceElementId.equals(element.targetElementId)) {
+
+  const hasSourceElement = element.sourceElementId !== undefined;
+  const hasSourcePoint = element.sourcePoint !== undefined;
+
+  if (hasSourceElement === hasSourcePoint) {
+    throw new Error(
+      'ConnectorElement source must reference either an element or a free point, but not both',
+    );
+  }
+
+  const hasTargetElement = element.targetElementId !== undefined;
+  const hasTargetPoint = element.targetPoint !== undefined;
+
+  if (hasTargetElement === hasTargetPoint) {
+    throw new Error(
+      'ConnectorElement target must reference either an element or a free point, but not both',
+    );
+  }
+
+  if (
+    hasSourceElement &&
+    hasTargetElement &&
+    element.sourceElementId !== undefined &&
+    element.targetElementId !== undefined &&
+    element.sourceElementId.equals(element.targetElementId)
+  ) {
     throw new Error('ConnectorElement source and target cannot be the same');
+  }
+
+  if (
+    hasSourcePoint &&
+    hasTargetPoint &&
+    element.sourcePoint !== undefined &&
+    element.targetPoint !== undefined &&
+    element.sourcePoint.equals(element.targetPoint)
+  ) {
+    throw new Error('ConnectorElement source and target cannot be the same point');
   }
 }
 

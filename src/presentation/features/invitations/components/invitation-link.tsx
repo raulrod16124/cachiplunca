@@ -1,6 +1,7 @@
 import { Button, Input, Stack, Text } from '@raulrod/ui';
 import { useMemo, useState, type ReactNode } from 'react';
 import { getPublicBasePath } from '../../../config/public-base';
+import { useI18n } from '../../../i18n';
 
 export const INVITATION_ACCEPT_PATH = '/invitations';
 
@@ -20,6 +21,7 @@ export function InvitationLink({
   token,
   buildLink = buildInvitationLink,
 }: InvitationLinkProps): ReactNode {
+  const { t } = useI18n();
   const [copied, setCopied] = useState(false);
   const link = useMemo(() => buildLink(token), [buildLink, token]);
 
@@ -34,7 +36,7 @@ export function InvitationLink({
 
   return (
     <Stack gap="space-2">
-      <Text color="color.text.muted">Share this one-time link. It will not be shown again.</Text>
+      <Text color="color.text.muted">{t('share.invite.linkHint')}</Text>
       <Input
         readOnly
         aria-label="Invitation link"
@@ -43,11 +45,11 @@ export function InvitationLink({
       />
       <Stack gap="space-1">
         <Button type="button" variant="secondary" onClick={handleCopy}>
-          Copy link
+          {t('common.copyLink')}
         </Button>
         {copied && (
           <Text role="status" aria-live="polite" color="color.text.muted">
-            Link copied to clipboard.
+            {t('common.copied')}
           </Text>
         )}
       </Stack>

@@ -10,6 +10,10 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function emailVerified() {
+      return request.auth.token.email_verified == true;
+    }
+
     function membershipId(workspaceId) {
       return workspaceId + '_' + request.auth.uid;
     }
@@ -42,6 +46,7 @@ service cloud.firestore {
 
     function isAcceptingValidInvitation(invitationId, workspaceId, role) {
       return signedIn() &&
+        emailVerified() &&
         request.auth.token.email is string &&
         invitationId is string &&
         exists(/databases/$(database)/documents/invitations/$(invitationId)) &&
@@ -69,13 +74,12 @@ service cloud.firestore {
         request.resource.data.userId == userId;
     }
 
-    // workspaces: read limitado a autenticados (ListWorkspaces lee el catálogo
-    // sin filtrar por membership; limitación MVP documentada en ADR-0023).
+    // workspaces: lectura limitada a miembros del workspace (ADR-0034).
     // create exige que el creador quede registrado como createdBy para poder
     // crear su membership de owner.
     // update/delete exclusivos de owner.
     match /workspaces/{workspaceId} {
-      allow read: if signedIn();
+      allow read: if signedIn() && isMember(workspaceId);
       allow create: if signedIn() && request.resource.data.createdBy == request.auth.uid;
       allow update, delete: if hasRole(workspaceId, ['owner']);
     }
@@ -127,13 +131,20 @@ service cloud.firestore {
       allow delete: if hasRole(resource.data.workspaceId, ['owner', 'editor']);
     }
 
-    // invitations: invitar/listar owner/editor; el invitado cuyo email coincide y
-    // cuya invitación está pending puede aceptarla (pending -> accepted) sin
-    // tocar el resto de campos. El read amplio es necesario para el lookup por
-    // tokenHash del accept (las rules no hacen queries); limitación MVP ADR-0023.
+    // invitations: leer solo miembros del workspace o el destinatario cuyo email
+    // coincide. El lookup por tokenHash debe filtrar además por email para que
+    // la query sea autorizable. El invitado acepta (pending -> accepted) solo
+    // con email verificado y sin tocar el resto de campos.
     // create restringe el rol otorgable según el rol del actor.
     match /invitations/{invitationId} {
-      allow read: if signedIn();
+      allow read: if signedIn() && (
+        resource == null ||
+        isMember(resource.data.workspaceId) ||
+        (
+          request.auth.token.email is string &&
+          resource.data.email == request.auth.token.email.lower()
+        )
+      );
       allow create: if signedIn() &&
         canGrantRoleInInvitation(request.resource.data.workspaceId, request.resource.data.role) &&
         request.resource.data.invitedBy == request.auth.uid;
@@ -146,6 +157,7 @@ service cloud.firestore {
           request.resource.data.tokenHash == resource.data.tokenHash
         ) ||
         (
+          emailVerified() &&
           request.auth.token.email is string &&
           resource.data.email == request.auth.token.email.lower() &&
           resource.data.status == 'pending' &&

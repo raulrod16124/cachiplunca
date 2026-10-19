@@ -67,11 +67,13 @@ function teammatePresence(
   workspaceId: WorkspaceId,
   userId: string,
   cursor: { x: number; y: number } | null,
+  displayName: string | null = null,
 ): Presence {
   return Presence.create({
     userId: UserId.create(userId),
     workspaceId,
     cursor: cursor === null ? null : Position.create(cursor.x, cursor.y),
+    displayName,
   });
 }
 
@@ -227,7 +229,7 @@ describe('collaboration', () => {
         },
         {
           kind: 'joined',
-          presence: teammatePresence(workspace.id, 'teammate-1', { x: 120, y: 90 }),
+          presence: teammatePresence(workspace.id, 'teammate-1', { x: 120, y: 90 }, 'Grace Hopper'),
           origin: 'remote',
         },
       ]);
@@ -235,9 +237,17 @@ describe('collaboration', () => {
 
     const connected = await screen.findByTestId('connected-users');
     expect(connected).toHaveTextContent('1 connected');
+    expect(screen.getByTestId('presence-avatar-teammate-1')).toHaveAttribute(
+      'aria-label',
+      'Grace Hopper',
+    );
 
     const cursor = await screen.findByTestId('remote-cursor');
     expect(cursor).toHaveAttribute('data-user-id', 'teammate-1');
+    expect(cursor).toHaveTextContent('Grace Hopper');
+    expect(screen.getByTestId('presence-avatar-teammate-1').getAttribute('data-user-color')).toBe(
+      cursor.getAttribute('data-user-color'),
+    );
 
     await act(async () => {
       harness.presencePort.emitChanges(workspace.id, [

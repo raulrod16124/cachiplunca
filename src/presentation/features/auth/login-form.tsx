@@ -13,6 +13,8 @@ import {
 import { useState, type FormEvent, type ReactNode } from 'react';
 import type { LoginFieldErrors, LoginUser } from '../../../application/commands';
 import { toAppError } from '../../../shared/errors';
+import { localizeFieldError, localizeMessage, useI18n } from '../../i18n';
+import { PasswordInput } from './password-input';
 import { describeLoginError } from './auth-error-messages';
 
 export interface LoginFormProps {
@@ -20,6 +22,7 @@ export interface LoginFormProps {
 }
 
 export function LoginForm({ loginUser }: LoginFormProps): ReactNode {
+  const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fieldErrors, setFieldErrors] = useState<LoginFieldErrors>({});
@@ -45,11 +48,11 @@ export function LoginForm({ loginUser }: LoginFormProps): ReactNode {
           setFieldErrors(result.fieldErrors);
           break;
         case 'error':
-          setFormError(describeLoginError(result.error));
+          setFormError(localizeMessage(t, describeLoginError(result.error)));
           break;
       }
     } catch (error) {
-      setFormError(describeLoginError(toAppError(error)));
+      setFormError(localizeMessage(t, describeLoginError(toAppError(error))));
     } finally {
       setSubmitting(false);
     }
@@ -58,13 +61,13 @@ export function LoginForm({ loginUser }: LoginFormProps): ReactNode {
   return (
     <Stack gap="space-5">
       <Stack gap="space-2">
-        <Heading as="h1">Sign in</Heading>
-        <Text color="color.text.muted">Turn scattered ideas into a shared plan.</Text>
+        <Heading as="h1">{t('auth.signIn.title')}</Heading>
+        <Text color="color.text.muted">{t('auth.signIn.subtitle')}</Text>
       </Stack>
       <form onSubmit={handleSubmit} noValidate>
         <Stack gap="space-4">
           <FormField>
-            <FormFieldLabel>Email</FormFieldLabel>
+            <FormFieldLabel>{t('auth.email')}</FormFieldLabel>
             <FormFieldControl>
               {(field) => (
                 <Input
@@ -79,17 +82,16 @@ export function LoginForm({ loginUser }: LoginFormProps): ReactNode {
               )}
             </FormFieldControl>
             {fieldErrors.email !== undefined && (
-              <FormFieldError>{fieldErrors.email}</FormFieldError>
+              <FormFieldError>{localizeFieldError(t, fieldErrors.email)}</FormFieldError>
             )}
           </FormField>
           <FormField>
-            <FormFieldLabel>Password</FormFieldLabel>
-            <FormFieldDescription>Use the password of your account.</FormFieldDescription>
+            <FormFieldLabel>{t('auth.password')}</FormFieldLabel>
+            <FormFieldDescription>{t('auth.passwordHint')}</FormFieldDescription>
             <FormFieldControl>
               {(field) => (
-                <Input
+                <PasswordInput
                   {...field}
-                  type="password"
                   name="password"
                   autoComplete="current-password"
                   value={password}
@@ -98,7 +100,7 @@ export function LoginForm({ loginUser }: LoginFormProps): ReactNode {
               )}
             </FormFieldControl>
             {fieldErrors.password !== undefined && (
-              <FormFieldError>{fieldErrors.password}</FormFieldError>
+              <FormFieldError>{localizeFieldError(t, fieldErrors.password)}</FormFieldError>
             )}
           </FormField>
           {formError !== null && (
@@ -107,7 +109,7 @@ export function LoginForm({ loginUser }: LoginFormProps): ReactNode {
             </Text>
           )}
           <Button type="submit" loading={submitting}>
-            Sign in
+            {t('auth.signIn.submit')}
           </Button>
         </Stack>
       </form>
