@@ -485,25 +485,24 @@ export function Canvas({
     const target = elements.find((element) => element.id.value === targetId);
 
     return getEditableRichTextTarget(target);
-  }, [
-    editingElement,
-    textSelectionTargetId,
-    contextMenuTargetId,
-    selection.selectedIds,
-    elements,
-  ]);
+  }, [editingElement, textSelectionTargetId, contextMenuTargetId, selection.selectedIds, elements]);
 
   const formatTarget = useMemo<TextFormatTarget | null>(() => {
     if (readOnly || onUpdateElement === undefined || editableTarget === null) {
       return null;
     }
 
-    if (
-      editingElement !== null &&
-      activeTextEditor !== null &&
-      !activeTextEditor.isDestroyed
-    ) {
+    if (editingElement !== null && activeTextEditor !== null && !activeTextEditor.isDestroyed) {
       return editorFormatTarget(activeTextEditor, { singleLine: editableTarget.singleLine });
+    }
+
+    // If we're actively editing an element but don't have a live editor instance
+    // (e.g. non-text types before the fix, or during lazy loading), don't commit
+    // via documentFormatTarget — the editor holds an unsynced draft and a mid-edit
+    // commit would be overwritten by the editor's own blur-commit. Return null so
+    // the floating toolbar is disabled while editing without a ready editor.
+    if (editingElement !== null) {
+      return null;
     }
 
     const targetId = editableTarget.element.id.value;

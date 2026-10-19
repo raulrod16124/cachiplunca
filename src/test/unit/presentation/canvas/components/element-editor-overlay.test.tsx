@@ -211,6 +211,32 @@ describe('ElementEditorOverlay', () => {
         content: richTextFromPlain('a note'),
       });
     });
+
+    it('onEditorReady is invoked and commitGuardRef prevents commit on blur', async () => {
+      const user = userEvent.setup();
+      const onTextEditorReady = jest.fn();
+      const textCommitGuardRef = { current: true };
+      const onCommit = jest.fn();
+
+      render(
+        <ElementEditorOverlay
+          element={createNote('')}
+          onCommit={onCommit}
+          onCancel={jest.fn()}
+          onTextEditorReady={onTextEditorReady}
+          textCommitGuardRef={textCommitGuardRef}
+        />,
+      );
+
+      // onTextEditorReady should be invoked during mount (overlay forwards to onEditorReady in child)
+      expect(onTextEditorReady).toHaveBeenCalled();
+
+      await user.type(screen.getByTestId('element-editor'), 'a note');
+      await user.tab();
+
+      // commitGuardRef should prevent the commit (overlay forwards to commitGuardRef in child)
+      expect(onCommit).not.toHaveBeenCalled();
+    });
   });
 
   describe('task', () => {
@@ -234,6 +260,32 @@ describe('ElementEditorOverlay', () => {
         title: richTextFromPlain('Ship it'),
       });
     });
+
+    it('onEditorReady is invoked and commitGuardRef prevents commit on blur', async () => {
+      const user = userEvent.setup();
+      const onTextEditorReady = jest.fn();
+      const textCommitGuardRef = { current: true };
+      const onCommit = jest.fn();
+
+      render(
+        <ElementEditorOverlay
+          element={createTask('New task')}
+          onCommit={onCommit}
+          onCancel={jest.fn()}
+          onTextEditorReady={onTextEditorReady}
+          textCommitGuardRef={textCommitGuardRef}
+        />,
+      );
+
+      expect(onTextEditorReady).toHaveBeenCalled();
+
+      const title = screen.getByLabelText('Task title');
+      await user.clear(title);
+      await user.type(title, 'Ship it');
+      await user.tab();
+
+      expect(onCommit).not.toHaveBeenCalled();
+    });
   });
 
   describe('frame', () => {
@@ -254,6 +306,32 @@ describe('ElementEditorOverlay', () => {
         element,
         title: richTextFromPlain('Discovery'),
       });
+    });
+
+    it('onEditorReady is invoked and commitGuardRef prevents commit on blur', async () => {
+      const user = userEvent.setup();
+      const onTextEditorReady = jest.fn();
+      const textCommitGuardRef = { current: true };
+      const onCommit = jest.fn();
+
+      render(
+        <ElementEditorOverlay
+          element={createFrame('Frame 1')}
+          onCommit={onCommit}
+          onCancel={jest.fn()}
+          onTextEditorReady={onTextEditorReady}
+          textCommitGuardRef={textCommitGuardRef}
+        />,
+      );
+
+      expect(onTextEditorReady).toHaveBeenCalled();
+
+      const title = screen.getByLabelText('Frame title');
+      await user.clear(title);
+      await user.type(title, 'Discovery');
+      await user.tab();
+
+      expect(onCommit).not.toHaveBeenCalled();
     });
   });
 
@@ -318,6 +396,32 @@ describe('ElementEditorOverlay', () => {
         title: null,
         url: 'https://example.com',
       });
+    });
+
+    it('onEditorReady is invoked and commitGuardRef prevents commit on blur', async () => {
+      const user = userEvent.setup();
+      const onTextEditorReady = jest.fn();
+      const textCommitGuardRef = { current: true };
+      const onCommit = jest.fn();
+
+      render(
+        <ElementEditorOverlay
+          element={createLink('https://example.com', 'Example')}
+          onCommit={onCommit}
+          onCancel={jest.fn()}
+          onTextEditorReady={onTextEditorReady}
+          textCommitGuardRef={textCommitGuardRef}
+        />,
+      );
+
+      expect(onTextEditorReady).toHaveBeenCalled();
+
+      const title = screen.getByLabelText('Link title');
+      await user.clear(title);
+      fireEvent.blur(title, { relatedTarget: null });
+
+      // commitGuardRef should prevent the title commit
+      expect(onCommit).not.toHaveBeenCalled();
     });
   });
 });

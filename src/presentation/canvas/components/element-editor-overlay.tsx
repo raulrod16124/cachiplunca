@@ -223,7 +223,12 @@ function NoteContentEditor({
   element,
   onCommit,
   onCancel,
-}: FieldEditorProps<NoteElement>): ReactElement {
+  onEditorReady,
+  commitGuardRef,
+}: FieldEditorProps<NoteElement> & {
+  readonly onEditorReady?: (editor: Editor | null) => void;
+  readonly commitGuardRef?: { readonly current: boolean };
+}): ReactElement {
   const handleCommit = (document: RichTextDocument): void => {
     if (JSON.stringify(document) === JSON.stringify(element.content)) {
       onCancel();
@@ -248,6 +253,8 @@ function NoteContentEditor({
         autoFocus
         onCommit={handleCommit}
         onCancel={onCancel}
+        onEditorReady={onEditorReady}
+        commitGuardRef={commitGuardRef}
       />
     </NoteBox>
   );
@@ -257,7 +264,12 @@ function TaskTitleEditor({
   element,
   onCommit,
   onCancel,
-}: FieldEditorProps<TaskElement>): ReactElement {
+  onEditorReady,
+  commitGuardRef,
+}: FieldEditorProps<TaskElement> & {
+  readonly onEditorReady?: (editor: Editor | null) => void;
+  readonly commitGuardRef?: { readonly current: boolean };
+}): ReactElement {
   const handleCommit = (document: RichTextDocument): void => {
     if (JSON.stringify(document) === JSON.stringify(element.title)) {
       onCancel();
@@ -279,6 +291,8 @@ function TaskTitleEditor({
           selectAllOnFocus
           onCommit={handleCommit}
           onCancel={onCancel}
+          onEditorReady={onEditorReady}
+          commitGuardRef={commitGuardRef}
         />
       </TaskTitle>
     </TaskBox>
@@ -289,7 +303,12 @@ function FrameTitleEditor({
   element,
   onCommit,
   onCancel,
-}: FieldEditorProps<FrameElement>): ReactElement {
+  onEditorReady,
+  commitGuardRef,
+}: FieldEditorProps<FrameElement> & {
+  readonly onEditorReady?: (editor: Editor | null) => void;
+  readonly commitGuardRef?: { readonly current: boolean };
+}): ReactElement {
   const handleCommit = (document: RichTextDocument): void => {
     if (JSON.stringify(document) === JSON.stringify(element.title)) {
       onCancel();
@@ -310,6 +329,8 @@ function FrameTitleEditor({
           autoFocus
           onCommit={handleCommit}
           onCancel={onCancel}
+          onEditorReady={onEditorReady}
+          commitGuardRef={commitGuardRef}
         />
       </FrameHeader>
     </FrameBox>
@@ -320,7 +341,12 @@ function LinkFieldsEditor({
   element,
   onCommit,
   onCancel,
-}: FieldEditorProps<LinkElement>): ReactElement {
+  onEditorReady,
+  commitGuardRef,
+}: FieldEditorProps<LinkElement> & {
+  readonly onEditorReady?: (editor: Editor | null) => void;
+  readonly commitGuardRef?: { readonly current: boolean };
+}): ReactElement {
   const [urlDraft, setUrlDraft] = useState(element.url);
   const titleDraftRef = useRef<RichTextDocument>(element.title ?? richTextFromPlain(''));
   const cancelledRef = useRef(false);
@@ -339,10 +365,7 @@ function LinkFieldsEditor({
 
     const titleDraft = titleDraftRef.current;
 
-    if (
-      JSON.stringify(titleDraft) === JSON.stringify(initialTitle) &&
-      urlDraft === element.url
-    ) {
+    if (JSON.stringify(titleDraft) === JSON.stringify(initialTitle) && urlDraft === element.url) {
       cancel();
       return;
     }
@@ -374,11 +397,32 @@ function LinkFieldsEditor({
       return;
     }
 
+    if (commitGuardRef?.current === true) {
+      return;
+    }
+
+    commit();
+  };
+
+  const handleUrlBlur = (event: FocusEvent<HTMLInputElement>): void => {
+    if (isContainedFocus(event, boxRef.current)) {
+      return;
+    }
+
+    if (commitGuardRef?.current === true) {
+      return;
+    }
+
     commit();
   };
 
   return (
-    <LinkBox ref={boxRef} style={boxStyle(element)} data-testid="element-editor-box" onBlur={handleBlur}>
+    <LinkBox
+      ref={boxRef}
+      style={boxStyle(element)}
+      data-testid="element-editor-box"
+      onBlur={handleBlur}
+    >
       <LinkTitle>
         <RichTextFieldEditor
           document={initialTitle}
@@ -392,6 +436,7 @@ function LinkFieldsEditor({
             titleDraftRef.current = document;
           }}
           onCancel={cancel}
+          onEditorReady={onEditorReady}
         />
       </LinkTitle>
       <UrlField
@@ -402,7 +447,7 @@ function LinkFieldsEditor({
         value={urlDraft}
         onChange={(event) => setUrlDraft(event.target.value)}
         onKeyDown={handleKeyDown}
-        onBlur={handleBlur}
+        onBlur={handleUrlBlur}
       />
     </LinkBox>
   );
@@ -428,19 +473,51 @@ export function ElementEditorOverlay({
   }
 
   if (isNoteElement(element)) {
-    return <NoteContentEditor element={element} onCommit={onCommit} onCancel={onCancel} />;
+    return (
+      <NoteContentEditor
+        element={element}
+        onCommit={onCommit}
+        onCancel={onCancel}
+        onEditorReady={onTextEditorReady}
+        commitGuardRef={textCommitGuardRef}
+      />
+    );
   }
 
   if (isTaskElement(element)) {
-    return <TaskTitleEditor element={element} onCommit={onCommit} onCancel={onCancel} />;
+    return (
+      <TaskTitleEditor
+        element={element}
+        onCommit={onCommit}
+        onCancel={onCancel}
+        onEditorReady={onTextEditorReady}
+        commitGuardRef={textCommitGuardRef}
+      />
+    );
   }
 
   if (isFrameElement(element)) {
-    return <FrameTitleEditor element={element} onCommit={onCommit} onCancel={onCancel} />;
+    return (
+      <FrameTitleEditor
+        element={element}
+        onCommit={onCommit}
+        onCancel={onCancel}
+        onEditorReady={onTextEditorReady}
+        commitGuardRef={textCommitGuardRef}
+      />
+    );
   }
 
   if (isLinkElement(element)) {
-    return <LinkFieldsEditor element={element} onCommit={onCommit} onCancel={onCancel} />;
+    return (
+      <LinkFieldsEditor
+        element={element}
+        onCommit={onCommit}
+        onCancel={onCancel}
+        onEditorReady={onTextEditorReady}
+        commitGuardRef={textCommitGuardRef}
+      />
+    );
   }
 
   return null;

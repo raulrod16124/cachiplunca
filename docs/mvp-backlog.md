@@ -5030,7 +5030,7 @@ Implementar una barra de herramientas contextual flotante, visual y funcionalmen
 
 ### TASK-135 — Canvas integration and context menu update
 
-**Priority:** P1 · **Depends:** TASK-133, TASK-134 · **Status:** TODO
+**Priority:** P1 · **Depends:** TASK-133, TASK-134 · **Status:** DONE
 
 #### Objetivo
 
