@@ -91,7 +91,7 @@ Definition of Done:
 | PBL-003 | Paleta de colores de nota                    | R1      | P1        | S        | —              | Sí  | DONE   |
 | PBL-004 | Ayuda de atajos                              | R1      | P2        | S        | —              | Sí  | DONE   |
 | PBL-005 | Export JSON y PDF del tablero                | R1      | P1        | S        | —              | Sí  | DONE   |
-| PBL-006 | Duplicar workspace                           | R1      | P1        | M        | —              | No  | TODO   |
+| PBL-006 | Duplicar workspace                           | R1      | P1        | M        | —              | No  | DONE   |
 | PBL-007 | Plantillas de arranque y empty states        | R1      | P0        | M        | —              | No  | TODO   |
 | PBL-008 | Command palette (Cmd/Ctrl + K)               | R1      | P1        | M        | —              | No  | TODO   |
 | PBL-009 | Vista Plan de tareas                         | R2      | P0        | M        | —              | No  | TODO   |
@@ -311,7 +311,7 @@ Permitir que el plan salga del canvas para compartirse, imprimirse o archivarse.
 
 ### PBL-006 — Duplicar workspace
 
-**Priority:** P1 · **Effort:** M · **Depends:** — · **Status:** TODO
+**Priority:** P1 · **Effort:** M · **Depends:** — · **Status:** DONE
 
 #### Objetivo
 
@@ -328,11 +328,11 @@ Permitir reutilizar un tablero como punto de partida sin reconstruirlo.
 
 #### Criterios de aceptación
 
-- [ ] El workspace duplicado es independiente del original.
-- [ ] Los conectores apuntan a los nuevos elementos, nunca a los originales.
-- [ ] El owner queda como miembro del duplicado.
-- [ ] No se copian miembros ni invitaciones.
-- [ ] Tests de la función pura de remapeo y E2E del flujo.
+- [x] El workspace duplicado es independiente del original.
+- [x] Los conectores apuntan a los nuevos elementos, nunca a los originales.
+- [x] El owner queda como miembro del duplicado.
+- [x] No se copian miembros ni invitaciones.
+- [x] Tests de la función pura de remapeo y E2E del flujo.
 
 #### Fuera de alcance
 
@@ -803,14 +803,15 @@ Cerrar el bucle de invitaciones sin introducir email ni backend nuevo.
 
 Añadir una línea por sesión. El detalle técnico extenso sigue viviendo en `docs/adr/session-log.md` cuando haya decisiones relevantes.
 
-| Fecha      | Tarea   | Resultado | Notas                                                                                                                                                                                    |
-| ---------- | ------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-10-19 | —       | Creado    | Creación del backlog post-MVP y priorización inicial.                                                                                                                                    |
-| 2026-10-19 | PBL-002 | DONE      | Borrado de workspace desde la card con confirmación; roles por workspace desde `ListWorkspaces`; unit, integración y E2E.                                                                |
-| 2026-10-19 | PBL-001 | DONE      | Lecturas de workspaces/invitations acotadas por membership/destinatario; accept con `email_verified`; flujo de verificación con envío y refresh; rules, unit, integración y E2E.         |
-| 2026-10-19 | PBL-003 | DONE      | Paleta de 5 colores de tema en el menú contextual de nota, reset a por defecto, `color: null` en `UpdateElement`, undo/redo, persistencia y E2E.                                         |
-| 2026-10-19 | PBL-004 | DONE      | Ayuda de atajos accesible desde `?` y la top bar; catálogo puro por contextos, i18n en/es, foco atrapado, cierre con `Escape` y tests de contenido.                                      |
-| 2026-10-19 | PBL-005 | DONE      | Export JSON versionado y descarga desde browser; vista imprimible escalada con `window.print()`; disponible para Owner, Editor y Viewer; serializer puro, i18n, unit, integración y E2E. |
+| Fecha      | Tarea   | Resultado | Notas                                                                                                                                                                                                   |
+| ---------- | ------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-19 | —       | Creado    | Creación del backlog post-MVP y priorización inicial.                                                                                                                                                   |
+| 2026-10-19 | PBL-002 | DONE      | Borrado de workspace desde la card con confirmación; roles por workspace desde `ListWorkspaces`; unit, integración y E2E.                                                                               |
+| 2026-10-19 | PBL-001 | DONE      | Lecturas de workspaces/invitations acotadas por membership/destinatario; accept con `email_verified`; flujo de verificación con envío y refresh; rules, unit, integración y E2E.                        |
+| 2026-10-19 | PBL-003 | DONE      | Paleta de 5 colores de tema en el menú contextual de nota, reset a por defecto, `color: null` en `UpdateElement`, undo/redo, persistencia y E2E.                                                        |
+| 2026-10-19 | PBL-004 | DONE      | Ayuda de atajos accesible desde `?` y la top bar; catálogo puro por contextos, i18n en/es, foco atrapado, cierre con `Escape` y tests de contenido.                                                     |
+| 2026-10-19 | PBL-005 | DONE      | Export JSON versionado y descarga desde browser; vista imprimible escalada con `window.print()`; disponible para Owner, Editor y Viewer; serializer puro, i18n, unit, integración y E2E.                |
+| 2026-10-19 | PBL-006 | DONE      | Duplicado owner-only desde la card con navegación al duplicado; copia de metadatos y elementos con IDs nuevos, remapeo de conectores y frames, compensación best-effort, i18n, unit, integración y E2E. |
 
 ---
 

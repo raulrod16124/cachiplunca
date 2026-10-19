@@ -6,6 +6,7 @@ import type {
   ChangeMemberRole,
   CreateWorkspaceWithOwner,
   DeleteWorkspace,
+  DuplicateWorkspace,
   InviteMember,
   LeaveWorkspace,
   LoginUser,
@@ -48,6 +49,7 @@ export interface AppRoutesProps {
   readonly listWorkspaces: ListWorkspaces;
   readonly createWorkspaceWithOwner: CreateWorkspaceWithOwner;
   readonly deleteWorkspace?: DeleteWorkspace;
+  readonly duplicateWorkspace?: DuplicateWorkspace;
   readonly getWorkspace: GetWorkspace;
   readonly loadWorkspaceElements: LoadWorkspaceElements;
   readonly elementPersistenceOrchestrator: ElementPersistenceOrchestrator;
@@ -77,6 +79,7 @@ export function AppRoutes({
   listWorkspaces,
   createWorkspaceWithOwner,
   deleteWorkspace,
+  duplicateWorkspace,
   getWorkspace,
   loadWorkspaceElements,
   elementPersistenceOrchestrator,
@@ -132,6 +135,7 @@ export function AppRoutes({
               listWorkspaces={listWorkspaces}
               createWorkspaceWithOwner={createWorkspaceWithOwner}
               deleteWorkspace={deleteWorkspace}
+              duplicateWorkspace={duplicateWorkspace}
               listPendingInvitationsForUser={listPendingInvitationsForUser}
               acceptInvitationById={acceptInvitationById}
               sendEmailVerification={sendEmailVerification}

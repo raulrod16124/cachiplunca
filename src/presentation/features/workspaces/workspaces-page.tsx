@@ -11,6 +11,7 @@ import type {
   CreateWorkspaceResult,
   CreateWorkspaceWithOwner,
   DeleteWorkspace,
+  DuplicateWorkspace,
   LogoutUser,
   RefreshUser,
   SendEmailVerification,
@@ -55,6 +56,7 @@ export interface WorkspacesPageProps {
   readonly listWorkspaces: ListWorkspaces;
   readonly createWorkspaceWithOwner: CreateWorkspaceWithOwner;
   readonly deleteWorkspace?: DeleteWorkspace;
+  readonly duplicateWorkspace?: DuplicateWorkspace;
   readonly listPendingInvitationsForUser?: ListPendingInvitationsForUser;
   readonly acceptInvitationById?: AcceptInvitationById;
   readonly sendEmailVerification?: SendEmailVerification;
@@ -66,6 +68,7 @@ export function WorkspacesPage({
   listWorkspaces,
   createWorkspaceWithOwner,
   deleteWorkspace,
+  duplicateWorkspace,
   listPendingInvitationsForUser,
   acceptInvitationById,
   sendEmailVerification,
@@ -143,6 +146,7 @@ export function WorkspacesPage({
                 userId={session.user.uid}
                 listWorkspaces={listWorkspaces}
                 deleteWorkspace={deleteWorkspace}
+                duplicateWorkspace={duplicateWorkspace}
                 onCreateWorkspace={handleCreateWorkspace}
                 refreshToken={refreshToken}
               />

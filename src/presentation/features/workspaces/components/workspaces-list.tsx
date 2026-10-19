@@ -1,5 +1,5 @@
 import { Button, Heading, Input, Skeleton, Stack, Text } from '@raulrod/ui';
-import { ArrowUpRight, LayoutGrid, Search, Trash2 } from '@raulrod/icons';
+import { ArrowUpRight, Copy, LayoutGrid, Search, Trash2 } from '@raulrod/icons';
 import { useMemo, useState, type ReactNode } from 'react';
 import styled from 'styled-components';
 import { can } from '../../../../domain/membership';
@@ -111,6 +111,8 @@ export interface WorkspacesListProps {
   readonly onCreate: () => void;
   readonly onSelect?: (workspace: Workspace) => void;
   readonly onRequestDelete?: (workspace: Workspace) => void;
+  readonly onDuplicate?: (workspace: Workspace) => void;
+  readonly duplicatingWorkspaceId?: string | null;
 }
 
 export function WorkspacesList({
@@ -122,6 +124,8 @@ export function WorkspacesList({
   onCreate,
   onSelect,
   onRequestDelete,
+  onDuplicate,
+  duplicatingWorkspaceId,
 }: WorkspacesListProps): ReactNode {
   const { t, locale } = useI18n();
   const [query, setQuery] = useState('');
@@ -220,6 +224,8 @@ export function WorkspacesList({
             const role = rolesByWorkspaceId.get(workspace.id.value);
             const canDelete =
               onRequestDelete !== undefined && role !== undefined && can(role, 'workspace:delete');
+            const canDuplicate = onDuplicate !== undefined && role === 'owner';
+            const isDuplicating = duplicatingWorkspaceId === workspace.id.value;
 
             return (
               <CardShell key={workspace.id.value} as="article">
@@ -242,7 +248,7 @@ export function WorkspacesList({
                       {workspace.description ?? t('workspaces.card.noDescription')}
                     </Description>
                   </Stack>
-                  {(onSelect !== undefined || canDelete) && (
+                  {(onSelect !== undefined || canDelete || canDuplicate) && (
                     <CardFooter>
                       {onSelect !== undefined && (
                         <Button
@@ -253,6 +259,19 @@ export function WorkspacesList({
                         >
                           {t('common.open')}
                           <ArrowUpRight aria-hidden="true" size={14} />
+                        </Button>
+                      )}
+                      {canDuplicate && onDuplicate !== undefined && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          loading={isDuplicating}
+                          aria-label={`${t('workspaces.card.duplicate')} ${workspace.name}`}
+                          onClick={() => onDuplicate(workspace)}
+                        >
+                          <Copy aria-hidden="true" size={14} />
+                          {t('workspaces.card.duplicate')}
                         </Button>
                       )}
                       {canDelete && onRequestDelete !== undefined && (

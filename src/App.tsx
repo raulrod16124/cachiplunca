@@ -62,6 +62,7 @@ function AppContent({
             refreshUser={authServices.refreshUser}
             listWorkspaces={workspaceServices.listWorkspaces}
             createWorkspaceWithOwner={workspaceServices.createWorkspaceWithOwner}
+            duplicateWorkspace={workspaceServices.duplicateWorkspace}
             deleteWorkspace={workspaceServices.deleteWorkspace}
             getWorkspace={workspaceServices.getWorkspace}
             getWorkspaceRole={workspaceServices.getWorkspaceRole}
@@ -90,8 +91,10 @@ function AppContent({
 
 function App() {
   const [authServices] = useState(createAuthServices);
-  const [workspaceServices] = useState(createWorkspaceServices);
   const [elementServices] = useState(createElementServices);
+  const [workspaceServices] = useState(() =>
+    createWorkspaceServices({ generateElementId: elementServices.generateElementId }),
+  );
   const [presenceServices] = useState(createPresenceServices);
   const [invitationServices] = useState(createInvitationServices);
   const [userSettingsServices] = useState(() => createUserSettingsServices(getFirebaseFirestore()));

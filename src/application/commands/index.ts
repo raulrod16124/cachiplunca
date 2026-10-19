@@ -11,6 +11,7 @@ export * from './create-workspace-with-owner';
 export * from './delete-element';
 export * from './delete-workspace';
 export * from './duplicate-element';
+export * from './duplicate-workspace';
 export * from './invite-member';
 export * from './leave-workspace';
 export * from './login-user';

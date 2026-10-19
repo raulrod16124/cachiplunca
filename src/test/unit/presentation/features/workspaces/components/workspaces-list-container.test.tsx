@@ -1,13 +1,13 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { WorkspacesListContainer } from '../../../../../../presentation/features/workspaces/components/workspaces-list-container';
 import type {
   ListWorkspaces,
   ListWorkspacesResult,
 } from '../../../../../../application/queries/list-workspaces';
-import type { DeleteWorkspace } from '../../../../../../application/commands';
+import type { DeleteWorkspace, DuplicateWorkspace } from '../../../../../../application/commands';
 import { Workspace } from '../../../../../../domain/workspace';
 import { UserId, WorkspaceId } from '../../../../../../domain/shared';
 import { createAppError, ERROR_CODES } from '../../../../../../shared/errors';
@@ -24,6 +24,11 @@ function createWorkspace(name: string): Workspace {
 
 function renderWithRouter(children: ReactNode): ReturnType<typeof render> {
   return render(<MemoryRouter>{children}</MemoryRouter>);
+}
+
+function LocationProbe(): ReactNode {
+  const location = useLocation();
+  return <div data-testid="location">{location.pathname}</div>;
 }
 
 describe('WorkspacesListContainer', () => {
@@ -205,5 +210,91 @@ describe('WorkspacesListContainer', () => {
       expect(listWorkspaces).toHaveBeenCalledTimes(2);
     });
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('duplicates a workspace and navigates to the copy', async () => {
+    const workspace = createWorkspace('Alpha');
+    const copy = Workspace.create({
+      id: WorkspaceId.create('ws-copy'),
+      name: 'Copy of Alpha',
+      createdBy: CREATED_BY,
+    });
+    const result: ListWorkspacesResult = {
+      status: 'ok',
+      workspaces: [workspace],
+      rolesByWorkspaceId: new Map([[workspace.id.value, 'owner']]),
+    };
+    const listWorkspaces: ListWorkspaces = jest.fn().mockResolvedValue(result);
+    const duplicateWorkspace: DuplicateWorkspace = jest.fn().mockResolvedValue({
+      status: 'ok',
+      workspace: copy,
+      copiedElementCount: 2,
+    });
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter>
+        <WorkspacesListContainer
+          userId="user-1"
+          listWorkspaces={listWorkspaces}
+          duplicateWorkspace={duplicateWorkspace}
+          onCreateWorkspace={onCreate}
+        />
+        <LocationProbe />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Duplicate Alpha' }));
+
+    await waitFor(() => {
+      expect(duplicateWorkspace).toHaveBeenCalledWith({
+        sourceWorkspaceId: workspace.id.value,
+        actorUserId: 'user-1',
+      });
+      expect(screen.getByTestId('location')).toHaveTextContent('/workspaces/ws-copy');
+    });
+  });
+
+  it('shows a duplicate error and allows retrying without touching the list', async () => {
+    const workspace = createWorkspace('Alpha');
+    const result: ListWorkspacesResult = {
+      status: 'ok',
+      workspaces: [workspace],
+      rolesByWorkspaceId: new Map([[workspace.id.value, 'owner']]),
+    };
+    const listWorkspaces: ListWorkspaces = jest.fn().mockResolvedValue(result);
+    const duplicateWorkspace: DuplicateWorkspace = jest.fn().mockResolvedValue({
+      status: 'error',
+      error: createAppError('persistence', ERROR_CODES.PERSISTENCE_WRITE_FAILED, 'boom'),
+    });
+    const user = userEvent.setup();
+
+    renderWithRouter(
+      <WorkspacesListContainer
+        userId="user-1"
+        listWorkspaces={listWorkspaces}
+        duplicateWorkspace={duplicateWorkspace}
+        onCreateWorkspace={onCreate}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Duplicate Alpha' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'The service is temporarily unavailable. Please try again.',
+    );
+    expect(screen.getByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Duplicate Alpha' }));
+    await waitFor(() => expect(duplicateWorkspace).toHaveBeenCalledTimes(2));
+    expect(listWorkspaces).toHaveBeenCalledTimes(1);
   });
 });

@@ -14,6 +14,8 @@ const MESSAGE_KEYS: Readonly<Record<string, TranslationKey>> = {
   'You do not have permission to create workspaces.': 'errors.createWorkspaceForbidden',
   'You do not have permission to delete this workspace.': 'errors.deleteWorkspaceForbidden',
   'We could not delete this workspace. Please try again.': 'errors.deleteWorkspaceFailed',
+  'You do not have permission to duplicate this workspace.': 'errors.duplicateWorkspaceForbidden',
+  'We could not duplicate this workspace. Please try again.': 'errors.duplicateWorkspaceFailed',
   'You are already a member of this workspace.': 'errors.alreadyMember',
   'We could not load your workspaces. Please try again.': 'errors.loadWorkspaces',
   'You do not have permission to view this workspace.': 'errors.workspaceViewForbidden',

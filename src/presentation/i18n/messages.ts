@@ -83,6 +83,7 @@ const en = {
   'workspaces.card.updated': 'Updated {when}',
   'workspaces.card.noDescription': 'No description yet',
   'workspaces.card.open': 'Open workspace',
+  'workspaces.card.duplicate': 'Duplicate',
   'workspaces.card.delete': 'Delete',
   'workspaces.deleteDialog.title': 'Delete workspace?',
   'workspaces.deleteDialog.description':
@@ -210,6 +211,8 @@ const en = {
   'errors.createWorkspaceForbidden': 'You do not have permission to create workspaces.',
   'errors.deleteWorkspaceForbidden': 'You do not have permission to delete this workspace.',
   'errors.deleteWorkspaceFailed': 'We could not delete this workspace. Please try again.',
+  'errors.duplicateWorkspaceForbidden': 'You do not have permission to duplicate this workspace.',
+  'errors.duplicateWorkspaceFailed': 'We could not duplicate this workspace. Please try again.',
   'errors.alreadyMember': 'You are already a member of this workspace.',
   'errors.loadWorkspaces': 'We could not load your workspaces. Please try again.',
   'errors.workspaceViewForbidden': 'You do not have permission to view this workspace.',
@@ -418,6 +421,7 @@ const es: Record<TranslationKey, string> = {
   'workspaces.card.updated': 'Actualizado {when}',
   'workspaces.card.noDescription': 'Todavía sin descripción',
   'workspaces.card.open': 'Abrir workspace',
+  'workspaces.card.duplicate': 'Duplicar',
   'workspaces.card.delete': 'Eliminar',
   'workspaces.deleteDialog.title': '¿Eliminar workspace?',
   'workspaces.deleteDialog.description':
@@ -549,6 +553,8 @@ const es: Record<TranslationKey, string> = {
   'errors.createWorkspaceForbidden': 'No tienes permiso para crear workspaces.',
   'errors.deleteWorkspaceForbidden': 'No tienes permiso para eliminar este workspace.',
   'errors.deleteWorkspaceFailed': 'No pudimos eliminar este workspace. Inténtalo de nuevo.',
+  'errors.duplicateWorkspaceForbidden': 'No tienes permiso para duplicar este workspace.',
+  'errors.duplicateWorkspaceFailed': 'No pudimos duplicar este workspace. Inténtalo de nuevo.',
   'errors.alreadyMember': 'Ya eres miembro de este workspace.',
   'errors.loadWorkspaces': 'No pudimos cargar tus workspaces. Inténtalo de nuevo.',
   'errors.workspaceViewForbidden': 'No tienes permiso para ver este workspace.',
