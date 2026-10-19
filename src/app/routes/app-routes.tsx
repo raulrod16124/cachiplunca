@@ -25,7 +25,7 @@ import type {
   ListWorkspaces,
   LoadWorkspaceElements,
 } from '../../application/queries';
-import type { PresencePort } from '../../application/ports';
+import type { FileDownloadPort, PresencePort } from '../../application/ports';
 import type {
   ElementPersistenceOrchestrator,
   RealtimeSubscriptionManager,
@@ -65,6 +65,7 @@ export interface AppRoutesProps {
   readonly removeMember?: RemoveMember;
   readonly leaveWorkspace?: LeaveWorkspace;
   readonly updateWorkspace?: UpdateWorkspace;
+  readonly fileDownload?: FileDownloadPort;
 }
 
 export function AppRoutes({
@@ -93,6 +94,7 @@ export function AppRoutes({
   removeMember,
   leaveWorkspace,
   updateWorkspace,
+  fileDownload,
 }: AppRoutesProps): ReactNode {
   return (
     <Routes>
@@ -156,6 +158,7 @@ export function AppRoutes({
               removeMember={removeMember}
               leaveWorkspace={leaveWorkspace}
               updateWorkspace={updateWorkspace}
+              fileDownload={fileDownload}
             />
           }
         />

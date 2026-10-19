@@ -2,6 +2,7 @@ import {
   Avatar,
   Badge,
   Button,
+  DropdownMenu,
   IconButton,
   Inline,
   Popover,
@@ -9,7 +10,14 @@ import {
   Tooltip,
   VisuallyHidden,
 } from '@raulrod/ui';
-import { ArrowLeft, CircleQuestionMark, Share2 } from '@raulrod/icons';
+import {
+  ArrowLeft,
+  CircleQuestionMark,
+  Download,
+  FileJson,
+  FileText,
+  Share2,
+} from '@raulrod/icons';
 import type { ReactNode } from 'react';
 import styled from 'styled-components';
 import type { AuthUser, RealtimeConnectionStatus } from '../../../../application/ports';
@@ -193,6 +201,25 @@ const HelpButton = styled(IconButton)`
   flex: none;
 `;
 
+const ExportTrigger = styled(DropdownMenu.Trigger)`
+  && {
+    padding: ${({ theme }) => theme.space[1]};
+    border: 1px solid ${({ theme }) => theme.color.border.strong};
+    border-radius: ${({ theme }) => theme.radius.md};
+    background: ${({ theme }) => theme.color.action.secondary.background};
+    color: ${({ theme }) => theme.color.action.secondary.text};
+    font-family: ${({ theme }) => theme.font.family.sans};
+    font-size: ${({ theme }) => theme.font.size.sm};
+    font-weight: ${({ theme }) => theme.font.weight.medium};
+    line-height: ${({ theme }) => theme.font.leading.none};
+    letter-spacing: ${({ theme }) => theme.font.tracking.normal};
+  }
+
+  &&:hover {
+    background: ${({ theme }) => theme.color.action.secondary.backgroundHover};
+  }
+`;
+
 export interface WorkspaceTopBarProps {
   readonly workspace: Workspace;
   readonly role: MembershipRole | undefined;
@@ -205,11 +232,14 @@ export interface WorkspaceTopBarProps {
   readonly logoutUser: LogoutUser;
   readonly onShare?: () => void;
   readonly onShowShortcuts?: () => void;
+  readonly onExportJson?: () => void;
+  readonly onExportPdf?: () => void;
   readonly onRename?: (name: string) => Promise<UpdateWorkspaceResult>;
   readonly readOnly?: boolean;
   readonly persistenceErrorMessage: string | null;
   readonly collaborationErrorMessage: string | null;
   readonly creationErrorMessage: string | null;
+  readonly exportErrorMessage?: string | null;
 }
 
 export function WorkspaceTopBar({
@@ -224,11 +254,14 @@ export function WorkspaceTopBar({
   logoutUser,
   onShare,
   onShowShortcuts,
+  onExportJson,
+  onExportPdf,
   onRename,
   readOnly = false,
   persistenceErrorMessage,
   collaborationErrorMessage,
   creationErrorMessage,
+  exportErrorMessage = null,
 }: WorkspaceTopBarProps): ReactNode {
   const { t } = useI18n();
   const syncBadge = describeSyncStatus(syncStatus);
@@ -246,7 +279,9 @@ export function WorkspaceTopBar({
   const hasErrors =
     persistenceErrorMessage !== null ||
     collaborationErrorMessage !== null ||
-    creationErrorMessage !== null;
+    creationErrorMessage !== null ||
+    exportErrorMessage !== null;
+  const canExport = onExportJson !== undefined && onExportPdf !== undefined;
 
   return (
     <Overlay>
@@ -376,6 +411,36 @@ export function WorkspaceTopBar({
               </ShareButton>
             </Tooltip>
           )}
+          {canExport ? (
+            <DropdownMenu>
+              <Tooltip content={t('canvas.export.label')} placement="bottom">
+                <ExportTrigger
+                  className="rr-icon-button rr-icon-button--secondary rr-icon-button--size-sm"
+                  aria-label={t('canvas.export.label')}
+                >
+                  <span className="rr-icon-button__icon">
+                    <Download aria-hidden="true" size={16} />
+                  </span>
+                </ExportTrigger>
+              </Tooltip>
+              <DropdownMenu.Content placement="bottom-end">
+                <DropdownMenu.Item
+                  data-testid="export-json"
+                  onSelect={onExportJson}
+                  startIcon={<FileJson aria-hidden="true" size={16} />}
+                >
+                  {t('canvas.export.json')}
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  data-testid="export-pdf"
+                  onSelect={onExportPdf}
+                  startIcon={<FileText aria-hidden="true" size={16} />}
+                >
+                  {t('canvas.export.pdf')}
+                </DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu>
+          ) : null}
           {onShowShortcuts === undefined ? null : (
             <Tooltip content={t('shortcuts.open')} placement="bottom">
               <HelpButton
@@ -408,6 +473,11 @@ export function WorkspaceTopBar({
           {creationErrorMessage === null ? null : (
             <Text role="alert" color="color.text.danger">
               {creationErrorMessage}
+            </Text>
+          )}
+          {exportErrorMessage === null ? null : (
+            <Text role="alert" color="color.text.danger">
+              {exportErrorMessage}
             </Text>
           )}
         </ErrorList>

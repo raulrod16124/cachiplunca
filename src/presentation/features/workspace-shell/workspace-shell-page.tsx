@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import type { PresencePort } from '../../../application/ports';
+import type { FileDownloadPort, PresencePort } from '../../../application/ports';
 import type {
   ChangeMemberRole,
   InviteMember,
@@ -40,6 +40,7 @@ export interface WorkspaceShellPageProps {
   readonly removeMember?: RemoveMember;
   readonly leaveWorkspace?: LeaveWorkspace;
   readonly updateWorkspace?: UpdateWorkspace;
+  readonly fileDownload?: FileDownloadPort;
 }
 
 export function WorkspaceShellPage({
@@ -58,6 +59,7 @@ export function WorkspaceShellPage({
   removeMember,
   leaveWorkspace,
   updateWorkspace,
+  fileDownload,
 }: WorkspaceShellPageProps): ReactNode {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const navigate = useNavigate();
@@ -90,6 +92,7 @@ export function WorkspaceShellPage({
       removeMember={removeMember}
       leaveWorkspace={leaveWorkspace}
       updateWorkspace={updateWorkspace}
+      fileDownload={fileDownload}
       onBack={() => navigate('/workspaces')}
     />
   );

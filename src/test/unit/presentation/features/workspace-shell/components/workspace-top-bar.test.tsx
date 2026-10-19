@@ -263,6 +263,80 @@ describe('WorkspaceTopBar', () => {
     expect(onShowShortcuts).toHaveBeenCalledTimes(1);
   });
 
+  it('exposes JSON and PDF export actions to viewers', async () => {
+    const onExportJson = jest.fn();
+    const onExportPdf = jest.fn();
+
+    render(
+      <WorkspaceTopBar
+        workspace={WORKSPACE}
+        role="viewer"
+        onBack={jest.fn()}
+        syncStatus="idle"
+        connectionStatus="connected"
+        connectedUsers={[]}
+        currentUser={CURRENT_USER}
+        logoutUser={LOGOUT_USER}
+        onExportJson={onExportJson}
+        onExportPdf={onExportPdf}
+        persistenceErrorMessage={null}
+        collaborationErrorMessage={null}
+        creationErrorMessage={null}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Export board' }));
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Export as JSON' }));
+    expect(onExportJson).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Export board' }));
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Export as PDF' }));
+    expect(onExportPdf).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides the export action when no handlers are wired', () => {
+    render(
+      <WorkspaceTopBar
+        workspace={WORKSPACE}
+        role="editor"
+        onBack={jest.fn()}
+        syncStatus="idle"
+        connectionStatus="connected"
+        connectedUsers={[]}
+        currentUser={CURRENT_USER}
+        logoutUser={LOGOUT_USER}
+        persistenceErrorMessage={null}
+        collaborationErrorMessage={null}
+        creationErrorMessage={null}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Export board' })).not.toBeInTheDocument();
+  });
+
+  it('announces export errors next to the other board errors', () => {
+    render(
+      <WorkspaceTopBar
+        workspace={WORKSPACE}
+        role="editor"
+        onBack={jest.fn()}
+        syncStatus="idle"
+        connectionStatus="connected"
+        connectedUsers={[]}
+        currentUser={CURRENT_USER}
+        logoutUser={LOGOUT_USER}
+        persistenceErrorMessage={null}
+        collaborationErrorMessage={null}
+        creationErrorMessage={null}
+        exportErrorMessage="We could not export the board. Try again."
+      />,
+    );
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'We could not export the board. Try again.',
+    );
+  });
+
   it('announces persistence and collaboration errors', () => {
     render(
       <WorkspaceTopBar

@@ -86,6 +86,9 @@ export interface WorkspaceShellLayoutProps {
   readonly collaborationErrorMessage: string | null;
   readonly creationErrorMessage: string | null;
   readonly onShare?: () => void;
+  readonly onExportJson?: () => void;
+  readonly onExportPdf?: () => void;
+  readonly exportErrorMessage?: string | null;
   readonly onRename?: (name: string) => Promise<UpdateWorkspaceResult>;
   readonly readOnly?: boolean;
   readonly accessErrorMessage?: string | null;
@@ -126,6 +129,9 @@ export function WorkspaceShellLayout({
   collaborationErrorMessage,
   creationErrorMessage,
   onShare,
+  onExportJson,
+  onExportPdf,
+  exportErrorMessage = null,
   onRename,
   readOnly = false,
   accessErrorMessage = null,
@@ -181,10 +187,13 @@ export function WorkspaceShellLayout({
           logoutUser={logoutUser}
           onShare={onShare}
           onShowShortcuts={() => setShortcutsOpen(true)}
+          onExportJson={onExportJson}
+          onExportPdf={onExportPdf}
           onRename={onRename}
           persistenceErrorMessage={persistenceErrorMessage}
           collaborationErrorMessage={collaborationErrorMessage}
           creationErrorMessage={creationErrorMessage}
+          exportErrorMessage={exportErrorMessage}
         />
         <Canvas
           store={canvasViewportStore}

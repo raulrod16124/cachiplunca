@@ -28,3 +28,4 @@ export * from './optimistic-element-updates';
 export * from './element-history';
 export * from './element-conflict-resolution';
 export * from './user-settings-store';
+export * from './board-export';

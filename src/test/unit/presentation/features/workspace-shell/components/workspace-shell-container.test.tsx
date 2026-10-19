@@ -37,7 +37,11 @@ import type {
   ElementPersistenceOrchestrator,
   RealtimeSubscriptionManager,
 } from '../../../../../../application/services';
-import type { AuthUser } from '../../../../../../application/ports';
+import type {
+  AuthUser,
+  FileDownloadPort,
+  TextFileDownload,
+} from '../../../../../../application/ports';
 import { createTextElement, richTextFromPlain } from '../../../../../../domain/element';
 import { Presence } from '../../../../../../domain/collaboration';
 import {
@@ -168,6 +172,7 @@ interface RenderOptions {
   readonly removeMember?: RemoveMember;
   readonly leaveWorkspace?: LeaveWorkspace;
   readonly updateWorkspace?: UpdateWorkspace;
+  readonly fileDownload?: FileDownloadPort;
 }
 
 function renderContainer(getWorkspace: GetWorkspace, options: RenderOptions = {}) {
@@ -203,6 +208,7 @@ function renderContainer(getWorkspace: GetWorkspace, options: RenderOptions = {}
         removeMember={options.removeMember}
         leaveWorkspace={options.leaveWorkspace}
         updateWorkspace={options.updateWorkspace}
+        fileDownload={options.fileDownload}
       />
     </MemoryRouter>,
   );
@@ -1420,6 +1426,80 @@ describe('WorkspaceShellContainer', () => {
 
     expect(screen.getByTestId('connected-users')).toBeInTheDocument();
     expect(screen.getByText('1 connected')).toBeInTheDocument();
+  });
+
+  it('exports the current board as versioned JSON for a viewer', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const downloadTextFile = jest.fn<void, [TextFileDownload]>();
+    const fileDownload: FileDownloadPort = { downloadTextFile };
+
+    renderContainer(getWorkspace, {
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [TEXT_ELEMENT],
+      }),
+      localUserId: 'user-local',
+      role: 'viewer',
+      fileDownload,
+    });
+
+    await screen.findByTestId('canvas-item-el-1');
+    fireEvent.click(await screen.findByRole('button', { name: 'Export board' }));
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Export as JSON' }));
+
+    expect(downloadTextFile).toHaveBeenCalledTimes(1);
+
+    const file = downloadTextFile.mock.calls[0]?.[0];
+
+    if (file === undefined) {
+      throw new Error('Expected a downloaded file');
+    }
+
+    expect(file.fileName).toMatch(/^roadmap-q4-\d{4}-\d{2}-\d{2}\.json$/);
+    expect(file.mimeType).toBe('application/json');
+
+    const parsed = JSON.parse(file.content) as {
+      version: number;
+      workspaceId: string;
+      elements: readonly { readonly id: string; readonly type: string }[];
+    };
+
+    expect(parsed.version).toBe(1);
+    expect(parsed.workspaceId).toBe('ws-test');
+    expect(parsed.elements).toEqual([expect.objectContaining({ id: 'el-1', type: 'text' })]);
+    expect(file.content).not.toContain('createdBy');
+  });
+
+  it('prints a printable snapshot of the board from the export menu', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const print = jest.fn();
+    const originalPrint = window.print;
+
+    window.print = print;
+
+    try {
+      renderContainer(getWorkspace, {
+        loadWorkspaceElements: createLoadWorkspaceElements({
+          status: 'ok',
+          elements: [TEXT_ELEMENT],
+        }),
+        localUserId: 'user-local',
+        role: 'viewer',
+        fileDownload: { downloadTextFile: jest.fn() },
+      });
+
+      await screen.findByTestId('canvas-item-el-1');
+      fireEvent.click(await screen.findByRole('button', { name: 'Export board' }));
+      fireEvent.click(await screen.findByRole('menuitem', { name: 'Export as PDF' }));
+
+      await waitFor(() => expect(print).toHaveBeenCalledTimes(1));
+
+      const printView = await screen.findByTestId('board-print-view');
+      expect(printView).toHaveTextContent('Roadmap Q4');
+      expect(printView).toHaveTextContent('Hello');
+    } finally {
+      window.print = originalPrint;
+    }
   });
 
   it('does not render the share entry point when no share services are wired', async () => {

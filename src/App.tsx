@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { createAuthServices, type AuthServices } from './app/config/auth-services';
 import { createElementServices, type ElementServices } from './app/config/element-services';
+import { createExportServices, type ExportServices } from './app/config/export-services';
 import {
   createInvitationServices,
   type InvitationServices,
@@ -28,6 +29,7 @@ interface AppContentProps {
   readonly presenceServices: PresenceServices;
   readonly invitationServices: InvitationServices;
   readonly userSettingsServices: UserSettingsServices;
+  readonly exportServices: ExportServices;
 }
 
 function AppContent({
@@ -37,6 +39,7 @@ function AppContent({
   presenceServices,
   invitationServices,
   userSettingsServices,
+  exportServices,
 }: AppContentProps) {
   const session = useSession();
   const userId = session.status === 'authenticated' ? UserId.create(session.user.uid) : null;
@@ -77,6 +80,7 @@ function AppContent({
             removeMember={workspaceServices.removeMember}
             leaveWorkspace={workspaceServices.leaveWorkspace}
             updateWorkspace={workspaceServices.updateWorkspace}
+            fileDownload={exportServices.fileDownload}
           />
         </ProfileServicesProvider>
       </I18nProvider>
@@ -91,6 +95,7 @@ function App() {
   const [presenceServices] = useState(createPresenceServices);
   const [invitationServices] = useState(createInvitationServices);
   const [userSettingsServices] = useState(() => createUserSettingsServices(getFirebaseFirestore()));
+  const [exportServices] = useState(createExportServices);
 
   const routerBasename = import.meta.env.BASE_URL.replace(/\/$/, '') || undefined;
 
@@ -105,6 +110,7 @@ function App() {
             presenceServices={presenceServices}
             invitationServices={invitationServices}
             userSettingsServices={userSettingsServices}
+            exportServices={exportServices}
           />
         </SessionProvider>
       </BrowserRouter>

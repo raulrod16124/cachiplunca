@@ -26,10 +26,12 @@ import type {
 } from '../../../../application/queries';
 import {
   applyRemoteElementChanges,
+  boardExportToJson,
   buildConnectorCreateInput,
   buildElementCreateInput,
   buildFreeConnectorCreateInput,
   connectorCandidateIds,
+  createBoardExportFileName,
   createBoardWindowCommand,
   createCanvasViewportStore,
   createCommandHistory,
@@ -47,6 +49,7 @@ import {
   EMPTY_REMOTE_CURSORS_STORE,
   resolveElementCreatePosition,
   rollbackFailedMutation,
+  serializeBoardExport,
 } from '../../../../application/services';
 import type {
   CanvasViewportStore,
@@ -64,6 +67,7 @@ import type {
 } from '../../../../application/services';
 import type {
   AuthUser,
+  FileDownloadPort,
   PresencePort,
   RealtimeConnectionStatus,
 } from '../../../../application/ports';
@@ -83,6 +87,7 @@ import type { TaskFormValues } from '../../../canvas/components/task-form-dialog
 import { ShareDialog } from '../../sharing';
 import { localizeMessage, useI18n } from '../../../i18n';
 import { WorkspaceShellLayout } from './workspace-shell-layout';
+import { BoardPrintView } from './board-print-view';
 import {
   describeCollaborationSyncError,
   describeCreateElementError,
@@ -118,6 +123,7 @@ export interface WorkspaceShellContainerProps {
   readonly removeMember?: RemoveMember;
   readonly leaveWorkspace?: LeaveWorkspace;
   readonly updateWorkspace?: UpdateWorkspace;
+  readonly fileDownload?: FileDownloadPort;
 }
 
 interface TransformGesture {
@@ -148,6 +154,7 @@ export function WorkspaceShellContainer({
   removeMember,
   leaveWorkspace,
   updateWorkspace,
+  fileDownload,
 }: WorkspaceShellContainerProps): ReactNode {
   const { t } = useI18n();
   const [status, setStatus] = useState<'loading' | 'notFound' | 'error' | 'success'>('loading');
@@ -165,6 +172,8 @@ export function WorkspaceShellContainer({
   const [persistenceError, setPersistenceError] = useState<AppError | null>(null);
   const [collaborationError, setCollaborationError] = useState<AppError | null>(null);
   const [creationError, setCreationError] = useState<AppError | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [printRequest, setPrintRequest] = useState<Date | null>(null);
   const [syncStatus, setSyncStatus] = useState<PersistenceSyncStatus>('idle');
   const elementsRef = useRef<readonly Element[]>([]);
   const canvasViewportStoreRef = useRef<CanvasViewportStore>(
@@ -726,6 +735,65 @@ export function WorkspaceShellContainer({
     }
   }, [loadWorkspaceElements, workspaceId]);
 
+  const workspaceName = result?.status === 'ok' ? result.workspace.name : '';
+
+  const handleExportJson = useCallback((): void => {
+    if (fileDownload === undefined || workspaceName.length === 0) {
+      return;
+    }
+
+    try {
+      const exportedAt = new Date();
+      const boardExport = serializeBoardExport({
+        workspaceId,
+        exportedAt,
+        elements: elementsRef.current,
+      });
+
+      fileDownload.downloadTextFile({
+        fileName: createBoardExportFileName(workspaceName, exportedAt, 'json'),
+        content: boardExportToJson(boardExport),
+        mimeType: 'application/json',
+      });
+      setExportError(null);
+    } catch {
+      setExportError(t('canvas.export.error'));
+    }
+  }, [fileDownload, workspaceId, workspaceName, t]);
+
+  const handleExportPdf = useCallback((): void => {
+    setExportError(null);
+    setPrintRequest(new Date());
+  }, []);
+
+  useEffect(() => {
+    if (printRequest === null) {
+      return;
+    }
+
+    const originalTitle = document.title;
+
+    document.title = createBoardExportFileName(workspaceName, printRequest, 'pdf').replace(
+      /\.pdf$/,
+      '',
+    );
+
+    function handleAfterPrint(): void {
+      setPrintRequest(null);
+    }
+
+    window.addEventListener('afterprint', handleAfterPrint);
+    const frame = window.requestAnimationFrame(() => {
+      window.print();
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener('afterprint', handleAfterPrint);
+      document.title = originalTitle;
+    };
+  }, [printRequest, workspaceName]);
+
   useEffect(() => {
     void fetchWorkspace();
   }, [fetchWorkspace]);
@@ -970,6 +1038,9 @@ export function WorkspaceShellContainer({
           }
           onRetryRole={roleStatus === 'failed' ? handleRetryRole : undefined}
           onShare={canShare ? () => setShareOpen(true) : undefined}
+          onExportJson={fileDownload === undefined ? undefined : handleExportJson}
+          onExportPdf={fileDownload === undefined ? undefined : handleExportPdf}
+          exportErrorMessage={exportError}
           onRename={canRename ? handleRenameWorkspace : undefined}
         />
         {canShare ? (
@@ -991,6 +1062,13 @@ export function WorkspaceShellContainer({
             onLeft={onBack}
           />
         ) : null}
+        {printRequest === null ? null : (
+          <BoardPrintView
+            workspaceName={result.workspace.name}
+            elements={elements}
+            exportedAt={printRequest}
+          />
+        )}
       </>
     );
   }

@@ -90,7 +90,7 @@ Definition of Done:
 | PBL-002 | Borrar workspace desde la UI                 | R1      | P0        | S        | —              | Sí  | DONE   |
 | PBL-003 | Paleta de colores de nota                    | R1      | P1        | S        | —              | Sí  | DONE   |
 | PBL-004 | Ayuda de atajos                              | R1      | P2        | S        | —              | Sí  | DONE   |
-| PBL-005 | Export JSON y PDF del tablero                | R1      | P1        | S        | —              | Sí  | TODO   |
+| PBL-005 | Export JSON y PDF del tablero                | R1      | P1        | S        | —              | Sí  | DONE   |
 | PBL-006 | Duplicar workspace                           | R1      | P1        | M        | —              | No  | TODO   |
 | PBL-007 | Plantillas de arranque y empty states        | R1      | P0        | M        | —              | No  | TODO   |
 | PBL-008 | Command palette (Cmd/Ctrl + K)               | R1      | P1        | M        | —              | No  | TODO   |
@@ -275,7 +275,7 @@ Hacer descubribles los atajos existentes sin añadir funcionalidad nueva al canv
 
 ### PBL-005 — Export JSON y PDF del tablero
 
-**Priority:** P1 · **Effort:** S · **Depends:** — · **Status:** TODO · **Quick win**
+**Priority:** P1 · **Effort:** S · **Depends:** — · **Status:** DONE · **Quick win**
 
 #### Objetivo
 
@@ -291,11 +291,11 @@ Permitir que el plan salga del canvas para compartirse, imprimirse o archivarse.
 
 #### Criterios de aceptación
 
-- [ ] El JSON incluye todos los elementos y no incluye datos sensibles de usuarios.
-- [ ] La serialización vive en una función pura con tests.
-- [ ] La descarga funciona en navegador.
-- [ ] La vista imprimible oculta controles y mantiene el contenido legible.
-- [ ] No se añaden dependencias nuevas.
+- [x] El JSON incluye todos los elementos y no incluye datos sensibles de usuarios.
+- [x] La serialización vive en una función pura con tests.
+- [x] La descarga funciona en navegador.
+- [x] La vista imprimible oculta controles y mantiene el contenido legible.
+- [x] No se añaden dependencias nuevas.
 
 #### Fuera de alcance
 
@@ -803,13 +803,14 @@ Cerrar el bucle de invitaciones sin introducir email ni backend nuevo.
 
 Añadir una línea por sesión. El detalle técnico extenso sigue viviendo en `docs/adr/session-log.md` cuando haya decisiones relevantes.
 
-| Fecha      | Tarea   | Resultado | Notas                                                                                                                                                                            |
-| ---------- | ------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-10-19 | —       | Creado    | Creación del backlog post-MVP y priorización inicial.                                                                                                                            |
-| 2026-10-19 | PBL-002 | DONE      | Borrado de workspace desde la card con confirmación; roles por workspace desde `ListWorkspaces`; unit, integración y E2E.                                                        |
-| 2026-10-19 | PBL-001 | DONE      | Lecturas de workspaces/invitations acotadas por membership/destinatario; accept con `email_verified`; flujo de verificación con envío y refresh; rules, unit, integración y E2E. |
-| 2026-10-19 | PBL-003 | DONE      | Paleta de 5 colores de tema en el menú contextual de nota, reset a por defecto, `color: null` en `UpdateElement`, undo/redo, persistencia y E2E.                                 |
-| 2026-10-19 | PBL-004 | DONE      | Ayuda de atajos accesible desde `?` y la top bar; catálogo puro por contextos, i18n en/es, foco atrapado, cierre con `Escape` y tests de contenido.                              |
+| Fecha      | Tarea   | Resultado | Notas                                                                                                                                                                                    |
+| ---------- | ------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-19 | —       | Creado    | Creación del backlog post-MVP y priorización inicial.                                                                                                                                    |
+| 2026-10-19 | PBL-002 | DONE      | Borrado de workspace desde la card con confirmación; roles por workspace desde `ListWorkspaces`; unit, integración y E2E.                                                                |
+| 2026-10-19 | PBL-001 | DONE      | Lecturas de workspaces/invitations acotadas por membership/destinatario; accept con `email_verified`; flujo de verificación con envío y refresh; rules, unit, integración y E2E.         |
+| 2026-10-19 | PBL-003 | DONE      | Paleta de 5 colores de tema en el menú contextual de nota, reset a por defecto, `color: null` en `UpdateElement`, undo/redo, persistencia y E2E.                                         |
+| 2026-10-19 | PBL-004 | DONE      | Ayuda de atajos accesible desde `?` y la top bar; catálogo puro por contextos, i18n en/es, foco atrapado, cierre con `Escape` y tests de contenido.                                      |
+| 2026-10-19 | PBL-005 | DONE      | Export JSON versionado y descarga desde browser; vista imprimible escalada con `window.print()`; disponible para Owner, Editor y Viewer; serializer puro, i18n, unit, integración y E2E. |
 
 ---
 
