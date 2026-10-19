@@ -180,6 +180,7 @@ export interface CanvasProps {
   readonly onCreateTask?: (values: TaskFormValues) => ElementId | void;
   readonly onUpdateElement?: (input: UpdateElementInput) => void;
   readonly remoteCursors?: readonly RemoteCursor[];
+  readonly userColors?: ReadonlyMap<string, string>;
   readonly onCursorMove?: (position: Position) => void;
   readonly readOnly?: boolean;
 }
@@ -204,6 +205,7 @@ export function Canvas({
   onCreateTask,
   onUpdateElement,
   remoteCursors = [],
+  userColors,
   onCursorMove,
   readOnly = false,
 }: CanvasProps): ReactElement {
@@ -947,7 +949,7 @@ export function Canvas({
           </Hint>
         ) : null}
       </World>
-      <RemoteCursorsOverlay cursors={remoteCursors} viewport={viewport} />
+      <RemoteCursorsOverlay cursors={remoteCursors} viewport={viewport} userColors={userColors} />
       <FloatingTextToolbar
         scopeRef={containerRef}
         formatTarget={formatTarget}

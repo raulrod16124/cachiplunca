@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useMemo, useRef } from 'react';
 import styled from 'styled-components';
 import { Button, Text } from '@raulrod/ui';
 import type { Workspace } from '../../../../domain/workspace';
@@ -19,6 +20,7 @@ import type {
   SelectionStore,
 } from '../../../../application/services';
 import type { AuthUser, RealtimeConnectionStatus } from '../../../../application/ports';
+import { createPresenceColorAssigner } from '../../../collaboration';
 import { Canvas } from '../../../canvas';
 import type { TaskFormValues } from '../../../canvas/components/task-form-dialog';
 import { WorkspaceTopBar } from './workspace-top-bar';
@@ -124,6 +126,29 @@ export function WorkspaceShellLayout({
   accessErrorMessage = null,
   onRetryRole,
 }: WorkspaceShellLayoutProps): ReactNode {
+  const colorAssignerRef = useRef(createPresenceColorAssigner());
+  const userIds = useMemo(() => {
+    const ids = new Set<string>();
+
+    for (const presence of connectedUsers) {
+      ids.add(presence.userId.value);
+    }
+    for (const cursor of remoteCursors) {
+      ids.add(cursor.userId);
+    }
+
+    return [...ids].sort((left, right) => left.localeCompare(right));
+  }, [connectedUsers, remoteCursors]);
+  const userColors = useMemo(() => {
+    const colors = new Map<string, string>();
+
+    for (const userId of userIds) {
+      colors.set(userId, colorAssignerRef.current.colorFor(userId));
+    }
+
+    return colors;
+  }, [userIds]);
+
   return (
     <Shell>
       {accessErrorMessage === null ? null : (
@@ -145,6 +170,7 @@ export function WorkspaceShellLayout({
           syncStatus={syncStatus}
           connectionStatus={connectionStatus}
           connectedUsers={connectedUsers}
+          userColors={userColors}
           currentUser={currentUser}
           logoutUser={logoutUser}
           onShare={onShare}
@@ -172,6 +198,7 @@ export function WorkspaceShellLayout({
           onUpdateElement={onUpdateElement}
           generateId={generateElementId}
           remoteCursors={remoteCursors}
+          userColors={userColors}
           onCursorMove={onCursorMove}
           readOnly={readOnly}
         />

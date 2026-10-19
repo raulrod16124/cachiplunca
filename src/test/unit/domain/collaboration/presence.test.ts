@@ -90,7 +90,60 @@ describe('Presence', () => {
       workspaceId: 'ws-1',
       lastSeenAt: '2024-01-01T00:00:00.000Z',
       cursor: null,
+      displayName: null,
     });
+  });
+
+  it('normalizes the display name and drops blank values', () => {
+    const named = Presence.create({
+      userId: USER_ID,
+      workspaceId: WORKSPACE_ID,
+      displayName: '  Ada Lovelace  ',
+    });
+    const blank = Presence.create({
+      userId: USER_ID,
+      workspaceId: WORKSPACE_ID,
+      displayName: '   ',
+    });
+
+    expect(named.displayName).toBe('Ada Lovelace');
+    expect(blank.displayName).toBeNull();
+  });
+
+  it('keeps the display name across refresh and cursor moves', () => {
+    const presence = Presence.create({
+      userId: USER_ID,
+      workspaceId: WORKSPACE_ID,
+      displayName: 'Ada',
+    });
+
+    expect(presence.refresh(new Date('2024-01-01T00:00:05.000Z')).displayName).toBe('Ada');
+    expect(presence.moveCursor(Position.create(1, 2)).displayName).toBe('Ada');
+  });
+
+  it('compares display names by value', () => {
+    const lastSeenAt = new Date('2024-01-01T00:00:00.000Z');
+    const named = Presence.create({
+      userId: USER_ID,
+      workspaceId: WORKSPACE_ID,
+      lastSeenAt,
+      displayName: 'Ada',
+    });
+    const same = Presence.create({
+      userId: USER_ID,
+      workspaceId: WORKSPACE_ID,
+      lastSeenAt,
+      displayName: 'Ada',
+    });
+    const renamed = Presence.create({
+      userId: USER_ID,
+      workspaceId: WORKSPACE_ID,
+      lastSeenAt,
+      displayName: 'Grace',
+    });
+
+    expect(named.equals(same)).toBe(true);
+    expect(named.equals(renamed)).toBe(false);
   });
 
   it('creates a presence without a cursor by default', () => {

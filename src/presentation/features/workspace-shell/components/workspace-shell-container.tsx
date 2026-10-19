@@ -66,7 +66,7 @@ import type {
 } from '../../../../application/ports';
 import type { Element, ElementType } from '../../../../domain/element';
 import type { MembershipRole } from '../../../../domain/membership';
-import { Presence } from '../../../../domain/collaboration';
+import { Presence, resolveUserDisplayName } from '../../../../domain/collaboration';
 import { Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
 import { useWorkspacePermissions } from '../../../hooks';
 import type { ElementId } from '../../../../domain/shared';
@@ -180,6 +180,11 @@ export function WorkspaceShellContainer({
     [presencePort],
   );
 
+  const localDisplayName = resolveUserDisplayName({
+    displayName: currentUser?.displayName,
+    email: currentUser?.email,
+  });
+
   const remoteCursorsStore = useMemo<RemoteCursorsStore>(() => {
     if (sharedPresencePort === undefined || localUserId === undefined) {
       return EMPTY_REMOTE_CURSORS_STORE;
@@ -220,12 +225,13 @@ export function WorkspaceShellContainer({
       basePresence: Presence.create({
         userId: UserId.create(localUserId),
         workspaceId: WorkspaceId.create(workspaceId),
+        displayName: localDisplayName,
       }),
       onError: (error) => {
         setCollaborationError(error);
       },
     });
-  }, [presencePort, localUserId, workspaceId]);
+  }, [sharedPresencePort, localUserId, localDisplayName, workspaceId]);
 
   const handleCursorMove = useCallback(
     (position: Position) => {

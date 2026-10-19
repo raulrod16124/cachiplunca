@@ -11,16 +11,19 @@ export interface PresenceDocument {
   readonly userId: string;
   readonly lastSeenAt: Date;
   readonly cursor?: PresenceCursorDocument;
+  readonly displayName?: string;
 }
 
 export function toPresenceDocument(presence: Presence): PresenceDocument {
   const cursor = presence.cursor;
+  const displayName = presence.displayName;
 
   return {
     workspaceId: presence.workspaceId.value,
     userId: presence.userId.value,
     lastSeenAt: presence.lastSeenAt,
     ...(cursor === null ? {} : { cursor: { x: cursor.x, y: cursor.y } }),
+    ...(displayName === null ? {} : { displayName }),
   };
 }
 
@@ -34,6 +37,7 @@ export function fromPresenceDocument(data: unknown): Presence {
     workspaceId: WorkspaceId.create(readString(data.workspaceId, 'workspaceId')),
     lastSeenAt: readDate(data.lastSeenAt, 'lastSeenAt'),
     cursor: readCursor(data.cursor),
+    displayName: readOptionalString(data.displayName, 'displayName'),
   });
 }
 
@@ -60,6 +64,13 @@ function readString(value: unknown, field: string): string {
     throw new Error(`Presence document field "${field}" must be a string`);
   }
   return value;
+}
+
+function readOptionalString(value: unknown, field: string): string | null {
+  if (value === undefined || value === null) {
+    return null;
+  }
+  return readString(value, field);
 }
 
 function readDate(value: unknown, field: string): Date {

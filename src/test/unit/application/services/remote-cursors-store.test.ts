@@ -57,10 +57,33 @@ describe('reduceRemoteCursors', () => {
     expect(next).toEqual([
       {
         userId: 'user-1',
+        displayName: null,
         position: Position.create(10, 20),
         lastSeenAt: new Date('2024-01-01T00:00:00.000Z'),
       },
     ]);
+  });
+
+  it('carries the display name into the remote cursor', () => {
+    const event: PresenceEvent = {
+      workspaceId: WORKSPACE_ID,
+      changes: [
+        {
+          kind: 'joined',
+          presence: Presence.create({
+            userId: UserId.create('user-1'),
+            workspaceId: WORKSPACE_ID,
+            cursor: Position.create(10, 20),
+            displayName: 'Ada Lovelace',
+          }),
+          origin: 'remote',
+        },
+      ],
+    };
+
+    const next = reduceRemoteCursors([], event, WORKSPACE_ID, LOCAL_USER_ID);
+
+    expect(next[0]?.displayName).toBe('Ada Lovelace');
   });
 
   it('ignores a local-origin change', () => {
@@ -93,7 +116,12 @@ describe('reduceRemoteCursors', () => {
 
   it('ignores events from another workspace without changing the reference', () => {
     const initial: readonly RemoteCursor[] = [
-      { userId: 'user-1', position: Position.create(1, 2), lastSeenAt: new Date() },
+      {
+        userId: 'user-1',
+        displayName: null,
+        position: Position.create(1, 2),
+        lastSeenAt: new Date(),
+      },
     ];
 
     const next = reduceRemoteCursors(
@@ -127,6 +155,7 @@ describe('reduceRemoteCursors', () => {
     const initial: readonly RemoteCursor[] = [
       {
         userId: 'user-1',
+        displayName: null,
         position: Position.create(1, 2),
         lastSeenAt: new Date('2024-01-01T00:00:00.000Z'),
       },
@@ -151,6 +180,7 @@ describe('reduceRemoteCursors', () => {
     expect(next).toEqual([
       {
         userId: 'user-1',
+        displayName: null,
         position: Position.create(9, 9),
         lastSeenAt: new Date('2024-01-01T00:00:05.000Z'),
       },
@@ -161,6 +191,7 @@ describe('reduceRemoteCursors', () => {
     const initial: readonly RemoteCursor[] = [
       {
         userId: 'user-1',
+        displayName: null,
         position: Position.create(1, 2),
         lastSeenAt: new Date('2024-01-01T00:00:00.000Z'),
       },
@@ -189,11 +220,13 @@ describe('reduceRemoteCursors', () => {
     const initial: readonly RemoteCursor[] = [
       {
         userId: 'user-1',
+        displayName: null,
         position: Position.create(1, 2),
         lastSeenAt: new Date(),
       },
       {
         userId: 'user-2',
+        displayName: null,
         position: Position.create(3, 4),
         lastSeenAt: new Date(),
       },
@@ -214,7 +247,12 @@ describe('reduceRemoteCursors', () => {
 
   it('orders cursors by user id and does not mutate the input', () => {
     const initial: readonly RemoteCursor[] = [
-      { userId: 'user-2', position: Position.create(1, 2), lastSeenAt: new Date() },
+      {
+        userId: 'user-2',
+        displayName: null,
+        position: Position.create(1, 2),
+        lastSeenAt: new Date(),
+      },
     ];
     const snapshot = [...initial];
 

@@ -7,6 +7,7 @@ export interface PresenceProps {
   readonly workspaceId: WorkspaceId;
   readonly lastSeenAt: Date;
   readonly cursor: Position | null;
+  readonly displayName: string | null;
 }
 
 export class Presence {
@@ -14,12 +15,14 @@ export class Presence {
   private readonly _workspaceId: WorkspaceId;
   private readonly _lastSeenAt: Date;
   private readonly _cursor: Position | null;
+  private readonly _displayName: string | null;
 
   private constructor(props: PresenceProps) {
     this._userId = props.userId;
     this._workspaceId = props.workspaceId;
     this._lastSeenAt = props.lastSeenAt;
     this._cursor = props.cursor;
+    this._displayName = props.displayName;
   }
 
   static create(props: {
@@ -27,6 +30,7 @@ export class Presence {
     readonly workspaceId: WorkspaceId;
     readonly lastSeenAt?: Date;
     readonly cursor?: Position | null;
+    readonly displayName?: string | null;
   }): Presence {
     const lastSeenAt = props.lastSeenAt ?? new Date();
     Presence.validateTimestamp(lastSeenAt);
@@ -36,6 +40,7 @@ export class Presence {
       workspaceId: props.workspaceId,
       lastSeenAt,
       cursor: props.cursor ?? null,
+      displayName: normalizeDisplayName(props.displayName),
     });
   }
 
@@ -47,6 +52,7 @@ export class Presence {
       workspaceId: this._workspaceId,
       lastSeenAt,
       cursor: this._cursor,
+      displayName: this._displayName,
     });
   }
 
@@ -60,6 +66,7 @@ export class Presence {
       workspaceId: this._workspaceId,
       lastSeenAt: new Date(),
       cursor,
+      displayName: this._displayName,
     });
   }
 
@@ -85,6 +92,10 @@ export class Presence {
     return this._cursor;
   }
 
+  get displayName(): string | null {
+    return this._displayName;
+  }
+
   isFor(workspaceId: WorkspaceId): boolean {
     return this._workspaceId.equals(workspaceId);
   }
@@ -94,7 +105,8 @@ export class Presence {
       this._userId.equals(other._userId) &&
       this._workspaceId.equals(other._workspaceId) &&
       this._lastSeenAt.getTime() === other._lastSeenAt.getTime() &&
-      sameCursor(this._cursor, other._cursor)
+      sameCursor(this._cursor, other._cursor) &&
+      this._displayName === other._displayName
     );
   }
 
@@ -103,14 +115,26 @@ export class Presence {
     workspaceId: string;
     lastSeenAt: string;
     cursor: { x: number; y: number } | null;
+    displayName: string | null;
   } {
     return {
       userId: this._userId.value,
       workspaceId: this._workspaceId.value,
       lastSeenAt: this._lastSeenAt.toISOString(),
       cursor: this._cursor === null ? null : this._cursor.toJSON(),
+      displayName: this._displayName,
     };
   }
+}
+
+function normalizeDisplayName(value: string | null | undefined): string | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const trimmed = value.trim();
+
+  return trimmed === '' ? null : trimmed;
 }
 
 function sameCursor(a: Position | null, b: Position | null): boolean {

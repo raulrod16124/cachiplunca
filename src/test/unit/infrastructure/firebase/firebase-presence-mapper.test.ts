@@ -39,6 +39,25 @@ describe('toPresenceDocument', () => {
     expect(document.cursor).toBeUndefined();
   });
 
+  it('maps the display name and round-trips it', () => {
+    const presence = Presence.create({
+      userId: USER_ID,
+      workspaceId: WORKSPACE_ID,
+      lastSeenAt: LAST_SEEN_AT,
+      displayName: 'Ada Lovelace',
+    });
+    const document = toPresenceDocument(presence);
+
+    expect(document.displayName).toBe('Ada Lovelace');
+    expect(fromPresenceDocument(document).displayName).toBe('Ada Lovelace');
+  });
+
+  it('omits the display name when the presence has none', () => {
+    const document = toPresenceDocument(buildPresence());
+
+    expect(document.displayName).toBeUndefined();
+  });
+
   it('maps a cursor position when present and round-trips it', () => {
     const presence = buildPresence().moveCursor(Position.create(12.5, -4));
     const document = toPresenceDocument(presence);
@@ -115,6 +134,27 @@ describe('fromPresenceDocument', () => {
     });
 
     expect(presence.cursor).toBeNull();
+  });
+
+  it('reads a legacy document without a display name as null', () => {
+    const presence = fromPresenceDocument({
+      workspaceId: 'ws-1',
+      userId: 'user-1',
+      lastSeenAt: LAST_SEEN_AT,
+    });
+
+    expect(presence.displayName).toBeNull();
+  });
+
+  it('rejects a display name that is not a string', () => {
+    expect(() =>
+      fromPresenceDocument({
+        workspaceId: 'ws-1',
+        userId: 'user-1',
+        lastSeenAt: LAST_SEEN_AT,
+        displayName: 42,
+      }),
+    ).toThrow('Presence document field "displayName" must be a string');
   });
 
   it('rejects a cursor that is not an object', () => {

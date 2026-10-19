@@ -37,6 +37,7 @@ import type {
   ElementPersistenceOrchestrator,
   RealtimeSubscriptionManager,
 } from '../../../../../../application/services';
+import type { AuthUser } from '../../../../../../application/ports';
 import { createTextElement, richTextFromPlain } from '../../../../../../domain/element';
 import { Presence } from '../../../../../../domain/collaboration';
 import {
@@ -156,6 +157,7 @@ interface RenderOptions {
   readonly realtimeSubscriptionManager?: RealtimeSubscriptionManager;
   readonly presencePort?: FakePresencePort;
   readonly localUserId?: string;
+  readonly currentUser?: AuthUser | null;
   readonly selectionStore?: ReturnType<typeof createSelectionStore>;
   readonly inviteMember?: InviteMember;
   readonly listPendingInvitations?: ListPendingInvitations;
@@ -191,6 +193,7 @@ function renderContainer(getWorkspace: GetWorkspace, options: RenderOptions = {}
         persistenceDebounceMs={options.persistenceDebounceMs}
         presencePort={options.presencePort}
         localUserId={options.localUserId}
+        currentUser={options.currentUser}
         selectionStore={options.selectionStore}
         inviteMember={options.inviteMember}
         listPendingInvitations={options.listPendingInvitations}
@@ -1304,11 +1307,17 @@ describe('WorkspaceShellContainer', () => {
     const { unmount } = renderContainer(getWorkspace, {
       presencePort,
       localUserId: userId.value,
+      currentUser: {
+        uid: userId.value,
+        email: 'ada@example.com',
+        emailVerified: true,
+        displayName: null,
+      },
     });
 
     await screen.findByRole('application', { name: 'Canvas' });
 
-    expect(presencePort.presenceOf(workspaceId, userId)).toBeDefined();
+    expect(presencePort.presenceOf(workspaceId, userId)?.displayName).toBe('ada');
     expect(presencePort.activeSubscriptionCount(workspaceId)).toBe(1);
 
     act(() => {
