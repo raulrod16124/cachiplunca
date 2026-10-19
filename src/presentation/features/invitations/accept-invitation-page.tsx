@@ -34,20 +34,13 @@ export function AcceptInvitationPage({ acceptInvitation }: AcceptInvitationPageP
     }
     startedRef.current = true;
 
-    let cancelled = false;
     void acceptInvitation({
       token: currentToken,
       userId: UserId.create(session.user.uid),
       userEmail: session.user.email ?? '',
     }).then((next) => {
-      if (!cancelled) {
-        setResult(next);
-      }
+      setResult(next);
     });
-
-    return () => {
-      cancelled = true;
-    };
   }, [acceptInvitation, currentToken, session]);
 
   if (session.status === 'loading') {

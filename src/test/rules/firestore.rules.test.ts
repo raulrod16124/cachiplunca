@@ -906,3 +906,62 @@ describe('firestore.rules — presence', () => {
     );
   });
 });
+
+function userSettingsData(userId: string, theme = 'dark') {
+  return {
+    userId,
+    theme,
+    fontSize: 'base',
+    locale: 'system',
+    reducedMotion: false,
+    version: 1,
+    updatedAt: now,
+  };
+}
+
+describe('firestore.rules — user_settings', () => {
+  test('a user can create, read and update their own settings', async () => {
+    const db = dbOf(ROLE_UIDS.owner);
+    await assertSucceeds(
+      setDoc(doc(db, 'user_settings', ROLE_UIDS.owner), userSettingsData(ROLE_UIDS.owner)),
+    );
+    await assertSucceeds(getDoc(doc(db, 'user_settings', ROLE_UIDS.owner)));
+    await assertSucceeds(
+      updateDoc(doc(db, 'user_settings', ROLE_UIDS.owner), { theme: 'light', version: 2 }),
+    );
+  });
+
+  test('a user cannot read or write another user settings', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), 'user_settings', ROLE_UIDS.viewer),
+        userSettingsData(ROLE_UIDS.viewer),
+      );
+    });
+
+    await assertFails(getDoc(doc(dbOf(ROLE_UIDS.owner), 'user_settings', ROLE_UIDS.viewer)));
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.owner), 'user_settings', ROLE_UIDS.viewer),
+        userSettingsData(ROLE_UIDS.viewer),
+      ),
+    );
+  });
+
+  test('a user cannot spoof the userId field of their own settings doc', async () => {
+    await assertFails(
+      setDoc(doc(dbOf(ROLE_UIDS.owner), 'user_settings', ROLE_UIDS.owner), {
+        ...userSettingsData(ROLE_UIDS.owner),
+        userId: ROLE_UIDS.viewer,
+      }),
+    );
+  });
+
+  test('anonymous users cannot read or write settings', async () => {
+    const db = unauthed().firestore();
+    await assertFails(getDoc(doc(db, 'user_settings', ROLE_UIDS.owner)));
+    await assertFails(
+      setDoc(doc(db, 'user_settings', ROLE_UIDS.owner), userSettingsData(ROLE_UIDS.owner)),
+    );
+  });
+});

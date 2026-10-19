@@ -1,9 +1,11 @@
 import { Avatar, DropdownMenu, Inline, Text } from '@raulrod/ui';
-import { LogOut } from '@raulrod/icons';
+import { LogOut, Settings } from '@raulrod/icons';
 import type { ReactNode } from 'react';
+import { useState } from 'react';
 import styled from 'styled-components';
 import type { AuthUser } from '../../../application/ports';
 import type { LogoutUser } from '../../../application/commands';
+import { SettingsModal } from '../settings/settings-modal';
 import { useSignOut } from './use-sign-out';
 
 const Trigger = styled(DropdownMenu.Trigger)`
@@ -40,6 +42,7 @@ export interface AccountMenuProps {
 
 export function AccountMenu({ currentUser, logoutUser }: AccountMenuProps): ReactNode {
   const { signingOut, signOutError, signOut } = useSignOut(logoutUser);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const name = currentUser?.displayName ?? currentUser?.email ?? 'Account';
 
   return (
@@ -70,6 +73,14 @@ export function AccountMenu({ currentUser, logoutUser }: AccountMenuProps): Reac
             </>
           )}
           <DropdownMenu.Item
+            onSelect={() => {
+              setSettingsOpen(true);
+            }}
+            startIcon={<Settings aria-hidden="true" size={16} />}
+          >
+            Settings
+          </DropdownMenu.Item>
+          <DropdownMenu.Item
             disabled={signingOut}
             onSelect={() => {
               void signOut();
@@ -80,6 +91,7 @@ export function AccountMenu({ currentUser, logoutUser }: AccountMenuProps): Reac
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu>
+      <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
     </Inline>
   );
 }

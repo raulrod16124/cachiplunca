@@ -3,6 +3,8 @@ import { Position } from '../shared/value-objects/position';
 import { Size } from '../shared/value-objects/size';
 import { UserId } from '../shared/value-objects/user-id';
 import { WorkspaceId } from '../shared/value-objects/workspace-id';
+import { parseRichTextDocument, richTextFromPlain } from './rich-text';
+import type { RichTextDocument } from './rich-text';
 import { validateNoteElement } from './element-types';
 import type { NoteElement } from './element-types';
 
@@ -12,15 +14,16 @@ export interface CreateNoteElementProps {
   readonly createdBy: UserId;
   readonly position: Position;
   readonly size: Size;
-  readonly content: string;
+  readonly content: RichTextDocument | string;
   readonly color?: string;
   readonly rotation?: number;
+  readonly zIndex?: number;
   readonly createdAt?: Date;
   readonly updatedAt?: Date;
 }
 
 export function createNoteElement(props: CreateNoteElementProps): NoteElement {
-  assertContentIsString(props.content);
+  const content = toRichTextDocument(props.content);
   assertColorIsString(props.color);
 
   const now = new Date();
@@ -34,10 +37,11 @@ export function createNoteElement(props: CreateNoteElementProps): NoteElement {
     position: props.position,
     size: props.size,
     rotation: props.rotation ?? 0,
+    zIndex: props.zIndex ?? 0,
     createdBy: props.createdBy,
     createdAt,
     updatedAt,
-    content: props.content,
+    content,
     ...(props.color === undefined ? {} : { color: props.color }),
   };
 
@@ -48,12 +52,10 @@ export function createNoteElement(props: CreateNoteElementProps): NoteElement {
 
 export function withNoteContent(
   element: NoteElement,
-  content: string,
+  content: RichTextDocument | string,
   updatedAt: Date = new Date(),
 ): NoteElement {
-  assertContentIsString(content);
-
-  const next: NoteElement = { ...element, content, updatedAt };
+  const next: NoteElement = { ...element, content: toRichTextDocument(content), updatedAt };
 
   validateNoteElement(next);
 
@@ -74,10 +76,16 @@ export function withNoteColor(
   return next;
 }
 
-function assertContentIsString(content: string): void {
-  if (typeof content !== 'string') {
-    throw new Error('NoteElement content must be a string');
+function toRichTextDocument(content: RichTextDocument | string | undefined): RichTextDocument {
+  if (content === undefined) {
+    throw new Error('NoteElement content must be defined');
   }
+
+  if (typeof content === 'string') {
+    return richTextFromPlain(content);
+  }
+
+  return parseRichTextDocument(content);
 }
 
 function assertColorIsString(color: string | undefined): void {

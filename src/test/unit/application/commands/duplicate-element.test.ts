@@ -9,6 +9,7 @@ import {
   createNoteElement,
   createTaskElement,
   createTextElement,
+  richTextToPlain,
   type ConnectorElement,
   type Element,
   type FrameElement,
@@ -135,14 +136,14 @@ describe('createDuplicateElement', () => {
     const task = expectOk({ element: taskElement({ status: 'done' }) });
     expect(task.type).toBe('task');
     if (task.type === 'task') {
-      expect(task.title).toBe('Ship it');
+      expect(richTextToPlain(task.title)).toBe('Ship it');
       expect(task.status).toBe('done');
     }
 
     const note = expectOk({ element: noteElement({ color: '#ff0' }) });
     expect(note.type).toBe('note');
     if (note.type === 'note') {
-      expect(note.content).toBe('idea');
+      expect(richTextToPlain(note.content)).toBe('idea');
       expect(note.color).toBe('#ff0');
     }
   });

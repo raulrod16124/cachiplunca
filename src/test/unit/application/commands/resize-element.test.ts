@@ -6,6 +6,7 @@ import {
   createNoteElement,
   createTaskElement,
   createTextElement,
+  richTextToPlain,
   type ConnectorElement,
   type Element,
   type FrameElement,
@@ -90,7 +91,7 @@ describe('createResizeElement', () => {
     const resizedTask = expectOk({ element: taskElement(), size: Size.create(200, 100) });
     expect(resizedTask.type).toBe('task');
     if (resizedTask.type === 'task') {
-      expect(resizedTask.title).toBe('Ship it');
+      expect(richTextToPlain(resizedTask.title)).toBe('Ship it');
       expect(resizedTask.status).toBe('todo');
     }
 
@@ -100,7 +101,7 @@ describe('createResizeElement', () => {
     });
     expect(resizedNote.type).toBe('note');
     if (resizedNote.type === 'note') {
-      expect(resizedNote.content).toBe('idea');
+      expect(richTextToPlain(resizedNote.content)).toBe('idea');
       expect(resizedNote.color).toBe('#ff0');
     }
   });

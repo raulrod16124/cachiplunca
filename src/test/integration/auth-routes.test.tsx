@@ -150,7 +150,8 @@ describe('auth routes', () => {
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Your workspaces' }),
     ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open account menu' }));
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Sign out' }));
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeInTheDocument();
     expect(screen.getByTestId('location')).toHaveTextContent('/login');

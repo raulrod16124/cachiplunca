@@ -6,8 +6,11 @@ import {
   createTaskElement,
   createTextElement,
   ELEMENT_TYPES,
+  parseRichTextDocument,
+  richTextFromPlain,
   type Element,
   type ElementType,
+  type RichTextDocument,
 } from '../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../domain/shared';
 
@@ -17,6 +20,7 @@ interface BaseElementDocument {
   readonly position: { readonly x: number; readonly y: number };
   readonly size: { readonly width: number; readonly height: number };
   readonly rotation: number;
+  readonly zIndex: number;
   readonly createdBy: string;
   readonly createdAt: Date;
   readonly updatedAt: Date;
@@ -24,18 +28,18 @@ interface BaseElementDocument {
 
 export interface TextElementDocument extends BaseElementDocument {
   readonly type: 'text';
-  readonly content: string;
+  readonly content: RichTextDocument;
 }
 
 export interface NoteElementDocument extends BaseElementDocument {
   readonly type: 'note';
-  readonly content: string;
+  readonly content: RichTextDocument;
   readonly color?: string;
 }
 
 export interface TaskElementDocument extends BaseElementDocument {
   readonly type: 'task';
-  readonly title: string;
+  readonly title: RichTextDocument;
   readonly status: 'todo' | 'in_progress' | 'done';
   readonly assigneeId?: string;
   readonly dueDate?: Date;
@@ -43,7 +47,7 @@ export interface TaskElementDocument extends BaseElementDocument {
 
 export interface FrameElementDocument extends BaseElementDocument {
   readonly type: 'frame';
-  readonly title: string;
+  readonly title: RichTextDocument;
   readonly parentFrameId?: string;
 }
 
@@ -56,7 +60,7 @@ export interface ConnectorElementDocument extends BaseElementDocument {
 export interface LinkElementDocument extends BaseElementDocument {
   readonly type: 'link';
   readonly url: string;
-  readonly title?: string;
+  readonly title?: RichTextDocument;
 }
 
 export type ElementDocument =
@@ -74,6 +78,7 @@ export function toElementDocument(element: Element): ElementDocument {
     position: element.position.toJSON(),
     size: element.size.toJSON(),
     rotation: element.rotation,
+    zIndex: element.zIndex,
     createdBy: element.createdBy.value,
     createdAt: element.createdAt,
     updatedAt: element.updatedAt,
@@ -134,17 +139,17 @@ export function fromElementDocument(id: string, data: unknown): Element {
 
   switch (type) {
     case 'text':
-      return createTextElement({ ...base, content: readString(data.content, 'content') });
+      return createTextElement({ ...base, content: readRichText(data.content) });
     case 'note':
       return createNoteElement({
         ...base,
-        content: readString(data.content, 'content'),
+        content: readRichText(data.content),
         ...(data.color === undefined ? {} : { color: readString(data.color, 'color') }),
       });
     case 'task':
       return createTaskElement({
         ...base,
-        title: readString(data.title, 'title'),
+        title: readRichText(data.title),
         status: readTaskStatus(data.status),
         ...(data.assigneeId === undefined
           ? {}
@@ -154,7 +159,7 @@ export function fromElementDocument(id: string, data: unknown): Element {
     case 'frame':
       return createFrameElement({
         ...base,
-        title: readString(data.title, 'title'),
+        title: readRichText(data.title),
         ...(data.parentFrameId === undefined
           ? {}
           : { parentFrameId: ElementId.create(readString(data.parentFrameId, 'parentFrameId')) }),
@@ -169,7 +174,7 @@ export function fromElementDocument(id: string, data: unknown): Element {
       return createLinkElement({
         ...base,
         url: readString(data.url, 'url'),
-        ...(data.title === undefined ? {} : { title: readString(data.title, 'title') }),
+        ...(data.title === undefined ? {} : { title: readRichText(data.title) }),
       });
   }
 }
@@ -188,6 +193,7 @@ function readBaseElementProps(id: string, data: Record<string, unknown>) {
     position: readPosition(data.position),
     size: readSize(data.size),
     rotation: readNumber(data.rotation, 'rotation'),
+    ...(data.zIndex === undefined ? {} : { zIndex: readNumber(data.zIndex, 'zIndex') }),
     createdBy: UserId.create(readString(data.createdBy, 'createdBy')),
     createdAt: readDate(data.createdAt, 'createdAt'),
     updatedAt: readDate(data.updatedAt, 'updatedAt'),
@@ -199,6 +205,13 @@ function readString(value: unknown, field: string): string {
     throw new Error(`Element document field "${field}" must be a string`);
   }
   return value;
+}
+
+function readRichText(value: unknown): RichTextDocument {
+  if (typeof value === 'string') {
+    return richTextFromPlain(value);
+  }
+  return parseRichTextDocument(value);
 }
 
 function readNumber(value: unknown, field: string): number {

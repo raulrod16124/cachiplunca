@@ -1,11 +1,16 @@
 import {
   createTaskElement,
+  richTextToPlain,
   withTaskAssignee,
   withTaskDueDate,
   withTaskStatus,
   withTaskTitle,
 } from '../../../../domain/element';
-import type { CreateTaskElementProps, TaskElement } from '../../../../domain/element';
+import type {
+  CreateTaskElementProps,
+  RichTextDocument,
+  TaskElement,
+} from '../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
 
 const createProps = (overrides: Partial<CreateTaskElementProps> = {}): CreateTaskElementProps => ({
@@ -27,7 +32,7 @@ describe('TaskElement', () => {
     const element = createTaskElement(createProps());
 
     expect(element.type).toBe('task');
-    expect(element.title).toBe('ship the MVP');
+    expect(richTextToPlain(element.title)).toBe('ship the MVP');
     expect(element.status).toBe('todo');
     expect(element.assigneeId).toBeUndefined();
     expect(element.dueDate).toBeUndefined();
@@ -67,7 +72,7 @@ describe('TaskElement', () => {
   });
 
   it('rejects undefined title', () => {
-    expect(() => createTaskElement(createProps({ title: undefined }))).toThrow(/title/);
+    expect(() => createTaskElement(createProps({ title: undefined }))).toThrow(/TaskElement title/);
   });
 
   it('rejects empty or whitespace-only title coming from untrusted data', () => {
@@ -77,7 +82,50 @@ describe('TaskElement', () => {
 
   it('rejects non-string title coming from untrusted data', () => {
     const untrusted = Object.assign(createProps(), { title: 123 });
-    expect(() => createTaskElement(untrusted)).toThrow(/title/);
+    expect(() => createTaskElement(untrusted)).toThrow(/rich text/);
+  });
+
+  it('rejects a title document with more than one block', () => {
+    const multiBlock = {
+      blocks: [
+        { type: 'paragraph', align: 'left', spans: [{ text: 'a' }] },
+        { type: 'paragraph', align: 'left', spans: [{ text: 'b' }] },
+      ],
+    } satisfies RichTextDocument;
+
+    expect(() => createTaskElement(createProps({ title: multiBlock }))).toThrow(
+      /exactly one block/,
+    );
+  });
+
+  it('rejects a title document whose single block is a list', () => {
+    const listTitle = {
+      blocks: [
+        {
+          type: 'bulletList',
+          items: [
+            {
+              type: 'listItem',
+              content: [{ type: 'paragraph', align: 'left', spans: [{ text: 'a' }] }],
+            },
+          ],
+        },
+      ],
+    } satisfies RichTextDocument;
+
+    expect(() => createTaskElement(createProps({ title: listTitle }))).toThrow(
+      /paragraph or heading/,
+    );
+  });
+
+  it('accepts a rich text document as title', () => {
+    const headingTitle = {
+      blocks: [{ type: 'heading', level: 2, align: 'left', spans: [{ text: 'Ship it' }] }],
+    } satisfies RichTextDocument;
+
+    const element = createTaskElement(createProps({ title: headingTitle }));
+
+    expect(richTextToPlain(element.title)).toBe('Ship it');
   });
 
   it('rejects an unknown status coming from untrusted data', () => {
@@ -125,14 +173,14 @@ describe('TaskElement', () => {
     const updated = withTaskTitle(original, 'updated title', updatedAt);
 
     expect(updated).not.toBe(original);
-    expect(updated.title).toBe('updated title');
+    expect(richTextToPlain(updated.title)).toBe('updated title');
     expect(updated.updatedAt).toBe(updatedAt);
-    expect(original.title).toBe('ship the MVP');
+    expect(richTextToPlain(original.title)).toBe('ship the MVP');
   });
 
   it('rejects an invalid title on update', () => {
     const original = createSample();
-    expect(() => withTaskTitle(original, '   ')).toThrow(/title/);
+    expect(() => withTaskTitle(original, '   ')).toThrow(/TaskElement title/);
   });
 
   it('updates the status without mutating the original', () => {

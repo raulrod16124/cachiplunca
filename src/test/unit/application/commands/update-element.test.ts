@@ -6,6 +6,8 @@ import {
   createNoteElement,
   createTaskElement,
   createTextElement,
+  richTextFromPlain,
+  richTextToPlain,
   type ConnectorElement,
   type Element,
   type FrameElement,
@@ -70,7 +72,7 @@ describe('createUpdateElement', () => {
 
     expect(element.type).toBe('text');
     if (element.type === 'text') {
-      expect(element.content).toBe('updated');
+      expect(richTextToPlain(element.content)).toBe('updated');
     }
   });
 
@@ -84,7 +86,7 @@ describe('createUpdateElement', () => {
 
     expect(element.type).toBe('note');
     if (element.type === 'note') {
-      expect(element.content).toBe('revised');
+      expect(richTextToPlain(element.content)).toBe('revised');
       expect(element.color).toBe('#ff0');
     }
   });
@@ -103,7 +105,7 @@ describe('createUpdateElement', () => {
 
     expect(element.type).toBe('task');
     if (element.type === 'task') {
-      expect(element.title).toBe('Ship it now');
+      expect(richTextToPlain(element.title)).toBe('Ship it now');
       expect(element.status).toBe('in_progress');
       expect(element.assigneeId?.value).toBe('user-2');
       expect(element.dueDate).toBe(dueDate);
@@ -135,7 +137,7 @@ describe('createUpdateElement', () => {
 
     expect(titled.type).toBe('frame');
     if (titled.type === 'frame') {
-      expect(titled.title).toBe('Phase 2');
+      expect(richTextToPlain(titled.title)).toBe('Phase 2');
       expect(titled.parentFrameId?.value).toBe('parent-1');
     }
 
@@ -161,7 +163,7 @@ describe('createUpdateElement', () => {
 
   it('updates link url and clears its title with null', () => {
     const element = expectOk({
-      element: linkElement({ title: 'Docs' }),
+      element: linkElement({ title: richTextFromPlain('Docs') }),
       type: 'link',
       url: 'https://example.org',
       title: null,
@@ -246,7 +248,7 @@ describe('createUpdateElement', () => {
   });
 
   it('does not mutate the input or the original element', () => {
-    const element = textElement({ content: 'original' });
+    const element = textElement({ content: richTextFromPlain('original') });
     const input: UpdateElementInput = { element, type: 'text', content: 'changed' };
     const elementSnapshot = { ...element };
     const inputSnapshot = { ...input };
@@ -255,7 +257,7 @@ describe('createUpdateElement', () => {
 
     expect(element).toEqual(elementSnapshot);
     expect(input).toEqual(inputSnapshot);
-    expect(element.content).toBe('original');
+    expect(richTextToPlain(element.content)).toBe('original');
   });
 
   it('is stateless: successive calls do not share updated elements', () => {
@@ -273,13 +275,13 @@ describe('createUpdateElement', () => {
   });
 
   it('is apt for undo: discarding the result restores the original state', () => {
-    const original = textElement({ content: 'before' });
+    const original = textElement({ content: richTextFromPlain('before') });
     const result = makeCommand()({ element: original, type: 'text', content: 'after' });
 
     expect(result.status).toBe('ok');
     if (result.status === 'ok' && result.element.type === 'text') {
-      expect(result.element.content).toBe('after');
-      expect(original.content).toBe('before');
+      expect(richTextToPlain(result.element.content)).toBe('after');
+      expect(richTextToPlain(original.content)).toBe('before');
     }
   });
 });

@@ -1,6 +1,18 @@
-import { createLinkElement, withLinkTitle, withLinkUrl } from '../../../../domain/element';
-import type { CreateLinkElementProps, LinkElement } from '../../../../domain/element';
+import {
+  createLinkElement,
+  richTextToPlain,
+  withLinkTitle,
+  withLinkUrl,
+} from '../../../../domain/element';
+import type {
+  CreateLinkElementProps,
+  LinkElement,
+  RichTextDocument,
+} from '../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
+
+const titleToPlain = (title: RichTextDocument | undefined): string =>
+  title === undefined ? '' : richTextToPlain(title);
 
 const createProps = (overrides: Partial<CreateLinkElementProps> = {}): CreateLinkElementProps => ({
   id: ElementId.create('elem-1'),
@@ -30,7 +42,7 @@ describe('LinkElement', () => {
   it('creates a link element with an explicit title', () => {
     const element = createLinkElement(createProps({ title: 'Docs' }));
 
-    expect(element.title).toBe('Docs');
+    expect(titleToPlain(element.title)).toBe('Docs');
   });
 
   it('keeps provided position, size, identity and timestamps', () => {
@@ -72,7 +84,50 @@ describe('LinkElement', () => {
 
   it('rejects a non-string title coming from untrusted data', () => {
     const untrusted = Object.assign(createProps(), { title: 123 });
-    expect(() => createLinkElement(untrusted)).toThrow(/title/);
+    expect(() => createLinkElement(untrusted)).toThrow(/rich text/);
+  });
+
+  it('rejects a title document with more than one block', () => {
+    const multiBlock = {
+      blocks: [
+        { type: 'paragraph', align: 'left', spans: [{ text: 'a' }] },
+        { type: 'paragraph', align: 'left', spans: [{ text: 'b' }] },
+      ],
+    } satisfies RichTextDocument;
+
+    expect(() => createLinkElement(createProps({ title: multiBlock }))).toThrow(
+      /exactly one block/,
+    );
+  });
+
+  it('rejects a title document whose single block is a list', () => {
+    const listTitle = {
+      blocks: [
+        {
+          type: 'bulletList',
+          items: [
+            {
+              type: 'listItem',
+              content: [{ type: 'paragraph', align: 'left', spans: [{ text: 'a' }] }],
+            },
+          ],
+        },
+      ],
+    } satisfies RichTextDocument;
+
+    expect(() => createLinkElement(createProps({ title: listTitle }))).toThrow(
+      /paragraph or heading/,
+    );
+  });
+
+  it('accepts a rich text document as title', () => {
+    const headingTitle = {
+      blocks: [{ type: 'heading', level: 3, align: 'left', spans: [{ text: 'Docs' }] }],
+    } satisfies RichTextDocument;
+
+    const element = createLinkElement(createProps({ title: headingTitle }));
+
+    expect(titleToPlain(element.title)).toBe('Docs');
   });
 
   it('rejects non-finite rotation', () => {
@@ -98,7 +153,7 @@ describe('LinkElement', () => {
 
     expect(updated).not.toBe(original);
     expect(updated.url).toBe('https://next.example.com');
-    expect(updated.title).toBe('Docs');
+    expect(titleToPlain(updated.title)).toBe('Docs');
     expect(updated.updatedAt).toBe(updatedAt);
     expect(original.url).toBe('https://example.com');
   });
@@ -116,10 +171,10 @@ describe('LinkElement', () => {
     const updated = withLinkTitle(original, 'Handbook', updatedAt);
 
     expect(updated).not.toBe(original);
-    expect(updated.title).toBe('Handbook');
+    expect(titleToPlain(updated.title)).toBe('Handbook');
     expect(updated.url).toBe('https://example.com');
     expect(updated.updatedAt).toBe(updatedAt);
-    expect(original.title).toBe('Docs');
+    expect(titleToPlain(original.title)).toBe('Docs');
   });
 
   it('clears the title when updated with undefined', () => {
@@ -134,7 +189,7 @@ describe('LinkElement', () => {
   it('rejects an invalid title on update', () => {
     const original = createSample();
 
-    expect(() => withLinkTitle(original, '   ')).toThrow(/title/);
+    expect(() => withLinkTitle(original, '   ')).toThrow(/LinkElement title/);
   });
 
   it('preserves unrelated fields across updates', () => {

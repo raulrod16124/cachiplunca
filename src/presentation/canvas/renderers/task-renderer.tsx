@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { isTaskElement } from '../../../domain/element';
 import type { TaskStatus } from '../../../domain/element';
 import type { ElementRendererProps } from './element-renderer';
+import { RichTextContent } from './rich-text-content';
 
 const STATUS_LABELS: Record<TaskStatus, string> = {
   todo: 'Todo',
@@ -20,6 +21,9 @@ const Content = styled.div`
   padding: 12px;
   overflow: hidden;
   border-radius: ${({ theme }) => theme.radius.sm};
+  border-width: 1px;
+  border-style: solid;
+  border-color: ${({ theme }) => theme.canvas.elementBorderSoft};
   background-color: ${({ theme }) => theme.canvas.surface};
   color: ${({ theme }) => theme.color.text.primary};
   font-size: ${({ theme }) => theme.font.size.sm};
@@ -60,13 +64,10 @@ export function TaskRenderer({ element }: ElementRendererProps): ReactElement | 
   }
 
   return (
-    <Content
-      data-element-content="true"
-      data-element-type="task"
-      data-task-status={element.status}
-      aria-hidden="true"
-    >
-      <Title>{element.title}</Title>
+    <Content data-element-content="true" data-element-type="task" data-task-status={element.status}>
+      <Title>
+        <RichTextContent document={element.title} mode="inline" />
+      </Title>
       <StatusBadge>{STATUS_LABELS[element.status]}</StatusBadge>
       {element.assigneeId === undefined ? null : (
         <Meta data-task-assignee="true">{element.assigneeId.value}</Meta>

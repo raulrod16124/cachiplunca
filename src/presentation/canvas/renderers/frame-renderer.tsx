@@ -2,6 +2,7 @@ import type { ReactElement } from 'react';
 import styled from 'styled-components';
 import { isFrameElement } from '../../../domain/element';
 import type { ElementRendererProps } from './element-renderer';
+import { RichTextContent } from './rich-text-content';
 
 const Content = styled.div`
   position: absolute;
@@ -33,8 +34,10 @@ export function FrameRenderer({ element }: ElementRendererProps): ReactElement |
   }
 
   return (
-    <Content data-element-content="true" data-element-type="frame" aria-hidden="true">
-      <Header data-frame-title="true">{element.title}</Header>
+    <Content data-element-content="true" data-element-type="frame">
+      <Header data-frame-title="true">
+        <RichTextContent document={element.title} mode="inline" />
+      </Header>
     </Content>
   );
 }

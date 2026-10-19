@@ -1,5 +1,6 @@
 import { createCreateElement, type CreateElementInput } from '../../../../application/commands';
 import type { Element } from '../../../../domain/element';
+import { richTextToPlain } from '../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
 import { ERROR_CODES } from '../../../../shared/errors';
 
@@ -36,7 +37,7 @@ describe('createCreateElement', () => {
 
     expect(element.type).toBe('text');
     if (element.type === 'text') {
-      expect(element.content).toBe('Title');
+      expect(richTextToPlain(element.content)).toBe('Title');
     }
   });
 
@@ -45,7 +46,7 @@ describe('createCreateElement', () => {
 
     expect(element.type).toBe('note');
     if (element.type === 'note') {
-      expect(element.content).toBe('Idea');
+      expect(richTextToPlain(element.content)).toBe('Idea');
       expect(element.color).toBe('#fff');
     }
   });
@@ -59,7 +60,7 @@ describe('createCreateElement', () => {
 
     expect(element.type).toBe('task');
     if (element.type === 'task') {
-      expect(element.title).toBe('Ship it');
+      expect(richTextToPlain(element.title)).toBe('Ship it');
       expect(element.status).toBe('todo');
       expect(element.assigneeId?.value).toBe('user-2');
       expect(element.dueDate).toBe(dueDate);
@@ -71,7 +72,7 @@ describe('createCreateElement', () => {
 
     expect(element.type).toBe('frame');
     if (element.type === 'frame') {
-      expect(element.title).toBe('Phase 1');
+      expect(richTextToPlain(element.title)).toBe('Phase 1');
     }
   });
 
@@ -97,7 +98,7 @@ describe('createCreateElement', () => {
     expect(element.type).toBe('link');
     if (element.type === 'link') {
       expect(element.url).toBe('https://example.com');
-      expect(element.title).toBe('Docs');
+      expect(element.title === undefined ? '' : richTextToPlain(element.title)).toBe('Docs');
     }
   });
 

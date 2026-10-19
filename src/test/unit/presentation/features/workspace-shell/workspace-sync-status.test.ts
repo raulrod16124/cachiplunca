@@ -8,16 +8,28 @@ describe('describeSyncStatus', () => {
     expect(describeSyncStatus('idle')).toBeNull();
   });
 
-  it('maps saving to an informational badge', () => {
-    expect(describeSyncStatus('saving')).toEqual({ label: 'Saving…', variant: 'info' });
+  it('maps saving to a spinner icon', () => {
+    expect(describeSyncStatus('saving')).toEqual({
+      label: 'Saving…',
+      variant: 'info',
+      icon: 'spinner',
+    });
   });
 
-  it('maps saved to a success badge', () => {
-    expect(describeSyncStatus('saved')).toEqual({ label: 'Saved', variant: 'success' });
+  it('maps saved to a cloud-check icon', () => {
+    expect(describeSyncStatus('saved')).toEqual({
+      label: 'Saved',
+      variant: 'success',
+      icon: 'cloud-check',
+    });
   });
 
-  it('maps error to a destructive badge', () => {
-    expect(describeSyncStatus('error')).toEqual({ label: 'Not saved', variant: 'destructive' });
+  it('maps error to an alert icon', () => {
+    expect(describeSyncStatus('error')).toEqual({
+      label: 'Not saved',
+      variant: 'destructive',
+      icon: 'alert',
+    });
   });
 });
 

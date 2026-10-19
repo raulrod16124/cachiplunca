@@ -2,6 +2,7 @@ import type { ReactElement } from 'react';
 import styled from 'styled-components';
 import { isNoteElement } from '../../../domain/element';
 import type { ElementRendererProps } from './element-renderer';
+import { RichTextContent } from './rich-text-content';
 
 const Content = styled.div`
   position: absolute;
@@ -10,6 +11,9 @@ const Content = styled.div`
   padding: 12px;
   overflow: hidden;
   border-radius: ${({ theme }) => theme.radius.sm};
+  border-width: 1px;
+  border-style: solid;
+  border-color: ${({ theme }) => theme.canvas.elementBorderSoft};
   background-color: ${({ theme }) => theme.canvas.surface};
   color: ${({ theme }) => theme.color.text.primary};
   font-size: ${({ theme }) => theme.font.size.sm};
@@ -28,10 +32,9 @@ export function NoteRenderer({ element }: ElementRendererProps): ReactElement | 
     <Content
       data-element-content="true"
       data-element-type="note"
-      aria-hidden="true"
       style={element.color === undefined ? undefined : { backgroundColor: element.color }}
     >
-      {element.content}
+      <RichTextContent document={element.content} />
     </Content>
   );
 }

@@ -1,6 +1,10 @@
 import { render, screen } from '@testing-library/react';
-import { createTaskElement, createTextElement } from '../../../../../domain/element';
-import type { TaskElement, TaskStatus } from '../../../../../domain/element';
+import {
+  createTaskElement,
+  createTextElement,
+  DEFAULT_TEXT_ALIGN,
+} from '../../../../../domain/element';
+import type { RichTextDocument, TaskElement, TaskStatus } from '../../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../../domain/shared';
 import { ElementView, TaskRenderer } from '../../../../../presentation/canvas/renderers';
 
@@ -10,7 +14,10 @@ interface TaskOverrides {
   readonly dueDate: Date;
 }
 
-function createElement(title: string, overrides: Partial<TaskOverrides> = {}): TaskElement {
+function createElement(
+  title: string | RichTextDocument,
+  overrides: Partial<TaskOverrides> = {},
+): TaskElement {
   return createTaskElement({
     id: ElementId.create('elem-1'),
     workspaceId: WorkspaceId.create('ws-1'),
@@ -101,6 +108,13 @@ describe('TaskRenderer', () => {
     expect(document.querySelector('[data-task-due-date]')).toBeNull();
   });
 
+  it('delimits the container with a soft border', () => {
+    render(<TaskRenderer element={createElement('Ship the MVP')} selected={false} />);
+
+    const content = document.querySelector('[data-element-content]');
+    expect(content).toHaveStyle({ borderTopWidth: '1px', borderTopStyle: 'solid' });
+  });
+
   it('returns null for a non-task element', () => {
     const text = createTextElement({
       id: ElementId.create('elem-2'),
@@ -114,6 +128,64 @@ describe('TaskRenderer', () => {
     const { container } = render(<TaskRenderer element={text} selected={false} />);
 
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it('renders the title with inline marks', () => {
+    const doc: RichTextDocument = {
+      blocks: [
+        {
+          type: 'paragraph',
+          align: DEFAULT_TEXT_ALIGN,
+          spans: [{ text: 'bold', marks: { bold: true } }, { text: ' title' }],
+        },
+      ],
+    };
+
+    const { container } = render(<TaskRenderer element={createElement(doc)} selected={false} />);
+
+    expect(screen.getByText('bold')).toHaveStyle({ fontWeight: 700 });
+    expect(container.textContent).toContain('bold title');
+  });
+
+  it('renders only the first text block of a multi-block title', () => {
+    const doc: RichTextDocument = {
+      blocks: [
+        { type: 'heading', level: 3, align: DEFAULT_TEXT_ALIGN, spans: [{ text: 'Plan' }] },
+        { type: 'paragraph', align: DEFAULT_TEXT_ALIGN, spans: [{ text: 'ignored' }] },
+      ],
+    };
+    const element: TaskElement = { ...createElement('placeholder'), title: doc };
+
+    render(<TaskRenderer element={element} selected={false} />);
+
+    expect(screen.getByText('Plan')).toBeInTheDocument();
+    expect(screen.queryByText('ignored')).toBeNull();
+  });
+
+  it('never renders list blocks from a title document', () => {
+    const doc: RichTextDocument = {
+      blocks: [
+        {
+          type: 'bulletList',
+          items: [
+            {
+              type: 'listItem',
+              content: [
+                { type: 'paragraph', align: DEFAULT_TEXT_ALIGN, spans: [{ text: 'listed' }] },
+              ],
+            },
+          ],
+        },
+        { type: 'paragraph', align: DEFAULT_TEXT_ALIGN, spans: [{ text: 'fallback title' }] },
+      ],
+    };
+    const element: TaskElement = { ...createElement('placeholder'), title: doc };
+
+    const { container } = render(<TaskRenderer element={element} selected={false} />);
+
+    expect(screen.getByText('fallback title')).toBeInTheDocument();
+    expect(container.querySelector('ul')).toBeNull();
+    expect(container.querySelector('li')).toBeNull();
   });
 
   it('delegates to the renderer through ElementView', () => {

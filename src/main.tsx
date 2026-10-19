@@ -4,8 +4,11 @@ import '@raulrod/tokens/styles.css';
 import '@raulrod/ui/styles.css';
 import './index.css';
 import App from './App.tsx';
+import { setPublicBasePath } from './presentation/config/public-base';
 import { ErrorBoundary } from './presentation/components/error-boundary.tsx';
 import { installGlobalErrorHandlers } from './presentation/providers/global-error-handlers.ts';
+
+setPublicBasePath(import.meta.env.BASE_URL);
 
 installGlobalErrorHandlers();
 

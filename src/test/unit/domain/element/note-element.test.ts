@@ -1,5 +1,10 @@
-import { createNoteElement, withNoteColor, withNoteContent } from '../../../../domain/element';
-import type { CreateNoteElementProps } from '../../../../domain/element';
+import {
+  createNoteElement,
+  richTextToPlain,
+  withNoteColor,
+  withNoteContent,
+} from '../../../../domain/element';
+import type { CreateNoteElementProps, RichTextDocument } from '../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
 
 const createProps = (overrides: Partial<CreateNoteElementProps> = {}): CreateNoteElementProps => ({
@@ -17,7 +22,7 @@ describe('NoteElement', () => {
     const element = createNoteElement(createProps());
 
     expect(element.type).toBe('note');
-    expect(element.content).toBe('note content');
+    expect(richTextToPlain(element.content)).toBe('note content');
     expect(element.color).toBeUndefined();
     expect(element.rotation).toBe(0);
     expect(element.createdAt).toBeInstanceOf(Date);
@@ -52,6 +57,31 @@ describe('NoteElement', () => {
 
   it('allows empty content so the editor can start and type into it', () => {
     expect(() => createNoteElement(createProps({ content: '' }))).not.toThrow();
+  });
+
+  it('accepts a multi-block rich text document as content', () => {
+    const document = {
+      blocks: [
+        { type: 'heading', level: 2, align: 'left', spans: [{ text: 'Ideas' }] },
+        {
+          type: 'bulletList',
+          items: [
+            {
+              type: 'listItem',
+              content: [{ type: 'paragraph', align: 'left', spans: [{ text: 'first' }] }],
+            },
+          ],
+        },
+      ],
+    } satisfies RichTextDocument;
+
+    const element = createNoteElement(createProps({ content: document }));
+
+    expect(richTextToPlain(element.content)).toBe('Ideas\nfirst');
+  });
+
+  it('rejects an invalid rich text document as content', () => {
+    expect(() => createNoteElement(createProps({ content: { blocks: [] } }))).toThrow(/blocks/);
   });
 
   it('rejects undefined content', () => {
@@ -96,9 +126,9 @@ describe('NoteElement', () => {
     const updated = withNoteContent(original, 'updated note', updatedAt);
 
     expect(updated).not.toBe(original);
-    expect(updated.content).toBe('updated note');
+    expect(richTextToPlain(updated.content)).toBe('updated note');
     expect(updated.updatedAt).toBe(updatedAt);
-    expect(original.content).toBe('note content');
+    expect(richTextToPlain(original.content)).toBe('note content');
   });
 
   it('rejects an update whose updatedAt predates createdAt', () => {
@@ -116,7 +146,7 @@ describe('NoteElement', () => {
 
     const updated = withNoteContent(original, '');
 
-    expect(updated.content).toBe('');
+    expect(richTextToPlain(updated.content)).toBe('');
   });
 
   it('returns a new element when updating color without mutating the original', () => {

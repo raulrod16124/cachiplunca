@@ -135,10 +135,10 @@ export function createAppHarness(): AppHarness {
       invitationRepository,
       membershipRepository,
       generateId: () => InvitationId.create(`inv-${++elementSequence}`),
-      issueToken: async () => ({
-        token: `token-${elementSequence}`,
-        tokenHash: `hash-${elementSequence}`,
-      }),
+      issueToken: async () => {
+        const token = `token-${++elementSequence}`;
+        return { token, tokenHash: await hashInvitationToken(token) };
+      },
     }),
     listPendingInvitations: createListPendingInvitations(invitationRepository),
     acceptInvitation: createAcceptInvitation({

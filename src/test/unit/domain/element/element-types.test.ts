@@ -8,6 +8,8 @@ import {
   isNoteElement,
   isTaskElement,
   isTextElement,
+  richTextFromPlain,
+  richTextToPlain,
   validateConnectorElement,
   validateElement,
   validateFrameElement,
@@ -18,6 +20,7 @@ import {
   withPosition,
   withRotation,
   withSize,
+  withZIndex,
 } from '../../../../domain/element';
 import type {
   BaseElement,
@@ -38,6 +41,7 @@ const createBaseElement = (overrides: Partial<BaseElement> = {}): BaseElement =>
   position: Position.create(0, 0),
   size: Size.create(10, 10),
   rotation: 0,
+  zIndex: 0,
   createdBy: UserId.create('user-1'),
   createdAt: new Date('2024-01-01T00:00:00Z'),
   updatedAt: new Date('2024-01-02T00:00:00Z'),
@@ -47,21 +51,21 @@ const createBaseElement = (overrides: Partial<BaseElement> = {}): BaseElement =>
 const createTextElement = (overrides: Partial<TextElement> = {}): TextElement => ({
   ...createBaseElement(),
   type: 'text',
-  content: 'hello',
+  content: richTextFromPlain('hello'),
   ...overrides,
 });
 
 const createNoteElement = (overrides: Partial<NoteElement> = {}): NoteElement => ({
   ...createBaseElement(),
   type: 'note',
-  content: 'note content',
+  content: richTextFromPlain('note content'),
   ...overrides,
 });
 
 const createTaskElement = (overrides: Partial<TaskElement> = {}): TaskElement => ({
   ...createBaseElement(),
   type: 'task',
-  title: 'task title',
+  title: richTextFromPlain('task title'),
   status: 'todo',
   ...overrides,
 });
@@ -69,7 +73,7 @@ const createTaskElement = (overrides: Partial<TaskElement> = {}): TaskElement =>
 const createFrameElement = (overrides: Partial<FrameElement> = {}): FrameElement => ({
   ...createBaseElement(),
   type: 'frame',
-  title: 'frame title',
+  title: richTextFromPlain('frame title'),
   ...overrides,
 });
 
@@ -130,15 +134,15 @@ describe('Element types', () => {
     const summaries = elements.map((element) => {
       switch (element.type) {
         case 'text':
-          return element.content;
+          return richTextToPlain(element.content);
         case 'task':
-          return `${element.title}:${element.status}`;
+          return `${richTextToPlain(element.title)}:${element.status}`;
         case 'link':
           return element.url;
         case 'frame':
-          return element.title;
+          return richTextToPlain(element.title);
         case 'note':
-          return element.content;
+          return richTextToPlain(element.content);
         case 'connector':
           return `${element.sourceElementId.value}->${element.targetElementId.value}`;
       }
@@ -190,6 +194,15 @@ describe('Element types', () => {
     expect(() => validateTextElement(createTextElement({ rotation: NaN }))).toThrow(/rotation/);
   });
 
+  it('rejects undefined zIndex', () => {
+    expect(() => validateTextElement(createTextElement({ zIndex: undefined }))).toThrow(/zIndex/);
+  });
+
+  it('rejects non-finite zIndex', () => {
+    expect(() => validateTextElement(createTextElement({ zIndex: NaN }))).toThrow(/zIndex/);
+    expect(() => validateTextElement(createTextElement({ zIndex: Infinity }))).toThrow(/zIndex/);
+  });
+
   it('rejects createdAt after updatedAt', () => {
     const bad = createTextElement({
       createdAt: new Date('2024-01-03T00:00:00Z'),
@@ -211,7 +224,9 @@ describe('Element types', () => {
 
   it('validates task element', () => {
     expect(() => validateTaskElement(createTaskElement())).not.toThrow();
-    expect(() => validateTaskElement(createTaskElement({ title: '   ' }))).toThrow(/title/);
+    expect(() =>
+      validateTaskElement(createTaskElement({ title: richTextFromPlain('   ') })),
+    ).toThrow(/title/);
     expect(() => validateTaskElement(createTaskElement({ dueDate: new Date('invalid') }))).toThrow(
       /dueDate/,
     );
@@ -223,7 +238,9 @@ describe('Element types', () => {
 
   it('validates frame element', () => {
     expect(() => validateFrameElement(createFrameElement())).not.toThrow();
-    expect(() => validateFrameElement(createFrameElement({ title: '' }))).toThrow(/title/);
+    expect(() =>
+      validateFrameElement(createFrameElement({ title: richTextFromPlain('') })),
+    ).toThrow(/title/);
     expect(() =>
       validateFrameElement(
         createFrameElement({
@@ -249,7 +266,9 @@ describe('Element types', () => {
   it('validates link element', () => {
     expect(() => validateLinkElement(createLinkElement())).not.toThrow();
     expect(() => validateLinkElement(createLinkElement({ url: '' }))).toThrow(/url/);
-    expect(() => validateLinkElement(createLinkElement({ title: '   ' }))).toThrow(/title/);
+    expect(() =>
+      validateLinkElement(createLinkElement({ title: richTextFromPlain('   ') })),
+    ).toThrow(/title/);
   });
 
   it('rejects untrusted element data with an unknown type', () => {
@@ -302,6 +321,53 @@ describe('withRotation', () => {
     });
 
     expect(() => withRotation(element, 10, new Date('2024-04-01T00:00:00Z'))).toThrow(/createdAt/);
+  });
+});
+
+describe('withZIndex', () => {
+  const updatedAt = new Date('2024-03-01T00:00:00Z');
+
+  it('returns a new element with the provided zIndex and timestamp', () => {
+    const element = createTextElement({ zIndex: 0 });
+    const reordered = withZIndex(element, 7, updatedAt);
+
+    expect(reordered.zIndex).toBe(7);
+    expect(reordered.updatedAt).toBe(updatedAt);
+    expect(reordered).not.toBe(element);
+  });
+
+  it('preserves the discriminant and type-specific fields for every element type', () => {
+    for (const element of allElements()) {
+      const reordered = withZIndex(element, 12, updatedAt);
+
+      expect(reordered.type).toBe(element.type);
+      expect(reordered.id.equals(element.id)).toBe(true);
+      expect(reordered.zIndex).toBe(12);
+    }
+  });
+
+  it('does not mutate the original element', () => {
+    const element = createTaskElement({ zIndex: 3 });
+    const snapshot = { ...element };
+
+    withZIndex(element, 9, updatedAt);
+
+    expect(element).toEqual(snapshot);
+    expect(element.zIndex).toBe(3);
+  });
+
+  it('rejects non-finite z-indexes', () => {
+    expect(() => withZIndex(createTextElement(), NaN, updatedAt)).toThrow(/zIndex/);
+    expect(() => withZIndex(createTextElement(), Infinity, updatedAt)).toThrow(/zIndex/);
+  });
+
+  it('rejects a timestamp older than createdAt', () => {
+    const element = createTextElement({
+      createdAt: new Date('2024-05-01T00:00:00Z'),
+      updatedAt: new Date('2024-05-01T00:00:00Z'),
+    });
+
+    expect(() => withZIndex(element, 5, new Date('2024-04-01T00:00:00Z'))).toThrow(/createdAt/);
   });
 });
 
@@ -493,7 +559,7 @@ describe('duplicateElement', () => {
   });
 
   it('rejects a source element that violates its invariants', () => {
-    const invalid = Object.assign(createTaskElement(), { title: '   ' });
+    const invalid = Object.assign(createTaskElement(), { title: richTextFromPlain('   ') });
 
     expect(() => duplicateElement(invalid, { id: ElementId.create('copy'), createdAt })).toThrow(
       /title/,

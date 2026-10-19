@@ -1,5 +1,14 @@
-import { createFrameElement, withFrameParent, withFrameTitle } from '../../../../domain/element';
-import type { CreateFrameElementProps, FrameElement } from '../../../../domain/element';
+import {
+  createFrameElement,
+  richTextToPlain,
+  withFrameParent,
+  withFrameTitle,
+} from '../../../../domain/element';
+import type {
+  CreateFrameElementProps,
+  FrameElement,
+  RichTextDocument,
+} from '../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
 
 const createProps = (
@@ -22,7 +31,7 @@ describe('FrameElement', () => {
     const element = createFrameElement(createProps());
 
     expect(element.type).toBe('frame');
-    expect(element.title).toBe('board');
+    expect(richTextToPlain(element.title)).toBe('board');
     expect(element.parentFrameId).toBeUndefined();
     expect(element.rotation).toBe(0);
     expect(element.createdAt).toBeInstanceOf(Date);
@@ -58,17 +67,62 @@ describe('FrameElement', () => {
   });
 
   it('rejects undefined title', () => {
-    expect(() => createFrameElement(createProps({ title: undefined }))).toThrow(/title/);
+    expect(() => createFrameElement(createProps({ title: undefined }))).toThrow(
+      /FrameElement title/,
+    );
   });
 
   it('rejects empty or whitespace-only title coming from untrusted data', () => {
-    expect(() => createFrameElement(createProps({ title: '' }))).toThrow(/title/);
-    expect(() => createFrameElement(createProps({ title: '   ' }))).toThrow(/title/);
+    expect(() => createFrameElement(createProps({ title: '' }))).toThrow(/FrameElement title/);
+    expect(() => createFrameElement(createProps({ title: '   ' }))).toThrow(/FrameElement title/);
   });
 
   it('rejects non-string title coming from untrusted data', () => {
     const untrusted = Object.assign(createProps(), { title: 123 });
-    expect(() => createFrameElement(untrusted)).toThrow(/title/);
+    expect(() => createFrameElement(untrusted)).toThrow(/rich text/);
+  });
+
+  it('rejects a title document with more than one block', () => {
+    const multiBlock = {
+      blocks: [
+        { type: 'paragraph', align: 'left', spans: [{ text: 'a' }] },
+        { type: 'paragraph', align: 'left', spans: [{ text: 'b' }] },
+      ],
+    } satisfies RichTextDocument;
+
+    expect(() => createFrameElement(createProps({ title: multiBlock }))).toThrow(
+      /exactly one block/,
+    );
+  });
+
+  it('rejects a title document whose single block is a list', () => {
+    const listTitle = {
+      blocks: [
+        {
+          type: 'orderedList',
+          items: [
+            {
+              type: 'listItem',
+              content: [{ type: 'paragraph', align: 'left', spans: [{ text: 'a' }] }],
+            },
+          ],
+        },
+      ],
+    } satisfies RichTextDocument;
+
+    expect(() => createFrameElement(createProps({ title: listTitle }))).toThrow(
+      /paragraph or heading/,
+    );
+  });
+
+  it('accepts a rich text document as title', () => {
+    const headingTitle = {
+      blocks: [{ type: 'heading', level: 1, align: 'left', spans: [{ text: 'Section' }] }],
+    } satisfies RichTextDocument;
+
+    const element = createFrameElement(createProps({ title: headingTitle }));
+
+    expect(richTextToPlain(element.title)).toBe('Section');
   });
 
   it('rejects an invalid parent frame id from untrusted data', () => {
@@ -109,14 +163,14 @@ describe('FrameElement', () => {
     const updated = withFrameTitle(original, 'updated title', updatedAt);
 
     expect(updated).not.toBe(original);
-    expect(updated.title).toBe('updated title');
+    expect(richTextToPlain(updated.title)).toBe('updated title');
     expect(updated.updatedAt).toBe(updatedAt);
-    expect(original.title).toBe('board');
+    expect(richTextToPlain(original.title)).toBe('board');
   });
 
   it('rejects an invalid title on update', () => {
     const original = createSample();
-    expect(() => withFrameTitle(original, '   ')).toThrow(/title/);
+    expect(() => withFrameTitle(original, '   ')).toThrow(/FrameElement title/);
   });
 
   it('sets and clears the parent frame without mutating the original', () => {

@@ -2,13 +2,11 @@ import { Tooltip } from '@raulrod/ui';
 import {
   Frame,
   Link2,
-  Redo2,
   Scan,
   SquareCheck,
   StickyNote,
   Trash2,
   Type,
-  Undo2,
   Waypoints,
 } from '@raulrod/icons';
 import type { ReactElement, ReactNode } from 'react';
@@ -90,26 +88,18 @@ function ToolbarAction({
 
 export interface CanvasToolbarProps {
   readonly onCreateElement: (type: ElementType) => void;
-  readonly onUndo: () => void;
-  readonly onRedo: () => void;
   readonly onDeleteSelection: () => void;
   readonly onFitView: () => void;
   readonly canCreate?: boolean;
-  readonly canUndo?: boolean;
-  readonly canRedo?: boolean;
   readonly hasSelection?: boolean;
   readonly canCreateConnector?: boolean;
 }
 
 export function CanvasToolbar({
   onCreateElement,
-  onUndo,
-  onRedo,
   onDeleteSelection,
   onFitView,
   canCreate = false,
-  canUndo = false,
-  canRedo = false,
   hasSelection = false,
   canCreateConnector = false,
 }: CanvasToolbarProps): ReactElement {
@@ -137,21 +127,6 @@ export function CanvasToolbar({
             />
           );
         })}
-      </Group>
-      <Separator aria-hidden="true" />
-      <Group>
-        <ToolbarAction
-          label="Undo"
-          icon={<Undo2 aria-hidden="true" size={ICON_SIZE} />}
-          disabled={!canUndo}
-          onClick={onUndo}
-        />
-        <ToolbarAction
-          label="Redo"
-          icon={<Redo2 aria-hidden="true" size={ICON_SIZE} />}
-          disabled={!canRedo}
-          onClick={onRedo}
-        />
       </Group>
       <Separator aria-hidden="true" />
       <Group>

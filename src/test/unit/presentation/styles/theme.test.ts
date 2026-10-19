@@ -41,6 +41,11 @@ describe('appTheme', () => {
     expect(allVars).not.toContain('--rr-font-size-200');
   });
 
+  it('exposes a soft element border alias derived from the default border', () => {
+    expect(appTheme.canvas.elementBorderSoft).toContain('var(--rr-color-border-default)');
+    expect(appTheme.canvas.elementBorderSoft).toContain('color-mix');
+  });
+
   it('exposes semantic roles through stable theme paths', () => {
     expect(appTheme.color.text.primary).toBe('var(--rr-color-text-primary)');
     expect(appTheme.color.link.text).toBe('var(--rr-color-link-text)');

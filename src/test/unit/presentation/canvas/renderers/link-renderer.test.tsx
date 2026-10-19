@@ -1,10 +1,14 @@
 import { render, screen } from '@testing-library/react';
-import { createLinkElement, createTextElement } from '../../../../../domain/element';
-import type { LinkElement } from '../../../../../domain/element';
+import {
+  createLinkElement,
+  createTextElement,
+  DEFAULT_TEXT_ALIGN,
+} from '../../../../../domain/element';
+import type { LinkElement, RichTextDocument } from '../../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../../domain/shared';
 import { ElementView, LinkRenderer } from '../../../../../presentation/canvas/renderers';
 
-function createElement(url: string, title?: string): LinkElement {
+function createElement(url: string, title?: string | RichTextDocument): LinkElement {
   return createLinkElement({
     id: ElementId.create('link-1'),
     workspaceId: WorkspaceId.create('ws-1'),
@@ -48,6 +52,13 @@ describe('LinkRenderer', () => {
     expect(content).toHaveAttribute('data-link-url', 'https://example.com');
   });
 
+  it('delimits the container with a soft border', () => {
+    render(<LinkRenderer element={createElement('https://example.com')} selected={false} />);
+
+    const content = document.querySelector('[data-element-content]');
+    expect(content).toHaveStyle({ borderTopWidth: '1px', borderTopStyle: 'solid' });
+  });
+
   it('returns null for a non-link element', () => {
     const text = createTextElement({
       id: ElementId.create('elem-2'),
@@ -61,6 +72,50 @@ describe('LinkRenderer', () => {
     const { container } = render(<LinkRenderer element={text} selected={false} />);
 
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it('renders the title with inline marks', () => {
+    const doc: RichTextDocument = {
+      blocks: [
+        {
+          type: 'paragraph',
+          align: DEFAULT_TEXT_ALIGN,
+          spans: [{ text: 'Example', marks: { underline: true } }],
+        },
+      ],
+    };
+
+    render(<LinkRenderer element={createElement('https://example.com', doc)} selected={false} />);
+
+    expect(screen.getByText('Example')).toHaveStyle({ textDecoration: 'underline' });
+  });
+
+  it('renders only the first text block and never lists in the title', () => {
+    const doc: RichTextDocument = {
+      blocks: [
+        { type: 'heading', level: 2, align: DEFAULT_TEXT_ALIGN, spans: [{ text: 'Docs' }] },
+        {
+          type: 'orderedList',
+          items: [
+            {
+              type: 'listItem',
+              content: [
+                { type: 'paragraph', align: DEFAULT_TEXT_ALIGN, spans: [{ text: 'listed' }] },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const element: LinkElement = { ...createElement('https://example.com'), title: doc };
+
+    const { container } = render(<LinkRenderer element={element} selected={false} />);
+
+    const title = document.querySelector('[data-link-title]');
+    expect(title).not.toBeNull();
+    expect(title?.textContent).toBe('Docs');
+    expect(container.querySelector('ol')).toBeNull();
+    expect(container.querySelector('h2')).toBeNull();
   });
 
   it('delegates to the renderer through ElementView', () => {

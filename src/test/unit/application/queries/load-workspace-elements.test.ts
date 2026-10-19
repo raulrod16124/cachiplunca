@@ -10,6 +10,7 @@ interface BuildTextOverrides {
   readonly id: string;
   readonly workspaceId?: WorkspaceId;
   readonly createdAt?: Date;
+  readonly zIndex?: number;
 }
 
 function buildTextElement(overrides: BuildTextOverrides): Element {
@@ -21,6 +22,7 @@ function buildTextElement(overrides: BuildTextOverrides): Element {
     size: Size.create(120, 80),
     content: `content-${overrides.id}`,
     ...(overrides.createdAt === undefined ? {} : { createdAt: overrides.createdAt }),
+    ...(overrides.zIndex === undefined ? {} : { zIndex: overrides.zIndex }),
   });
 }
 
@@ -114,6 +116,23 @@ describe('sortElementsForLoad', () => {
     const sorted = sortElementsForLoad([later, sameDateB, sameDateA, earliest]);
 
     expect(sorted.map((element) => element.id.value)).toEqual(['el-a', 'el-c', 'el-d', 'el-b']);
+  });
+
+  it('orders elements by zIndex before createdAt', () => {
+    const earliestButFront = buildTextElement({
+      id: 'el-a',
+      createdAt: new Date('2023-12-01T00:00:00.000Z'),
+      zIndex: 5,
+    });
+    const latestButBack = buildTextElement({
+      id: 'el-b',
+      createdAt: new Date('2024-02-01T00:00:00.000Z'),
+      zIndex: 0,
+    });
+
+    const sorted = sortElementsForLoad([earliestButFront, latestButBack]);
+
+    expect(sorted.map((element) => element.id.value)).toEqual(['el-b', 'el-a']);
   });
 
   it('does not mutate the input array', () => {

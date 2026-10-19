@@ -1,4 +1,4 @@
-import { ELEMENT_TYPES } from '../../../domain/element';
+import { ELEMENT_TYPES, richTextToPlain } from '../../../domain/element';
 import type { Element, ElementType, TaskStatus } from '../../../domain/element';
 
 const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
@@ -41,15 +41,18 @@ function contentLabel(prefix: string, content: string): string {
 function referenceLabel(element: Element): string {
   switch (element.type) {
     case 'text':
-      return contentLabel('text', element.content);
+      return contentLabel('text', richTextToPlain(element.content));
     case 'note':
-      return contentLabel('note', element.content);
+      return contentLabel('note', richTextToPlain(element.content));
     case 'task':
-      return contentLabel('task', element.title);
+      return contentLabel('task', richTextToPlain(element.title));
     case 'frame':
-      return contentLabel('frame', element.title);
+      return contentLabel('frame', richTextToPlain(element.title));
     case 'link':
-      return contentLabel('link', element.title ?? element.url);
+      return contentLabel(
+        'link',
+        element.title === undefined ? element.url : richTextToPlain(element.title),
+      );
     case 'connector':
       return 'connector';
     default: {
@@ -75,11 +78,14 @@ function resolveReference(id: string, elements: readonly Element[]): string {
 export function describeElement(element: Element, elements: readonly Element[] = []): string {
   switch (element.type) {
     case 'text':
-      return contentLabel('Text', element.content);
+      return contentLabel('Text', richTextToPlain(element.content));
     case 'note':
-      return contentLabel('Note', element.content);
+      return contentLabel('Note', richTextToPlain(element.content));
     case 'task': {
-      const parts = [`Task: ${truncate(element.title)}`, TASK_STATUS_LABELS[element.status]];
+      const parts = [
+        `Task: ${truncate(richTextToPlain(element.title))}`,
+        TASK_STATUS_LABELS[element.status],
+      ];
 
       if (element.dueDate !== undefined) {
         parts.push(`due ${element.dueDate.toISOString().slice(0, 10)}`);
@@ -88,7 +94,7 @@ export function describeElement(element: Element, elements: readonly Element[] =
       return parts.join(', ');
     }
     case 'frame':
-      return contentLabel('Frame', element.title);
+      return contentLabel('Frame', richTextToPlain(element.title));
     case 'connector': {
       const from = resolveReference(element.sourceElementId.value, elements);
       const to = resolveReference(element.targetElementId.value, elements);
@@ -96,7 +102,10 @@ export function describeElement(element: Element, elements: readonly Element[] =
       return `Connector from ${from} to ${to}`;
     }
     case 'link':
-      return contentLabel('Link', element.title ?? element.url);
+      return contentLabel(
+        'Link',
+        element.title === undefined ? element.url : richTextToPlain(element.title),
+      );
     default: {
       const unknown: never = element;
       return `Element ${JSON.stringify(unknown)}`;

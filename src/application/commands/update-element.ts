@@ -18,6 +18,7 @@ import {
   type FrameElement,
   type LinkElement,
   type NoteElement,
+  type RichTextDocument,
   type TaskElement,
   type TaskStatus,
 } from '../../domain/element';
@@ -31,22 +32,25 @@ interface UpdateElementBaseInput {
 }
 
 export type UpdateElementInput =
-  | (UpdateElementBaseInput & { readonly type: 'text'; readonly content?: string })
+  | (UpdateElementBaseInput & {
+      readonly type: 'text';
+      readonly content?: RichTextDocument | string;
+    })
   | (UpdateElementBaseInput & {
       readonly type: 'note';
-      readonly content?: string;
+      readonly content?: RichTextDocument | string;
       readonly color?: string;
     })
   | (UpdateElementBaseInput & {
       readonly type: 'task';
-      readonly title?: string;
+      readonly title?: RichTextDocument | string;
       readonly status?: TaskStatus;
       readonly assigneeId?: UserId | null;
       readonly dueDate?: Date | null;
     })
   | (UpdateElementBaseInput & {
       readonly type: 'frame';
-      readonly title?: string;
+      readonly title?: RichTextDocument | string;
       readonly parentFrameId?: ElementId | null;
     })
   | (UpdateElementBaseInput & {
@@ -57,7 +61,7 @@ export type UpdateElementInput =
   | (UpdateElementBaseInput & {
       readonly type: 'link';
       readonly url?: string;
-      readonly title?: string | null;
+      readonly title?: RichTextDocument | string | null;
     });
 
 export interface UpdateElementDeps {

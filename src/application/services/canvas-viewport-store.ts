@@ -10,6 +10,8 @@ export interface CanvasViewportStore {
   readonly subscribe: (onChange: () => void) => Unsubscribe;
   readonly pan: (screenDelta: Position) => void;
   readonly zoom: (factor: number, anchorScreen: Position) => void;
+  readonly setScale: (scale: number) => void;
+  readonly resize: (size: Size) => void;
   readonly reset: (size?: Size) => void;
   readonly fit: (contentBounds: Bounds | null, padding?: number) => void;
 }
@@ -49,6 +51,20 @@ export function createCanvasViewportStore(
       const currentScale = viewport.scale;
       const targetScale = clamp(currentScale * factor, MIN_CANVAS_SCALE, MAX_CANVAS_SCALE);
       publish(viewport.zoom(targetScale / currentScale, anchorScreen));
+    },
+    setScale(scale) {
+      const currentScale = viewport.scale;
+      const targetScale = clamp(scale, MIN_CANVAS_SCALE, MAX_CANVAS_SCALE);
+
+      if (targetScale === currentScale) {
+        return;
+      }
+
+      const anchorScreen = Position.create(viewport.size.width / 2, viewport.size.height / 2);
+      publish(viewport.zoom(targetScale / currentScale, anchorScreen));
+    },
+    resize(size) {
+      publish(Viewport.create(viewport.transform, size));
     },
     reset(size) {
       publish(Viewport.default(size ?? viewport.size));

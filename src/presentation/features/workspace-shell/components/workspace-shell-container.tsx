@@ -4,12 +4,16 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import styled from 'styled-components';
 import {
   createCreateElement,
+  createUpdateElement,
   type ChangeMemberRole,
   type CreateElementInput,
   type InviteMember,
   type LeaveWorkspace,
   type LogoutUser,
   type RemoveMember,
+  type UpdateElementInput,
+  type UpdateWorkspace,
+  type UpdateWorkspaceResult,
 } from '../../../../application/commands';
 import type {
   GetWorkspace,
@@ -106,6 +110,7 @@ export interface WorkspaceShellContainerProps {
   readonly changeMemberRole?: ChangeMemberRole;
   readonly removeMember?: RemoveMember;
   readonly leaveWorkspace?: LeaveWorkspace;
+  readonly updateWorkspace?: UpdateWorkspace;
 }
 
 interface TransformGesture {
@@ -135,13 +140,15 @@ export function WorkspaceShellContainer({
   changeMemberRole,
   removeMember,
   leaveWorkspace,
+  updateWorkspace,
 }: WorkspaceShellContainerProps): ReactNode {
   const [status, setStatus] = useState<'loading' | 'notFound' | 'error' | 'success'>('loading');
   const [shareOpen, setShareOpen] = useState(false);
   const [role, setRole] = useState<MembershipRole | undefined>(undefined);
-  const [roleStatus, setRoleStatus] = useState<'idle' | 'loading' | 'settled'>(
+  const [roleStatus, setRoleStatus] = useState<'idle' | 'loading' | 'settled' | 'failed'>(
     getWorkspaceRole === undefined ? 'idle' : 'loading',
   );
+  const [roleAttempt, setRoleAttempt] = useState(0);
   const permissions = useWorkspacePermissions(role);
   const [result, setResult] = useState<GetWorkspaceResult | null>(null);
   const [elements, setElements] = useState<readonly Element[]>([]);
@@ -346,8 +353,35 @@ export function WorkspaceShellContainer({
     [generateElementId],
   );
 
+  const updateElementCommand = useMemo(() => createUpdateElement(), []);
+
+  const handleUpdateElement = useCallback(
+    (input: UpdateElementInput): void => {
+      const current = elementsRef.current.find(
+        (element) => element.id.value === input.element.id.value,
+      );
+
+      if (current === undefined) {
+        return;
+      }
+
+      const result = updateElementCommand({ ...input, element: current });
+
+      if (result.status === 'error') {
+        return;
+      }
+
+      const next = elementsRef.current.map((element) =>
+        element.id.value === current.id.value ? result.element : element,
+      );
+
+      commitElements(next, `Update ${current.type}`);
+    },
+    [updateElementCommand, commitElements],
+  );
+
   const handleCreateElement = useCallback(
-    (type: ElementType): void => {
+    (type: ElementType): ElementId | void => {
       if (localUserId === undefined) {
         return;
       }
@@ -408,6 +442,8 @@ export function WorkspaceShellContainer({
       setCreationError(null);
       commitElements([...elementsRef.current, result.element], `Create ${type}`);
       selectionStoreRef.current.select(result.element.id.value);
+
+      return result.element.id;
     },
     [localUserId, workspaceId, createElement, commitElements],
   );
@@ -480,6 +516,13 @@ export function WorkspaceShellContainer({
     [commitElements],
   );
 
+  const handleReorderElements = useCallback(
+    (next: readonly Element[]) => {
+      commitElements(next, 'Reorder elements');
+    },
+    [commitElements],
+  );
+
   const handleUndoElements = useCallback(
     (restored: readonly Element[]) => {
       const previous = elementsRef.current;
@@ -511,6 +554,28 @@ export function WorkspaceShellContainer({
       setStatus('error');
     }
   }, [getWorkspace, workspaceId]);
+
+  const handleRenameWorkspace = useCallback(
+    async (name: string): Promise<UpdateWorkspaceResult> => {
+      if (updateWorkspace === undefined) {
+        return {
+          status: 'error',
+          error: toAppError(new Error('Renaming is not available.')),
+        };
+      }
+
+      const result = await updateWorkspace({ id: workspaceId, name });
+      if (result.status === 'ok') {
+        setResult((previous) =>
+          previous === null || previous.status !== 'ok'
+            ? previous
+            : { status: 'ok', workspace: result.workspace },
+        );
+      }
+      return result;
+    },
+    [updateWorkspace, workspaceId],
+  );
 
   const fetchElements = useCallback(async (): Promise<void> => {
     setElementsStatus('loading');
@@ -553,21 +618,30 @@ export function WorkspaceShellContainer({
         if (!active) {
           return;
         }
-        setRole(response.status === 'ok' ? response.role : undefined);
-        setRoleStatus('settled');
+        if (response.status === 'ok') {
+          setRole(response.role);
+          setRoleStatus('settled');
+          return;
+        }
+        setRole(undefined);
+        setRoleStatus(response.status === 'notFound' ? 'settled' : 'failed');
       } catch {
         if (!active) {
           return;
         }
         setRole(undefined);
-        setRoleStatus('settled');
+        setRoleStatus('failed');
       }
     })();
 
     return () => {
       active = false;
     };
-  }, [getWorkspaceRole, localUserId, workspaceId]);
+  }, [getWorkspaceRole, localUserId, workspaceId, roleAttempt]);
+
+  const handleRetryRole = useCallback(() => {
+    setRoleAttempt((attempt) => attempt + 1);
+  }, []);
 
   useEffect(() => {
     if (status === 'success') {
@@ -703,6 +777,9 @@ export function WorkspaceShellContainer({
     const canMemberRemove = !permissionsEnforced || permissions.can('member:remove');
     const canMemberLeave = !permissionsEnforced || permissions.can('member:leave');
     const canCreateElement = canElementWrite && localUserId !== undefined;
+    const canRename =
+      updateWorkspace !== undefined &&
+      (!permissionsEnforced || permissions.can('workspace:update'));
 
     const canShare =
       localUserId !== undefined &&
@@ -729,9 +806,11 @@ export function WorkspaceShellContainer({
           onDeleteElements={handleDeleteElements}
           onDuplicateElements={handleDuplicateElements}
           onPasteElements={handlePasteElements}
+          onReorderElements={handleReorderElements}
           onUndoElements={handleUndoElements}
           onRedoElements={handleRedoElements}
           onCreateElement={canCreateElement ? handleCreateElement : undefined}
+          onUpdateElement={canElementWrite ? handleUpdateElement : undefined}
           generateElementId={generateElementId}
           remoteCursors={remoteCursors}
           onCursorMove={cursorBroadcaster === null ? undefined : handleCursorMove}
@@ -747,7 +826,14 @@ export function WorkspaceShellContainer({
             creationError === null ? null : describeCreateElementError(creationError)
           }
           readOnly={!canElementWrite}
+          accessErrorMessage={
+            roleStatus === 'failed'
+              ? 'We could not verify your access to this workspace. The board is view-only.'
+              : null
+          }
+          onRetryRole={roleStatus === 'failed' ? handleRetryRole : undefined}
           onShare={canShare ? () => setShareOpen(true) : undefined}
+          onRename={canRename ? handleRenameWorkspace : undefined}
         />
         {canShare ? (
           <ShareDialog

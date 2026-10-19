@@ -6,6 +6,7 @@ import {
   createNoteElement,
   createTaskElement,
   createTextElement,
+  richTextToPlain,
   type ConnectorElement,
   type Element,
   type FrameElement,
@@ -86,14 +87,14 @@ describe('createDeleteElement', () => {
     const removedTask = expectOk({ element: taskElement() });
     expect(removedTask.type).toBe('task');
     if (removedTask.type === 'task') {
-      expect(removedTask.title).toBe('Ship it');
+      expect(richTextToPlain(removedTask.title)).toBe('Ship it');
       expect(removedTask.status).toBe('todo');
     }
 
     const removedNote = expectOk({ element: noteElement({ color: '#ff0' }) });
     expect(removedNote.type).toBe('note');
     if (removedNote.type === 'note') {
-      expect(removedNote.content).toBe('idea');
+      expect(richTextToPlain(removedNote.content)).toBe('idea');
       expect(removedNote.color).toBe('#ff0');
     }
   });

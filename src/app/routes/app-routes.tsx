@@ -10,6 +10,7 @@ import type {
   LogoutUser,
   RegisterUser,
   RemoveMember,
+  UpdateWorkspace,
 } from '../../application/commands';
 import type {
   GetWorkspace,
@@ -53,6 +54,7 @@ export interface AppRoutesProps {
   readonly changeMemberRole?: ChangeMemberRole;
   readonly removeMember?: RemoveMember;
   readonly leaveWorkspace?: LeaveWorkspace;
+  readonly updateWorkspace?: UpdateWorkspace;
 }
 
 export function AppRoutes({
@@ -75,6 +77,7 @@ export function AppRoutes({
   changeMemberRole,
   removeMember,
   leaveWorkspace,
+  updateWorkspace,
 }: AppRoutesProps): ReactNode {
   return (
     <Routes>
@@ -118,6 +121,7 @@ export function AppRoutes({
               changeMemberRole={changeMemberRole}
               removeMember={removeMember}
               leaveWorkspace={leaveWorkspace}
+              updateWorkspace={updateWorkspace}
             />
           }
         />

@@ -1,7 +1,8 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Position, ElementId, Size, UserId, WorkspaceId } from '../../../../../domain/shared';
-import { createTextElement } from '../../../../../domain/element';
+import { createTextElement, richTextFromPlain } from '../../../../../domain/element';
 import type { Element, ElementType } from '../../../../../domain/element';
 import {
   createCanvasViewportStore,
@@ -10,7 +11,12 @@ import {
 } from '../../../../../application/services';
 import type { CommandHistory } from '../../../../../application/services';
 import { createFunctionCommand } from '../../../../../application/commands';
+import type { UpdateElementInput } from '../../../../../application/commands';
 import { Canvas } from '../../../../../presentation/canvas/components/canvas';
+
+jest.mock('../../../../../presentation/canvas/components/rich-text-editor', () =>
+  require('../../../../fixtures/rich-text-editor-stub'),
+);
 
 function createElement(id: string, x: number, y: number, width: number, height: number): Element {
   return createTextElement({
@@ -35,6 +41,8 @@ function renderCanvas(
   onUndoElements?: (next: readonly Element[]) => void,
   onRedoElements?: (next: readonly Element[]) => void,
   onTransformEnd?: () => void,
+  onReorderElements?: (next: readonly Element[]) => void,
+  onUpdateElement?: (input: UpdateElementInput) => void,
 ) {
   const store = createCanvasViewportStore(Size.create(800, 600));
   const selectionStore = createSelectionStore();
@@ -54,6 +62,8 @@ function renderCanvas(
       onUndoElements={onUndoElements}
       onRedoElements={onRedoElements}
       onTransformEnd={onTransformEnd}
+      onReorderElements={onReorderElements}
+      onUpdateElement={onUpdateElement}
     />,
   );
 
@@ -123,7 +133,7 @@ describe('Canvas', () => {
     expect(screen.getByRole('application', { name: 'Canvas' })).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Arrow keys to move selection · Shift + Arrow to extend selection · Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo',
+        'Arrow keys to move selection · Shift + Arrow to extend selection · Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo · Ctrl/Cmd + ] to bring to front · Ctrl/Cmd + [ to send to back · Right-click an object for more options',
       ),
     ).toBeInTheDocument();
   });
@@ -147,7 +157,7 @@ describe('Canvas', () => {
     expect(canvas).toHaveAttribute('tabindex', '0');
     expect(canvas).toHaveAttribute(
       'aria-keyshortcuts',
-      'ArrowUp ArrowDown ArrowLeft ArrowRight Escape Control+A Meta+A Delete Control+D Meta+D Control+C Meta+C Control+V Meta+V Control+Z Meta+Z Control+Shift+Z Meta+Shift+Z Control+Y Meta+Y',
+      'ArrowUp ArrowDown ArrowLeft ArrowRight Escape Control+A Meta+A Delete Control+D Meta+D Control+C Meta+C Control+V Meta+V Control+Z Meta+Z Control+Shift+Z Meta+Shift+Z Control+Y Meta+Y Control+] Meta+] Control+[ Meta+[',
     );
   });
 
@@ -277,11 +287,11 @@ describe('Canvas', () => {
     renderCanvas();
     const canvas = screen.getByRole('application', { name: 'Canvas' });
 
-    expect(screen.getByLabelText('Zoom level')).toHaveTextContent('100%');
+    expect(screen.getByTestId('zoom-level')).toHaveTextContent('100%');
 
     fireEvent.wheel(canvas, { ctrlKey: true, deltaY: -100, clientX: 200, clientY: 150 });
 
-    expect(screen.getByLabelText('Zoom level')).not.toHaveTextContent('100%');
+    expect(screen.getByTestId('zoom-level')).not.toHaveTextContent('100%');
   });
 
   it('resets the viewport when clicking reset view', async () => {
@@ -297,7 +307,7 @@ describe('Canvas', () => {
     const world = screen.getByTestId('canvas-world');
     expect(Number(canvas.getAttribute('data-scale'))).toBe(1);
     expect(world.style.transform).toContain('translate(0px, 0px)');
-    expect(screen.getByLabelText('Zoom level')).toHaveTextContent('100%');
+    expect(screen.getByTestId('zoom-level')).toHaveTextContent('100%');
   });
 
   describe('selection', () => {
@@ -1025,6 +1035,198 @@ describe('Canvas', () => {
     });
   });
 
+  describe('z-order', () => {
+    it('brings the selected item to the front on Ctrl+]', async () => {
+      const onReorderElements = jest.fn();
+      const { selectionStore } = renderCanvas(
+        [FIRST_ITEM, SECOND_ITEM],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        onReorderElements,
+      );
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      act(() => {
+        selectionStore.select('first');
+      });
+
+      canvas.focus();
+      await userEvent.setup().keyboard('{Control>}]{/Control}');
+
+      expect(onReorderElements).toHaveBeenCalledTimes(1);
+      const reordered: readonly Element[] = onReorderElements.mock.calls[0][0];
+      expect(reordered.map((element) => element.id.value)).toEqual(['second', 'first']);
+    });
+
+    it('sends the selected item to the back on Ctrl+[', async () => {
+      const onReorderElements = jest.fn();
+      const { selectionStore } = renderCanvas(
+        [FIRST_ITEM, SECOND_ITEM],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        onReorderElements,
+      );
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      act(() => {
+        selectionStore.select('second');
+      });
+
+      canvas.focus();
+      await userEvent.setup().keyboard('{Control>}[[{/Control}');
+
+      expect(onReorderElements).toHaveBeenCalledTimes(1);
+      const reordered: readonly Element[] = onReorderElements.mock.calls[0][0];
+      expect(reordered.map((element) => element.id.value)).toEqual(['second', 'first']);
+    });
+
+    it('does nothing on the z-order shortcuts when there is no selection', async () => {
+      const onReorderElements = jest.fn();
+      renderCanvas(
+        [FIRST_ITEM],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        onReorderElements,
+      );
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      canvas.focus();
+      await userEvent.setup().keyboard('{Control>}]{/Control}');
+
+      expect(onReorderElements).not.toHaveBeenCalled();
+    });
+
+    it('opens a context menu on right-click and brings the hit item to the front', async () => {
+      const onReorderElements = jest.fn();
+      const { selectionStore } = renderCanvas(
+        [FIRST_ITEM, SECOND_ITEM],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        onReorderElements,
+      );
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const user = userEvent.setup();
+
+      fireEvent.contextMenu(canvas, { clientX: 150, clientY: 130 });
+
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['first']);
+
+      await user.click(screen.getByRole('menuitem', { name: 'Bring to front' }));
+
+      expect(onReorderElements).toHaveBeenCalledTimes(1);
+      const reordered: readonly Element[] = onReorderElements.mock.calls[0][0];
+      expect(reordered.map((element) => element.id.value)).toEqual(['second', 'first']);
+    });
+
+    it('sends the hit item to the back from the context menu', async () => {
+      const onReorderElements = jest.fn();
+      const { selectionStore } = renderCanvas(
+        [FIRST_ITEM, SECOND_ITEM],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        onReorderElements,
+      );
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      const user = userEvent.setup();
+
+      fireEvent.contextMenu(canvas, { clientX: 350, clientY: 250 });
+
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['second']);
+
+      await user.click(screen.getByRole('menuitem', { name: 'Send to back' }));
+
+      expect(onReorderElements).toHaveBeenCalledTimes(1);
+      const reordered: readonly Element[] = onReorderElements.mock.calls[0][0];
+      expect(reordered.map((element) => element.id.value)).toEqual(['second', 'first']);
+    });
+
+    it('does not open a context menu when right-clicking empty space', () => {
+      renderCanvas([FIRST_ITEM]);
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      fireEvent.contextMenu(canvas, { clientX: 700, clientY: 550 });
+
+      expect(screen.queryByRole('menuitem', { name: 'Bring to front' })).not.toBeInTheDocument();
+    });
+
+    it('shows text formatting options when right-clicking a text element', async () => {
+      const { selectionStore } = renderCanvas(
+        [FIRST_ITEM],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        jest.fn(),
+      );
+      act(() => {
+        selectionStore.select('first');
+      });
+
+      const text = screen.getByText('hello');
+      const range = document.createRange();
+      range.selectNodeContents(text);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+      fireEvent.contextMenu(canvas, { clientX: 150, clientY: 130 });
+
+      expect(await screen.findByRole('toolbar', { name: 'Text formatting' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Font' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Bold' })).toBeInTheDocument();
+
+      window.getSelection()?.removeAllRanges();
+    });
+  });
+
   describe('undo', () => {
     it('undoes the last command on Ctrl+Z and emits the previous state', async () => {
       const onUndoElements = jest.fn();
@@ -1254,7 +1456,7 @@ describe('Canvas', () => {
       expect(onCreateElement).toHaveBeenCalledWith('connector');
     });
 
-    it('undoes the last command through the toolbar button', async () => {
+    it('undoes the last command through the viewport controls button', async () => {
       const onUndoElements = jest.fn();
       const history = historyWithRecordedCommand([FIRST_ITEM], [FIRST_ITEM, SECOND_ITEM]);
       renderToolbarCanvas({
@@ -1331,6 +1533,181 @@ describe('Canvas', () => {
       fireEvent.pointerDown(screen.getByRole('button', { name: 'Fit view' }), { button: 0 });
 
       expect(canvas).not.toHaveFocus();
+    });
+  });
+
+  describe('inline editing', () => {
+    interface EditableCanvasOptions {
+      readonly elements: readonly Element[];
+      readonly onUpdateElement?: (input: UpdateElementInput) => void;
+      readonly onCreateElement?: (type: ElementType) => ElementId | void;
+      readonly readOnly?: boolean;
+    }
+
+    function renderEditableCanvas(options: EditableCanvasOptions) {
+      const store = createCanvasViewportStore(Size.create(800, 600));
+      const selectionStore = createSelectionStore();
+
+      render(
+        <Canvas
+          store={store}
+          selectionStore={selectionStore}
+          elements={options.elements}
+          onUpdateElement={options.onUpdateElement}
+          onCreateElement={options.onCreateElement}
+          readOnly={options.readOnly}
+        />,
+      );
+
+      return { store, selectionStore };
+    }
+
+    function AutoEditHarness({
+      onUpdateElement,
+    }: {
+      readonly onUpdateElement: (input: UpdateElementInput) => void;
+    }) {
+      const store = useMemo(() => createCanvasViewportStore(Size.create(800, 600)), []);
+      const selectionStore = useMemo(() => createSelectionStore(), []);
+      const [elements, setElements] = useState<readonly Element[]>([]);
+      const counterRef = useRef(0);
+
+      const handleCreate = useCallback((): ElementId => {
+        counterRef.current += 1;
+        const element = createElement(`created-${counterRef.current}`, 100, 100, 100, 60);
+        setElements((previous) => [...previous, element]);
+        return element.id;
+      }, []);
+
+      return (
+        <Canvas
+          store={store}
+          selectionStore={selectionStore}
+          elements={elements}
+          onUpdateElement={onUpdateElement}
+          onCreateElement={handleCreate}
+        />
+      );
+    }
+
+    it('opens the inline editor when double-clicking an element', async () => {
+      renderEditableCanvas({ elements: [FIRST_ITEM], onUpdateElement: jest.fn() });
+
+      fireEvent.doubleClick(screen.getByTestId('canvas-item-first'));
+
+      expect(await screen.findByTestId('element-editor')).toHaveValue('hello');
+      expect(screen.queryByTestId('selection-overlay')).not.toBeInTheDocument();
+    });
+
+    it('positions the editor over the element world bounds', async () => {
+      renderEditableCanvas({ elements: [FIRST_ITEM], onUpdateElement: jest.fn() });
+
+      fireEvent.doubleClick(screen.getByTestId('canvas-item-first'));
+
+      const box = await screen.findByTestId('element-editor-box');
+      expect(getComputedStyle(box).position).toBe('absolute');
+      expect(box.style.left).toBe('100px');
+      expect(box.style.top).toBe('100px');
+      expect(box.style.width).toBe('120px');
+      expect(box.style.height).toBe('80px');
+      expect(box).toContainElement(await screen.findByTestId('element-editor'));
+    });
+
+    it('opens the editor when the double-click is retargeted to the canvas surface', async () => {
+      renderEditableCanvas({ elements: [FIRST_ITEM], onUpdateElement: jest.fn() });
+
+      const item = screen.getByTestId('canvas-item-first');
+      const elementFromPoint = jest.fn(() => item);
+      Object.defineProperty(document, 'elementFromPoint', {
+        configurable: true,
+        writable: true,
+        value: elementFromPoint,
+      });
+
+      try {
+        fireEvent.doubleClick(screen.getByRole('application', { name: 'Canvas' }), {
+          clientX: 120,
+          clientY: 110,
+        });
+
+        expect(elementFromPoint).toHaveBeenCalled();
+        expect(await screen.findByTestId('element-editor')).toHaveValue('hello');
+      } finally {
+        delete (document as { elementFromPoint?: unknown }).elementFromPoint;
+      }
+    });
+
+    it('commits the edited content through onUpdateElement on blur', async () => {
+      const user = userEvent.setup();
+      const onUpdateElement = jest.fn();
+      renderEditableCanvas({ elements: [FIRST_ITEM], onUpdateElement });
+
+      fireEvent.doubleClick(screen.getByTestId('canvas-item-first'));
+
+      const editor = await screen.findByTestId('element-editor');
+      await user.clear(editor);
+      await user.type(editor, 'updated');
+      await user.tab();
+
+      expect(onUpdateElement).toHaveBeenCalledWith({
+        type: 'text',
+        element: FIRST_ITEM,
+        content: richTextFromPlain('updated'),
+      });
+      expect(screen.queryByTestId('element-editor')).not.toBeInTheDocument();
+    });
+
+    it('closes the editor without committing when Escape is pressed', async () => {
+      const user = userEvent.setup();
+      const onUpdateElement = jest.fn();
+      renderEditableCanvas({ elements: [FIRST_ITEM], onUpdateElement });
+
+      fireEvent.doubleClick(screen.getByTestId('canvas-item-first'));
+
+      const editor = await screen.findByTestId('element-editor');
+      await user.clear(editor);
+      await user.type(editor, 'discarded');
+      await user.keyboard('{Escape}');
+
+      expect(onUpdateElement).not.toHaveBeenCalled();
+      expect(screen.queryByTestId('element-editor')).not.toBeInTheDocument();
+    });
+
+    it('opens the editor on Enter with a single selected element', async () => {
+      const user = userEvent.setup();
+      const { selectionStore } = renderEditableCanvas({
+        elements: [FIRST_ITEM],
+        onUpdateElement: jest.fn(),
+      });
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      await user.pointer({ keys: '[MouseLeft>]', target: canvas, coords: { x: 150, y: 130 } });
+      expect(selectionStore.getSnapshot().selectedIds).toEqual(['first']);
+
+      await user.keyboard('{Enter}');
+
+      expect(await screen.findByTestId('element-editor')).toBeInTheDocument();
+    });
+
+    it('does not open the editor when the canvas is read-only', () => {
+      renderEditableCanvas({
+        elements: [FIRST_ITEM],
+        onUpdateElement: jest.fn(),
+        readOnly: true,
+      });
+
+      fireEvent.doubleClick(screen.getByTestId('canvas-item-first'));
+
+      expect(screen.queryByTestId('element-editor')).not.toBeInTheDocument();
+    });
+
+    it('opens the editor for a freshly created element', async () => {
+      const user = userEvent.setup();
+      render(<AutoEditHarness onUpdateElement={jest.fn()} />);
+
+      await user.click(screen.getByRole('button', { name: 'Add text' }));
+
+      expect(await screen.findByTestId('element-editor')).toBeInTheDocument();
     });
   });
 });

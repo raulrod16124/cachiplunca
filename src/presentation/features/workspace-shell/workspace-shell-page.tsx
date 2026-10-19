@@ -7,6 +7,7 @@ import type {
   LeaveWorkspace,
   LogoutUser,
   RemoveMember,
+  UpdateWorkspace,
 } from '../../../application/commands';
 import type {
   GetWorkspace,
@@ -38,6 +39,7 @@ export interface WorkspaceShellPageProps {
   readonly changeMemberRole?: ChangeMemberRole;
   readonly removeMember?: RemoveMember;
   readonly leaveWorkspace?: LeaveWorkspace;
+  readonly updateWorkspace?: UpdateWorkspace;
 }
 
 export function WorkspaceShellPage({
@@ -55,6 +57,7 @@ export function WorkspaceShellPage({
   changeMemberRole,
   removeMember,
   leaveWorkspace,
+  updateWorkspace,
 }: WorkspaceShellPageProps): ReactNode {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const navigate = useNavigate();
@@ -86,6 +89,7 @@ export function WorkspaceShellPage({
       changeMemberRole={changeMemberRole}
       removeMember={removeMember}
       leaveWorkspace={leaveWorkspace}
+      updateWorkspace={updateWorkspace}
       onBack={() => navigate('/workspaces')}
     />
   );

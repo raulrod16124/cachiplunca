@@ -25,6 +25,7 @@ import {
   type InviteMember,
   type LeaveWorkspace,
   type RemoveMember,
+  type UpdateWorkspace,
 } from '../../../../../../application/commands';
 import {
   createElementPersistence,
@@ -36,7 +37,7 @@ import type {
   ElementPersistenceOrchestrator,
   RealtimeSubscriptionManager,
 } from '../../../../../../application/services';
-import { createTextElement } from '../../../../../../domain/element';
+import { createTextElement, richTextFromPlain } from '../../../../../../domain/element';
 import { Presence } from '../../../../../../domain/collaboration';
 import {
   ElementId,
@@ -46,6 +47,10 @@ import {
   UserId,
   WorkspaceId,
 } from '../../../../../../domain/shared';
+
+jest.mock('../../../../../../presentation/canvas/components/rich-text-editor', () =>
+  require('../../../../../../test/fixtures/rich-text-editor-stub'),
+);
 import { Workspace } from '../../../../../../domain/workspace';
 import { createAppError, ERROR_CODES } from '../../../../../../shared/errors';
 import { WorkspaceShellContainer } from '../../../../../../presentation/features/workspace-shell/components/workspace-shell-container';
@@ -160,6 +165,7 @@ interface RenderOptions {
   readonly changeMemberRole?: ChangeMemberRole;
   readonly removeMember?: RemoveMember;
   readonly leaveWorkspace?: LeaveWorkspace;
+  readonly updateWorkspace?: UpdateWorkspace;
 }
 
 function renderContainer(getWorkspace: GetWorkspace, options: RenderOptions = {}) {
@@ -193,6 +199,7 @@ function renderContainer(getWorkspace: GetWorkspace, options: RenderOptions = {}
         changeMemberRole={options.changeMemberRole}
         removeMember={options.removeMember}
         leaveWorkspace={options.leaveWorkspace}
+        updateWorkspace={options.updateWorkspace}
       />
     </MemoryRouter>,
   );
@@ -1605,6 +1612,52 @@ describe('WorkspaceShellContainer', () => {
     const canvas = await screen.findByRole('application', { name: 'Canvas' });
     expect(canvas).toHaveAttribute('aria-readonly', 'true');
     expect(screen.queryByRole('button', { name: 'Share' })).not.toBeInTheDocument();
+    expect(screen.getByText('View only')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('shows an explicit view-only banner with retry when role resolution fails', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const getWorkspaceRole: GetWorkspaceRole = jest
+      .fn()
+      .mockRejectedValueOnce(new Error('network down'))
+      .mockResolvedValueOnce({ status: 'ok', role: 'editor' });
+
+    renderContainer(getWorkspace, {
+      localUserId: 'user-local',
+      getWorkspaceRole,
+    });
+
+    const canvas = await screen.findByRole('application', { name: 'Canvas' });
+    await waitFor(() => expect(canvas).toHaveAttribute('aria-readonly', 'true'));
+    expect(screen.getByText('View only')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent(/could not verify your access/i);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+
+    const retriedCanvas = await screen.findByRole('application', { name: 'Canvas' });
+    await waitFor(() => expect(retriedCanvas).toHaveAttribute('aria-readonly', 'false'));
+    expect(screen.getByText('Editor')).toBeInTheDocument();
+    expect(screen.queryByText('View only')).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('shows the view-only banner when role resolution returns an error result', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const getWorkspaceRole: GetWorkspaceRole = jest.fn().mockResolvedValue({
+      status: 'error',
+      error: createAppError('network', ERROR_CODES.NETWORK_REQUEST_FAILED, 'offline'),
+    });
+
+    renderContainer(getWorkspace, {
+      localUserId: 'user-local',
+      getWorkspaceRole,
+    });
+
+    const canvas = await screen.findByRole('application', { name: 'Canvas' });
+    await waitFor(() => expect(canvas).toHaveAttribute('aria-readonly', 'true'));
+    expect(screen.getByText('View only')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent(/could not verify your access/i);
   });
 
   it('creates a text element from the toolbar at the viewport center', async () => {
@@ -1653,6 +1706,40 @@ describe('WorkspaceShellContainer', () => {
     });
   });
 
+  it('edits an element inline and persists the new content', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const repository = new FakeElementRepository();
+    const orchestrator = createElementPersistenceOrchestrator(createElementPersistence(repository));
+    const user = userEvent.setup();
+
+    renderContainer(getWorkspace, {
+      localUserId: 'user-local',
+      elementPersistenceOrchestrator: orchestrator,
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [TEXT_ELEMENT],
+      }),
+    });
+
+    const item = await screen.findByTestId('canvas-item-el-1');
+    fireEvent.doubleClick(item);
+
+    const editor = await screen.findByTestId('element-editor');
+    await user.clear(editor);
+    await user.type(editor, 'Updated');
+    await user.tab();
+
+    await waitFor(async () => {
+      const stored = await repository.listByWorkspace(WorkspaceId.create('ws-test'));
+      expect(stored).toHaveLength(1);
+      const element = stored[0];
+      expect(element?.type).toBe('text');
+      if (element?.type === 'text') {
+        expect(element.content).toEqual(richTextFromPlain('Updated'));
+      }
+    });
+  });
+
   it('creates a connector between two selected elements', async () => {
     const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
     const second = createTextElement({
@@ -1696,5 +1783,48 @@ describe('WorkspaceShellContainer', () => {
 
     await screen.findByRole('application', { name: 'Canvas' });
     expect(screen.getByRole('button', { name: 'Add text' })).toBeDisabled();
+  });
+
+  it('renames the workspace inline when the user is the owner', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const updateWorkspace = jest.fn().mockImplementation(async (input: { name?: string }) => ({
+      status: 'ok' as const,
+      workspace: WORKSPACE.update({ name: input.name ?? '' }),
+    }));
+    const user = userEvent.setup();
+
+    renderContainer(getWorkspace, {
+      role: 'owner',
+      localUserId: 'user-1',
+      updateWorkspace,
+    });
+
+    await user.click(await screen.findByRole('button', { name: 'Rename workspace' }));
+    const input = screen.getByRole('textbox', { name: 'Workspace name' });
+    await user.clear(input);
+    await user.type(input, 'Roadmap 2027{Enter}');
+
+    await waitFor(() =>
+      expect(updateWorkspace).toHaveBeenCalledWith({
+        id: 'ws-test',
+        name: 'Roadmap 2027',
+      }),
+    );
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Roadmap 2027' }),
+    ).toBeInTheDocument();
+  });
+
+  it('does not offer renaming to editors', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+
+    renderContainer(getWorkspace, {
+      role: 'editor',
+      localUserId: 'user-1',
+      updateWorkspace: jest.fn(),
+    });
+
+    await screen.findByRole('heading', { level: 1, name: 'Roadmap Q4' });
+    expect(screen.queryByRole('button', { name: 'Rename workspace' })).not.toBeInTheDocument();
   });
 });

@@ -11,3 +11,14 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
+
+/*
+ * @raulrod/ui renders `Select.Content` (and Popover/DropdownMenu panels) at
+ * `z-index: var(--rr-z-overlay)` (100), below `Dialog` at `var(--rr-z-modal)`
+ * (200). Both portal to `document.body`, so a Select opened inside a Dialog
+ * paints *under* the dialog overlay and its options receive no pointer events.
+ * Raise the settings listbox above the modal until this is fixed upstream.
+ */
+.settings-select-content {
+  z-index: calc(var(--rr-z-modal) + 1);
+}

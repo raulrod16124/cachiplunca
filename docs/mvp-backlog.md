@@ -116,6 +116,7 @@ Convertir información en un plan compartido
 - pan y zoom;
 - selección y multiselección;
 - Text, Note, Task, Frame, Connector y Link;
+- texto enriquecido (fuente, tamaño, negrita, cursiva, subrayado, color, resaltado, listas y estilos) en Text, Note, Task, Frame y Link;
 - crear, mover, redimensionar, eliminar y duplicar;
 - copy/paste;
 - keyboard shortcuts;
@@ -295,13 +296,13 @@ Campos específicos:
 
 ```text
 Task:
-  title
+  title: RichTextDocument | string
   status
   assigneeId?
   dueDate?
 
 Frame:
-  title
+  title: RichTextDocument | string
   position
   size
   parentFrameId?
@@ -312,8 +313,14 @@ Connector:
 
 Link:
   url
-  title?
+  title?: RichTextDocument | string
+
+Note:
+  content: RichTextDocument | string
+  color?
 ```
+
+> `RichTextDocument | string` indica que el dominio acepta rich text y mantiene compatibilidad backward-compatible con strings legacy.
 
 Los detalles definitivos deben emerger de las invariantes del dominio y documentarse si difieren de esta referencia.
 
@@ -4862,6 +4869,205 @@ Actualizar las dependencias directas con major pendiente sin romper el SDK ni el
 - La resolución forzada de dependencias debe justificarse y verificarse funcionalmente.
 - Los upgrades de major no se aplican en bloque.
 
+### TASK-131 — Rich text model foundation
+
+**Priority:** P1 · **Depends:** TASK-045 · **Status:** DONE
+
+#### Objetivo
+
+Extender el modelo de dominio para que `note`, `task`, `frame` y `link` puedan almacenar y validar texto enriquecido (`RichTextDocument`), no solo `text`.
+
+#### Alcance
+
+- Extender `RichTextDocument` para soportar nuevas marcas (`italic`, `highlight`) y nuevos tipos de bloque (`heading`, `bulletList`, `orderedList`).
+- Cambiar el campo `content` de `NoteElement` de `string` a `RichTextDocument | string` (compatibilidad con strings legacy).
+- Cambiar el campo `title` de `TaskElement`, `FrameElement` y `LinkElement.title` de `string` a `RichTextDocument | string`.
+- Validar que los títulos de task/frame/link contengan exactamente un bloque de tipo `paragraph` o `heading` (sin listas ni múltiples párrafos).
+- Actualizar `update-element.ts` para aceptar `RichTextDocument | string` en los patches de note/task/frame/link.
+- Actualizar `firebase-element-mapper.ts` para leer strings legacy y convertirlos con `richTextFromPlain`, y serializar `RichTextDocument` para todos los tipos.
+- Añadir/actualizar tests de dominio, application e infrastructure.
+
+#### Criterios de aceptación
+
+- [x] `note`, `task`, `frame` y `link` se crean y actualizan con `RichTextDocument` o `string`.
+- [x] Los títulos de task/frame/link rechazan documentos con más de un bloque o con listas.
+- [x] El mapper lee documentos antiguos en formato string sin errores.
+- [x] Los tests de dominio (`note-element`, `task-element`, `frame-element`, `link-element`, `rich-text`) pasan.
+- [x] Los tests del mapper pasan, incluyendo round-trip de strings legacy.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+
+#### Fuera de alcance
+
+- No cambiar la UI de edición (llega en TASK-132/TASK-135).
+- No implementar renderizado enriquecido (llega en TASK-133).
+- No añadir efectos de texto avanzados (contorno, sombra, brillo).
+
+#### Constraints técnicos
+
+- Domain no importa React, Firebase, styled-components, `@raulrod/ui` ni APIs del navegador.
+- Las validaciones de rich text viven en Domain.
+- La migración de datos es backward-compatible: strings antiguos se convierten al leer.
+
+### TASK-132 — TipTap adapter and extensions
+
+**Priority:** P1 · **Depends:** TASK-131 · **Status:** DONE
+
+#### Objetivo
+
+Hacer que TipTap pueda editar el rich text extendido (italic, highlight, headings, listas) y proporcionar una capa unificada de formato para editor y documento de dominio.
+
+#### Alcance
+
+- Añadir dependencias TipTap: `@tiptap/extension-italic`, `@tiptap/extension-highlight`, `@tiptap/extension-bullet-list`, `@tiptap/extension-ordered-list`, `@tiptap/extension-list-item`, `@tiptap/extension-heading`.
+- Extender `rich-text-adapter.ts` para mapear nuevos bloques y marcas en ambas direcciones.
+- Extender `editor-format.ts` y `text-format.ts` con acciones para `italic`, `highlight`, `heading`, `bulletList`, `orderedList`, `increaseFontSize`, `decreaseFontSize`.
+- Implementar detección de estado `mixed` en `getEditorFormatState` (recorriendo nodos de la selección).
+- Introducir la abstracción `TextFormatTarget` en Presentation para unificar formato sobre editor activo o documento de dominio.
+- Añadir/actualizar tests de adapter y formato.
+
+#### Criterios de aceptación
+
+- [x] TipTap round-trips headings, listas, italic y highlight.
+- [x] `applyFormatToEditor` y `applyFormatToDocument` soportan las nuevas acciones.
+- [x] `getEditorFormatState` reporta estados `on/off/mixed` para marcas y atributos de bloque.
+- [x] `TextFormatTarget` permite aplicar formato sin saber si hay editor activo.
+- [x] Los tests de adapter y formato pasan.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+
+#### Fuera de alcance
+
+- No implementar la UI del toolbar (llega en TASK-134).
+- No integrar con `Canvas` (llega en TASK-135).
+- No implementar format painter (llega en TASK-134).
+
+#### Constraints técnicos
+
+- Presentation puede depender de TipTap; Domain/Application no.
+- Los helpers de formato deben mantenerse puros y testeables sin montar React.
+
+### TASK-133 — Rich text rendering for all elements
+
+**Priority:** P1 · **Depends:** TASK-132 · **Status:** DONE
+
+#### Objetivo
+
+Renderizar el contenido enriquecido en `note`, `task`, `frame` y `link` de forma coherente con `text`, respetando las restricciones de cada tipo.
+
+#### Alcance
+
+- Refactorizar `text-renderer.tsx` para soportar headings y listas.
+- Cambiar `note-renderer.tsx` para renderizar `RichTextDocument` (multi-párrafo, headings, listas).
+- Cambiar `task-renderer.tsx` para renderizar `title` como rich text inline (un solo bloque).
+- Cambiar `frame-renderer.tsx` para renderizar `title` como rich text inline (un solo bloque).
+- Cambiar `link-renderer.tsx` para renderizar `title` como rich text inline (un solo bloque).
+- Extraer un componente compartido `RichTextContent` que pinte cualquier `RichTextDocument` y sea reutilizado por todos los renderers.
+- Añadir/actualizar tests de renderizado.
+
+#### Criterios de aceptación
+
+- [x] `text` y `note` renderizan párrafos, headings, listas y marcas inline.
+- [x] `task`, `frame` y `link.title` renderizan un único bloque con marcas inline.
+- [x] `RichTextContent` se usa como base en todos los renderers.
+- [x] Los tests de renderizado de cada tipo pasan.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+
+#### Fuera de alcance
+
+- No cambiar la edición inline (llega en TASK-135).
+- No implementar hipervínculos clicables dentro del rich text.
+
+#### Constraints técnicos
+
+- Presentation concentra React y styled-components.
+- El renderizado debe respetar el modelo de dominio (no mostrar listas en títulos aunque el documento las tuviera).
+
+### TASK-134 — Floating Word-style text toolbar
+
+**Priority:** P1 · **Depends:** TASK-132 · **Status:** DONE
+
+#### Objetivo
+
+Implementar una barra de herramientas contextual flotante, visual y funcionalmente equivalente a la Mini Toolbar de Microsoft Word, que aparezca al hacer clic derecho sobre una selección de texto.
+
+#### Alcance
+
+- Crear `FloatingTextToolbar` en `src/presentation/canvas/text-format/floating-text-toolbar.tsx`.
+- Dos filas de controles con grupos funcionales y divisores verticales:
+  - Fila superior: selector de fuente, selector de tamaño, aumentar/disminuir tamaño, format painter, efectos de texto (placeholder/extensible), estilos.
+  - Fila inferior: negrita, cursiva, subrayado, color de resaltado, color de fuente, lista con viñetas, lista numerada.
+- Botones con estados `normal/hover/active/pressed/disabled/mixed`.
+- Patrón `[acción principal][▼]` para color de fuente y resaltado.
+- Selectores de fuente con preview tipográfico y búsqueda; selector de tamaño editable.
+- Paleta de colores con "Automático", colores del tema, estándar y "Más colores".
+- Menú de estilos semánticos: Normal, Título 1, Título 2, Título 3, Subtítulo, Cita, Énfasis.
+- Format painter: copiar formato de una selección y aplicarlo a otra.
+- Posicionamiento dinámico junto a la selección, evitando salirse del viewport (arriba por defecto, debajo si no cabe, ajuste lateral).
+- No robar foco ni destruir la selección al interactuar con la barra.
+- Hooks auxiliares: `use-text-selection`, `format-painter-store`, `color-picker`, `font-family-select`, `font-size-select`, `styles-menu`.
+- Añadir tests del toolbar y sus hooks.
+
+#### Criterios de aceptación
+
+- [x] La barra aparece al hacer clic derecho sobre texto seleccionado.
+- [x] Se posiciona junto a la selección sin salirse del viewport.
+- [x] Aplica formato inmediatamente sin perder la selección.
+- [x] Los controles reflejan el estado actual incluyendo `mixed`.
+- [x] Format painter copia y aplica formato entre selecciones.
+- [x] Los estilos aplican headings/paragraph semánticamente.
+- [x] Los tests del toolbar pasan.
+- [x] TypeScript strict, Oxlint y Prettier no reportan errores.
+
+#### Fuera de alcance
+
+- Efectos de texto avanzados (contorno, sombra, brillo) se omiten; se deja arquitectura lista para extender.
+- No aparece automáticamente al seleccionar con el ratón (solo con clic derecho).
+
+#### Constraints técnicos
+
+- Usar `@raulrod/ui` como base; styled-components para estilos propios.
+- El toolbar es un componente de Presentation puro y testable.
+- La lógica de formato debe reutilizar `TextFormatTarget` (TASK-132).
+
+### TASK-135 — Canvas integration and context menu update
+
+**Priority:** P1 · **Depends:** TASK-133, TASK-134 · **Status:** DONE
+
+#### Objetivo
+
+Integrar el rich text editable y el toolbar flotante en el canvas, permitiendo editar y formatear texto en cualquier elemento que contenga texto.
+
+#### Alcance
+
+- Montar `FloatingTextToolbar` a nivel de `Canvas`, activado por clic derecho sobre cualquier elemento con texto.
+- Actualizar `ElementEditorOverlay` para usar `RichTextEditor` en `note` (multi-párrafo) y en los campos de texto de `task`, `frame` y `link` (single-line).
+- Eliminar el toolbar embebido de `RichTextEditor`.
+- Adaptar `Canvas` para que `formatTarget` incluya cualquier elemento con texto (`text`, `note`, `task`, `frame`, `link`).
+- Aplicar formato al editor activo o al documento de dominio según corresponda, solo cuando hay selección de texto real.
+- Actualizar `ElementContextMenu` para que las opciones de formato se muestran a través del toolbar flotante; conservar opciones de canvas (`Bring to front`, `Send to back`) debajo o en un menú separado.
+- Actualizar el stub `rich-text-editor-stub.tsx` para reflejar el nuevo contrato.
+- Añadir/actualizar tests de integración en `canvas.test.tsx`, `element-editor-overlay.test.tsx` y `element-context-menu.test.tsx`.
+
+#### Criterios de aceptación
+
+- [ ] Clic derecho sobre texto de cualquier elemento muestra el toolbar flotante.
+- [ ] Doble clic o Enter inicia la edición enriquecida en note/task/frame/link.
+- [ ] El formato se aplica al editor activo o al documento de dominio.
+- [ ] Solo se formatea cuando hay selección de texto real.
+- [ ] Las opciones de canvas (`Bring to front`, `Send to back`) siguen disponibles.
+- [ ] Los tests de integración pasan.
+- [ ] TypeScript strict, Oxlint y Prettier no reportan errores.
+
+#### Fuera de alcance
+
+- No cambiar la creación de elementos desde la toolbar.
+- No implementar edición colaborativa simultánea de texto enriquecido.
+
+#### Constraints técnicos
+
+- Presentation concentra React, UI y composición.
+- La lógica de formato reutiliza `TextFormatTarget` (TASK-132).
+- Los cambios arquitectónicos significativos se documentan en ADR.
+
 ---
 
 # 7. Definition of Done del MVP
@@ -4980,6 +5186,30 @@ Añadir una entrada breve por sesión.
 - Bloqueos:
 - Siguiente tarea:
 -->
+
+## 2026-10-18 — TASK-133
+
+- Resultado: **Rich text rendering for all elements** completa. Nuevo componente compartido `RichTextContent` (`src/presentation/canvas/renderers/rich-text-content.tsx`) con dos modos: `block` (párrafos, headings h1–h3 con tamaños 1.5em/1.25em/1.1em, listas ordenadas/no ordenadas con anidación, alineación) e `inline` (solo el primer bloque de texto, ignorando listas y bloques extra — defensivo frente a documentos con listas en títulos). Las marcas inline cubren bold, italic, underline+strikethrough combinados, color, fontFamily, fontSize y highlight (elemento `<mark>`). `text-renderer` y `note-renderer` usan modo `block`; `task`, `frame` y `link` usan modo `inline` en sus títulos. Se eliminó el flattening con `richTextToPlain` de los cinco renderers y el `spanStyle` local de text-renderer.
+- Tests/quality gates: 193 suites / 2273 tests en verde (nuevas: `rich-text-content.test.tsx` con 18 tests; ampliados text/note/task/frame/link renderer tests con headings, listas, marcas y modo defensivo de títulos multi-bloque). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente).
+- Decisiones: (1) `RichTextContent` vive en `renderers/` (co-located con los consumidores) y se exporta desde el barrel; (2) highlight se renderiza con `<mark>` sin color fijo, en paridad con el editor TipTap (que emite `<mark>` sin atributos de color cuando `multicolor: false`); (3) estilos estructurales (márgenes de headings, padding de listas) replican los del `EditorShell` de `rich-text-editor.tsx` para paridad visual edición/lectura; (4) en modo `inline` se devuelve solo el primer bloque de párrafo/heading aunque el validador de dominio ya garantice un único bloque, por robustez ante datos legacy; (5) sin ADR: decisiones locales de Presentation sin cambio arquitectónico.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-134 (Floating Word-style text toolbar).
+
+## 2026-10-18 — TASK-132
+
+- Resultado: **TipTap adapter and extensions** completa. Dependencias `@tiptap/extension-{italic,highlight,heading,bullet-list,ordered-list,list-item}` instaladas a `^3.32.0`. `rich-text-adapter.ts` mapea headings (1–3), bullet/ordered lists, italic y highlight en ambas direcciones (con `readHeadingLevel` y `editorContentToListItems`), manteniendo el skipping de nodos desconocidos. `text-format.ts`/`editor-format.ts` amplían acciones (`italic`, `highlight`, `heading`, `list`, `increaseFontSize`, `decreaseFontSize`) y estado (`heading`, `bulletList`, `orderedList` + detección `mixed` recorriendo `nodesBetween` de la selección). Nuevos helpers puros en Domain `rich-text.ts`: `setDocumentHeading`, `setDocumentList`, `stepDocumentFontSize` y getters `getDocumentHeadingState`/`getDocumentListState`. Nueva abstracción `TextFormatTarget` (`text-format-target.ts`: `editorFormatTarget`/`documentFormatTarget`, commit sin-op) — creada y testeada, sin cablear en `canvas.tsx` (TASK-135). `rich-text-editor.tsx` registra las extensiones (`Heading` con levels 1–3, `TextAlign` types paragraph/heading) y añade estilos h1–h3/ul/ol. Fixture compartido `src/test/fixtures/format-test-editor.ts`.
+- Tests/quality gates: 192 suites / 2242 tests en verde (adapter 15, `rich-text` 60, formato 39, `text-format-target` 4). `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` y `npm run build` en verde (aviso de chunk >500 kB preexistente, bundle de Firebase).
+- Decisiones: (1) transforms estructurales (heading/list/step de font-size) como helpers puros en Domain, no en el adapter; (2) `TextFormatTarget` solo creada + testeada, sin integración con Canvas (acordado con el usuario, llega en TASK-135); (3) `liftListItem` falla con NodeSelection en TipTap v3, así que `list: null` usa `toggleBulletList`/`toggleOrderedList` según estado activo; (4) estados de marca/bloque calculados con `nodesBetween` (no `isActive`) para detección `mixed` fiable; (5) paso de font-size por `TEXT_FONT_SIZES` con default 14; (6) sin ADR por ser decisiones locales de Presentation sobre el modelo ya documentado en TASK-131.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-133 (Rich text rendering for all elements).
+
+## 2026-10-17 — Planificación rich text y toolbar flotante
+
+- Resultado: Análisis completo de la edición de texto existente (`TextElement` con TipTap; `note`/`task`/`frame`/`link` con texto plano). Se propusieron 5 fases (TASK-131 a TASK-135) para extender rich text a todos los elementos con texto y sustituir el toolbar/contextual actual por una barra flotante estilo Microsoft Word. Las tareas se añadieron a `docs/mvp-backlog.md` con objetivo, alcance, criterios, límites y constraints.
+- Tests/quality gates: No se ejecutaron gates (solo planificación y documentación). Se verificó que el archivo sigue el formato existente.
+- Decisiones: (1) implementación por fases; (2) `text`/`note` con multi-párrafo, headings y listas; `task`/`frame`/`link.title` con un solo bloque inline; (3) toolbar flotante por clic derecho, manteniendo opciones de canvas debajo o en menú separado; (4) compatibilidad backward-compatible con strings legacy; (5) efectos de texto avanzados omitidos pero arquitectura extensible; (6) formato solo con selección de texto real.
+- Bloqueos: ninguno.
+- Siguiente tarea: TASK-131 (Rich text model foundation).
 
 ## 2026-10-08 — TASK-011
 

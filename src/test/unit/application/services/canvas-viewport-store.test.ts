@@ -73,6 +73,45 @@ describe('createCanvasViewportStore', () => {
     expect(store.getSnapshot()).toEqual(Viewport.default(Size.create(1024, 768)));
   });
 
+  describe('resize', () => {
+    it('updates the viewport size while preserving the transform', () => {
+      const store = createCanvasViewportStore(Size.create(800, 600));
+
+      store.pan(Position.create(50, 30));
+      store.zoom(2, Position.create(0, 0));
+      const transform = store.getSnapshot().transform;
+
+      store.resize(Size.create(1440, 900));
+
+      expect(store.getSnapshot().size).toEqual(Size.create(1440, 900));
+      expect(store.getSnapshot().transform).toEqual(transform);
+    });
+
+    it('notifies subscribers when the size changes', () => {
+      const store = createCanvasViewportStore(Size.create(800, 600));
+      const listener = jest.fn();
+
+      const unsubscribe = store.subscribe(listener);
+      store.resize(Size.create(1440, 900));
+
+      expect(listener).toHaveBeenCalledTimes(1);
+
+      unsubscribe();
+    });
+
+    it('does not notify subscribers when the size is unchanged', () => {
+      const store = createCanvasViewportStore(Size.create(800, 600));
+      const listener = jest.fn();
+
+      const unsubscribe = store.subscribe(listener);
+      store.resize(Size.create(800, 600));
+
+      expect(listener).not.toHaveBeenCalled();
+
+      unsubscribe();
+    });
+  });
+
   describe('zoom', () => {
     it('zooms in around the anchor point', () => {
       const store = createCanvasViewportStore(Size.create(800, 600));
@@ -128,6 +167,57 @@ describe('createCanvasViewportStore', () => {
       store.zoom(MAX_CANVAS_SCALE, Position.create(0, 0));
       const unsubscribe = store.subscribe(listener);
       store.zoom(2, Position.create(100, 100));
+
+      expect(listener).not.toHaveBeenCalled();
+
+      unsubscribe();
+    });
+  });
+
+  describe('setScale', () => {
+    it('sets an absolute scale', () => {
+      const store = createCanvasViewportStore(Size.create(800, 600));
+
+      store.setScale(2);
+
+      expect(store.getSnapshot().scale).toBe(2);
+    });
+
+    it('keeps the viewport center fixed while scaling', () => {
+      const store = createCanvasViewportStore(Size.create(800, 600));
+      const screenCenter = Position.create(400, 300);
+      store.pan(Position.create(50, 30));
+      const worldCenter = store.getSnapshot().screenToWorld(screenCenter);
+
+      store.setScale(2.5);
+
+      const after = store.getSnapshot().worldToScreen(worldCenter);
+      expect(after.x).toBeCloseTo(screenCenter.x);
+      expect(after.y).toBeCloseTo(screenCenter.y);
+    });
+
+    it('clamps to the maximum scale', () => {
+      const store = createCanvasViewportStore(Size.create(800, 600));
+
+      store.setScale(100);
+
+      expect(store.getSnapshot().scale).toBe(MAX_CANVAS_SCALE);
+    });
+
+    it('clamps to the minimum scale', () => {
+      const store = createCanvasViewportStore(Size.create(800, 600));
+
+      store.setScale(0.0001);
+
+      expect(store.getSnapshot().scale).toBe(MIN_CANVAS_SCALE);
+    });
+
+    it('does not notify subscribers when the scale is unchanged', () => {
+      const store = createCanvasViewportStore(Size.create(800, 600));
+      const listener = jest.fn();
+
+      const unsubscribe = store.subscribe(listener);
+      store.setScale(1);
 
       expect(listener).not.toHaveBeenCalled();
 

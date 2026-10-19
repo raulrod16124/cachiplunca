@@ -5,6 +5,7 @@ import {
   createNoteElement,
   createTaskElement,
   createTextElement,
+  richTextFromPlain,
   type Element,
 } from '../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
@@ -37,6 +38,7 @@ function expectBaseDocument(document: ElementDocument): void {
   expect(document.position).toEqual({ x: 10, y: 20 });
   expect(document.size).toEqual({ width: 120, height: 80 });
   expect(document.rotation).toBe(0);
+  expect(document.zIndex).toBe(0);
   expect(document.createdBy).toBe('user-1');
   expect(document.createdAt).toEqual(CREATED_AT);
   expect(document.updatedAt).toEqual(UPDATED_AT);
@@ -64,7 +66,7 @@ describe('toElementDocument', () => {
 
     expect(document.type).toBe('text');
     expectBaseDocument(document);
-    expect(asRecord(document).content).toBe('Hello');
+    expect(asRecord(document).content).toEqual(richTextFromPlain('Hello'));
   });
 
   it('maps a NoteElement preserving optional color', () => {
@@ -77,7 +79,7 @@ describe('toElementDocument', () => {
     const document = toElementDocument(element);
 
     expect(document.type).toBe('note');
-    expect(asRecord(document).content).toBe('A note');
+    expect(asRecord(document).content).toEqual(richTextFromPlain('A note'));
     expect(asRecord(document).color).toBe('#ffcc00');
   });
 
@@ -102,7 +104,7 @@ describe('toElementDocument', () => {
     const document = toElementDocument(element);
 
     expect(document.type).toBe('task');
-    expect(asRecord(document).title).toBe('Do it');
+    expect(asRecord(document).title).toEqual(richTextFromPlain('Do it'));
     expect(asRecord(document).status).toBe('in_progress');
     expect(asRecord(document).assigneeId).toBe('user-2');
     expect(asRecord(document).dueDate).toEqual(new Date('2024-12-31T00:00:00.000Z'));
@@ -131,7 +133,7 @@ describe('toElementDocument', () => {
     const document = toElementDocument(element);
 
     expect(document.type).toBe('frame');
-    expect(asRecord(document).title).toBe('Section');
+    expect(asRecord(document).title).toEqual(richTextFromPlain('Section'));
     expect(asRecord(document).parentFrameId).toBe('el-parent');
   });
 
@@ -168,7 +170,7 @@ describe('toElementDocument', () => {
 
     expect(document.type).toBe('link');
     expect(asRecord(document).url).toBe('https://example.com');
-    expect(asRecord(document).title).toBe('Example');
+    expect(asRecord(document).title).toEqual(richTextFromPlain('Example'));
   });
 
   it('omits title from a LinkElement document when absent', () => {
@@ -199,6 +201,30 @@ describe('fromElementDocument', () => {
     expectRoundTrip(createLinkElement({ ...buildBase('el-link'), url: 'https://example.com' }));
   });
 
+  it('maps a non-zero zIndex', () => {
+    const element = createTextElement({
+      ...buildBase('el-text'),
+      content: 'Hello',
+      zIndex: 7,
+    });
+
+    const document = toElementDocument(element);
+
+    expect(document.zIndex).toBe(7);
+    expectRoundTrip(element);
+  });
+
+  it('defaults a missing zIndex to zero for legacy documents', () => {
+    const document = toElementDocument(
+      createTextElement({ ...buildBase('el-text'), content: 'Hello' }),
+    );
+    const { zIndex: _zIndex, ...withoutZIndex } = document;
+
+    const element = fromElementDocument('el-text', withoutZIndex);
+
+    expect(element.zIndex).toBe(0);
+  });
+
   it('accepts Timestamp-like date fields', () => {
     const document = {
       ...toElementDocument(createTextElement({ ...buildBase('el-text'), content: 'Hello' })),
@@ -210,6 +236,39 @@ describe('fromElementDocument', () => {
 
     expect(element.createdAt.getTime()).toBe(CREATED_AT.getTime());
     expect(element.updatedAt.getTime()).toBe(UPDATED_AT.getTime());
+  });
+
+  it('converts legacy string content and titles when reading', () => {
+    const base = {
+      ...toElementDocument(createTextElement({ ...buildBase('el-text'), content: 'Hello' })),
+    };
+    const text = fromElementDocument('el-text', { ...base, content: 'Legacy text' });
+    expect(text.type).toBe('text');
+    expect(text.type === 'text' ? text.content : null).toEqual(richTextFromPlain('Legacy text'));
+
+    const noteDocument = toElementDocument(
+      createNoteElement({ ...buildBase('el-note'), content: 'x' }),
+    );
+    const note = fromElementDocument('el-note', { ...noteDocument, content: 'Legacy note' });
+    expect(note.type === 'note' ? note.content : null).toEqual(richTextFromPlain('Legacy note'));
+
+    const taskDocument = toElementDocument(
+      createTaskElement({ ...buildBase('el-task'), title: 'x', status: 'todo' }),
+    );
+    const task = fromElementDocument('el-task', { ...taskDocument, title: 'Legacy task' });
+    expect(task.type === 'task' ? task.title : null).toEqual(richTextFromPlain('Legacy task'));
+
+    const frameDocument = toElementDocument(
+      createFrameElement({ ...buildBase('el-frame'), title: 'x' }),
+    );
+    const frame = fromElementDocument('el-frame', { ...frameDocument, title: 'Legacy frame' });
+    expect(frame.type === 'frame' ? frame.title : null).toEqual(richTextFromPlain('Legacy frame'));
+
+    const linkDocument = toElementDocument(
+      createLinkElement({ ...buildBase('el-link'), url: 'https://example.com' }),
+    );
+    const link = fromElementDocument('el-link', { ...linkDocument, title: 'Legacy link' });
+    expect(link.type === 'link' ? link.title : null).toEqual(richTextFromPlain('Legacy link'));
   });
 
   it('rejects a non-object document', () => {
@@ -256,7 +315,7 @@ describe('fromElementDocument', () => {
     };
 
     expect(() => fromElementDocument('el-text', document)).toThrow(
-      'Element document field "content" must be a string',
+      'Rich text content must be a rich text document',
     );
   });
 

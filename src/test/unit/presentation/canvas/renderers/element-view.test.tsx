@@ -62,12 +62,12 @@ describe('ElementView', () => {
     expect(screen.getByRole('group', { name: 'Custom label' })).toBeInTheDocument();
   });
 
-  it('uses the default renderer as fallback', () => {
+  it('uses the built-in renderer for a known element type', () => {
     render(<ElementView element={createElement()} selected={false} />);
 
-    expect(
-      screen.getByTestId('canvas-item-elem-1').querySelector('[data-element-fallback]'),
-    ).not.toBeNull();
+    const wrapper = screen.getByTestId('canvas-item-elem-1');
+    expect(wrapper.querySelector('[data-element-content]')?.textContent).toBe('hello');
+    expect(wrapper.querySelector('[data-element-fallback]')).toBeNull();
   });
 
   it('delegates the content to the registered renderer', () => {

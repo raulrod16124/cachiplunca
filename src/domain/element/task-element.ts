@@ -3,6 +3,8 @@ import { Position } from '../shared/value-objects/position';
 import { Size } from '../shared/value-objects/size';
 import { UserId } from '../shared/value-objects/user-id';
 import { WorkspaceId } from '../shared/value-objects/workspace-id';
+import { parseRichTextDocument, richTextFromPlain } from './rich-text';
+import type { RichTextDocument } from './rich-text';
 import { TASK_STATUSES, validateTaskElement } from './element-types';
 import type { TaskElement, TaskStatus } from './element-types';
 
@@ -12,17 +14,18 @@ export interface CreateTaskElementProps {
   readonly createdBy: UserId;
   readonly position: Position;
   readonly size: Size;
-  readonly title: string;
+  readonly title: RichTextDocument | string;
   readonly status: TaskStatus;
   readonly assigneeId?: UserId;
   readonly dueDate?: Date;
   readonly rotation?: number;
+  readonly zIndex?: number;
   readonly createdAt?: Date;
   readonly updatedAt?: Date;
 }
 
 export function createTaskElement(props: CreateTaskElementProps): TaskElement {
-  assertTitle(props.title);
+  const title = toRichTextDocument(props.title);
   assertStatus(props.status);
   assertAssignee(props.assigneeId);
   assertDueDate(props.dueDate);
@@ -38,10 +41,11 @@ export function createTaskElement(props: CreateTaskElementProps): TaskElement {
     position: props.position,
     size: props.size,
     rotation: props.rotation ?? 0,
+    zIndex: props.zIndex ?? 0,
     createdBy: props.createdBy,
     createdAt,
     updatedAt,
-    title: props.title,
+    title,
     status: props.status,
     ...(props.assigneeId === undefined ? {} : { assigneeId: props.assigneeId }),
     ...(props.dueDate === undefined ? {} : { dueDate: props.dueDate }),
@@ -54,12 +58,10 @@ export function createTaskElement(props: CreateTaskElementProps): TaskElement {
 
 export function withTaskTitle(
   element: TaskElement,
-  title: string,
+  title: RichTextDocument | string,
   updatedAt: Date = new Date(),
 ): TaskElement {
-  assertTitle(title);
-
-  return buildTaskElement(element, { title, updatedAt });
+  return buildTaskElement(element, { title: toRichTextDocument(title), updatedAt });
 }
 
 export function withTaskStatus(
@@ -93,7 +95,7 @@ export function withTaskDueDate(
 }
 
 interface TaskElementOverrides {
-  readonly title?: string;
+  readonly title?: RichTextDocument;
   readonly status?: TaskStatus;
   readonly assigneeId?: UserId;
   readonly dueDate?: Date;
@@ -111,6 +113,7 @@ function buildTaskElement(element: TaskElement, overrides: TaskElementOverrides)
     position: element.position,
     size: element.size,
     rotation: element.rotation,
+    zIndex: element.zIndex,
     createdBy: element.createdBy,
     createdAt: element.createdAt,
     updatedAt: overrides.updatedAt,
@@ -125,13 +128,19 @@ function buildTaskElement(element: TaskElement, overrides: TaskElementOverrides)
   return next;
 }
 
-function assertTitle(title: string): void {
-  if (typeof title !== 'string') {
-    throw new Error('TaskElement title must be a string');
+function toRichTextDocument(title: RichTextDocument | string | undefined): RichTextDocument {
+  if (title === undefined) {
+    throw new Error('TaskElement title must be defined');
   }
-  if (title.trim().length === 0) {
-    throw new Error('TaskElement title cannot be empty');
+
+  if (typeof title === 'string') {
+    if (title.trim().length === 0) {
+      throw new Error('TaskElement title cannot be empty');
+    }
+    return richTextFromPlain(title);
   }
+
+  return parseRichTextDocument(title);
 }
 
 function assertStatus(status: TaskStatus): void {

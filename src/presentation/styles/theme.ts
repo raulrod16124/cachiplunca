@@ -166,6 +166,7 @@ export const appTheme = {
     surface: token('color.background.default'),
     surfaceMuted: token('color.background.surface'),
     elementBorder: token('color.border.default'),
+    elementBorderSoft: `color-mix(in srgb, ${token('color.border.default')} 55%, transparent)`,
     elementBorderStrong: token('color.border.strong'),
     handleFill: token('color.background.default'),
     hintText: token('color.text.muted'),

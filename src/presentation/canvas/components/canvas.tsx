@@ -1,8 +1,9 @@
 import { VisuallyHidden } from '@raulrod/ui';
-import type { ReactElement } from 'react';
-import { useCallback, useMemo, useSyncExternalStore } from 'react';
+import type { Editor } from '@tiptap/core';
+import type { MouseEvent as ReactMouseEvent, ReactElement } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import styled from 'styled-components';
-import { Bounds, Grid, Position } from '../../../domain/shared';
+import { Bounds, Grid, Position, Size } from '../../../domain/shared';
 import type { Element, ElementType } from '../../../domain/element';
 import type { ElementId } from '../../../domain/shared';
 import type {
@@ -11,10 +12,14 @@ import type {
   RemoteCursor,
   SelectionStore,
 } from '../../../application/services';
+import type { UpdateElementInput } from '../../../application/commands';
 import {
+  bringElementsToFront,
   deleteElements,
   elementContentBounds,
+  findSelectableAt,
   getVisibleElementIds,
+  sendElementsToBack,
   toSelectableItems,
 } from '../../../application/services';
 import { describeBoard, describeElement } from '../accessibility';
@@ -25,11 +30,13 @@ import { useDragSelection } from '../hooks/use-drag-selection';
 import { useElementCopyPaste } from '../hooks/use-element-copy-paste';
 import { useElementDelete } from '../hooks/use-element-delete';
 import { useElementDuplicate } from '../hooks/use-element-duplicate';
+import { useElementEdit } from '../hooks/use-element-edit';
 import { useElementMove } from '../hooks/use-element-move';
 import { useElementRedo } from '../hooks/use-element-redo';
 import { useElementResize } from '../hooks/use-element-resize';
 import { useElementSize } from '../hooks/use-element-size';
 import { useElementUndo } from '../hooks/use-element-undo';
+import { useElementZOrder } from '../hooks/use-element-z-order';
 import { usePan } from '../hooks/use-pan';
 import { useSelection } from '../hooks/use-selection';
 import { useSelectionKeyboard } from '../hooks/use-selection-keyboard';
@@ -39,9 +46,19 @@ import { ElementView } from '../renderers';
 import type { ElementRendererRegistry } from '../renderers';
 import { EmptyState } from '../../components/empty-state';
 import { CanvasToolbar } from './canvas-toolbar';
+import { ElementContextMenu } from './element-context-menu';
+import { ElementEditorOverlay } from './element-editor-overlay';
 import { RemoteCursorsOverlay } from './remote-cursors-overlay';
 import { SelectionOverlay } from './selection-overlay';
 import { ViewportControls } from './viewport-controls';
+import {
+  getEditableRichTextTarget,
+  toUpdateElementInput,
+} from '../text-format/editable-text-element';
+import { FloatingTextToolbar } from '../text-format/floating-text-toolbar';
+import { documentFormatTarget, editorFormatTarget } from '../text-format/text-format-target';
+import type { TextFormatTarget } from '../text-format/text-format-target';
+import { readTextSelectionElementId } from '../text-format/use-text-selection';
 
 const CanvasContainer = styled.div`
   position: relative;
@@ -123,7 +140,15 @@ export const CULLING_MARGIN = 64;
 const BOARD_SUMMARY_ID = 'canvas-board-summary';
 
 const CANVAS_SHORTCUTS =
-  'Arrow keys to move selection · Shift + Arrow to extend selection · Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo';
+  'Arrow keys to move selection · Shift + Arrow to extend selection · Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo · Ctrl/Cmd + ] to bring to front · Ctrl/Cmd + [ to send to back · Right-click an object for more options';
+
+const EDITABLE_ELEMENT_TYPES: ReadonlySet<ElementType> = new Set<ElementType>([
+  'text',
+  'note',
+  'task',
+  'frame',
+  'link',
+]);
 
 export interface CanvasProps {
   readonly store: CanvasViewportStore;
@@ -139,11 +164,13 @@ export interface CanvasProps {
     duplicatedIds: readonly string[],
   ) => void;
   readonly onPasteElements?: (elements: readonly Element[], pastedIds: readonly string[]) => void;
+  readonly onReorderElements?: (elements: readonly Element[]) => void;
   readonly generateId?: () => ElementId;
   readonly history?: CommandHistory<readonly Element[]>;
   readonly onUndoElements?: (elements: readonly Element[]) => void;
   readonly onRedoElements?: (elements: readonly Element[]) => void;
-  readonly onCreateElement?: (type: ElementType) => void;
+  readonly onCreateElement?: (type: ElementType) => ElementId | void;
+  readonly onUpdateElement?: (input: UpdateElementInput) => void;
   readonly remoteCursors?: readonly RemoteCursor[];
   readonly onCursorMove?: (position: Position) => void;
   readonly readOnly?: boolean;
@@ -160,11 +187,13 @@ export function Canvas({
   onDeleteElements,
   onDuplicateElements,
   onPasteElements,
+  onReorderElements,
   generateId,
   history,
   onUndoElements,
   onRedoElements,
   onCreateElement,
+  onUpdateElement,
   remoteCursors = [],
   onCursorMove,
   readOnly = false,
@@ -176,6 +205,15 @@ export function Canvas({
   const { ref: zoomRef } = useZoom({ onZoom: store.zoom });
   const { ref: canvasFocusRef } = useCanvasFocus();
   const { size: measuredSize, ref: elementSizeRef } = useElementSize();
+
+  useEffect(() => {
+    if (measuredSize === null || measuredSize.width <= 0 || measuredSize.height <= 0) {
+      return;
+    }
+
+    store.resize(Size.create(measuredSize.width, measuredSize.height));
+  }, [store, measuredSize]);
+
   const handleCursorMove = useCallback(
     (position: Position) => {
       onCursorMove?.(position);
@@ -345,10 +383,148 @@ export function Canvas({
     disabled: readOnly,
   });
 
+  const { ref: elementZOrderRef } = useElementZOrder({
+    elements,
+    selectedIds: selection.selectedIds,
+    onReorderElements,
+    disabled: readOnly,
+  });
+
   const { ref: elementUndoRef } = useElementUndo({ history, onUndoElements, disabled: readOnly });
   const { ref: elementRedoRef } = useElementRedo({ history, onRedoElements, disabled: readOnly });
 
-  const handleToolbarUndo = useCallback((): void => {
+  const [editingElementId, setEditingElementId] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  const editingElement = useMemo(
+    () =>
+      editingElementId === null
+        ? null
+        : (elements.find((element) => element.id.value === editingElementId) ?? null),
+    [elements, editingElementId],
+  );
+
+  useEffect(() => {
+    if (editingElementId !== null && editingElement === null) {
+      setEditingElementId(null);
+    }
+  }, [editingElementId, editingElement]);
+
+  const beginEditing = useCallback(
+    (id: string): void => {
+      if (readOnly || onUpdateElement === undefined) {
+        return;
+      }
+
+      const target = elements.find((element) => element.id.value === id);
+
+      if (target === undefined || !EDITABLE_ELEMENT_TYPES.has(target.type)) {
+        return;
+      }
+
+      setEditingElementId(id);
+    },
+    [elements, onUpdateElement, readOnly],
+  );
+
+  const { ref: elementEditRef } = useElementEdit({
+    selectedIds: selection.selectedIds,
+    onBeginEdit: beginEditing,
+    disabled: readOnly || onUpdateElement === undefined,
+  });
+
+  const handleCommitEdit = useCallback(
+    (input: UpdateElementInput): void => {
+      onUpdateElement?.(input);
+      setEditingElementId(null);
+    },
+    [onUpdateElement],
+  );
+
+  const handleCancelEdit = useCallback((): void => {
+    setEditingElementId(null);
+  }, []);
+
+  const [activeTextEditor, setActiveTextEditor] = useState<Editor | null>(null);
+  const floatingToolbarOpenRef = useRef(false);
+  const [contextMenuTargetId, setContextMenuTargetId] = useState<string | null>(null);
+  const [textSelectionTargetId, setTextSelectionTargetId] = useState<string | null>(null);
+  const elementsRef = useRef(elements);
+  elementsRef.current = elements;
+
+  useEffect(() => {
+    const handleSelectionChange = (): void => {
+      setTextSelectionTargetId(readTextSelectionElementId(containerRef.current));
+    };
+
+    document.addEventListener('selectionchange', handleSelectionChange);
+
+    return () => {
+      document.removeEventListener('selectionchange', handleSelectionChange);
+    };
+  }, []);
+
+  const handleTextEditorReady = useCallback((editor: Editor | null): void => {
+    setActiveTextEditor(editor);
+  }, []);
+
+  const editableTarget = useMemo(() => {
+    if (editingElement !== null) {
+      return getEditableRichTextTarget(editingElement);
+    }
+
+    const targetId =
+      textSelectionTargetId ??
+      contextMenuTargetId ??
+      (selection.selectedIds.length === 1 ? selection.selectedIds[0] : null);
+
+    if (targetId === null) {
+      return null;
+    }
+
+    const target = elements.find((element) => element.id.value === targetId);
+
+    return getEditableRichTextTarget(target);
+  }, [editingElement, textSelectionTargetId, contextMenuTargetId, selection.selectedIds, elements]);
+
+  const formatTarget = useMemo<TextFormatTarget | null>(() => {
+    if (readOnly || onUpdateElement === undefined || editableTarget === null) {
+      return null;
+    }
+
+    if (editingElement !== null && activeTextEditor !== null && !activeTextEditor.isDestroyed) {
+      return editorFormatTarget(activeTextEditor, { singleLine: editableTarget.singleLine });
+    }
+
+    // If we're actively editing an element but don't have a live editor instance
+    // (e.g. non-text types before the fix, or during lazy loading), don't commit
+    // via documentFormatTarget — the editor holds an unsynced draft and a mid-edit
+    // commit would be overwritten by the editor's own blur-commit. Return null so
+    // the floating toolbar is disabled while editing without a ready editor.
+    if (editingElement !== null) {
+      return null;
+    }
+
+    const targetId = editableTarget.element.id.value;
+
+    return documentFormatTarget({
+      singleLine: editableTarget.singleLine,
+      getDocument: () => {
+        const current = elementsRef.current.find((element) => element.id.value === targetId);
+        return getEditableRichTextTarget(current)?.document;
+      },
+      commitDocument: (document) => {
+        const current = elementsRef.current.find((element) => element.id.value === targetId);
+        const currentTarget = getEditableRichTextTarget(current);
+
+        if (currentTarget !== null) {
+          onUpdateElement(toUpdateElementInput(currentTarget, document));
+        }
+      },
+    });
+  }, [readOnly, onUpdateElement, editableTarget, activeTextEditor]);
+
+  const handleUndo = useCallback((): void => {
     if (history === undefined || !history.canUndo()) {
       return;
     }
@@ -362,7 +538,7 @@ export function Canvas({
     onUndoElements?.(result.state);
   }, [history, onUndoElements]);
 
-  const handleToolbarRedo = useCallback((): void => {
+  const handleRedo = useCallback((): void => {
     if (history === undefined || !history.canRedo()) {
       return;
     }
@@ -395,15 +571,90 @@ export function Canvas({
     store.fit(elementContentBounds(elements));
   }, [store, elements]);
 
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+
+  const closeContextMenu = useCallback((): void => {
+    setContextMenu(null);
+    setContextMenuTargetId(null);
+  }, []);
+
+  const handleContextMenu = useCallback(
+    (event: ReactMouseEvent<HTMLDivElement>): void => {
+      if (readOnly) {
+        return;
+      }
+
+      const rect = event.currentTarget.getBoundingClientRect();
+      const offset = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+      const world = viewport.screenToWorld(Position.create(offset.x, offset.y));
+      const hitId = findSelectableAt(items, world);
+
+      event.preventDefault();
+
+      if (hitId === null) {
+        setContextMenu(null);
+        setContextMenuTargetId(null);
+        return;
+      }
+
+      if (!selection.selectedIds.includes(hitId)) {
+        selectionStore.select(hitId);
+      }
+
+      setContextMenu(offset);
+      setContextMenuTargetId(hitId);
+    },
+    [readOnly, viewport, items, selection.selectedIds, selectionStore],
+  );
+
+  const handleBringToFront = useCallback((): void => {
+    closeContextMenu();
+
+    if (selection.selectedIds.length === 0) {
+      return;
+    }
+
+    const result = bringElementsToFront(elements, selection.selectedIds);
+
+    if (result.status === 'error') {
+      return;
+    }
+
+    onReorderElements?.(result.elements);
+  }, [closeContextMenu, elements, selection.selectedIds, onReorderElements]);
+
+  const handleSendToBack = useCallback((): void => {
+    closeContextMenu();
+
+    if (selection.selectedIds.length === 0) {
+      return;
+    }
+
+    const result = sendElementsToBack(elements, selection.selectedIds);
+
+    if (result.status === 'error') {
+      return;
+    }
+
+    onReorderElements?.(result.elements);
+  }, [closeContextMenu, elements, selection.selectedIds, onReorderElements]);
+
   const handleCreateElement = useCallback(
     (type: ElementType): void => {
-      onCreateElement?.(type);
+      const created = onCreateElement?.(type);
+
+      if (created === undefined) {
+        return;
+      }
+
+      setEditingElementId(created.value);
     },
     [onCreateElement],
   );
 
   const setContainerRef = useCallback(
     (node: HTMLDivElement | null) => {
+      containerRef.current = node;
       panRef.current = node;
       zoomRef.current = node;
       selectionRef.current = node;
@@ -415,8 +666,10 @@ export function Canvas({
       elementDeleteRef.current = node;
       elementDuplicateRef.current = node;
       elementCopyPasteRef.current = node;
+      elementZOrderRef.current = node;
       elementUndoRef.current = node;
       elementRedoRef.current = node;
+      elementEditRef.current = node;
       cursorBroadcastRef.current = node;
       canvasFocusRef.current = node;
       elementSizeRef(node);
@@ -433,8 +686,10 @@ export function Canvas({
       elementDeleteRef,
       elementDuplicateRef,
       elementCopyPasteRef,
+      elementZOrderRef,
       elementUndoRef,
       elementRedoRef,
+      elementEditRef,
       cursorBroadcastRef,
       canvasFocusRef,
       elementSizeRef,
@@ -502,9 +757,10 @@ export function Canvas({
       aria-describedby={BOARD_SUMMARY_ID}
       aria-readonly={readOnly}
       aria-activedescendant={activeId === null ? undefined : `element-${activeId}`}
-      aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Escape Control+A Meta+A Delete Control+D Meta+D Control+C Meta+C Control+V Meta+V Control+Z Meta+Z Control+Shift+Z Meta+Shift+Z Control+Y Meta+Y"
+      aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Escape Control+A Meta+A Delete Control+D Meta+D Control+C Meta+C Control+V Meta+V Control+Z Meta+Z Control+Shift+Z Meta+Shift+Z Control+Y Meta+Y Control+] Meta+] Control+[ Meta+["
       aria-grabbed={isPanning}
       tabIndex={0}
+      onContextMenu={handleContextMenu}
       data-active-id={activeId ?? undefined}
       data-panning={isPanning}
       data-pan-key={spacePressed}
@@ -544,7 +800,17 @@ export function Canvas({
             />
           );
         })}
-        <SelectionOverlay items={selectedItems} />
+        {editingElementId === null ? <SelectionOverlay items={selectedItems} /> : null}
+        {editingElement === null ? null : (
+          <ElementEditorOverlay
+            key={editingElement.id.value}
+            element={editingElement}
+            onCommit={handleCommitEdit}
+            onCancel={handleCancelEdit}
+            onTextEditorReady={handleTextEditorReady}
+            textCommitGuardRef={floatingToolbarOpenRef}
+          />
+        )}
         {elements.length === 0 ? (
           <Hint>
             <EmptyState title="This board is empty" titleAs="h2" description={CANVAS_SHORTCUTS} />
@@ -552,15 +818,25 @@ export function Canvas({
         ) : null}
       </World>
       <RemoteCursorsOverlay cursors={remoteCursors} viewport={viewport} />
+      <FloatingTextToolbar
+        scopeRef={containerRef}
+        formatTarget={formatTarget}
+        enabled={!readOnly}
+        onOpenChange={(open) => {
+          floatingToolbarOpenRef.current = open;
+        }}
+      />
+      <ElementContextMenu
+        position={contextMenu}
+        onBringToFront={handleBringToFront}
+        onSendToBack={handleSendToBack}
+        onClose={closeContextMenu}
+      />
       <CanvasToolbar
         onCreateElement={handleCreateElement}
-        onUndo={handleToolbarUndo}
-        onRedo={handleToolbarRedo}
         onDeleteSelection={handleToolbarDelete}
         onFitView={handleFitView}
         canCreate={canCreateElement}
-        canUndo={canUndo}
-        canRedo={canRedo}
         hasSelection={hasSelection}
         canCreateConnector={canCreateConnector}
       />
@@ -576,7 +852,13 @@ export function Canvas({
           }}
         />
       ) : null}
-      <ViewportControls store={store} />
+      <ViewportControls
+        store={store}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+      />
     </CanvasContainer>
   );
 }
