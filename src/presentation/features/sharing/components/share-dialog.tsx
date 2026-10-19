@@ -27,6 +27,7 @@ import {
   describeRemoveMemberError,
 } from '../share-error-messages';
 import { MembersList, type MembersStatus } from './members-list';
+import { localizeMessage, useI18n } from '../../../i18n';
 
 const INVITE_TAB = 'invite';
 const PEOPLE_TAB = 'people';
@@ -66,6 +67,7 @@ export function ShareDialog({
   listPendingInvitations,
   onLeft,
 }: ShareDialogProps): ReactNode {
+  const { t } = useI18n();
   const canShowInvite =
     canInvite && inviteMember !== undefined && listPendingInvitations !== undefined;
   const defaultTab = canShowInvite ? INVITE_TAB : PEOPLE_TAB;
@@ -87,10 +89,10 @@ export function ShareDialog({
         setStatus('ready');
         return;
       }
-      setErrorMessage(describeListMembersError(result.error));
+      setErrorMessage(localizeMessage(t, describeListMembersError(result.error)));
       setStatus('error');
     } catch (error) {
-      setErrorMessage(describeListMembersError(toAppError(error)));
+      setErrorMessage(localizeMessage(t, describeListMembersError(toAppError(error))));
       setStatus('error');
     }
   }, [listWorkspaceMembers, workspaceId]);
@@ -123,10 +125,10 @@ export function ShareDialog({
         } else if (result.status === 'invalid-input') {
           setActionError('Choose a valid role.');
         } else {
-          setActionError(describeChangeMemberRoleError(result.error));
+          setActionError(localizeMessage(t, describeChangeMemberRoleError(result.error)));
         }
       } catch (error) {
-        setActionError(describeChangeMemberRoleError(toAppError(error)));
+        setActionError(localizeMessage(t, describeChangeMemberRoleError(toAppError(error))));
       } finally {
         setPendingUserId(null);
       }
@@ -150,10 +152,10 @@ export function ShareDialog({
         if (result.status === 'ok') {
           await fetchMembers();
         } else {
-          setActionError(describeRemoveMemberError(result.error));
+          setActionError(localizeMessage(t, describeRemoveMemberError(result.error)));
         }
       } catch (error) {
-        setActionError(describeRemoveMemberError(toAppError(error)));
+        setActionError(localizeMessage(t, describeRemoveMemberError(toAppError(error))));
       } finally {
         setPendingUserId(null);
       }
@@ -173,25 +175,31 @@ export function ShareDialog({
         onLeft();
         return;
       }
-      setActionError(describeLeaveWorkspaceError(result.error));
+      setActionError(localizeMessage(t, describeLeaveWorkspaceError(result.error)));
     } catch (error) {
-      setActionError(describeLeaveWorkspaceError(toAppError(error)));
+      setActionError(localizeMessage(t, describeLeaveWorkspaceError(toAppError(error))));
     } finally {
       setPendingUserId(null);
     }
   }, [leaveWorkspace, currentUserId, workspaceId, onLeft]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+      classNames={{ content: 'share-dialog-content' }}
+    >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Share workspace</DialogTitle>
-          <DialogDescription>Invite people and manage who has access.</DialogDescription>
+          <DialogTitle>{t('share.title')}</DialogTitle>
+          <DialogDescription>{t('share.description')}</DialogDescription>
         </DialogHeader>
         <Tabs value={tab} onValueChange={setTab}>
           <Tabs.List>
-            {canShowInvite ? <Tabs.Trigger value={INVITE_TAB}>Invite</Tabs.Trigger> : null}
-            <Tabs.Trigger value={PEOPLE_TAB}>People</Tabs.Trigger>
+            {canShowInvite ? (
+              <Tabs.Trigger value={INVITE_TAB}>{t('share.tabs.invite')}</Tabs.Trigger>
+            ) : null}
+            <Tabs.Trigger value={PEOPLE_TAB}>{t('share.tabs.people')}</Tabs.Trigger>
           </Tabs.List>
           {canShowInvite && inviteMember !== undefined && listPendingInvitations !== undefined ? (
             <Tabs.Panel value={INVITE_TAB}>
@@ -206,7 +214,7 @@ export function ShareDialog({
           ) : null}
           <Tabs.Panel value={PEOPLE_TAB}>
             <Stack gap="space-3">
-              <Heading as="h3">Members</Heading>
+              <Heading as="h3">{t('share.members')}</Heading>
               <MembersList
                 status={status}
                 members={members}

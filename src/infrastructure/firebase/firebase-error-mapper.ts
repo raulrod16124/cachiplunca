@@ -38,6 +38,11 @@ const FIREBASE_ERROR_MAP: Readonly<Record<string, MappedError>> = {
     code: ERROR_CODES.AUTH_INVALID_CREDENTIALS,
     message: 'The credentials are not valid.',
   },
+  'auth/requires-recent-login': {
+    kind: 'authorization',
+    code: ERROR_CODES.AUTH_REQUIRES_RECENT_LOGIN,
+    message: 'Sign in again before changing your security settings.',
+  },
   'auth/user-not-found': {
     kind: 'authorization',
     code: ERROR_CODES.AUTH_INVALID_CREDENTIALS,

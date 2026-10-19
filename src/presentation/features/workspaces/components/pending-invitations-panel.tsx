@@ -1,14 +1,50 @@
-import { Badge, Button, Heading, Stack, Text } from '@raulrod/ui';
+import { Avatar, Button, Heading, Inline, Stack, Text } from '@raulrod/ui';
+import { Mail } from '@raulrod/icons';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import styled from 'styled-components';
 import type { AcceptInvitationById } from '../../../../application/commands';
 import type { GetWorkspace, ListPendingInvitationsForUser } from '../../../../application/queries';
 import type { Invitation } from '../../../../domain/invitation';
 import { UserId } from '../../../../domain/shared';
 import { toAppError } from '../../../../shared/errors';
+import { localizeMessage, useI18n } from '../../../i18n';
 import {
   describeAcceptInvitationError,
   describePendingInvitationsError,
 } from '../../invitations/invitation-error-messages';
+
+const Panel = styled.section`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.space[3]};
+  padding: ${({ theme }) => theme.space[4]};
+  border: 1px solid ${({ theme }) => theme.color.border.primary};
+  border-radius: ${({ theme }) => theme.radius.lg};
+  background: ${({ theme }) => theme.color.background.info};
+`;
+
+const PanelHeading = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: ${({ theme }) => theme.space[2]};
+`;
+
+const InvitationRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.space[3]};
+  flex-wrap: wrap;
+  padding: ${({ theme }) => `${theme.space[3]} 0 0`};
+  border-top: 1px solid ${({ theme }) => theme.color.border.default};
+`;
+
+const InvitationIdentity = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.space[2]};
+  min-width: 0;
+`;
 
 export interface PendingInvitationsPanelProps {
   readonly userId: string;
@@ -29,6 +65,7 @@ export function PendingInvitationsPanel({
   getWorkspace,
   onAccepted,
 }: PendingInvitationsPanelProps): ReactNode {
+  const { t } = useI18n();
   const [status, setStatus] = useState<PanelStatus>('idle');
   const [invitations, setInvitations] = useState<readonly Invitation[]>([]);
   const [workspaceNames, setWorkspaceNames] = useState<ReadonlyMap<string, string>>(new Map());
@@ -55,7 +92,7 @@ export function PendingInvitationsPanel({
           return;
         }
         if (result.status !== 'ok') {
-          setLoadError(describePendingInvitationsError(result.error));
+          setLoadError(localizeMessage(t, describePendingInvitationsError(result.error)));
           setStatus('error');
           return;
         }
@@ -82,7 +119,7 @@ export function PendingInvitationsPanel({
         if (!active) {
           return;
         }
-        setLoadError(describePendingInvitationsError(toAppError(error)));
+        setLoadError(localizeMessage(t, describePendingInvitationsError(toAppError(error))));
         setStatus('error');
       }
     })();
@@ -115,11 +152,11 @@ export function PendingInvitationsPanel({
 
         setActionError(
           result.status === 'invalid-input'
-            ? 'This invitation link is not valid.'
-            : describeAcceptInvitationError(result.error),
+            ? t('errors.invitationLinkInvalid')
+            : localizeMessage(t, describeAcceptInvitationError(result.error)),
         );
       } catch (error) {
-        setActionError(describeAcceptInvitationError(toAppError(error)));
+        setActionError(localizeMessage(t, describeAcceptInvitationError(toAppError(error))));
       } finally {
         setAcceptingId(null);
       }
@@ -133,14 +170,20 @@ export function PendingInvitationsPanel({
 
   if (status === 'error') {
     return (
-      <Stack gap="space-2">
+      <Panel>
         <Text role="alert" color="color.text.danger">
-          {loadError ?? 'We could not load your invitations. Please try again.'}
+          {loadError ?? t('workspaces.pending.error')}
         </Text>
-        <Button type="button" variant="secondary" onClick={() => setReloadToken((t) => t + 1)}>
-          Retry
-        </Button>
-      </Stack>
+        <Inline>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => setReloadToken((token) => token + 1)}
+          >
+            {t('workspaces.pending.retry')}
+          </Button>
+        </Inline>
+      </Panel>
     );
   }
 
@@ -149,32 +192,49 @@ export function PendingInvitationsPanel({
   }
 
   return (
-    <Stack gap="space-3">
-      <Heading as="h2">Pending invitations</Heading>
+    <Panel>
+      <PanelHeading>
+        <Mail aria-hidden="true" size={18} />
+        <Stack gap="space-1">
+          <Heading as="h2">{t('workspaces.pending.title')}</Heading>
+          <Text color="color.text.muted" size="font.size.sm">
+            {t('workspaces.pending.description')}
+          </Text>
+        </Stack>
+      </PanelHeading>
       {invitations.map((invitation) => {
-        const workspaceName = workspaceNames.get(invitation.workspaceId.value);
+        const workspaceName = workspaceNames.get(invitation.workspaceId.value) ?? 'A workspace';
         return (
-          <Stack key={invitation.id.value} gap="space-2">
-            <Text>
-              {workspaceName ?? 'A workspace'} invited you as <Badge>{invitation.role}</Badge>
-            </Text>
+          <InvitationRow key={invitation.id.value}>
+            <InvitationIdentity>
+              <Avatar name={workspaceName} size="sm" />
+              <Stack gap="space-1">
+                <Text>
+                  {t('workspaces.pending.invited', {
+                    workspace: workspaceName,
+                    role: invitation.role,
+                  })}
+                </Text>
+              </Stack>
+            </InvitationIdentity>
             <Button
               type="button"
               variant="primary"
+              size="sm"
               loading={acceptingId === invitation.id.value}
               disabled={acceptingId !== null && acceptingId !== invitation.id.value}
               onClick={() => void handleAccept(invitation)}
             >
-              Accept invitation
+              {t('workspaces.pending.accept')}
             </Button>
-          </Stack>
+          </InvitationRow>
         );
       })}
-      {actionError !== null && (
+      {actionError === null ? null : (
         <Text role="alert" color="color.text.danger">
           {actionError}
         </Text>
       )}
-    </Stack>
+    </Panel>
   );
 }

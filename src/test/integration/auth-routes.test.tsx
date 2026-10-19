@@ -99,7 +99,6 @@ describe('auth routes', () => {
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Your workspaces' }),
     ).toBeInTheDocument();
-    expect(screen.getByText(`${CREDENTIALS.email} is ready to plan.`)).toBeInTheDocument();
     expect(screen.getByTestId('location')).toHaveTextContent('/workspaces');
   });
 

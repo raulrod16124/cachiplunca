@@ -2,6 +2,8 @@ import type {
   AuthCredentials,
   AuthPort,
   AuthUser,
+  ChangeEmailInput,
+  ChangePasswordInput,
   SessionErrorListener,
   SessionListener,
 } from '../../application/ports';
@@ -62,6 +64,77 @@ export class FakeAuthPort implements AuthPort {
     this.#setSession(null);
   }
 
+  async updateDisplayName(displayName: string): Promise<AuthUser> {
+    const session = this.#requireSession();
+    const stored = this.#users.get(normalizeEmail(session.email ?? ''));
+    if (stored === undefined) {
+      throw createAppError(
+        'authorization',
+        ERROR_CODES.AUTH_UNAUTHENTICATED,
+        'You must be signed in to perform this action.',
+      );
+    }
+
+    const updated: AuthUser = { ...stored.user, displayName };
+    this.#users.set(normalizeEmail(session.email ?? ''), { ...stored, user: updated });
+    this.#setSession(updated);
+    return updated;
+  }
+
+  async changeEmail(input: ChangeEmailInput): Promise<AuthUser> {
+    const session = this.#requireSession();
+    const currentKey = normalizeEmail(session.email ?? '');
+    const stored = this.#users.get(currentKey);
+    if (stored === undefined || stored.password !== input.currentPassword) {
+      throw createAppError(
+        'authorization',
+        ERROR_CODES.AUTH_INVALID_CREDENTIALS,
+        'The credentials are not valid.',
+      );
+    }
+
+    const nextKey = normalizeEmail(input.email);
+    if (nextKey !== currentKey && this.#users.has(nextKey)) {
+      throw createAppError(
+        'conflict',
+        ERROR_CODES.AUTH_EMAIL_ALREADY_IN_USE,
+        'The email address is already in use.',
+      );
+    }
+
+    const updated: AuthUser = { ...stored.user, email: input.email.trim() };
+    this.#users.delete(currentKey);
+    this.#users.set(nextKey, { ...stored, user: updated });
+    this.#setSession(updated);
+    return updated;
+  }
+
+  async changePassword(input: ChangePasswordInput): Promise<void> {
+    const session = this.#requireSession();
+    const key = normalizeEmail(session.email ?? '');
+    const stored = this.#users.get(key);
+    if (stored === undefined || stored.password !== input.currentPassword) {
+      throw createAppError(
+        'authorization',
+        ERROR_CODES.AUTH_INVALID_CREDENTIALS,
+        'The credentials are not valid.',
+      );
+    }
+
+    this.#users.set(key, { ...stored, password: input.newPassword });
+  }
+
+  #requireSession(): AuthUser {
+    if (this.#session === null) {
+      throw createAppError(
+        'authorization',
+        ERROR_CODES.AUTH_UNAUTHENTICATED,
+        'You must be signed in to perform this action.',
+      );
+    }
+    return this.#session;
+  }
+
   observeSession(listener: SessionListener, onError?: SessionErrorListener): Unsubscribe {
     this.#listeners.add(listener);
     if (onError !== undefined) {
@@ -109,5 +182,10 @@ function sameUser(a: AuthUser | null, b: AuthUser | null): boolean {
   if (a === null || b === null) {
     return a === b;
   }
-  return a.uid === b.uid;
+  return (
+    a.uid === b.uid &&
+    a.email === b.email &&
+    a.emailVerified === b.emailVerified &&
+    a.displayName === b.displayName
+  );
 }

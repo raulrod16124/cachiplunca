@@ -8,6 +8,7 @@ import type {
 import type { Workspace } from '../../../../domain/workspace';
 import { toAppError } from '../../../../shared/errors';
 import { describeListWorkspacesError } from '../workspace-error-messages';
+import { localizeMessage, useI18n } from '../../../i18n';
 import { WorkspacesList } from './workspaces-list';
 
 export interface WorkspacesListContainerProps {
@@ -23,6 +24,7 @@ export function WorkspacesListContainer({
   onCreateWorkspace,
   refreshToken = 0,
 }: WorkspacesListContainerProps): ReactNode {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [result, setResult] = useState<ListWorkspacesResult | null>(null);
@@ -44,7 +46,9 @@ export function WorkspacesListContainer({
   }, [fetchWorkspaces, refreshToken]);
 
   const errorMessage =
-    result?.status === 'error' ? describeListWorkspacesError(result.error) : undefined;
+    result?.status === 'error'
+      ? localizeMessage(t, describeListWorkspacesError(result.error))
+      : undefined;
   const workspaces = result?.status === 'ok' ? result.workspaces : [];
 
   const handleSelectWorkspace = useCallback(

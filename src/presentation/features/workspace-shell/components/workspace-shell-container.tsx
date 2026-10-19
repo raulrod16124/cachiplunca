@@ -81,6 +81,7 @@ import { LoadingState } from '../../../components/loading-state';
 import type { ConnectorEndpointDragInput } from '../../../canvas/hooks';
 import type { TaskFormValues } from '../../../canvas/components/task-form-dialog';
 import { ShareDialog } from '../../sharing';
+import { localizeMessage, useI18n } from '../../../i18n';
 import { WorkspaceShellLayout } from './workspace-shell-layout';
 import {
   describeCollaborationSyncError,
@@ -148,6 +149,7 @@ export function WorkspaceShellContainer({
   leaveWorkspace,
   updateWorkspace,
 }: WorkspaceShellContainerProps): ReactNode {
+  const { t } = useI18n();
   const [status, setStatus] = useState<'loading' | 'notFound' | 'error' | 'success'>('loading');
   const [shareOpen, setShareOpen] = useState(false);
   const [role, setRole] = useState<MembershipRole | undefined>(undefined);
@@ -843,7 +845,7 @@ export function WorkspaceShellContainer({
   if (status === 'error') {
     const errorMessage =
       result?.status === 'error'
-        ? describeGetWorkspaceError(result.error)
+        ? localizeMessage(t, describeGetWorkspaceError(result.error))
         : 'Something went wrong.';
 
     return (
@@ -879,7 +881,7 @@ export function WorkspaceShellContainer({
       const errorMessage =
         elementsError === null
           ? 'Something went wrong.'
-          : describeLoadWorkspaceElementsError(elementsError);
+          : localizeMessage(t, describeLoadWorkspaceElementsError(elementsError));
 
       return (
         <Container>
@@ -946,13 +948,19 @@ export function WorkspaceShellContainer({
           syncStatus={syncStatus}
           connectionStatus={connectionStatus}
           persistenceErrorMessage={
-            persistenceError === null ? null : describePersistElementsError(persistenceError)
+            persistenceError === null
+              ? null
+              : localizeMessage(t, describePersistElementsError(persistenceError))
           }
           collaborationErrorMessage={
-            collaborationError === null ? null : describeCollaborationSyncError(collaborationError)
+            collaborationError === null
+              ? null
+              : localizeMessage(t, describeCollaborationSyncError(collaborationError))
           }
           creationErrorMessage={
-            creationError === null ? null : describeCreateElementError(creationError)
+            creationError === null
+              ? null
+              : localizeMessage(t, describeCreateElementError(creationError))
           }
           readOnly={!canElementWrite}
           accessErrorMessage={

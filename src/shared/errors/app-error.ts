@@ -17,6 +17,7 @@ export const ERROR_CODES = {
   AUTH_FORBIDDEN: 'auth/forbidden',
   AUTH_EMAIL_ALREADY_IN_USE: 'auth/email-already-in-use',
   AUTH_INVALID_CREDENTIALS: 'auth/invalid-credentials',
+  AUTH_REQUIRES_RECENT_LOGIN: 'auth/requires-recent-login',
   AUTH_APP_MISCONFIGURED: 'auth/app-misconfigured',
   AUTH_TOO_MANY_REQUESTS: 'auth/too-many-requests',
   AUTH_ACCOUNT_DISABLED: 'auth/account-disabled',

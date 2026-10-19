@@ -5,6 +5,7 @@ import type { Invitation } from '../../../../domain/invitation';
 import { EmptyState } from '../../../components/empty-state';
 import { ErrorState } from '../../../components/error-state';
 import { LoadingState } from '../../../components/loading-state';
+import { useI18n } from '../../../i18n';
 
 export type PendingInvitationsStatus = 'loading' | 'error' | 'ready';
 
@@ -37,6 +38,7 @@ export function PendingInvitationsList({
   errorMessage,
   onRetry,
 }: PendingInvitationsListProps): ReactNode {
+  const { t } = useI18n();
   if (status === 'loading') {
     return (
       <LoadingState label="Loading pending invitations">
@@ -53,14 +55,14 @@ export function PendingInvitationsList({
       <ErrorState
         title="Could not load invitations"
         description={errorMessage ?? 'Something went wrong.'}
-        actionLabel="Retry"
+        actionLabel={t('common.retry')}
         onAction={onRetry}
       />
     );
   }
 
   if (invitations.length === 0) {
-    return <EmptyState title="No pending invitations." titleAs="h3" />;
+    return <EmptyState title={t('share.invite.pendingEmpty')} titleAs="h3" />;
   }
 
   return (
@@ -72,7 +74,7 @@ export function PendingInvitationsList({
             <Inline gap="space-2" align="center">
               <Badge variant="neutral">{invitation.role}</Badge>
               <Text color="color.text.muted">
-                Expires {DATE_FORMATTER.format(invitation.expiresAt)}
+                {t('share.invite.expires', { date: DATE_FORMATTER.format(invitation.expiresAt) })}
               </Text>
             </Inline>
           </Inline>

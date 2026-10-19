@@ -1,4 +1,5 @@
-import { Button, Heading, Inline, Stack, Text } from '@raulrod/ui';
+import { Button, Heading, Stack } from '@raulrod/ui';
+import { Plus } from '@raulrod/icons';
 import { useMemo, useState, type ReactNode } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
@@ -18,14 +19,36 @@ import type {
 } from '../../../application/queries';
 import { UserId } from '../../../domain/shared';
 import { createAppError, ERROR_CODES } from '../../../shared/errors';
-import { AccountMenu } from '../auth/account-menu';
+import { useI18n } from '../../i18n';
+import { AppShell } from '../app-shell/app-shell';
 import { CreateWorkspaceDialog } from './components/create-workspace-dialog';
 import { PendingInvitationsPanel } from './components/pending-invitations-panel';
 import { WorkspacesListContainer } from './components/workspaces-list-container';
 
-const Page = styled.main`
-  min-height: 100dvh;
-  padding: 24px;
+const Main = styled.main`
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: ${({ theme }) => `${theme.space[8]} ${theme.space[6]}`};
+
+  @media (max-width: 900px) {
+    padding: ${({ theme }) => `${theme.space[5]} ${theme.space[4]}`};
+  }
+`;
+
+const Header = styled.header`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.space[4]};
+  flex-wrap: wrap;
+  margin-bottom: ${({ theme }) => theme.space[8]};
+`;
+
+const Section = styled.section`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.space[4]};
 `;
 
 export interface WorkspacesPageProps {
@@ -47,6 +70,7 @@ export function WorkspacesPage({
 }: WorkspacesPageProps): ReactNode {
   const session = useSession();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [createOpen, setCreateOpen] = useState(false);
   const [refreshToken, setRefreshToken] = useState(0);
   const currentUser = session.status === 'authenticated' ? session.user : null;
@@ -79,47 +103,47 @@ export function WorkspacesPage({
   };
 
   return (
-    <Page>
-      <Stack gap="space-6">
-        <Stack gap="space-4">
-          <Inline justify="between" align="start" wrap gap="space-3">
-            <Stack gap="space-2">
-              <Heading as="h1">Your workspaces</Heading>
-              <Text color="color.text.muted">
-                {session.status === 'authenticated' && session.user.email !== null
-                  ? `${session.user.email} is ready to plan.`
-                  : 'Your shared plans will live here.'}
-              </Text>
-            </Stack>
-            <Inline gap="space-2" align="center">
-              <Button type="button" variant="primary" onClick={handleCreateWorkspace}>
-                Create workspace
-              </Button>
-              <AccountMenu currentUser={currentUser} logoutUser={logoutUser} />
-            </Inline>
-          </Inline>
+    <AppShell
+      currentUser={currentUser}
+      logoutUser={logoutUser}
+      onCreateWorkspace={handleCreateWorkspace}
+    >
+      <Main>
+        <Header>
+          <Heading as="h1">{t('workspaces.title')}</Heading>
+          <Button type="button" variant="primary" onClick={handleCreateWorkspace}>
+            <Plus aria-hidden="true" size={16} />
+            {t('workspaces.create')}
+          </Button>
+        </Header>
+
+        <Stack gap="space-8">
+          {session.status === 'authenticated' &&
+            listPendingInvitationsForUser !== undefined &&
+            acceptInvitationById !== undefined && (
+              <Section id="pending-invitations">
+                <PendingInvitationsPanel
+                  userId={session.user.uid}
+                  userEmail={session.user.email}
+                  listPendingInvitationsForUser={listPendingInvitationsForUser}
+                  acceptInvitationById={acceptInvitationById}
+                  getWorkspace={getWorkspace}
+                  onAccepted={(workspaceId) => navigate(`/workspaces/${workspaceId}`)}
+                />
+              </Section>
+            )}
+          <Section id="workspaces">
+            {session.status === 'authenticated' && (
+              <WorkspacesListContainer
+                userId={session.user.uid}
+                listWorkspaces={listWorkspaces}
+                onCreateWorkspace={handleCreateWorkspace}
+                refreshToken={refreshToken}
+              />
+            )}
+          </Section>
         </Stack>
-        {session.status === 'authenticated' &&
-          listPendingInvitationsForUser !== undefined &&
-          acceptInvitationById !== undefined && (
-            <PendingInvitationsPanel
-              userId={session.user.uid}
-              userEmail={session.user.email}
-              listPendingInvitationsForUser={listPendingInvitationsForUser}
-              acceptInvitationById={acceptInvitationById}
-              getWorkspace={getWorkspace}
-              onAccepted={(workspaceId) => navigate(`/workspaces/${workspaceId}`)}
-            />
-          )}
-        {session.status === 'authenticated' && (
-          <WorkspacesListContainer
-            userId={session.user.uid}
-            listWorkspaces={listWorkspaces}
-            onCreateWorkspace={handleCreateWorkspace}
-            refreshToken={refreshToken}
-          />
-        )}
-      </Stack>
+      </Main>
       <CreateWorkspaceDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
@@ -127,6 +151,6 @@ export function WorkspacesPage({
         createdBy={ownerId}
         onCreated={handleCreated}
       />
-    </Page>
+    </AppShell>
   );
 }

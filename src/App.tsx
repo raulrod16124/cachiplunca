@@ -15,6 +15,8 @@ import { createWorkspaceServices, type WorkspaceServices } from './app/config/wo
 import { AppRoutes } from './app/routes/app-routes';
 import { UserId } from './domain/shared/value-objects/user-id';
 import { getFirebaseFirestore } from './infrastructure/firebase/firebase-app';
+import { ProfileServicesProvider } from './presentation/features/profile/profile-services-provider';
+import { I18nProvider } from './presentation/i18n';
 import { SessionProvider, useSession } from './presentation/providers/session-provider';
 import { UserSettingsProvider } from './presentation/providers/user-settings-provider';
 import { AppThemeProvider } from './presentation/styles';
@@ -41,30 +43,40 @@ function AppContent({
 
   return (
     <UserSettingsProvider store={userSettingsServices.userSettingsStore} userId={userId}>
-      <AppRoutes
-        registerUser={authServices.registerUser}
-        loginUser={authServices.loginUser}
-        logoutUser={authServices.logoutUser}
-        listWorkspaces={workspaceServices.listWorkspaces}
-        createWorkspaceWithOwner={workspaceServices.createWorkspaceWithOwner}
-        getWorkspace={workspaceServices.getWorkspace}
-        getWorkspaceRole={workspaceServices.getWorkspaceRole}
-        loadWorkspaceElements={elementServices.loadWorkspaceElements}
-        elementPersistenceOrchestrator={elementServices.elementPersistenceOrchestrator}
-        realtimeSubscriptionManager={elementServices.realtimeSubscriptionManager}
-        generateElementId={elementServices.generateElementId}
-        presencePort={presenceServices.presencePort}
-        inviteMember={invitationServices.inviteMember}
-        listPendingInvitations={invitationServices.listPendingInvitations}
-        listPendingInvitationsForUser={invitationServices.listPendingInvitationsForUser}
-        acceptInvitation={invitationServices.acceptInvitation}
-        acceptInvitationById={invitationServices.acceptInvitationById}
-        listWorkspaceMembers={workspaceServices.listWorkspaceMembers}
-        changeMemberRole={workspaceServices.changeMemberRole}
-        removeMember={workspaceServices.removeMember}
-        leaveWorkspace={workspaceServices.leaveWorkspace}
-        updateWorkspace={workspaceServices.updateWorkspace}
-      />
+      <I18nProvider>
+        <ProfileServicesProvider
+          services={{
+            updateUserProfile: authServices.updateUserProfile,
+            changeUserEmail: authServices.changeUserEmail,
+            changeUserPassword: authServices.changeUserPassword,
+          }}
+        >
+          <AppRoutes
+            registerUser={authServices.registerUser}
+            loginUser={authServices.loginUser}
+            logoutUser={authServices.logoutUser}
+            listWorkspaces={workspaceServices.listWorkspaces}
+            createWorkspaceWithOwner={workspaceServices.createWorkspaceWithOwner}
+            getWorkspace={workspaceServices.getWorkspace}
+            getWorkspaceRole={workspaceServices.getWorkspaceRole}
+            loadWorkspaceElements={elementServices.loadWorkspaceElements}
+            elementPersistenceOrchestrator={elementServices.elementPersistenceOrchestrator}
+            realtimeSubscriptionManager={elementServices.realtimeSubscriptionManager}
+            generateElementId={elementServices.generateElementId}
+            presencePort={presenceServices.presencePort}
+            inviteMember={invitationServices.inviteMember}
+            listPendingInvitations={invitationServices.listPendingInvitations}
+            listPendingInvitationsForUser={invitationServices.listPendingInvitationsForUser}
+            acceptInvitation={invitationServices.acceptInvitation}
+            acceptInvitationById={invitationServices.acceptInvitationById}
+            listWorkspaceMembers={workspaceServices.listWorkspaceMembers}
+            changeMemberRole={workspaceServices.changeMemberRole}
+            removeMember={workspaceServices.removeMember}
+            leaveWorkspace={workspaceServices.leaveWorkspace}
+            updateWorkspace={workspaceServices.updateWorkspace}
+          />
+        </ProfileServicesProvider>
+      </I18nProvider>
     </UserSettingsProvider>
   );
 }

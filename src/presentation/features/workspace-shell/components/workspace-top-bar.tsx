@@ -25,6 +25,7 @@ import {
   userDetailedLabel,
 } from '../../../collaboration';
 import { AccountMenu } from '../../auth/account-menu';
+import { localizeMessage, useI18n, type TranslationKey } from '../../../i18n';
 import { describeConnectionStatus, describeSyncStatus } from '../workspace-sync-status';
 import { SyncStatusIndicator } from './sync-status-indicator';
 import { WorkspaceTitleField } from './workspace-title-field';
@@ -32,10 +33,10 @@ import { WorkspaceTitleField } from './workspace-title-field';
 const MAX_PRESENCE_AVATARS = 4;
 const AVATAR_TEXT_COLOR = '#ffffff';
 
-const ROLE_LABELS: Record<MembershipRole, string> = {
-  owner: 'Owner',
-  editor: 'Editor',
-  viewer: 'Viewer',
+const ROLE_KEYS: Record<MembershipRole, TranslationKey> = {
+  owner: 'share.role.owner',
+  editor: 'share.role.editor',
+  viewer: 'share.role.viewer',
 };
 
 const Overlay = styled.header`
@@ -223,11 +224,18 @@ export function WorkspaceTopBar({
   collaborationErrorMessage,
   creationErrorMessage,
 }: WorkspaceTopBarProps): ReactNode {
+  const { t } = useI18n();
   const syncBadge = describeSyncStatus(syncStatus);
   const connectionBadge = describeConnectionStatus(connectionStatus);
+  const localizedSyncBadge =
+    syncBadge === null ? null : { ...syncBadge, label: localizeMessage(t, syncBadge.label) };
+  const localizedConnectionBadge =
+    connectionBadge === null
+      ? null
+      : { ...connectionBadge, label: localizeMessage(t, connectionBadge.label) };
   const visibleUsers = connectedUsers.slice(0, MAX_PRESENCE_AVATARS);
   const overflowUsers = connectedUsers.slice(MAX_PRESENCE_AVATARS);
-  const connectedLabel = `${connectedUsers.length} connected`;
+  const connectedLabel = t('canvas.topbar.connected', { count: connectedUsers.length });
   const colorFor = (userId: string): string => userColors?.get(userId) ?? presenceColorFor(userId);
   const hasErrors =
     persistenceErrorMessage !== null ||
@@ -243,22 +251,24 @@ export function WorkspaceTopBar({
             variant="ghost"
             size="sm"
             onClick={onBack}
-            aria-label="Back to workspaces"
+            aria-label={t('canvas.topbar.back')}
           >
             <ArrowLeft aria-hidden="true" size={16} />
           </BackButton>
           <WorkspaceTitleField name={workspace.name} onRename={onRename} />
           {role === undefined ? (
             readOnly ? (
-              <Badge variant="warning">View only</Badge>
+              <Badge variant="warning">{t('canvas.topbar.viewOnly')}</Badge>
             ) : null
           ) : (
-            <Badge variant="neutral">{ROLE_LABELS[role]}</Badge>
+            <Badge variant="neutral">{t(ROLE_KEYS[role])}</Badge>
           )}
-          {syncBadge === null ? null : <SyncStatusIndicator status={syncBadge} />}
-          {connectionBadge === null ? null : (
+          {localizedSyncBadge === null ? null : <SyncStatusIndicator status={localizedSyncBadge} />}
+          {localizedConnectionBadge === null ? null : (
             <span role="status" aria-live="polite">
-              <Badge variant={connectionBadge.variant}>{connectionBadge.label}</Badge>
+              <Badge variant={localizedConnectionBadge.variant}>
+                {localizedConnectionBadge.label}
+              </Badge>
             </span>
           )}
         </Cluster>
@@ -268,7 +278,7 @@ export function WorkspaceTopBar({
               <Popover>
                 <PresenceTrigger
                   data-testid="connected-users"
-                  aria-label={`Participants: ${connectedLabel}. Show list`}
+                  aria-label={t('canvas.topbar.showParticipants', { count: connectedUsers.length })}
                 >
                   <PresenceRow aria-hidden="true">
                     {visibleUsers.map((presence) => {
@@ -312,7 +322,7 @@ export function WorkspaceTopBar({
                 </PresenceTrigger>
                 <Popover.Content placement="bottom-end">
                   <PresencePanel>
-                    <Popover.Title>Connected people</Popover.Title>
+                    <Popover.Title>{t('canvas.topbar.connectedPeople')}</Popover.Title>
                     <PresenceList>
                       {connectedUsers.map((presence) => {
                         const userId = presence.userId.value;
@@ -331,7 +341,7 @@ export function WorkspaceTopBar({
                               <Text weight="font.weight.medium">{label}</Text>
                               {label === shortId ? null : (
                                 <Text color="color.text.muted" size="font.size.sm">
-                                  ID {shortId}
+                                  {t('canvas.topbar.id', { id: shortId })}
                                 </Text>
                               )}
                             </PresenceIdentity>
@@ -343,17 +353,17 @@ export function WorkspaceTopBar({
                 </Popover.Content>
               </Popover>
               <VisuallyHidden role="status" aria-live="polite">
-                {`Participants: ${connectedLabel}`}
+                {t('canvas.topbar.participants', { count: connectedUsers.length })}
               </VisuallyHidden>
             </Inline>
           )}
           {onShare === undefined ? null : (
-            <Tooltip content="Share" placement="bottom">
+            <Tooltip content={t('canvas.topbar.share')} placement="bottom">
               <ShareButton
                 type="button"
                 variant="secondary"
                 size="sm"
-                label="Share"
+                label={t('canvas.topbar.share')}
                 onClick={onShare}
               >
                 <Share2 aria-hidden="true" size={16} />

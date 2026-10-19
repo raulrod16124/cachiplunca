@@ -1,6 +1,8 @@
 export * from './accept-invitation';
 export * from './accept-invitation-by-id';
 export * from './change-member-role';
+export * from './change-user-email';
+export * from './change-user-password';
 export * from './command';
 export * from './create-element';
 export * from './create-owner-membership';
@@ -23,4 +25,5 @@ export * from './update-element';
 export * from './update-workspace';
 export * from './validate-workspace-name';
 export * from './paste-element';
+export * from './update-user-profile';
 export * from './update-user-settings';

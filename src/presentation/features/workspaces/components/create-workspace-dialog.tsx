@@ -20,6 +20,7 @@ import type { CreateWorkspace, CreateWorkspaceFieldErrors } from '../../../../ap
 import type { UserId } from '../../../../domain/shared';
 import { toAppError } from '../../../../shared/errors';
 import { describeCreateWorkspaceError } from '../workspace-error-messages';
+import { localizeFieldError, localizeMessage, useI18n } from '../../../i18n';
 
 export interface CreateWorkspaceDialogProps {
   readonly open: boolean;
@@ -36,6 +37,7 @@ export function CreateWorkspaceDialog({
   createdBy,
   onCreated,
 }: CreateWorkspaceDialogProps): ReactNode {
+  const { t } = useI18n();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [fieldErrors, setFieldErrors] = useState<CreateWorkspaceFieldErrors>({});
@@ -77,11 +79,11 @@ export function CreateWorkspaceDialog({
           setFieldErrors(result.fieldErrors);
           break;
         case 'error':
-          setFormError(describeCreateWorkspaceError(result.error));
+          setFormError(localizeMessage(t, describeCreateWorkspaceError(result.error)));
           break;
       }
     } catch (error) {
-      setFormError(describeCreateWorkspaceError(toAppError(error)));
+      setFormError(localizeMessage(t, describeCreateWorkspaceError(toAppError(error))));
     } finally {
       setSubmitting(false);
     }
@@ -91,13 +93,13 @@ export function CreateWorkspaceDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create workspace</DialogTitle>
-          <DialogDescription>Give your shared plan a home.</DialogDescription>
+          <DialogTitle>{t('workspaces.createDialog.title')}</DialogTitle>
+          <DialogDescription>{t('workspaces.createDialog.description')}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} noValidate>
           <Stack gap="space-4">
             <FormField>
-              <FormFieldLabel>Name</FormFieldLabel>
+              <FormFieldLabel>{t('workspaces.createDialog.name')}</FormFieldLabel>
               <FormFieldControl>
                 {(field) => (
                   <Input
@@ -110,11 +112,11 @@ export function CreateWorkspaceDialog({
                 )}
               </FormFieldControl>
               {fieldErrors.name !== undefined && (
-                <FormFieldError>{fieldErrors.name}</FormFieldError>
+                <FormFieldError>{localizeFieldError(t, fieldErrors.name)}</FormFieldError>
               )}
             </FormField>
             <FormField>
-              <FormFieldLabel>Description</FormFieldLabel>
+              <FormFieldLabel>{t('workspaces.createDialog.descriptionLabel')}</FormFieldLabel>
               <FormFieldControl>
                 {(field) => (
                   <Textarea
@@ -139,10 +141,10 @@ export function CreateWorkspaceDialog({
                 disabled={submitting}
                 onClick={() => onOpenChange(false)}
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button type="submit" loading={submitting}>
-                Create
+                {t('workspaces.createDialog.submit')}
               </Button>
             </DialogFooter>
           </Stack>
