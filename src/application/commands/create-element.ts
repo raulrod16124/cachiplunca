@@ -35,6 +35,7 @@ export type CreateElementInput =
       readonly type: 'task';
       readonly title: RichTextDocument | string;
       readonly status: TaskStatus;
+      readonly notes?: RichTextDocument | string;
       readonly assigneeId?: UserId;
       readonly dueDate?: Date;
     })
@@ -96,6 +97,7 @@ function buildElement(input: CreateElementInput, deps: CreateElementDeps): Eleme
         ...base,
         title: input.title,
         status: input.status,
+        notes: input.notes,
         assigneeId: input.assigneeId,
         dueDate: input.dueDate,
       });

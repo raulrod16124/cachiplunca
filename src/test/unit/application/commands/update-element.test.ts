@@ -116,8 +116,8 @@ describe('createUpdateElement', () => {
     const element = expectOk({
       element: taskElement({ assigneeId: UserId.create('user-2'), dueDate: UPDATED_AT }),
       type: 'task',
-      assigneeId: null,
-      dueDate: null,
+      assigneeId: null as any,
+      dueDate: null as any,
     });
 
     expect(element.type).toBe('task');

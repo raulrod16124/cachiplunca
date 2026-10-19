@@ -133,11 +133,11 @@ describe('createDuplicateElement', () => {
   });
 
   it('preserves type-specific fields of the source element', () => {
-    const task = expectOk({ element: taskElement({ status: 'done' }) });
+    const task = expectOk({ element: taskElement({ status: 'completed' }) });
     expect(task.type).toBe('task');
     if (task.type === 'task') {
       expect(richTextToPlain(task.title)).toBe('Ship it');
-      expect(task.status).toBe('done');
+      expect(task.status).toBe('completed');
     }
 
     const note = expectOk({ element: noteElement({ color: '#ff0' }) });

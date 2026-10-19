@@ -74,6 +74,7 @@ import { toAppError, type AppError } from '../../../../shared/errors';
 import { EmptyState } from '../../../components/empty-state';
 import { ErrorState } from '../../../components/error-state';
 import { LoadingState } from '../../../components/loading-state';
+import type { TaskFormValues } from '../../../canvas/components/task-form-dialog';
 import { ShareDialog } from '../../sharing';
 import { WorkspaceShellLayout } from './workspace-shell-layout';
 import {
@@ -448,6 +449,45 @@ export function WorkspaceShellContainer({
     [localUserId, workspaceId, createElement, commitElements],
   );
 
+  const handleCreateTask = useCallback(
+    (values: TaskFormValues): ElementId | void => {
+      if (localUserId === undefined) {
+        return;
+      }
+
+      const size = defaultElementSize('task');
+      const position = resolveElementCreatePosition(
+        canvasViewportStoreRef.current.getSnapshot(),
+        size,
+      );
+      const notes = values.notes.trim();
+      const input: CreateElementInput = {
+        type: 'task',
+        workspaceId: WorkspaceId.create(workspaceId),
+        createdBy: UserId.create(localUserId),
+        position,
+        size,
+        title: values.title,
+        status: values.status,
+        ...(notes === '' ? {} : { notes }),
+      };
+
+      const result = createElement(input);
+
+      if (result.status === 'error') {
+        setCreationError(result.error);
+        return;
+      }
+
+      setCreationError(null);
+      commitElements([...elementsRef.current, result.element], 'Create task');
+      selectionStoreRef.current.select(result.element.id.value);
+
+      return result.element.id;
+    },
+    [localUserId, workspaceId, createElement, commitElements],
+  );
+
   const handleMoveElements = useCallback(
     (next: readonly Element[]) => {
       const previous = elementsRef.current;
@@ -810,6 +850,7 @@ export function WorkspaceShellContainer({
           onUndoElements={handleUndoElements}
           onRedoElements={handleRedoElements}
           onCreateElement={canCreateElement ? handleCreateElement : undefined}
+          onCreateTask={canCreateElement ? handleCreateTask : undefined}
           onUpdateElement={canElementWrite ? handleUpdateElement : undefined}
           generateElementId={generateElementId}
           remoteCursors={remoteCursors}

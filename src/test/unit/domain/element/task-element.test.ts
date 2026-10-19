@@ -3,6 +3,7 @@ import {
   richTextToPlain,
   withTaskAssignee,
   withTaskDueDate,
+  withTaskNotes,
   withTaskStatus,
   withTaskTitle,
 } from '../../../../domain/element';
@@ -34,11 +35,30 @@ describe('TaskElement', () => {
     expect(element.type).toBe('task');
     expect(richTextToPlain(element.title)).toBe('ship the MVP');
     expect(element.status).toBe('todo');
+    expect(element.notes).toBeUndefined();
     expect(element.assigneeId).toBeUndefined();
     expect(element.dueDate).toBeUndefined();
     expect(element.rotation).toBe(0);
     expect(element.createdAt).toBeInstanceOf(Date);
     expect(element.updatedAt.getTime()).toBeGreaterThanOrEqual(element.createdAt.getTime());
+  });
+
+  it('creates a task element with notes from a plain string', () => {
+    const element = createTaskElement(createProps({ notes: 'blocked by infra' }));
+
+    expect(element.notes).toBeDefined();
+    expect(richTextToPlain(element.notes ?? { blocks: [] })).toBe('blocked by infra');
+  });
+
+  it('accepts an empty notes document', () => {
+    const element = createTaskElement(createProps({ notes: '' }));
+
+    expect(richTextToPlain(element.notes ?? { blocks: [] })).toBe('');
+  });
+
+  it('rejects an invalid notes document', () => {
+    const untrusted = Object.assign(createProps(), { notes: { blocks: [] } });
+    expect(() => createTaskElement(untrusted)).toThrow(/blocks/);
   });
 
   it('creates a task element with assignee and due date', () => {
@@ -187,11 +207,13 @@ describe('TaskElement', () => {
     const original = createSample();
     const updatedAt = new Date('2024-01-02T00:00:00Z');
 
-    const updated = withTaskStatus(original, 'done', updatedAt);
+    const updated = withTaskStatus(original, 'completed', updatedAt);
+    const blocked = withTaskStatus(original, 'blocked', updatedAt);
 
     expect(updated).not.toBe(original);
-    expect(updated.status).toBe('done');
+    expect(updated.status).toBe('completed');
     expect(updated.updatedAt).toBe(updatedAt);
+    expect(blocked.status).toBe('blocked');
     expect(original.status).toBe('todo');
   });
 
@@ -199,6 +221,26 @@ describe('TaskElement', () => {
     const original = createSample();
     const corrupted = Object.assign(createSample(), { status: 'archived' });
     expect(() => withTaskStatus(original, corrupted.status)).toThrow(/status/);
+  });
+
+  it('sets and clears notes without mutating the original', () => {
+    const original = createSample();
+    const updatedAt = new Date('2024-01-02T00:00:00Z');
+
+    const annotated = withTaskNotes(original, 'waiting on review', updatedAt);
+    const cleared = withTaskNotes(annotated, undefined, updatedAt);
+
+    expect(annotated).not.toBe(original);
+    expect(richTextToPlain(annotated.notes ?? { blocks: [] })).toBe('waiting on review');
+    expect(original.notes).toBeUndefined();
+    expect(cleared.notes).toBeUndefined();
+    expect('notes' in cleared).toBe(false);
+  });
+
+  it('rejects an invalid notes document on update', () => {
+    const original = createSample();
+
+    expect(() => withTaskNotes(original, { blocks: [] })).toThrow(/blocks/);
   });
 
   it('assigns and clears the assignee without mutating the original', () => {

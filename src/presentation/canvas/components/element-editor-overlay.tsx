@@ -14,14 +14,12 @@ import type {
   LinkElement,
   NoteElement,
   RichTextDocument,
-  TaskElement,
   TextElement,
 } from '../../../domain/element';
 import {
   isFrameElement,
   isLinkElement,
   isNoteElement,
-  isTaskElement,
   isTextElement,
   richTextFromPlain,
   richTextToPlain,
@@ -67,18 +65,6 @@ const UrlField = styled.input`
   &::placeholder {
     color: ${({ theme }) => theme.color.text.muted};
   }
-`;
-
-const TaskBox = styled(EditorBox)`
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 12px;
-`;
-
-const TaskTitle = styled.div`
-  font-weight: ${({ theme }) => theme.font.weight.semibold};
-  word-break: break-word;
 `;
 
 const FrameBox = styled(EditorBox)`
@@ -127,7 +113,7 @@ type FieldEditorProps<TElement extends Element> = {
 type RichTextFieldEditorProps = {
   readonly document: RichTextDocument;
   readonly ariaLabel: string;
-  readonly dataField: 'content' | 'title';
+  readonly dataField: 'content' | 'title' | 'notes';
   readonly singleLine?: boolean;
   readonly autoFocus?: boolean;
   readonly selectAllOnFocus?: boolean;
@@ -257,45 +243,6 @@ function NoteContentEditor({
         commitGuardRef={commitGuardRef}
       />
     </NoteBox>
-  );
-}
-
-function TaskTitleEditor({
-  element,
-  onCommit,
-  onCancel,
-  onEditorReady,
-  commitGuardRef,
-}: FieldEditorProps<TaskElement> & {
-  readonly onEditorReady?: (editor: Editor | null) => void;
-  readonly commitGuardRef?: { readonly current: boolean };
-}): ReactElement {
-  const handleCommit = (document: RichTextDocument): void => {
-    if (JSON.stringify(document) === JSON.stringify(element.title)) {
-      onCancel();
-      return;
-    }
-
-    onCommit({ type: 'task', element, title: document });
-  };
-
-  return (
-    <TaskBox style={boxStyle(element)} data-testid="element-editor-box">
-      <TaskTitle>
-        <RichTextFieldEditor
-          document={element.title}
-          ariaLabel="Task title"
-          dataField="title"
-          singleLine
-          autoFocus
-          selectAllOnFocus
-          onCommit={handleCommit}
-          onCancel={onCancel}
-          onEditorReady={onEditorReady}
-          commitGuardRef={commitGuardRef}
-        />
-      </TaskTitle>
-    </TaskBox>
   );
 }
 
@@ -475,18 +422,6 @@ export function ElementEditorOverlay({
   if (isNoteElement(element)) {
     return (
       <NoteContentEditor
-        element={element}
-        onCommit={onCommit}
-        onCancel={onCancel}
-        onEditorReady={onTextEditorReady}
-        commitGuardRef={textCommitGuardRef}
-      />
-    );
-  }
-
-  if (isTaskElement(element)) {
-    return (
-      <TaskTitleEditor
         element={element}
         onCommit={onCommit}
         onCancel={onCancel}

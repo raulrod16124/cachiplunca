@@ -11,6 +11,7 @@ import {
   type Element,
   type ElementType,
   type RichTextDocument,
+  type TaskStatus,
 } from '../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../domain/shared';
 
@@ -40,7 +41,8 @@ export interface NoteElementDocument extends BaseElementDocument {
 export interface TaskElementDocument extends BaseElementDocument {
   readonly type: 'task';
   readonly title: RichTextDocument;
-  readonly status: 'todo' | 'in_progress' | 'done';
+  readonly status: TaskStatus;
+  readonly notes?: RichTextDocument;
   readonly assigneeId?: string;
   readonly dueDate?: Date;
 }
@@ -100,6 +102,7 @@ export function toElementDocument(element: Element): ElementDocument {
         type: 'task' as const,
         title: element.title,
         status: element.status,
+        ...(element.notes === undefined ? {} : { notes: element.notes }),
         ...(element.assigneeId === undefined ? {} : { assigneeId: element.assigneeId.value }),
         ...(element.dueDate === undefined ? {} : { dueDate: element.dueDate }),
       } as TaskElementDocument;
@@ -151,6 +154,7 @@ export function fromElementDocument(id: string, data: unknown): Element {
         ...base,
         title: readRichText(data.title),
         status: readTaskStatus(data.status),
+        ...(data.notes === undefined ? {} : { notes: readRichText(data.notes) }),
         ...(data.assigneeId === undefined
           ? {}
           : { assigneeId: UserId.create(readString(data.assigneeId, 'assigneeId')) }),
@@ -246,12 +250,29 @@ function readSize(value: unknown): Size {
   );
 }
 
-function readTaskStatus(value: unknown): 'todo' | 'in_progress' | 'done' {
+const LEGACY_TASK_STATUSES: Record<string, TaskStatus> = {
+  done: 'completed',
+};
+
+function readTaskStatus(value: unknown): TaskStatus {
   const status = readString(value, 'status');
-  if (status !== 'todo' && status !== 'in_progress' && status !== 'done') {
-    throw new Error('Element document field "status" must be a valid task status');
+
+  if (
+    status === 'todo' ||
+    status === 'in_progress' ||
+    status === 'completed' ||
+    status === 'blocked'
+  ) {
+    return status;
   }
-  return status;
+
+  const legacy = LEGACY_TASK_STATUSES[status];
+
+  if (legacy !== undefined) {
+    return legacy;
+  }
+
+  throw new Error('Element document field "status" must be a valid task status');
 }
 
 function readDate(value: unknown, field: string): Date {

@@ -105,6 +105,8 @@ describe('critical journey', () => {
     expect(await screen.findByRole('application', { name: 'Canvas' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Add task' }));
+    fireEvent.change(await screen.findByLabelText('Title'), { target: { value: 'Persist me' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create task' }));
     await waitFor(() => expect(boardItems()).toHaveLength(1));
     await waitFor(async () =>
       expect(await harness.elementRepository.listByWorkspace(workspace.id)).toHaveLength(1),

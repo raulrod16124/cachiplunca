@@ -20,6 +20,7 @@ import type {
 } from '../../../../application/services';
 import type { AuthUser, RealtimeConnectionStatus } from '../../../../application/ports';
 import { Canvas } from '../../../canvas';
+import type { TaskFormValues } from '../../../canvas/components/task-form-dialog';
 import { WorkspaceTopBar } from './workspace-top-bar';
 
 const Shell = styled.div`
@@ -68,6 +69,7 @@ export interface WorkspaceShellLayoutProps {
   readonly onUndoElements: (elements: readonly Element[]) => void;
   readonly onRedoElements: (elements: readonly Element[]) => void;
   readonly onCreateElement?: (type: ElementType) => ElementId | void;
+  readonly onCreateTask?: (values: TaskFormValues) => ElementId | void;
   readonly onUpdateElement?: (input: UpdateElementInput) => void;
   readonly generateElementId: () => ElementId;
   readonly remoteCursors: readonly RemoteCursor[];
@@ -105,6 +107,7 @@ export function WorkspaceShellLayout({
   onUndoElements,
   onRedoElements,
   onCreateElement,
+  onCreateTask,
   onUpdateElement,
   generateElementId,
   remoteCursors,
@@ -165,6 +168,7 @@ export function WorkspaceShellLayout({
           onUndoElements={onUndoElements}
           onRedoElements={onRedoElements}
           onCreateElement={onCreateElement}
+          onCreateTask={onCreateTask}
           onUpdateElement={onUpdateElement}
           generateId={generateElementId}
           remoteCursors={remoteCursors}
