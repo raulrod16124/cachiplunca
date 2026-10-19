@@ -18,6 +18,7 @@ export * from './register-user';
 export * from './remove-member';
 export * from './resize-element';
 export * from './reorder-element';
+export * from './update-connector-endpoint';
 export * from './update-element';
 export * from './update-workspace';
 export * from './validate-workspace-name';

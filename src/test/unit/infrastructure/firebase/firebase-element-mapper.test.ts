@@ -334,3 +334,65 @@ describe('fromElementDocument', () => {
     );
   });
 });
+
+describe('free connector mapping', () => {
+  it('maps free endpoints and omits element ids', () => {
+    const element = createConnectorElement({
+      ...buildBase('el-free'),
+      sourcePoint: Position.create(0, 20),
+      targetPoint: Position.create(160, 20),
+    });
+
+    const document = toElementDocument(element);
+    const record = asRecord(document);
+
+    expect(record.sourceElementId).toBeUndefined();
+    expect(record.targetElementId).toBeUndefined();
+    expect(record.sourcePoint).toEqual({ x: 0, y: 20 });
+    expect(record.targetPoint).toEqual({ x: 160, y: 20 });
+  });
+
+  it('round-trips a free connector', () => {
+    expectRoundTrip(
+      createConnectorElement({
+        ...buildBase('el-free'),
+        sourcePoint: Position.create(0, 20),
+        targetPoint: Position.create(160, 20),
+      }),
+    );
+  });
+
+  it('still reads legacy documents with both element ids', () => {
+    const document = toElementDocument(
+      createConnectorElement({
+        ...buildBase('el-legacy'),
+        sourceElementId: ElementId.create('el-a'),
+        targetElementId: ElementId.create('el-b'),
+      }),
+    );
+
+    const element = fromElementDocument('el-legacy', document);
+
+    expect(element.type).toBe('connector');
+    if (element.type !== 'connector') {
+      return;
+    }
+
+    expect(element.sourceElementId?.value).toBe('el-a');
+    expect(element.targetElementId?.value).toBe('el-b');
+  });
+
+  it('rejects a document with a missing free point', () => {
+    const document = toElementDocument(
+      createConnectorElement({
+        ...buildBase('el-free'),
+        sourcePoint: Position.create(0, 20),
+        targetPoint: Position.create(160, 20),
+      }),
+    );
+    const record = asRecord(document);
+    const { sourcePoint: _sourcePoint, ...withoutSourcePoint } = record;
+
+    expect(() => fromElementDocument('el-free', withoutSourcePoint)).toThrow(/position/);
+  });
+});

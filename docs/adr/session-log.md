@@ -1,5 +1,14 @@
 # Session Log
 
+## 2026-10-19 — Conectores libres y anclaje al borde
+
+- Connector domain extendido con extremos libres: `sourcePoint`/`targetPoint` locales, `sourceElementId`/`targetElementId` ligados. Validación XOR por extremo y helper union `ConnectorEndpoint`.
+- Application: `connector-geometry.ts` (intersección rayo-rectángulo con gap, geometría mixta, distance-to-segment), `createUpdateConnectorEndpoint`, `connectorCandidateIds`, `buildFreeConnectorCreateInput` y cascada de borrado de conectores ligados.
+- Presentation: renderer con coordenadas reales y hit path; ElementView usa la geometría resuelta y los conectores se pintan primero (detrás de los nodos); SelectionOverlay muestra handles de extremo para libres; hook `useConnectorEndpointDrag`; toolbar con “Add connector” y “Connect selected elements”; hit-test por segmento con prioridad de cajas.
+- Persistencia: mapper lee/escribe extremos libres y mantiene compatibilidad con documentos antiguos.
+- Tests: 211 suites / 2513 tests en verde (+2 suites nuevas: `connector-geometry`, `update-connector-endpoint`, y casos nuevos en dominio, mapper, hit-test, creación, borrado, toolbar, Canvas y contenedor). `npm run perf` en verde.
+- ADR-0033 (`docs/adr/0033-free-connectors.md`).
+
 ## 2026-10-18 — TASK-134 Floating Word-style text toolbar
 
 - Siguiente tarea del backlog: TASK-134 (P1, dependencias TASK-132 DONE; acordada con el usuario, que decretó el salto sobre TASK-127/128/130). Alcance: la mini-toolbar flotante completa en `src/presentation/canvas/text-format/`.

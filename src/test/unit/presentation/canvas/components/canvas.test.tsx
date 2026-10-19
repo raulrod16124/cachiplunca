@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Position, ElementId, Size, UserId, WorkspaceId } from '../../../../../domain/shared';
 import {
+  createConnectorElement,
   createTaskElement,
   createTextElement,
   richTextFromPlain,
@@ -1422,6 +1423,7 @@ describe('Canvas', () => {
     interface ToolbarCanvasOptions {
       readonly elements?: readonly Element[];
       readonly onCreateElement?: (type: ElementType) => void;
+      readonly onCreateConnector?: (mode: 'free' | 'bound') => void;
       readonly history?: CommandHistory<readonly Element[]>;
       readonly onUndoElements?: (elements: readonly Element[]) => void;
       readonly onRedoElements?: (elements: readonly Element[]) => void;
@@ -1438,6 +1440,7 @@ describe('Canvas', () => {
           selectionStore={selectionStore}
           elements={options.elements}
           onCreateElement={options.onCreateElement}
+          onCreateConnector={options.onCreateConnector}
           history={options.history}
           onUndoElements={options.onUndoElements}
           onRedoElements={options.onRedoElements}
@@ -1458,11 +1461,11 @@ describe('Canvas', () => {
       expect(onCreateElement).toHaveBeenCalledWith('note');
     });
 
-    it('enables the connector button only with two selected elements', async () => {
-      const onCreateElement = jest.fn();
+    it('enables the connect-selected button only with two selected elements', async () => {
+      const onCreateConnector = jest.fn();
       const { selectionStore } = renderToolbarCanvas({
         elements: [FIRST_ITEM, SECOND_ITEM],
-        onCreateElement,
+        onCreateConnector,
       });
       const user = userEvent.setup();
       const connector = screen.getByRole('button', { name: 'Connect selected elements' });
@@ -1477,7 +1480,7 @@ describe('Canvas', () => {
 
       await user.click(connector);
 
-      expect(onCreateElement).toHaveBeenCalledWith('connector');
+      expect(onCreateConnector).toHaveBeenCalledWith('bound');
     });
 
     it('undoes the last command through the viewport controls button', async () => {
@@ -1911,6 +1914,90 @@ describe('Canvas', () => {
       fireEvent.doubleClick(screen.getByTestId('canvas-item-task-1'));
 
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+  });
+});
+
+describe('Canvas connector endpoints', () => {
+  beforeAll(() => {
+    if (!('setPointerCapture' in Element.prototype)) {
+      Object.defineProperty(Element.prototype, 'setPointerCapture', {
+        value: jest.fn(),
+        configurable: true,
+      });
+      Object.defineProperty(Element.prototype, 'hasPointerCapture', {
+        value: jest.fn().mockReturnValue(true),
+        configurable: true,
+      });
+      Object.defineProperty(Element.prototype, 'releasePointerCapture', {
+        value: jest.fn(),
+        configurable: true,
+      });
+    }
+  });
+
+  function createFreeConnector() {
+    return createConnectorElement({
+      id: ElementId.create('free-connector'),
+      workspaceId: WorkspaceId.create('ws-1'),
+      createdBy: UserId.create('user-1'),
+      position: Position.create(100, 100),
+      size: Size.create(160, 40),
+      sourcePoint: Position.create(0, 20),
+      targetPoint: Position.create(160, 20),
+    });
+  }
+
+  it('renders endpoint handles for a selected free connector', () => {
+    const connector = createFreeConnector();
+    const store = createCanvasViewportStore(Size.create(800, 600));
+    const selectionStore = createSelectionStore();
+    render(<Canvas store={store} selectionStore={selectionStore} elements={[connector]} />);
+
+    act(() => {
+      selectionStore.select('free-connector');
+    });
+
+    expect(document.querySelectorAll('[data-connector-endpoint]')).toHaveLength(2);
+    expect(document.querySelector('[data-resize-handle]')).toBeNull();
+  });
+
+  it('reports endpoint drags in world coordinates', async () => {
+    const connector = createFreeConnector();
+    const onUpdateConnectorEndpoint = jest.fn();
+    const user = userEvent.setup();
+    const store = createCanvasViewportStore(Size.create(800, 600));
+    const selectionStore = createSelectionStore();
+
+    render(
+      <Canvas
+        store={store}
+        selectionStore={selectionStore}
+        elements={[connector]}
+        onUpdateConnectorEndpoint={onUpdateConnectorEndpoint}
+      />,
+    );
+
+    act(() => {
+      selectionStore.select('free-connector');
+    });
+
+    const handle = document.querySelector('[data-connector-endpoint-side="target"]');
+
+    expect(handle).not.toBeNull();
+
+    const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: handle as HTMLElement, coords: { x: 260, y: 120 } },
+      { target: canvas, coords: { x: 300, y: 180 } },
+      { keys: '[/MouseLeft]', target: canvas, coords: { x: 300, y: 180 } },
+    ]);
+
+    expect(onUpdateConnectorEndpoint).toHaveBeenCalledWith({
+      element: connector,
+      side: 'target',
+      point: expect.objectContaining({ x: 300, y: 180 }),
     });
   });
 });

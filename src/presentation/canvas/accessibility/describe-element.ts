@@ -1,4 +1,10 @@
-import { ELEMENT_TYPES, richTextToPlain } from '../../../domain/element';
+import {
+  ELEMENT_TYPES,
+  connectorSourceEndpoint,
+  connectorTargetEndpoint,
+  richTextToPlain,
+} from '../../../domain/element';
+import type { ConnectorEndpoint } from '../../../domain/element';
 import type { Element, ElementType, TaskStatus } from '../../../domain/element';
 
 const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
@@ -63,10 +69,19 @@ function referenceLabel(element: Element): string {
   }
 }
 
-function resolveReference(id: string, elements: readonly Element[]): string {
-  const referenced = elements.find((candidate) => candidate.id.value === id);
+function describeConnectorEndpoint(
+  endpoint: ConnectorEndpoint,
+  elements: readonly Element[],
+  connectorPosition: Element['position'],
+): string {
+  if (endpoint.kind === 'point') {
+    const world = endpoint.point.add(connectorPosition);
+    return `point ${Math.round(world.x)}, ${Math.round(world.y)}`;
+  }
 
-  return referenced === undefined ? id : referenceLabel(referenced);
+  const referenced = elements.find((candidate) => candidate.id.value === endpoint.elementId.value);
+
+  return referenced === undefined ? endpoint.elementId.value : referenceLabel(referenced);
 }
 
 /**
@@ -97,8 +112,16 @@ export function describeElement(element: Element, elements: readonly Element[] =
     case 'frame':
       return contentLabel('Frame', richTextToPlain(element.title));
     case 'connector': {
-      const from = resolveReference(element.sourceElementId.value, elements);
-      const to = resolveReference(element.targetElementId.value, elements);
+      const from = describeConnectorEndpoint(
+        connectorSourceEndpoint(element),
+        elements,
+        element.position,
+      );
+      const to = describeConnectorEndpoint(
+        connectorTargetEndpoint(element),
+        elements,
+        element.position,
+      );
 
       return `Connector from ${from} to ${to}`;
     }

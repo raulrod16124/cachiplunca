@@ -16,6 +16,12 @@ export { useElementMove } from './use-element-move';
 export type { UseElementMoveOptions, UseElementMoveResult } from './use-element-move';
 export { useElementResize } from './use-element-resize';
 export type { UseElementResizeOptions, UseElementResizeResult } from './use-element-resize';
+export { useConnectorEndpointDrag } from './use-connector-endpoint-drag';
+export type {
+  ConnectorEndpointDragInput,
+  UseConnectorEndpointDragOptions,
+  UseConnectorEndpointDragResult,
+} from './use-connector-endpoint-drag';
 export { useElementDelete } from './use-element-delete';
 export type { UseElementDeleteOptions, UseElementDeleteResult } from './use-element-delete';
 export { useElementDuplicate } from './use-element-duplicate';

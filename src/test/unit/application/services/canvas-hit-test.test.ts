@@ -1,5 +1,5 @@
 import { Bounds, ElementId, Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
-import { createTextElement } from '../../../../domain/element';
+import { createConnectorElement, createTextElement } from '../../../../domain/element';
 import {
   findSelectableAt,
   findSelectablesInBounds,
@@ -100,5 +100,68 @@ describe('toSelectableItem', () => {
 
   it('returns an empty list for no elements', () => {
     expect(toSelectableItems([])).toEqual([]);
+  });
+});
+
+describe('connector segments', () => {
+  const CONNECTOR: SelectableItem = {
+    id: 'connector',
+    bounds: Bounds.fromXYWH(0, 0, 200, 200),
+    segment: { start: Position.create(0, 0), end: Position.create(200, 200) },
+  };
+
+  it('hits a connector near its stroke', () => {
+    expect(findSelectableAt([CONNECTOR], Position.create(100, 104))).toBe('connector');
+  });
+
+  it('misses a connector far from its stroke even inside its bounds', () => {
+    expect(findSelectableAt([CONNECTOR], Position.create(20, 180))).toBeNull();
+  });
+
+  it('prioritizes element boxes over connector segments', () => {
+    const box = { id: 'box', bounds: Bounds.fromXYWH(90, 90, 20, 20) };
+
+    expect(findSelectableAt([CONNECTOR, box], Position.create(100, 100))).toBe('box');
+    expect(findSelectableAt([box, CONNECTOR], Position.create(100, 100))).toBe('box');
+  });
+
+  it('uses connector bounds for marquee selection', () => {
+    expect(findSelectablesInBounds([CONNECTOR], Bounds.fromXYWH(90, 90, 20, 20))).toEqual([
+      'connector',
+    ]);
+  });
+
+  it('derives a segment and endpoint handles for free connectors', () => {
+    const connector = createConnectorElement({
+      id: ElementId.create('free'),
+      workspaceId: WorkspaceId.create('ws-1'),
+      createdBy: UserId.create('user-1'),
+      position: Position.create(100, 100),
+      size: Size.create(160, 40),
+      sourcePoint: Position.create(0, 20),
+      targetPoint: Position.create(160, 20),
+    });
+
+    const item = toSelectableItem(connector);
+
+    expect(item.segment?.start.equals(Position.create(100, 120))).toBe(true);
+    expect(item.segment?.end.equals(Position.create(260, 120))).toBe(true);
+    expect(item.connectorEndpoints?.map((endpoint) => endpoint.side)).toEqual(['source', 'target']);
+  });
+
+  it('does not expose endpoint handles for bound connectors', () => {
+    const connector = createConnectorElement({
+      id: ElementId.create('bound'),
+      workspaceId: WorkspaceId.create('ws-1'),
+      createdBy: UserId.create('user-1'),
+      position: Position.create(0, 0),
+      size: Size.create(10, 10),
+      sourceElementId: ElementId.create('a'),
+      targetElementId: ElementId.create('b'),
+    });
+
+    const item = toSelectableItem(connector);
+
+    expect(item.connectorEndpoints).toBeUndefined();
   });
 });

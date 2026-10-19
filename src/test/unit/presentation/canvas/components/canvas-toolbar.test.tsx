@@ -8,14 +8,17 @@ type ToolbarProps = ComponentProps<typeof CanvasToolbar>;
 
 function renderToolbar(overrides: Partial<ToolbarProps> = {}) {
   const onCreateElement = jest.fn();
+  const onCreateConnector = jest.fn();
   const onDeleteSelection = jest.fn();
   const onFitView = jest.fn();
 
   const props: ToolbarProps = {
     onCreateElement,
+    onCreateConnector,
     onDeleteSelection,
     onFitView,
     canCreate: true,
+    canCreateFreeConnector: true,
     hasSelection: false,
     canCreateConnector: false,
     ...overrides,
@@ -23,7 +26,7 @@ function renderToolbar(overrides: Partial<ToolbarProps> = {}) {
 
   render(<CanvasToolbar {...props} />);
 
-  return { onCreateElement, onDeleteSelection, onFitView };
+  return { onCreateElement, onCreateConnector, onDeleteSelection, onFitView };
 }
 
 describe('CanvasToolbar', () => {
@@ -59,21 +62,31 @@ describe('CanvasToolbar', () => {
     expect(screen.getByRole('button', { name: 'Add note' })).toBeDisabled();
   });
 
-  it('only enables the connector button with exactly two selected elements', async () => {
+  it('adds a free connector through its own button', async () => {
     const user = userEvent.setup();
-    const { onCreateElement } = renderToolbar({ canCreateConnector: true });
+    const { onCreateConnector } = renderToolbar();
+
+    await user.click(screen.getByRole('button', { name: 'Add connector' }));
+
+    expect(onCreateConnector).toHaveBeenCalledWith('free');
+  });
+
+  it('connects the selected elements through its own button', async () => {
+    const user = userEvent.setup();
+    const { onCreateConnector } = renderToolbar({ canCreateConnector: true });
 
     const connector = screen.getByRole('button', { name: 'Connect selected elements' });
     expect(connector).toBeEnabled();
 
     await user.click(connector);
 
-    expect(onCreateElement).toHaveBeenCalledWith('connector');
+    expect(onCreateConnector).toHaveBeenCalledWith('bound');
   });
 
-  it('disables the connector button without a two-element selection', () => {
-    renderToolbar({ canCreateConnector: false });
+  it('disables the connector buttons when they are not available', () => {
+    renderToolbar({ canCreateFreeConnector: false, canCreateConnector: false });
 
+    expect(screen.getByRole('button', { name: 'Add connector' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Connect selected elements' })).toBeDisabled();
   });
 
@@ -126,7 +139,7 @@ describe('CanvasToolbar', () => {
   });
 
   it('places the tab stop on the first enabled control when creation is unavailable', () => {
-    renderToolbar({ canCreate: false });
+    renderToolbar({ canCreate: false, canCreateFreeConnector: false });
 
     expect(screen.getByRole('button', { name: 'Fit view' })).toHaveAttribute('tabindex', '0');
     expect(screen.getByRole('button', { name: 'Add text' })).toBeDisabled();

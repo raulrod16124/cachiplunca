@@ -1,12 +1,18 @@
 import {
   buildConnectorCreateInput,
   buildElementCreateInput,
+  buildFreeConnectorCreateInput,
+  connectorCandidateIds,
   connectorEndpoints,
   defaultElementSize,
   elementContentBounds,
   resolveElementCreatePosition,
 } from '../../../../application/services';
-import { createTextElement, type Element } from '../../../../domain/element';
+import {
+  createConnectorElement,
+  createTextElement,
+  type Element,
+} from '../../../../domain/element';
 import {
   ElementId,
   Position,
@@ -165,8 +171,61 @@ describe('buildConnectorCreateInput', () => {
 
     expect(input.type).toBe('connector');
     if (input.type === 'connector') {
-      expect(input.sourceElementId.value).toBe('source');
-      expect(input.targetElementId.value).toBe('target');
+      expect(input.sourceElementId?.value).toBe('source');
+      expect(input.targetElementId?.value).toBe('target');
     }
+  });
+});
+
+describe('connectorCandidateIds', () => {
+  it('returns the pair when exactly two non-connector elements are selected', () => {
+    const first = createElement('a', 0, 0);
+    const second = createElement('b', 100, 100);
+
+    expect(connectorCandidateIds([first, second], ['a', 'b'])).toEqual(['a', 'b']);
+  });
+
+  it('returns null when a connector is part of the selection', () => {
+    const first = createElement('a', 0, 0);
+    const connector = createConnectorElement({
+      id: ElementId.create('c'),
+      workspaceId: WORKSPACE_ID,
+      createdBy: USER_ID,
+      position: Position.create(0, 0),
+      size: Size.create(10, 10),
+      sourceElementId: ElementId.create('a'),
+      targetElementId: ElementId.create('b'),
+    });
+
+    expect(connectorCandidateIds([first, connector], ['a', 'c'])).toBeNull();
+  });
+
+  it('returns null with more than two selected ids', () => {
+    const first = createElement('a', 0, 0);
+    const second = createElement('b', 100, 100);
+    const third = createElement('c', 200, 200);
+
+    expect(connectorCandidateIds([first, second, third], ['a', 'b', 'c'])).toBeNull();
+  });
+});
+
+describe('buildFreeConnectorCreateInput', () => {
+  it('places both endpoints as local points inside the box', () => {
+    const input = buildFreeConnectorCreateInput({
+      workspaceId: WORKSPACE_ID,
+      createdBy: USER_ID,
+      position: Position.create(10, 20),
+      size: Size.create(160, 40),
+    });
+
+    expect(input.type).toBe('connector');
+    if (input.type !== 'connector') {
+      return;
+    }
+
+    expect(input.sourceElementId).toBeUndefined();
+    expect(input.targetElementId).toBeUndefined();
+    expect(input.sourcePoint?.equals(Position.create(0, 20))).toBe(true);
+    expect(input.targetPoint?.equals(Position.create(160, 20))).toBe(true);
   });
 });

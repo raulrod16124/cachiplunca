@@ -21,7 +21,7 @@ import type {
 } from '../../../../application/services';
 import type { AuthUser, RealtimeConnectionStatus } from '../../../../application/ports';
 import { createPresenceColorAssigner } from '../../../collaboration';
-import { Canvas } from '../../../canvas';
+import { Canvas, type ConnectorEndpointDragInput } from '../../../canvas';
 import type { TaskFormValues } from '../../../canvas/components/task-form-dialog';
 import { WorkspaceTopBar } from './workspace-top-bar';
 
@@ -71,8 +71,10 @@ export interface WorkspaceShellLayoutProps {
   readonly onUndoElements: (elements: readonly Element[]) => void;
   readonly onRedoElements: (elements: readonly Element[]) => void;
   readonly onCreateElement?: (type: ElementType) => ElementId | void;
+  readonly onCreateConnector?: (mode: 'free' | 'bound') => ElementId | void;
   readonly onCreateTask?: (values: TaskFormValues) => ElementId | void;
   readonly onUpdateElement?: (input: UpdateElementInput) => void;
+  readonly onUpdateConnectorEndpoint?: (input: ConnectorEndpointDragInput) => void;
   readonly generateElementId: () => ElementId;
   readonly remoteCursors: readonly RemoteCursor[];
   readonly connectedUsers: readonly Presence[];
@@ -109,8 +111,10 @@ export function WorkspaceShellLayout({
   onUndoElements,
   onRedoElements,
   onCreateElement,
+  onCreateConnector,
   onCreateTask,
   onUpdateElement,
+  onUpdateConnectorEndpoint,
   generateElementId,
   remoteCursors,
   connectedUsers,
@@ -194,8 +198,10 @@ export function WorkspaceShellLayout({
           onUndoElements={onUndoElements}
           onRedoElements={onRedoElements}
           onCreateElement={onCreateElement}
+          onCreateConnector={onCreateConnector}
           onCreateTask={onCreateTask}
           onUpdateElement={onUpdateElement}
+          onUpdateConnectorEndpoint={onUpdateConnectorEndpoint}
           generateId={generateElementId}
           remoteCursors={remoteCursors}
           userColors={userColors}

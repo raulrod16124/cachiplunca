@@ -1778,10 +1778,10 @@ describe('WorkspaceShellContainer', () => {
     const connector = await screen.findByTestId('canvas-item-generated-1');
     expect(connector).toHaveAttribute('data-element-type', 'connector');
     expect(connector).toHaveStyle({
-      left: '30px',
-      top: '40px',
-      width: '290px',
-      height: '240px',
+      left: '136.75px',
+      top: '124px',
+      width: '76.5px',
+      height: '72px',
     });
   });
 
@@ -1835,5 +1835,26 @@ describe('WorkspaceShellContainer', () => {
 
     await screen.findByRole('heading', { level: 1, name: 'Roadmap Q4' });
     expect(screen.queryByRole('button', { name: 'Rename workspace' })).not.toBeInTheDocument();
+  });
+});
+
+describe('free connector creation', () => {
+  it('creates a standalone connector from the toolbar and selects it', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const user = userEvent.setup();
+
+    renderContainer(getWorkspace, {
+      localUserId: 'user-local',
+      loadWorkspaceElements: createLoadWorkspaceElements({ status: 'ok', elements: [] }),
+    });
+
+    await screen.findByRole('application', { name: 'Canvas' });
+    await user.click(screen.getByRole('button', { name: 'Add connector' }));
+
+    const connector = await screen.findByTestId('canvas-item-generated-1');
+
+    expect(connector).toHaveAttribute('data-element-type', 'connector');
+    expect(connector.querySelector('[data-connector-line]')).not.toBeNull();
+    expect(document.querySelector('[data-connector-endpoint]')).not.toBeNull();
   });
 });

@@ -3,9 +3,9 @@ import { memo, useMemo } from 'react';
 import styled from 'styled-components';
 import type { UpdateElementInput } from '../../../application/commands';
 import type { Element } from '../../../domain/element';
-import type { Size } from '../../../domain/shared';
+import { Bounds, Position, type Size } from '../../../domain/shared';
 import { describeElement } from '../accessibility';
-import type { ElementRendererRegistry } from './element-renderer';
+import type { ConnectorRenderGeometry, ElementRendererRegistry } from './element-renderer';
 import { resolveElementRenderer } from './resolve-element-renderer';
 
 const Wrapper = styled.div`
@@ -22,6 +22,8 @@ export interface ElementViewProps {
   readonly renderers?: ElementRendererRegistry;
   readonly ariaLabel?: string;
   readonly zIndex?: number;
+  readonly connectorStart?: Position;
+  readonly connectorEnd?: Position;
   readonly onUpdateElement?: (input: UpdateElementInput) => void;
   readonly onResizeElement?: (element: Element, size: Size) => void;
 }
@@ -32,29 +34,63 @@ function ElementViewComponent({
   renderers,
   ariaLabel,
   zIndex,
+  connectorStart,
+  connectorEnd,
   onUpdateElement,
   onResizeElement,
 }: ElementViewProps): ReactElement {
   const Renderer = resolveElementRenderer(renderers, element.type);
 
-  const style = useMemo<CSSProperties>(
-    () => ({
+  const connectorGeometry = useMemo<ConnectorRenderGeometry | undefined>(() => {
+    if (connectorStart === undefined || connectorEnd === undefined) {
+      return undefined;
+    }
+
+    const left = Math.min(connectorStart.x, connectorEnd.x);
+    const top = Math.min(connectorStart.y, connectorEnd.y);
+    const origin = Position.create(left, top);
+
+    return { start: connectorStart, end: connectorEnd, origin };
+  }, [connectorStart, connectorEnd]);
+
+  const style = useMemo<CSSProperties>(() => {
+    if (connectorGeometry !== undefined) {
+      const bounds = Bounds.fromXYWH(
+        connectorGeometry.origin.x,
+        connectorGeometry.origin.y,
+        Math.abs(connectorGeometry.end.x - connectorGeometry.start.x),
+        Math.abs(connectorGeometry.end.y - connectorGeometry.start.y),
+      );
+
+      return {
+        left: bounds.x,
+        top: bounds.y,
+        width: bounds.width,
+        height: bounds.height,
+        transform: `rotate(${element.rotation}deg)`,
+        zIndex,
+        pointerEvents: 'none',
+        contain: 'none',
+      };
+    }
+
+    return {
       left: element.position.x,
       top: element.position.y,
       width: element.size.width,
       height: element.size.height,
       transform: `rotate(${element.rotation}deg)`,
       zIndex,
-    }),
-    [
-      element.position.x,
-      element.position.y,
-      element.size.width,
-      element.size.height,
-      element.rotation,
-      zIndex,
-    ],
-  );
+    };
+  }, [
+    connectorGeometry,
+    element.position.x,
+    element.position.y,
+    element.size.width,
+    element.size.height,
+    element.rotation,
+    zIndex,
+  ]);
 
   return (
     <Wrapper
@@ -72,6 +108,7 @@ function ElementViewComponent({
       <Renderer
         element={element}
         selected={selected}
+        connectorGeometry={connectorGeometry}
         onUpdateElement={onUpdateElement}
         onResizeElement={onResizeElement}
       />

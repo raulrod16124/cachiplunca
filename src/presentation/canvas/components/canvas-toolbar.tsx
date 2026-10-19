@@ -1,5 +1,6 @@
 import { Tooltip } from '@raulrod/ui';
 import {
+  ArrowUpRight,
   Frame,
   Link2,
   Scan,
@@ -57,11 +58,6 @@ const ELEMENT_TOOLS: readonly ElementTool[] = [
   { type: 'task', label: 'Add task', icon: <SquareCheck aria-hidden="true" size={ICON_SIZE} /> },
   { type: 'frame', label: 'Add frame', icon: <Frame aria-hidden="true" size={ICON_SIZE} /> },
   { type: 'link', label: 'Add link', icon: <Link2 aria-hidden="true" size={ICON_SIZE} /> },
-  {
-    type: 'connector',
-    label: 'Connect selected elements',
-    icon: <Waypoints aria-hidden="true" size={ICON_SIZE} />,
-  },
 ];
 
 interface ToolbarActionProps {
@@ -88,18 +84,22 @@ function ToolbarAction({
 
 export interface CanvasToolbarProps {
   readonly onCreateElement: (type: ElementType) => void;
+  readonly onCreateConnector?: (mode: 'free' | 'bound') => void;
   readonly onDeleteSelection: () => void;
   readonly onFitView: () => void;
   readonly canCreate?: boolean;
+  readonly canCreateFreeConnector?: boolean;
   readonly hasSelection?: boolean;
   readonly canCreateConnector?: boolean;
 }
 
 export function CanvasToolbar({
   onCreateElement,
+  onCreateConnector,
   onDeleteSelection,
   onFitView,
   canCreate = false,
+  canCreateFreeConnector = false,
   hasSelection = false,
   canCreateConnector = false,
 }: CanvasToolbarProps): ReactElement {
@@ -115,7 +115,7 @@ export function CanvasToolbar({
     >
       <Group>
         {ELEMENT_TOOLS.map((tool) => {
-          const disabled = !canCreate || (tool.type === 'connector' && !canCreateConnector);
+          const disabled = !canCreate;
 
           return (
             <ToolbarAction
@@ -127,6 +127,18 @@ export function CanvasToolbar({
             />
           );
         })}
+        <ToolbarAction
+          label="Add connector"
+          icon={<ArrowUpRight aria-hidden="true" size={ICON_SIZE} />}
+          disabled={!canCreateFreeConnector}
+          onClick={() => onCreateConnector?.('free')}
+        />
+        <ToolbarAction
+          label="Connect selected elements"
+          icon={<Waypoints aria-hidden="true" size={ICON_SIZE} />}
+          disabled={!canCreateConnector}
+          onClick={() => onCreateConnector?.('bound')}
+        />
       </Group>
       <Separator aria-hidden="true" />
       <Group>

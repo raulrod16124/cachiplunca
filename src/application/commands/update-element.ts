@@ -1,6 +1,8 @@
 import {
   withConnectorSource,
+  withConnectorSourcePoint,
   withConnectorTarget,
+  withConnectorTargetPoint,
   withFrameParent,
   withFrameTitle,
   withLinkTitle,
@@ -23,7 +25,7 @@ import {
   type TaskElement,
   type TaskStatus,
 } from '../../domain/element';
-import type { ElementId, UserId } from '../../domain/shared';
+import type { ElementId, Position, UserId } from '../../domain/shared';
 import type { AppError } from '../../shared/errors';
 import { toValidationAppError } from './to-validation-app-error';
 
@@ -59,6 +61,8 @@ export type UpdateElementInput =
       readonly type: 'connector';
       readonly sourceElementId?: ElementId;
       readonly targetElementId?: ElementId;
+      readonly sourcePoint?: Position;
+      readonly targetPoint?: Position;
     })
   | (UpdateElementBaseInput & {
       readonly type: 'link';
@@ -208,6 +212,8 @@ function applyConnector(input: ConnectorPatch, updatedAt: Date): Element {
   if (
     input.sourceElementId === undefined &&
     input.targetElementId === undefined &&
+    input.sourcePoint === undefined &&
+    input.targetPoint === undefined &&
     input.rotation === undefined
   ) {
     throw noChangesError();
@@ -217,8 +223,14 @@ function applyConnector(input: ConnectorPatch, updatedAt: Date): Element {
   if (input.sourceElementId !== undefined) {
     updated = withConnectorSource(updated, input.sourceElementId, updatedAt);
   }
+  if (input.sourcePoint !== undefined) {
+    updated = withConnectorSourcePoint(updated, input.sourcePoint, updatedAt);
+  }
   if (input.targetElementId !== undefined) {
     updated = withConnectorTarget(updated, input.targetElementId, updatedAt);
+  }
+  if (input.targetPoint !== undefined) {
+    updated = withConnectorTargetPoint(updated, input.targetPoint, updatedAt);
   }
   return applyRotation(input, updated, updatedAt);
 }

@@ -7,7 +7,7 @@ import {
   type Viewport,
   type WorkspaceId,
 } from '../../domain/shared';
-import { type Element, type ElementType } from '../../domain/element';
+import { type Element, type ElementType, isConnectorElement } from '../../domain/element';
 import type { CreateElementInput } from '../commands';
 
 export type DirectCreatableElementType = Exclude<ElementType, 'connector'>;
@@ -17,6 +17,7 @@ export const DEFAULT_NOTE_CONTENT = '';
 export const DEFAULT_TASK_TITLE = 'New task';
 export const DEFAULT_FRAME_TITLE = 'New frame';
 export const DEFAULT_LINK_URL = 'https://example.com';
+export const DEFAULT_FREE_CONNECTOR_SIZE = Size.create(160, 40);
 
 export const ELEMENT_DEFAULT_SIZES: Record<ElementType, Size> = {
   text: Size.create(160, 40),
@@ -66,6 +67,26 @@ export function connectorEndpoints(
   return [selectedIds[0], selectedIds[1]];
 }
 
+export function connectorCandidateIds(
+  elements: readonly Element[],
+  selectedIds: readonly string[],
+): readonly [string, string] | null {
+  if (selectedIds.length !== 2) {
+    return null;
+  }
+
+  const selected = new Set(selectedIds);
+  const candidates = elements.filter(
+    (element) => selected.has(element.id.value) && !isConnectorElement(element),
+  );
+
+  if (candidates.length !== 2) {
+    return null;
+  }
+
+  return [candidates[0].id.value, candidates[1].id.value];
+}
+
 export function buildElementCreateInput(
   type: DirectCreatableElementType,
   placement: ElementCreationPlacement,
@@ -96,6 +117,19 @@ export function buildConnectorCreateInput(
   placement: ElementCreationPlacement,
 ): CreateElementInput {
   return { ...toBase(placement), type: 'connector', sourceElementId, targetElementId };
+}
+
+export function buildFreeConnectorCreateInput(
+  placement: ElementCreationPlacement,
+): CreateElementInput {
+  const { width, height } = placement.size;
+
+  return {
+    ...toBase(placement),
+    type: 'connector',
+    sourcePoint: Position.create(0, height / 2),
+    targetPoint: Position.create(width, height / 2),
+  };
 }
 
 function toBase(placement: ElementCreationPlacement): {

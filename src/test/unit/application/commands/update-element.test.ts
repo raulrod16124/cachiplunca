@@ -156,8 +156,8 @@ describe('createUpdateElement', () => {
 
     expect(element.type).toBe('connector');
     if (element.type === 'connector') {
-      expect(element.sourceElementId.value).toBe('c');
-      expect(element.targetElementId.value).toBe('b');
+      expect(element.sourceElementId?.value).toBe('c');
+      expect(element.targetElementId?.value).toBe('b');
     }
   });
 

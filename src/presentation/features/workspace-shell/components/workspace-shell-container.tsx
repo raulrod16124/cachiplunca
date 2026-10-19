@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import styled from 'styled-components';
 import {
   createCreateElement,
+  createUpdateConnectorEndpoint,
   createUpdateElement,
   type ChangeMemberRole,
   type CreateElementInput,
@@ -27,7 +28,8 @@ import {
   applyRemoteElementChanges,
   buildConnectorCreateInput,
   buildElementCreateInput,
-  connectorEndpoints,
+  buildFreeConnectorCreateInput,
+  connectorCandidateIds,
   createBoardWindowCommand,
   createCanvasViewportStore,
   createCommandHistory,
@@ -38,6 +40,7 @@ import {
   createRemoteCursorsStore,
   createSelectionStore,
   createSharedPresencePort,
+  DEFAULT_FREE_CONNECTOR_SIZE,
   defaultElementSize,
   elementContentBounds,
   EMPTY_CONNECTED_USERS_STORE,
@@ -64,7 +67,8 @@ import type {
   PresencePort,
   RealtimeConnectionStatus,
 } from '../../../../application/ports';
-import type { Element, ElementType } from '../../../../domain/element';
+import { isConnectorElement } from '../../../../domain/element';
+import type { ConnectorElement, Element, ElementType } from '../../../../domain/element';
 import type { MembershipRole } from '../../../../domain/membership';
 import { Presence, resolveUserDisplayName } from '../../../../domain/collaboration';
 import { Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
@@ -74,6 +78,7 @@ import { toAppError, type AppError } from '../../../../shared/errors';
 import { EmptyState } from '../../../components/empty-state';
 import { ErrorState } from '../../../components/error-state';
 import { LoadingState } from '../../../components/loading-state';
+import type { ConnectorEndpointDragInput } from '../../../canvas/hooks';
 import type { TaskFormValues } from '../../../canvas/components/task-form-dialog';
 import { ShareDialog } from '../../sharing';
 import { WorkspaceShellLayout } from './workspace-shell-layout';
@@ -389,16 +394,67 @@ export function WorkspaceShellContainer({
 
   const handleCreateElement = useCallback(
     (type: ElementType): ElementId | void => {
+      if (localUserId === undefined || type === 'connector') {
+        return;
+      }
+
+      const workspace = WorkspaceId.create(workspaceId);
+      const createdBy = UserId.create(localUserId);
+      const size = defaultElementSize(type);
+      const position = resolveElementCreatePosition(
+        canvasViewportStoreRef.current.getSnapshot(),
+        size,
+      );
+
+      const input = buildElementCreateInput(type, {
+        workspaceId: workspace,
+        createdBy,
+        position,
+        size,
+      });
+
+      const result = createElement(input);
+
+      if (result.status === 'error') {
+        setCreationError(result.error);
+        return;
+      }
+
+      setCreationError(null);
+      commitElements([...elementsRef.current, result.element], `Create ${type}`);
+      selectionStoreRef.current.select(result.element.id.value);
+
+      return result.element.id;
+    },
+    [localUserId, workspaceId, createElement, commitElements],
+  );
+
+  const handleCreateConnector = useCallback(
+    (mode: 'free' | 'bound'): ElementId | void => {
       if (localUserId === undefined) {
         return;
       }
 
       const workspace = WorkspaceId.create(workspaceId);
       const createdBy = UserId.create(localUserId);
+      const viewport = canvasViewportStoreRef.current.getSnapshot();
       let input: CreateElementInput;
 
-      if (type === 'connector') {
-        const endpoints = connectorEndpoints(selectionStoreRef.current.getSnapshot().selectedIds);
+      if (mode === 'free') {
+        const size = DEFAULT_FREE_CONNECTOR_SIZE;
+        const position = resolveElementCreatePosition(viewport, size);
+
+        input = buildFreeConnectorCreateInput({
+          workspaceId: workspace,
+          createdBy,
+          position,
+          size,
+        });
+      } else {
+        const endpoints = connectorCandidateIds(
+          elementsRef.current,
+          selectionStoreRef.current.getSnapshot().selectedIds,
+        );
 
         if (endpoints === null) {
           return;
@@ -424,19 +480,6 @@ export function WorkspaceShellContainer({
           position: bounds.position,
           size: bounds.size,
         });
-      } else {
-        const size = defaultElementSize(type);
-        const position = resolveElementCreatePosition(
-          canvasViewportStoreRef.current.getSnapshot(),
-          size,
-        );
-
-        input = buildElementCreateInput(type, {
-          workspaceId: workspace,
-          createdBy,
-          position,
-          size,
-        });
       }
 
       const result = createElement(input);
@@ -447,12 +490,49 @@ export function WorkspaceShellContainer({
       }
 
       setCreationError(null);
-      commitElements([...elementsRef.current, result.element], `Create ${type}`);
+      commitElements([...elementsRef.current, result.element], 'Create connector');
       selectionStoreRef.current.select(result.element.id.value);
 
       return result.element.id;
     },
     [localUserId, workspaceId, createElement, commitElements],
+  );
+
+  const updateConnectorEndpointCommand = useMemo(() => createUpdateConnectorEndpoint(), []);
+
+  const handleUpdateConnectorEndpoint = useCallback(
+    (input: ConnectorEndpointDragInput): void => {
+      if (localUserId === undefined) {
+        return;
+      }
+
+      const current = elementsRef.current.find(
+        (element): element is ConnectorElement =>
+          element.id.value === input.element.id.value && isConnectorElement(element),
+      );
+
+      if (current === undefined) {
+        return;
+      }
+
+      const result = updateConnectorEndpointCommand({
+        element: current,
+        side: input.side,
+        point: input.point,
+      });
+
+      if (result.status === 'error') {
+        return;
+      }
+
+      const next = elementsRef.current.map((element) =>
+        element.id.value === current.id.value ? result.element : element,
+      );
+
+      transformGestureRef.current ??= { base: elementsRef.current, label: 'Update connector' };
+      persistElements(elementsRef.current, next);
+    },
+    [localUserId, updateConnectorEndpointCommand, persistElements],
   );
 
   const handleCreateTask = useCallback(
@@ -856,8 +936,10 @@ export function WorkspaceShellContainer({
           onUndoElements={handleUndoElements}
           onRedoElements={handleRedoElements}
           onCreateElement={canCreateElement ? handleCreateElement : undefined}
+          onCreateConnector={canCreateElement ? handleCreateConnector : undefined}
           onCreateTask={canCreateElement ? handleCreateTask : undefined}
           onUpdateElement={canElementWrite ? handleUpdateElement : undefined}
+          onUpdateConnectorEndpoint={canElementWrite ? handleUpdateConnectorEndpoint : undefined}
           generateElementId={generateElementId}
           remoteCursors={remoteCursors}
           onCursorMove={cursorBroadcaster === null ? undefined : handleCursorMove}

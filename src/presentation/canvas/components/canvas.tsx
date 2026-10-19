@@ -5,11 +5,12 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import styled from 'styled-components';
 import { Bounds, Grid, Position, Size } from '../../../domain/shared';
 import type { Element, ElementType } from '../../../domain/element';
-import { isTaskElement, richTextToPlain } from '../../../domain/element';
+import { isConnectorElement, isTaskElement, richTextToPlain } from '../../../domain/element';
 import type { ElementId } from '../../../domain/shared';
 import type {
   CanvasViewportStore,
   CommandHistory,
+  ConnectorGeometry,
   RemoteCursor,
   SelectionStore,
 } from '../../../application/services';
@@ -17,10 +18,11 @@ import type { UpdateElementInput } from '../../../application/commands';
 import { createResizeElement } from '../../../application/commands';
 import {
   bringElementsToFront,
+  connectorCandidateIds,
   deleteElements,
-  elementContentBounds,
   findSelectableAt,
   getVisibleElementIds,
+  resolveConnectorGeometry,
   sendElementsToBack,
   toSelectableItems,
 } from '../../../application/services';
@@ -40,6 +42,10 @@ import { useElementSize } from '../hooks/use-element-size';
 import { useElementUndo } from '../hooks/use-element-undo';
 import { useElementZOrder } from '../hooks/use-element-z-order';
 import { usePan } from '../hooks/use-pan';
+import {
+  useConnectorEndpointDrag,
+  type ConnectorEndpointDragInput,
+} from '../hooks/use-connector-endpoint-drag';
 import { useSelection } from '../hooks/use-selection';
 import { useSelectionKeyboard } from '../hooks/use-selection-keyboard';
 import { useSpacePressed } from '../hooks/use-space-pressed';
@@ -177,7 +183,9 @@ export interface CanvasProps {
   readonly onUndoElements?: (elements: readonly Element[]) => void;
   readonly onRedoElements?: (elements: readonly Element[]) => void;
   readonly onCreateElement?: (type: ElementType) => ElementId | void;
+  readonly onCreateConnector?: (mode: 'free' | 'bound') => ElementId | void;
   readonly onCreateTask?: (values: TaskFormValues) => ElementId | void;
+  readonly onUpdateConnectorEndpoint?: (input: ConnectorEndpointDragInput) => void;
   readonly onUpdateElement?: (input: UpdateElementInput) => void;
   readonly remoteCursors?: readonly RemoteCursor[];
   readonly userColors?: ReadonlyMap<string, string>;
@@ -202,8 +210,10 @@ export function Canvas({
   onUndoElements,
   onRedoElements,
   onCreateElement,
+  onCreateConnector,
   onCreateTask,
   onUpdateElement,
+  onUpdateConnectorEndpoint,
   remoteCursors = [],
   userColors,
   onCursorMove,
@@ -237,7 +247,43 @@ export function Canvas({
     disabled: onCursorMove === undefined,
   });
 
-  const items = useMemo(() => toSelectableItems(elements), [elements]);
+  const elementsById = useMemo(
+    () => new Map(elements.map((element) => [element.id.value, element])),
+    [elements],
+  );
+  const connectorGeometries = useMemo(() => {
+    const geometries = new Map<string, ConnectorGeometry>();
+
+    for (const element of elements) {
+      if (!isConnectorElement(element)) {
+        continue;
+      }
+
+      const geometry = resolveConnectorGeometry(element, elementsById);
+
+      if (geometry !== null) {
+        geometries.set(element.id.value, geometry);
+      }
+    }
+
+    return geometries;
+  }, [elements, elementsById]);
+  const items = useMemo(
+    () =>
+      toSelectableItems(
+        elements.filter(
+          (element) => !isConnectorElement(element) || connectorGeometries.has(element.id.value),
+        ),
+        connectorGeometries,
+      ),
+    [elements, connectorGeometries],
+  );
+  const renderElements = useMemo<readonly Element[]>(() => {
+    const connectors = elements.filter((element) => isConnectorElement(element));
+    const others = elements.filter((element) => !isConnectorElement(element));
+
+    return [...connectors, ...others];
+  }, [elements]);
   const boardSummary = useMemo(() => describeBoard(elements), [elements]);
 
   const handleSelect = useCallback(
@@ -320,6 +366,23 @@ export function Canvas({
     viewport,
     selectedIds: selection.selectedIds,
     onResizeElements,
+    onTransformEnd,
+    spacePressed,
+    disabled: readOnly,
+  });
+
+  const handleUpdateConnectorEndpoint = useCallback(
+    (input: ConnectorEndpointDragInput): void => {
+      onUpdateConnectorEndpoint?.(input);
+    },
+    [onUpdateConnectorEndpoint],
+  );
+
+  const { ref: connectorEndpointRef } = useConnectorEndpointDrag({
+    elements,
+    viewport,
+    selectedIds: selection.selectedIds,
+    onUpdateConnectorEndpoint: handleUpdateConnectorEndpoint,
     onTransformEnd,
     spacePressed,
     disabled: readOnly,
@@ -618,8 +681,13 @@ export function Canvas({
   }, [elements, selection.selectedIds, onDeleteElements, handleClear]);
 
   const handleFitView = useCallback((): void => {
-    store.fit(elementContentBounds(elements));
-  }, [store, elements]);
+    const bounds = items.reduce<Bounds | null>(
+      (accumulator, item) => (accumulator === null ? item.bounds : accumulator.union(item.bounds)),
+      null,
+    );
+
+    store.fit(bounds);
+  }, [store, items]);
 
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
@@ -707,6 +775,13 @@ export function Canvas({
     [onCreateElement, onCreateTask],
   );
 
+  const handleCreateConnector = useCallback(
+    (mode: 'free' | 'bound'): void => {
+      onCreateConnector?.(mode);
+    },
+    [onCreateConnector],
+  );
+
   const handleTaskFormSubmit = useCallback(
     (values: TaskFormValues): void => {
       if (taskForm === null) {
@@ -791,6 +866,7 @@ export function Canvas({
       canvasNavigationRef.current = node;
       elementMoveRef.current = node;
       elementResizeRef.current = node;
+      connectorEndpointRef.current = node;
       elementDeleteRef.current = node;
       elementDuplicateRef.current = node;
       elementCopyPasteRef.current = node;
@@ -811,6 +887,7 @@ export function Canvas({
       canvasNavigationRef,
       elementMoveRef,
       elementResizeRef,
+      connectorEndpointRef,
       elementDeleteRef,
       elementDuplicateRef,
       elementCopyPasteRef,
@@ -870,14 +947,19 @@ export function Canvas({
   }, [measuredSize, viewport, items]);
 
   const canCreateElement =
-    !readOnly && (onCreateElement !== undefined || onCreateTask !== undefined);
+    !readOnly &&
+    (onCreateElement !== undefined ||
+      onCreateTask !== undefined ||
+      onCreateConnector !== undefined);
   const canUndo =
     !readOnly && history !== undefined && onUndoElements !== undefined && history.canUndo();
   const canRedo =
     !readOnly && history !== undefined && onRedoElements !== undefined && history.canRedo();
   const hasSelection = !readOnly && selection.selectedIds.length > 0;
   const canCreateConnector =
-    canCreateElement && onCreateElement !== undefined && selection.selectedIds.length === 2;
+    canCreateElement &&
+    onCreateConnector !== undefined &&
+    connectorCandidateIds(elements, selection.selectedIds) !== null;
 
   return (
     <CanvasContainer
@@ -915,10 +997,16 @@ export function Canvas({
           transform: `translate(${translateX}px, ${translateY}px) scale(${transform.scale})`,
         }}
       >
-        {elements.map((element) => {
+        {renderElements.map((element) => {
           if (visibleIds !== null && !visibleIds.has(element.id.value)) {
             return null;
           }
+
+          if (isConnectorElement(element) && !connectorGeometries.has(element.id.value)) {
+            return null;
+          }
+
+          const geometry = connectorGeometries.get(element.id.value) ?? undefined;
 
           return (
             <ElementView
@@ -927,6 +1015,8 @@ export function Canvas({
               selected={selectedIdSet.has(element.id.value)}
               renderers={renderers}
               ariaLabel={ariaLabels.get(element.id.value)}
+              connectorStart={geometry?.start}
+              connectorEnd={geometry?.end}
               onUpdateElement={readOnly ? undefined : onUpdateElement}
               onResizeElement={readOnly ? undefined : handleResizeElement}
             />
@@ -966,9 +1056,11 @@ export function Canvas({
       />
       <CanvasToolbar
         onCreateElement={handleCreateElement}
+        onCreateConnector={handleCreateConnector}
         onDeleteSelection={handleToolbarDelete}
         onFitView={handleFitView}
         canCreate={canCreateElement}
+        canCreateFreeConnector={canCreateElement && onCreateConnector !== undefined}
         hasSelection={hasSelection}
         canCreateConnector={canCreateConnector}
       />

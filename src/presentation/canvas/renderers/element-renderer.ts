@@ -1,11 +1,18 @@
 import type { ReactElement } from 'react';
 import type { UpdateElementInput } from '../../../application/commands';
 import type { Element, ElementType } from '../../../domain/element';
-import type { Size } from '../../../domain/shared';
+import type { Position, Size } from '../../../domain/shared';
+
+export interface ConnectorRenderGeometry {
+  readonly start: Position;
+  readonly end: Position;
+  readonly origin: Position;
+}
 
 export interface ElementRendererProps {
   readonly element: Element;
   readonly selected: boolean;
+  readonly connectorGeometry?: ConnectorRenderGeometry;
   readonly onUpdateElement?: (input: UpdateElementInput) => void;
   readonly onResizeElement?: (element: Element, size: Size) => void;
 }

@@ -1,6 +1,7 @@
 import {
   createConnectorElement,
   withConnectorSource,
+  withConnectorSourcePoint,
   withConnectorTarget,
 } from '../../../../domain/element';
 import type { ConnectorElement, CreateConnectorElementProps } from '../../../../domain/element';
@@ -29,8 +30,8 @@ describe('ConnectorElement', () => {
     const element = createConnectorElement(createProps());
 
     expect(element.type).toBe('connector');
-    expect(element.sourceElementId.value).toBe('source');
-    expect(element.targetElementId.value).toBe('target');
+    expect(element.sourceElementId?.value).toBe('source');
+    expect(element.targetElementId?.value).toBe('target');
     expect(element.rotation).toBe(0);
     expect(element.createdAt).toBeInstanceOf(Date);
     expect(element.updatedAt.getTime()).toBeGreaterThanOrEqual(element.createdAt.getTime());
@@ -99,10 +100,10 @@ describe('ConnectorElement', () => {
     const updated = withConnectorSource(original, ElementId.create('source-2'), updatedAt);
 
     expect(updated).not.toBe(original);
-    expect(updated.sourceElementId.value).toBe('source-2');
-    expect(updated.targetElementId.value).toBe('target');
+    expect(updated.sourceElementId?.value).toBe('source-2');
+    expect(updated.targetElementId?.value).toBe('target');
     expect(updated.updatedAt).toBe(updatedAt);
-    expect(original.sourceElementId.value).toBe('source');
+    expect(original.sourceElementId?.value).toBe('source');
   });
 
   it('returns a new element when updating the target without mutating the original', () => {
@@ -112,10 +113,10 @@ describe('ConnectorElement', () => {
     const updated = withConnectorTarget(original, ElementId.create('target-2'), updatedAt);
 
     expect(updated).not.toBe(original);
-    expect(updated.targetElementId.value).toBe('target-2');
-    expect(updated.sourceElementId.value).toBe('source');
+    expect(updated.targetElementId?.value).toBe('target-2');
+    expect(updated.sourceElementId?.value).toBe('source');
     expect(updated.updatedAt).toBe(updatedAt);
-    expect(original.targetElementId.value).toBe('target');
+    expect(original.targetElementId?.value).toBe('target');
   });
 
   it('rejects a non-ElementId endpoint on update', () => {
@@ -131,8 +132,8 @@ describe('ConnectorElement', () => {
   it('rejects an update that would make source and target the same', () => {
     const original = createSample();
 
-    expect(() => withConnectorSource(original, original.targetElementId)).toThrow(/same/);
-    expect(() => withConnectorTarget(original, original.sourceElementId)).toThrow(/same/);
+    expect(() => withConnectorSource(original, original.targetElementId!)).toThrow(/same/);
+    expect(() => withConnectorTarget(original, original.sourceElementId!)).toThrow(/same/);
   });
 
   it('preserves unrelated fields across updates', () => {
@@ -140,7 +141,7 @@ describe('ConnectorElement', () => {
 
     const updated = withConnectorSource(original, ElementId.create('source-2'));
 
-    expect(updated.targetElementId.value).toBe('target');
+    expect(updated.targetElementId?.value).toBe('target');
     expect(updated.rotation).toBe(15);
     expect(updated.position.equals(original.position)).toBe(true);
     expect(updated.size.equals(original.size)).toBe(true);
@@ -153,5 +154,74 @@ describe('ConnectorElement', () => {
     expect(() =>
       withConnectorTarget(original, ElementId.create('target-2'), new Date('2024-01-01T00:00:00Z')),
     ).toThrow(/updatedAt/);
+  });
+});
+
+describe('ConnectorElement free endpoints', () => {
+  const createFreeProps = (
+    overrides: Partial<CreateConnectorElementProps> = {},
+  ): CreateConnectorElementProps => ({
+    id: ElementId.create('free-1'),
+    workspaceId: WorkspaceId.create('ws-1'),
+    createdBy: UserId.create('user-1'),
+    position: Position.create(100, 100),
+    size: Size.create(160, 40),
+    sourcePoint: Position.create(0, 20),
+    targetPoint: Position.create(160, 20),
+    ...overrides,
+  });
+
+  it('creates a connector whose endpoints are local points', () => {
+    const element = createConnectorElement(createFreeProps());
+
+    expect(element.sourceElementId).toBeUndefined();
+    expect(element.targetElementId).toBeUndefined();
+    expect(element.sourcePoint?.equals(Position.create(0, 20))).toBe(true);
+    expect(element.targetPoint?.equals(Position.create(160, 20))).toBe(true);
+  });
+
+  it('rejects an endpoint that mixes an element id and a point', () => {
+    expect(() =>
+      createConnectorElement(createFreeProps({ sourceElementId: ElementId.create('source') })),
+    ).toThrow(/source/);
+  });
+
+  it('rejects a missing endpoint representation', () => {
+    expect(() => createConnectorElement(createFreeProps({ targetPoint: undefined }))).toThrow(
+      /target/,
+    );
+  });
+
+  it('rejects coincident free points', () => {
+    expect(() =>
+      createConnectorElement(
+        createFreeProps({
+          sourcePoint: Position.create(10, 10),
+          targetPoint: Position.create(10, 10),
+        }),
+      ),
+    ).toThrow(/same point/);
+  });
+
+  it('updates a free endpoint and clears the previous one', () => {
+    const original = createConnectorElement(createFreeProps());
+    const updated = withConnectorSourcePoint(original, Position.create(-20, 5));
+
+    expect(updated.sourcePoint?.equals(Position.create(-20, 5))).toBe(true);
+    expect(updated.sourceElementId).toBeUndefined();
+    expect(updated.targetPoint?.equals(original.targetPoint!)).toBe(true);
+    expect(original.sourcePoint?.equals(Position.create(0, 20))).toBe(true);
+  });
+
+  it('converts a bound endpoint into a free one and vice versa', () => {
+    const bound = createSample();
+    const free = withConnectorSourcePoint(bound, Position.create(10, 10));
+
+    expect(free.sourcePoint?.equals(Position.create(10, 10))).toBe(true);
+    expect(free.sourceElementId).toBeUndefined();
+
+    const rebound = withConnectorSource(free, ElementId.create('source-2'));
+    expect(rebound.sourceElementId?.value).toBe('source-2');
+    expect(rebound.sourcePoint).toBeUndefined();
   });
 });

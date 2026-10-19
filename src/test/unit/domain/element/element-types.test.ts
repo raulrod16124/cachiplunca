@@ -144,7 +144,7 @@ describe('Element types', () => {
         case 'note':
           return richTextToPlain(element.content);
         case 'connector':
-          return `${element.sourceElementId.value}->${element.targetElementId.value}`;
+          return `${element.sourceElementId?.value}->${element.targetElementId?.value}`;
       }
     });
 

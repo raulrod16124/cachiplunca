@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { isConnectorElement } from '../../../domain/element';
 import type { Element } from '../../../domain/element';
 import { Position } from '../../../domain/shared';
 import type { Viewport } from '../../../domain/shared';
@@ -135,11 +136,29 @@ export function useElementMove({
       }
 
       const local = toLocalPoint(surface, event);
+      const nextIdsToMove = resolveMoveIds(id, latestRef.current.selectedIds).filter(
+        (candidateId) => {
+          const candidate = latestRef.current.elements.find(
+            (element) => element.id.value === candidateId,
+          );
+
+          return !(
+            candidate !== undefined &&
+            isConnectorElement(candidate) &&
+            candidate.sourceElementId !== undefined &&
+            candidate.targetElementId !== undefined
+          );
+        },
+      );
+
+      if (nextIdsToMove.length === 0) {
+        return;
+      }
 
       surface.setPointerCapture(event.pointerId);
       pointerId = event.pointerId;
       hitId = id;
-      idsToMove = resolveMoveIds(id, latestRef.current.selectedIds);
+      idsToMove = nextIdsToMove;
       baseline = latestRef.current.elements;
       startLocal = local;
       startWorld = latestRef.current.viewport.screenToWorld(local);
