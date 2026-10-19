@@ -45,8 +45,8 @@ El comando `UpdateElement` existía testeado pero no estaba cableado en Presenta
 
 **Estado:** conocido/aceptado · **Impacto:** medio en producción, nulo con emuladores
 
-- Cualquier usuario autenticado puede leer workspaces ajenos (`firestore.rules`): la lista "Your workspaces" muestra tableros de otros usuarios (visible en E2E: todos los tests comparten la lista).
-- El email del invitado no se verifica antes de aceptar la invitación (TODO TASK-127).
+- Cualquier usuario autenticado puede leer workspaces ajenos (`firestore.rules`). La UI ya acota "Your workspaces" a las memberships del usuario (`ListWorkspaces`), pero la frontera de lectura sigue siendo global; el cierre completo es TASK-127.
+- El email del invitado no se verifica antes de aceptar la invitación (TODO TASK-127). La lista de invitaciones pendientes por email y el accept desde esa lista reutilizan la misma comprobación de email que el enlace; siguen sujetos a este gap.
 - El banner "Running in emulator mode…" lo inyecta el SDK de Firebase en dev; no es código de la app.
 
 **Condición de cierre:** TASK-127/126 (parcialmente DONE según backlog) + reglas de lectura por membership.

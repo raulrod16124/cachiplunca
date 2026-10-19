@@ -23,6 +23,10 @@ export class FakeInvitationRepository implements InvitationRepository {
     return invitation;
   }
 
+  async findById(id: InvitationId): Promise<Invitation | null> {
+    return this.#invitations.get(id.value) ?? null;
+  }
+
   async findByTokenHash(tokenHash: string): Promise<Invitation | null> {
     for (const invitation of this.#invitations.values()) {
       if (invitation.tokenHash === tokenHash) {
@@ -35,6 +39,12 @@ export class FakeInvitationRepository implements InvitationRepository {
   async listPendingByWorkspace(workspaceId: WorkspaceId): Promise<Invitation[]> {
     return [...this.#invitations.values()].filter(
       (invitation) => invitation.isPending() && invitation.workspaceId.equals(workspaceId),
+    );
+  }
+
+  async listPendingByEmail(email: string): Promise<Invitation[]> {
+    return [...this.#invitations.values()].filter(
+      (invitation) => invitation.isPending() && invitation.isForEmail(email),
     );
   }
 

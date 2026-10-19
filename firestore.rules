@@ -42,10 +42,11 @@ service cloud.firestore {
 
     function isAcceptingValidInvitation(invitationId, workspaceId, role) {
       return signedIn() &&
+        request.auth.token.email is string &&
         invitationId is string &&
         exists(/databases/$(database)/documents/invitations/$(invitationId)) &&
         get(/databases/$(database)/documents/invitations/$(invitationId)).data.workspaceId == workspaceId &&
-        get(/databases/$(database)/documents/invitations/$(invitationId)).data.email == request.auth.token.email &&
+        get(/databases/$(database)/documents/invitations/$(invitationId)).data.email == request.auth.token.email.lower() &&
         get(/databases/$(database)/documents/invitations/$(invitationId)).data.role == role &&
         get(/databases/$(database)/documents/invitations/$(invitationId)).data.status == 'pending' &&
         get(/databases/$(database)/documents/invitations/$(invitationId)).data.expiresAt > request.time;
@@ -145,7 +146,8 @@ service cloud.firestore {
           request.resource.data.tokenHash == resource.data.tokenHash
         ) ||
         (
-          resource.data.email == request.auth.token.email &&
+          request.auth.token.email is string &&
+          resource.data.email == request.auth.token.email.lower() &&
           resource.data.status == 'pending' &&
           request.resource.data.status == 'accepted' &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])

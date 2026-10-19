@@ -6,9 +6,11 @@ import {
 import { UserId, WorkspaceId } from '../../../../domain/shared';
 import { Workspace } from '../../../../domain/workspace';
 import { ERROR_CODES } from '../../../../shared/errors';
+import { FakeMembershipRepository } from '../../../fixtures/fake-membership-repository';
 import { FakeWorkspaceRepository } from '../../../fixtures/fake-workspace-repository';
 
 const CREATED_BY = UserId.create('user-1');
+const USER = UserId.create('user-1');
 
 function buildWorkspace(
   id: string,
@@ -20,6 +22,18 @@ function buildWorkspace(
     name: `Workspace ${id}`,
     createdAt: timestamps.createdAt,
     updatedAt: timestamps.updatedAt ?? timestamps.createdAt,
+  });
+}
+
+async function seedMembership(
+  memberships: FakeMembershipRepository,
+  workspaceId: string,
+  userId: UserId = USER,
+): Promise<void> {
+  await memberships.create({
+    userId,
+    workspaceId: WorkspaceId.create(workspaceId),
+    role: 'owner',
   });
 }
 
@@ -78,11 +92,13 @@ describe('sortWorkspacesForList', () => {
 });
 
 describe('createListWorkspaces', () => {
-  it('returns an ok result with an empty list when the repository is empty', async () => {
-    const repository = new FakeWorkspaceRepository();
-    const listWorkspaces = createListWorkspaces(repository);
+  it('returns an empty list when the user has no memberships', async () => {
+    const workspaces = new FakeWorkspaceRepository();
+    const memberships = new FakeMembershipRepository();
+    await workspaces.create({ createdBy: CREATED_BY, name: 'Not mine' });
+    const listWorkspaces = createListWorkspaces(workspaces, memberships);
 
-    const result = await listWorkspaces();
+    const result = await listWorkspaces(USER.value);
 
     expect(result.status).toBe('ok');
     if (result.status === 'ok') {
@@ -90,34 +106,59 @@ describe('createListWorkspaces', () => {
     }
   });
 
-  it('returns every workspace from the repository', async () => {
-    const repository = new FakeWorkspaceRepository();
-    await repository.create({ createdBy: CREATED_BY, name: 'First' });
-    await repository.create({ createdBy: CREATED_BY, name: 'Second' });
-    const listWorkspaces = createListWorkspaces(repository);
+  it('returns only the workspaces where the user is a member', async () => {
+    const workspaces = new FakeWorkspaceRepository();
+    const memberships = new FakeMembershipRepository();
+    const mine = await workspaces.create({ createdBy: CREATED_BY, name: 'Mine' });
+    await workspaces.create({ createdBy: CREATED_BY, name: 'Someone else' });
+    await seedMembership(memberships, mine.id.value);
 
-    const result = await listWorkspaces();
+    const listWorkspaces = createListWorkspaces(workspaces, memberships);
+
+    const result = await listWorkspaces(USER.value);
 
     expect(result.status).toBe('ok');
     if (result.status === 'ok') {
-      expect(result.workspaces.map((workspace) => workspace.name).sort()).toEqual([
-        'First',
-        'Second',
-      ]);
+      expect(result.workspaces.map((workspace) => workspace.name)).toEqual(['Mine']);
+    }
+  });
+
+  it('ignores memberships whose workspace no longer exists', async () => {
+    const workspaces = new FakeWorkspaceRepository();
+    const memberships = new FakeMembershipRepository();
+    await seedMembership(memberships, 'ws-deleted');
+    const listWorkspaces = createListWorkspaces(workspaces, memberships);
+
+    const result = await listWorkspaces(USER.value);
+
+    expect(result.status).toBe('ok');
+    if (result.status === 'ok') {
+      expect(result.workspaces).toEqual([]);
     }
   });
 
   it('orders the result by most recently updated first', async () => {
-    const repository = new FakeWorkspaceRepository();
+    const workspaces = new FakeWorkspaceRepository();
+    const memberships = new FakeMembershipRepository();
     const older = buildWorkspace('ws-a', { createdAt: new Date('2026-01-01') });
     const newer = buildWorkspace('ws-b', {
       createdAt: new Date('2026-02-01'),
       updatedAt: new Date('2026-03-01'),
     });
-    jest.spyOn(repository, 'list').mockResolvedValue([older, newer]);
-    const listWorkspaces = createListWorkspaces(repository);
+    jest.spyOn(workspaces, 'findById').mockImplementation(async (id) => {
+      if (id.value === older.id.value) {
+        return older;
+      }
+      if (id.value === newer.id.value) {
+        return newer;
+      }
+      return null;
+    });
+    await seedMembership(memberships, older.id.value);
+    await seedMembership(memberships, newer.id.value);
+    const listWorkspaces = createListWorkspaces(workspaces, memberships);
 
-    const result = await listWorkspaces();
+    const result = await listWorkspaces(USER.value);
 
     expect(result.status).toBe('ok');
     if (result.status === 'ok') {
@@ -125,16 +166,17 @@ describe('createListWorkspaces', () => {
     }
   });
 
-  it('preserves AppErrors thrown by the repository', async () => {
-    const repository = new FakeWorkspaceRepository();
-    jest.spyOn(repository, 'list').mockRejectedValue({
+  it('preserves AppErrors thrown by the membership repository', async () => {
+    const workspaces = new FakeWorkspaceRepository();
+    const memberships = new FakeMembershipRepository();
+    jest.spyOn(memberships, 'listByUser').mockRejectedValue({
       kind: 'network',
       code: ERROR_CODES.NETWORK_REQUEST_FAILED,
       message: 'Network request failed.',
     });
-    const listWorkspaces = createListWorkspaces(repository);
+    const listWorkspaces = createListWorkspaces(workspaces, memberships);
 
-    const result: ListWorkspacesResult = await listWorkspaces();
+    const result: ListWorkspacesResult = await listWorkspaces(USER.value);
 
     expect(result.status).toBe('error');
     if (result.status === 'error') {
@@ -144,11 +186,12 @@ describe('createListWorkspaces', () => {
   });
 
   it('normalizes unexpected errors into AppError', async () => {
-    const repository = new FakeWorkspaceRepository();
-    jest.spyOn(repository, 'list').mockRejectedValue(new Error('socket hang up'));
-    const listWorkspaces = createListWorkspaces(repository);
+    const workspaces = new FakeWorkspaceRepository();
+    const memberships = new FakeMembershipRepository();
+    jest.spyOn(memberships, 'listByUser').mockRejectedValue(new Error('socket hang up'));
+    const listWorkspaces = createListWorkspaces(workspaces, memberships);
 
-    const result: ListWorkspacesResult = await listWorkspaces();
+    const result: ListWorkspacesResult = await listWorkspaces(USER.value);
 
     expect(result.status).toBe('error');
     if (result.status === 'error') {

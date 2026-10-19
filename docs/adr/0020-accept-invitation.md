@@ -46,3 +46,15 @@ Restricciones relevantes:
 - TASK-096/097 pueden apoyarse en este caso de uso: las rules deben permitir a un usuario autenticado crear su propia membership desde una invitación válida y marcar la invitación como aceptada.
 - Los codes nuevos son aditivos; el UI mapea `INVITATION_INVALID`/`INVITATION_EXPIRED`/`INVITATION_EMAIL_MISMATCH`/`MEMBERSHIP_ALREADY_EXISTS` a mensajes amigables.
 - Si `updateStatus` falla de forma persistente, el accept devuelve error y no concede acceso (rollback), manteniendo consistencia.
+
+## Actualización (2026-10-19)
+
+Además del enlace `/invitations/:token`, el usuario autenticado puede descubrir
+sus invitaciones pendientes por email (`listPendingByEmail`) y aceptarlas por
+`invitationId` (`accept-invitation-by-id`). Ambos caminos comparten
+`acceptInvitationRecord`, por lo que aplican la misma validación de estado,
+expiración y email, la misma creación de membership anclada a la invitación y la
+misma compensación si falla `updateStatus`. Las rules siguen exigiendo email,
+rol, estado y expiración; el token deja de ser imprescindible para el invitado
+autenticado. El riesgo residual de email no verificado se mantiene documentado
+en TASK-127.

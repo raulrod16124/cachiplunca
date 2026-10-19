@@ -1,4 +1,5 @@
 export * from './accept-invitation';
+export * from './accept-invitation-by-id';
 export * from './change-member-role';
 export * from './command';
 export * from './create-element';

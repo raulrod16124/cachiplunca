@@ -5,6 +5,7 @@ import { SessionProvider } from '../../presentation/providers/session-provider';
 import { AppRoutes, type AppRoutesProps } from '../../app/routes/app-routes';
 import {
   createAcceptInvitation,
+  createAcceptInvitationById,
   createChangeMemberRole,
   createCreateOwnerMembership,
   createCreateWorkspaceWithOwner,
@@ -19,6 +20,7 @@ import {
   createGetWorkspace,
   createGetWorkspaceRole,
   createListPendingInvitations,
+  createListPendingInvitationsForUser,
   createListWorkspaceMembers,
   createListWorkspaces,
   createLoadWorkspaceElements,
@@ -120,7 +122,7 @@ export function createAppHarness(): AppHarness {
     registerUser: createRegisterUser(authPort),
     loginUser: createLoginUser(authPort),
     logoutUser: createLogoutUser(authPort),
-    listWorkspaces: createListWorkspaces(workspaceRepository),
+    listWorkspaces: createListWorkspaces(workspaceRepository, membershipRepository),
     createWorkspaceWithOwner: createCreateWorkspaceWithOwner({
       workspaceRepository,
       createOwnerMembership: createCreateOwnerMembership(membershipRepository),
@@ -141,10 +143,15 @@ export function createAppHarness(): AppHarness {
       },
     }),
     listPendingInvitations: createListPendingInvitations(invitationRepository),
+    listPendingInvitationsForUser: createListPendingInvitationsForUser(invitationRepository),
     acceptInvitation: createAcceptInvitation({
       invitationRepository,
       membershipRepository,
       hashToken: hashInvitationToken,
+    }),
+    acceptInvitationById: createAcceptInvitationById({
+      invitationRepository,
+      membershipRepository,
     }),
     loadWorkspaceElements: createLoadWorkspaceElements(elementRepository),
     elementPersistenceOrchestrator: createElementPersistenceOrchestrator(

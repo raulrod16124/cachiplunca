@@ -1,12 +1,16 @@
 import {
   createAcceptInvitation,
+  createAcceptInvitationById,
   createInviteMember,
   type AcceptInvitation,
+  type AcceptInvitationById,
   type InviteMember,
 } from '../../application/commands';
 import {
   createListPendingInvitations,
+  createListPendingInvitationsForUser,
   type ListPendingInvitations,
+  type ListPendingInvitationsForUser,
 } from '../../application/queries';
 import type { InvitationRepository, MembershipRepository } from '../../application/ports';
 import { InvitationId } from '../../domain/shared';
@@ -21,7 +25,9 @@ import { createFirebaseMembershipRepository } from '../../infrastructure/firebas
 export interface InvitationServices {
   readonly inviteMember: InviteMember;
   readonly listPendingInvitations: ListPendingInvitations;
+  readonly listPendingInvitationsForUser: ListPendingInvitationsForUser;
   readonly acceptInvitation: AcceptInvitation;
+  readonly acceptInvitationById: AcceptInvitationById;
 }
 
 export function createInvitationServices(): InvitationServices {
@@ -36,10 +42,15 @@ export function createInvitationServices(): InvitationServices {
       issueToken: createInvitationTokenIssuer(),
     }),
     listPendingInvitations: createListPendingInvitations(invitationRepository),
+    listPendingInvitationsForUser: createListPendingInvitationsForUser(invitationRepository),
     acceptInvitation: createAcceptInvitation({
       invitationRepository,
       membershipRepository,
       hashToken: hashInvitationToken,
+    }),
+    acceptInvitationById: createAcceptInvitationById({
+      invitationRepository,
+      membershipRepository,
     }),
   };
 }

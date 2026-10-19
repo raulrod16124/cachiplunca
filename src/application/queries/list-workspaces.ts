@@ -1,12 +1,13 @@
 import type { Workspace } from '../../domain/workspace';
+import { UserId } from '../../domain/shared';
 import { toAppError, type AppError } from '../../shared/errors';
-import type { WorkspaceRepository } from '../ports';
+import type { MembershipRepository, WorkspaceRepository } from '../ports';
 
 export type ListWorkspacesResult =
   | { readonly status: 'ok'; readonly workspaces: Workspace[] }
   | { readonly status: 'error'; readonly error: AppError };
 
-export type ListWorkspaces = () => Promise<ListWorkspacesResult>;
+export type ListWorkspaces = (userId: string) => Promise<ListWorkspacesResult>;
 
 export function sortWorkspacesForList(workspaces: readonly Workspace[]): Workspace[] {
   return [...workspaces].sort(compareWorkspacesForList);
@@ -29,11 +30,25 @@ function compareWorkspacesForList(a: Workspace, b: Workspace): number {
   return a.id.value < b.id.value ? -1 : 1;
 }
 
-export function createListWorkspaces(workspaceRepository: WorkspaceRepository): ListWorkspaces {
-  return async (): Promise<ListWorkspacesResult> => {
+export function createListWorkspaces(
+  workspaceRepository: WorkspaceRepository,
+  membershipRepository: MembershipRepository,
+): ListWorkspaces {
+  return async (userId: string): Promise<ListWorkspacesResult> => {
     try {
-      const workspaces = await workspaceRepository.list();
-      return { status: 'ok', workspaces: sortWorkspacesForList(workspaces) };
+      const memberships = await membershipRepository.listByUser(UserId.create(userId));
+      const resolved = await Promise.all(
+        memberships.map((membership) => workspaceRepository.findById(membership.workspaceId)),
+      );
+
+      const unique = new Map<string, Workspace>();
+      for (const workspace of resolved) {
+        if (workspace !== null) {
+          unique.set(workspace.id.value, workspace);
+        }
+      }
+
+      return { status: 'ok', workspaces: sortWorkspacesForList([...unique.values()]) };
     } catch (error) {
       return { status: 'error', error: toAppError(error) };
     }

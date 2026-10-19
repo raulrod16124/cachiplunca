@@ -32,7 +32,7 @@ async function renderAuthenticatedApp() {
 
   const repository = new FakeWorkspaceRepository();
   const membershipRepository = new FakeMembershipRepository();
-  const listWorkspaces = jest.fn(async (): Promise<ListWorkspacesResult> => ({
+  const listWorkspaces = jest.fn(async (_userId: string): Promise<ListWorkspacesResult> => ({
     status: 'ok',
     workspaces: await repository.list(),
   }));

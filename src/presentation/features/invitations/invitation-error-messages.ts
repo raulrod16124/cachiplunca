@@ -35,6 +35,8 @@ export function describeAcceptInvitationError(error: AppError): string {
       return 'The service is temporarily unavailable. Please try again.';
     case ERROR_CODES.AUTH_UNAUTHENTICATED:
       return 'Your session has expired. Sign in again to continue.';
+    case ERROR_CODES.AUTH_FORBIDDEN:
+      return 'We could not add you to this workspace. Please try again or ask for a new invitation.';
     case ERROR_CODES.VALIDATION_INVALID_INPUT:
       return 'This invitation link is not valid.';
     default:

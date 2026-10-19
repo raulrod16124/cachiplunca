@@ -1,3 +1,4 @@
+import type { Invitation } from '../../domain/invitation';
 import type { MembershipRole } from '../../domain/membership';
 import type { UserId, WorkspaceId } from '../../domain/shared';
 import { createAppError, ERROR_CODES, toAppError, type AppError } from '../../shared/errors';
@@ -27,6 +28,12 @@ export interface AcceptInvitationDeps {
   readonly now?: () => Date;
 }
 
+export interface InvitationAcceptanceDeps {
+  readonly invitationRepository: InvitationRepository;
+  readonly membershipRepository: MembershipRepository;
+  readonly now?: () => Date;
+}
+
 export function validateAcceptInvitationInput(
   input: AcceptInvitationInput,
 ): AcceptInvitationFieldErrors {
@@ -44,56 +51,76 @@ export function createAcceptInvitation(deps: AcceptInvitationDeps): AcceptInvita
       return { status: 'invalid-input', fieldErrors };
     }
 
-    const email = typeof input.userEmail === 'string' ? input.userEmail.trim() : '';
-    if (email.length === 0) {
-      return { status: 'error', error: emailMismatchError() };
-    }
-
     try {
       const tokenHash = await deps.hashToken(input.token);
       const invitation = await deps.invitationRepository.findByTokenHash(tokenHash);
 
-      if (invitation === null || !invitation.isPending()) {
+      if (invitation === null) {
         return { status: 'error', error: invalidInvitationError() };
       }
 
-      const now = deps.now?.() ?? new Date();
-      if (invitation.isExpired(now)) {
-        return { status: 'error', error: expiredInvitationError() };
-      }
-
-      if (!invitation.isForEmail(email)) {
-        return { status: 'error', error: emailMismatchError() };
-      }
-
-      const membership = await deps.membershipRepository.create({
-        userId: input.userId,
-        workspaceId: invitation.workspaceId,
-        role: invitation.role,
-        invitationId: invitation.id,
-      });
-
-      try {
-        await deps.invitationRepository.updateStatus(invitation.id, 'accepted');
-      } catch (error) {
-        return { status: 'error', error: await rollbackMembership(deps, input, membership, error) };
-      }
-
-      return { status: 'ok', workspaceId: membership.workspaceId, role: membership.role };
+      return await acceptInvitationRecord(deps, invitation, input);
     } catch (error) {
       return { status: 'error', error: toAppError(error) };
     }
   };
 }
 
+/**
+ * Grants workspace access for an invitation that has already been resolved.
+ * Shared by the token link flow and the pending-invitations list so both paths
+ * enforce exactly the same expiry/email/membership/rollback rules.
+ */
+export async function acceptInvitationRecord(
+  deps: InvitationAcceptanceDeps,
+  invitation: Invitation,
+  input: { readonly userId: UserId; readonly userEmail: string },
+): Promise<AcceptInvitationResult> {
+  if (!invitation.isPending()) {
+    return { status: 'error', error: invalidInvitationError() };
+  }
+
+  const now = deps.now?.() ?? new Date();
+  if (invitation.isExpired(now)) {
+    return { status: 'error', error: expiredInvitationError() };
+  }
+
+  const email = typeof input.userEmail === 'string' ? input.userEmail.trim() : '';
+  if (email.length === 0 || !invitation.isForEmail(email)) {
+    return { status: 'error', error: emailMismatchError() };
+  }
+
+  try {
+    const membership = await deps.membershipRepository.create({
+      userId: input.userId,
+      workspaceId: invitation.workspaceId,
+      role: invitation.role,
+      invitationId: invitation.id,
+    });
+
+    try {
+      await deps.invitationRepository.updateStatus(invitation.id, 'accepted');
+    } catch (error) {
+      return {
+        status: 'error',
+        error: await rollbackMembership(deps, input.userId, membership, error),
+      };
+    }
+
+    return { status: 'ok', workspaceId: membership.workspaceId, role: membership.role };
+  } catch (error) {
+    return { status: 'error', error: toAppError(error) };
+  }
+}
+
 async function rollbackMembership(
-  deps: AcceptInvitationDeps,
-  input: AcceptInvitationInput,
+  deps: InvitationAcceptanceDeps,
+  userId: UserId,
   membership: { readonly workspaceId: WorkspaceId },
   error: unknown,
 ): Promise<AppError> {
   try {
-    await deps.membershipRepository.delete(input.userId, membership.workspaceId);
+    await deps.membershipRepository.delete(userId, membership.workspaceId);
   } catch (compensationError) {
     return annotateCompensationFailure(toAppError(error), compensationError);
   }

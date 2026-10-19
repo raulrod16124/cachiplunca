@@ -82,8 +82,13 @@ VITE_FIREBASE_MEASUREMENT_ID=
 Las Security Rules se despliegan contra el proyecto seleccionado en `.firebaserc` (`cachiplunca-dev`):
 
 ```bash
-npx firebase deploy --only firestore:rules
+npm run deploy:rules
 ```
+
+> El despliegue de las rules es manual y debe repetirse cada vez que cambie
+> `firestore.rules`. Si el frontend se despliega con rules antiguas, los usuarios
+> invitados pueden ver un tablero en la lista pero recibir `permission-denied` al
+> abrirlo.
 
 ## Scripts
 
@@ -98,6 +103,7 @@ npx firebase deploy --only firestore:rules
 | `npm run format:check` | Prettier --check                                                 |
 | `npm test`             | Suite unitaria/integración (Jest, `--runInBand`)                 |
 | `npm run test:rules`   | Tests de Firebase Security Rules contra el emulador de Firestore |
+| `npm run deploy:rules` | Despliega `firestore.rules` al proyecto Firebase configurado     |
 | `npm run perf`         | Medición + regression budgets de rendimiento del canvas          |
 | `npm run perf:dev`     | App de rendimiento en modo desarrollo (`perf.html`)              |
 
