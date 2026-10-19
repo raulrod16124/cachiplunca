@@ -1,11 +1,14 @@
 import { Button, Input, Stack, Text } from '@raulrod/ui';
 import { useMemo, useState, type ReactNode } from 'react';
+import { getPublicBasePath } from '../../../config/public-base';
 
 export const INVITATION_ACCEPT_PATH = '/invitations';
 
 export function buildInvitationLink(token: string, origin?: string): string {
   const base = origin ?? (typeof window === 'undefined' ? '' : window.location.origin);
-  return `${base}${INVITATION_ACCEPT_PATH}/${token}`;
+  const basePath = getPublicBasePath();
+  const path = basePath === '/' ? INVITATION_ACCEPT_PATH : `${basePath}${INVITATION_ACCEPT_PATH}`;
+  return `${base}${path}/${token}`;
 }
 
 export interface InvitationLinkProps {

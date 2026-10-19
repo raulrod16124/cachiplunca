@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { setPublicBasePath } from '../../../../../../presentation/config/public-base';
 import {
   buildInvitationLink,
   InvitationLink,
@@ -10,12 +11,20 @@ beforeEach(() => {
   writeText.mockReset();
   writeText.mockResolvedValue(undefined);
   Object.assign(navigator, { clipboard: { writeText } });
+  setPublicBasePath('/');
 });
 
 describe('buildInvitationLink', () => {
   it('builds an absolute link from an explicit origin', () => {
     expect(buildInvitationLink('token-abc', 'https://app.test')).toBe(
       'https://app.test/invitations/token-abc',
+    );
+  });
+
+  it('prepends the public base path when set', () => {
+    setPublicBasePath('/cachiplunca');
+    expect(buildInvitationLink('token-abc', 'https://app.test')).toBe(
+      'https://app.test/cachiplunca/invitations/token-abc',
     );
   });
 });

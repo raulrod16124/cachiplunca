@@ -75,9 +75,11 @@ function App() {
   const [invitationServices] = useState(createInvitationServices);
   const [userSettingsServices] = useState(() => createUserSettingsServices(getFirebaseFirestore()));
 
+  const routerBasename = import.meta.env.BASE_URL.replace(/\/$/, '') || undefined;
+
   return (
     <AppThemeProvider>
-      <BrowserRouter>
+      <BrowserRouter basename={routerBasename}>
         <SessionProvider store={authServices.sessionStore}>
           <AppContent
             authServices={authServices}
