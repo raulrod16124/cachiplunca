@@ -37,6 +37,7 @@ import {
 import { AccountMenu } from '../../auth/account-menu';
 import { localizeMessage, useI18n, type TranslationKey } from '../../../i18n';
 import { describeConnectionStatus, describeSyncStatus } from '../workspace-sync-status';
+import { SessionTimer } from './session-timer';
 import { SyncStatusIndicator } from './sync-status-indicator';
 import { WorkspaceTitleField } from './workspace-title-field';
 
@@ -442,6 +443,7 @@ export function WorkspaceTopBar({
               </PlanButton>
             </Tooltip>
           )}
+          <SessionTimer />
           {onShare === undefined ? null : (
             <Tooltip content={t('canvas.topbar.share')} placement="bottom">
               <ShareButton

@@ -56,6 +56,7 @@ describe('WorkspaceTopBar', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'Roadmap Q4' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Back to workspaces' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Session timer' })).toBeInTheDocument();
     expect(screen.getByText('Editor')).toBeInTheDocument();
   });
 
