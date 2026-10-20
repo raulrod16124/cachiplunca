@@ -18,6 +18,7 @@ import {
   FileText,
   ListChecks,
   MessageSquare,
+  Presentation,
   Share2,
 } from '@raulrod/icons';
 import type { ReactNode } from 'react';
@@ -204,6 +205,10 @@ const PlanButton = styled(IconButton)`
   flex: none;
 `;
 
+const PresentButton = styled(IconButton)`
+  flex: none;
+`;
+
 const HelpButton = styled(IconButton)`
   flex: none;
 `;
@@ -242,6 +247,8 @@ export interface WorkspaceTopBarProps {
   readonly onTogglePlan?: () => void;
   readonly commentsOpen?: boolean;
   readonly onToggleComments?: () => void;
+  readonly onPresent?: () => void;
+  readonly canPresent?: boolean;
   readonly onShowShortcuts?: () => void;
   readonly onExportJson?: () => void;
   readonly onExportPdf?: () => void;
@@ -268,6 +275,8 @@ export function WorkspaceTopBar({
   onTogglePlan,
   commentsOpen = false,
   onToggleComments,
+  onPresent,
+  canPresent = false,
   onShowShortcuts,
   onExportJson,
   onExportPdf,
@@ -441,6 +450,23 @@ export function WorkspaceTopBar({
               >
                 <MessageSquare aria-hidden="true" size={16} />
               </PlanButton>
+            </Tooltip>
+          )}
+          {onPresent === undefined ? null : (
+            <Tooltip
+              content={canPresent ? t('presentation.start') : t('presentation.unavailable')}
+              placement="bottom"
+            >
+              <PresentButton
+                type="button"
+                variant="secondary"
+                size="sm"
+                label={t('presentation.start')}
+                disabled={!canPresent}
+                onClick={onPresent}
+              >
+                <Presentation aria-hidden="true" size={16} />
+              </PresentButton>
             </Tooltip>
           )}
           <SessionTimer />

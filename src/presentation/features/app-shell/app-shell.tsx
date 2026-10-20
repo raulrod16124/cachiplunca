@@ -1,4 +1,4 @@
-import { Button, Text } from '@raulrod/ui';
+import { Badge, Button, Text } from '@raulrod/ui';
 import { LayoutGrid, Mail, Plus } from '@raulrod/icons';
 import type { ReactNode } from 'react';
 import styled from 'styled-components';
@@ -111,6 +111,10 @@ const NavItem = styled.a<{ $active?: boolean }>`
   }
 `;
 
+const NavBadge = styled(Badge)`
+  margin-left: auto;
+`;
+
 const SidebarFooter = styled.div`
   display: flex;
   align-items: center;
@@ -155,6 +159,7 @@ export interface AppShellProps {
   readonly currentUser: AuthUser | null;
   readonly logoutUser: LogoutUser;
   readonly onCreateWorkspace: () => void;
+  readonly pendingInvitationCount?: number;
   readonly children: ReactNode;
 }
 
@@ -162,6 +167,7 @@ export function AppShell({
   currentUser,
   logoutUser,
   onCreateWorkspace,
+  pendingInvitationCount = 0,
   children,
 }: AppShellProps): ReactNode {
   const { t } = useI18n();
@@ -187,9 +193,21 @@ export function AppShell({
             <LayoutGrid aria-hidden="true" size={16} />
             {t('shell.nav.workspaces')}
           </NavItem>
-          <NavItem href="#pending-invitations">
+          <NavItem
+            href="#pending-invitations"
+            aria-label={
+              pendingInvitationCount > 0
+                ? t('shell.nav.pendingInvitations', { count: pendingInvitationCount })
+                : undefined
+            }
+          >
             <Mail aria-hidden="true" size={16} />
             {t('shell.nav.invitations')}
+            {pendingInvitationCount > 0 ? (
+              <NavBadge variant="info" aria-hidden="true">
+                {pendingInvitationCount}
+              </NavBadge>
+            ) : null}
           </NavItem>
         </Nav>
 

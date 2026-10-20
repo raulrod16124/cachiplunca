@@ -34,6 +34,31 @@ body {
   max-width: 38rem;
 }
 
+/*
+ * Side drawers (task plan / comments) reuse `Dialog` for focus trap, scroll
+ * lock, focus return and dismissal, but must read as a right-anchored sheet
+ * with a subtle blurred scrim instead of a centered modal. The DS only exposes
+ * class names for the content slot, so the overlay and backdrop are reached
+ * through :has until a Drawer ships upstream.
+ *
+ * z-index stays at `overlay` (not `modal`): Select.Content/DropdownMenu also
+ * portal at `--rr-z-overlay`; the later portal paints above the drawer, which
+ * keeps status menus usable inside the panel. Regular dialogs keep `modal`
+ * and therefore still stack above the drawer.
+ */
+.rr-dialog:has(.app-drawer-content) {
+  align-items: stretch;
+  justify-content: flex-end;
+  padding: 0;
+  z-index: var(--rr-z-overlay);
+}
+
+.rr-dialog:has(.app-drawer-content) .rr-dialog-backdrop {
+  background: color-mix(in srgb, var(--rr-color-text-primary) 16%, transparent);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
 /* Profile tabs share the dialog width and read as one segmented control. */
 .profile-dialog-content .rr-tabs-list {
   display: flex;

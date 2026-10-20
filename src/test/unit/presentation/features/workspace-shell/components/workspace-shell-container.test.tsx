@@ -42,7 +42,11 @@ import type {
   FileDownloadPort,
   TextFileDownload,
 } from '../../../../../../application/ports';
-import { createTextElement, richTextFromPlain } from '../../../../../../domain/element';
+import {
+  createFrameElement,
+  createTextElement,
+  richTextFromPlain,
+} from '../../../../../../domain/element';
 import { Presence } from '../../../../../../domain/collaboration';
 import {
   ElementId,
@@ -81,6 +85,26 @@ const TEXT_ELEMENT = createTextElement({
   position: Position.create(30, 40),
   size: Size.create(120, 80),
   content: 'Hello',
+  createdAt: new Date('2024-01-01T00:00:00.000Z'),
+});
+
+const FRAME_ELEMENT = createFrameElement({
+  id: ElementId.create('frame-1'),
+  workspaceId: WorkspaceId.create('ws-test'),
+  createdBy: UserId.create('user-1'),
+  position: Position.create(0, 0),
+  size: Size.create(400, 300),
+  title: 'Intro',
+  createdAt: new Date('2024-01-01T00:00:00.000Z'),
+});
+
+const SECOND_FRAME_ELEMENT = createFrameElement({
+  id: ElementId.create('frame-2'),
+  workspaceId: WorkspaceId.create('ws-test'),
+  createdBy: UserId.create('user-1'),
+  position: Position.create(0, 600),
+  size: Size.create(400, 300),
+  title: 'Details',
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
 });
 
@@ -280,6 +304,81 @@ describe('WorkspaceShellContainer', () => {
       height: '80px',
     });
     expect(loadWorkspaceElements).toHaveBeenCalledWith('ws-test');
+  });
+
+  it('presents the frames, navigates and returns to edit mode without persisting', async () => {
+    const user = userEvent.setup();
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const loadWorkspaceElements = createLoadWorkspaceElements({
+      status: 'ok',
+      elements: [FRAME_ELEMENT, SECOND_FRAME_ELEMENT],
+    });
+    const orchestrator: ElementPersistenceOrchestrator = {
+      persistDelta: jest.fn().mockResolvedValue({ status: 'ok' }),
+    };
+
+    renderContainer(getWorkspace, {
+      loadWorkspaceElements,
+      elementPersistenceOrchestrator: orchestrator,
+    });
+
+    await screen.findByTestId('canvas-item-frame-1');
+
+    const canvas = screen.getByRole('application', { name: 'Canvas' });
+    const present = screen.getByRole('button', { name: 'Present' });
+    expect(present).toBeEnabled();
+
+    await user.click(present);
+
+    expect(screen.getByTestId('board-presentation')).toBeInTheDocument();
+    expect(screen.queryByTestId('canvas-toolbar')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Task plan' })).not.toBeInTheDocument();
+    expect(canvas).toHaveAttribute('aria-readonly', 'true');
+    expect(screen.getByRole('status')).toHaveTextContent('Frame 1 of 2');
+
+    await user.click(screen.getByRole('button', { name: 'Next frame' }));
+    expect(screen.getByRole('status')).toHaveTextContent('Frame 2 of 2');
+
+    fireEvent.keyDown(screen.getByTestId('board-presentation'), { key: 'Escape' });
+
+    expect(screen.queryByTestId('board-presentation')).not.toBeInTheDocument();
+    expect(screen.getByTestId('canvas-toolbar')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Present' })).toBeInTheDocument();
+    expect(canvas).toHaveAttribute('aria-readonly', 'false');
+    expect(canvas).toHaveFocus();
+    expect(orchestrator.persistDelta).not.toHaveBeenCalled();
+  });
+
+  it('allows presenting read-only boards', async () => {
+    const user = userEvent.setup();
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const loadWorkspaceElements = createLoadWorkspaceElements({
+      status: 'ok',
+      elements: [FRAME_ELEMENT],
+    });
+
+    renderContainer(getWorkspace, { loadWorkspaceElements, role: 'viewer' });
+
+    await screen.findByTestId('canvas-item-frame-1');
+    expect(screen.getByRole('application', { name: 'Canvas' })).toHaveAttribute(
+      'aria-readonly',
+      'true',
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Present' }));
+
+    expect(screen.getByTestId('board-presentation')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Frame 1 of 1');
+  });
+
+  it('disables the presentation when the board has no frames', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+
+    renderContainer(getWorkspace);
+
+    await screen.findByRole('application', { name: 'Canvas' });
+
+    expect(screen.getByRole('button', { name: 'Present' })).toBeDisabled();
   });
 
   it('renders a loading state while loading the board', async () => {

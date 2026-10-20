@@ -166,8 +166,8 @@ export function App(): ReactElement {
     <div style={{ fontFamily: 'monospace', padding: 12 }}>
       <h1>Canvas performance harness</h1>
       <p>
-        Manual browser baseline for TASK-113. Open with <code>npm run perf:dev</code>. Metrics are
-        machine- and browser-dependent; compare runs on the same host.
+        Manual browser baseline. Open with <code>npm run perf:dev</code>. Metrics are machine- and
+        browser-dependent; compare runs on the same host.
       </p>
       <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 8 }}>
         <label>

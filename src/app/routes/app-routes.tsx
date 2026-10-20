@@ -25,6 +25,7 @@ import type {
   ListWorkspaceMembers,
   ListWorkspaces,
   LoadWorkspaceElements,
+  WatchPendingInvitationsForUser,
 } from '../../application/queries';
 import type { FileDownloadPort, PresencePort } from '../../application/ports';
 import type { CommentServices } from '../../application/comment-services';
@@ -37,7 +38,10 @@ import type {
 import type { ElementId } from '../../domain/shared';
 import { LoginPage } from '../../presentation/features/auth/login-page';
 import { RegisterPage } from '../../presentation/features/auth/register-page';
-import { AcceptInvitationPage } from '../../presentation/features/invitations';
+import {
+  AcceptInvitationPage,
+  PendingInvitationsProvider,
+} from '../../presentation/features/invitations';
 import { GuestWorkspacePage } from '../../presentation/features/guest/guest-workspace-page';
 import { WorkspaceShellPage } from '../../presentation/features/workspace-shell';
 import { WorkspacesPage } from '../../presentation/features/workspaces/workspaces-page';
@@ -63,6 +67,7 @@ export interface AppRoutesProps {
   readonly inviteMember?: InviteMember;
   readonly listPendingInvitations?: ListPendingInvitations;
   readonly listPendingInvitationsForUser?: ListPendingInvitationsForUser;
+  readonly watchPendingInvitationsForUser?: WatchPendingInvitationsForUser;
   readonly acceptInvitation?: AcceptInvitation;
   readonly acceptInvitationById?: AcceptInvitationById;
   readonly getWorkspaceRole?: GetWorkspaceRole;
@@ -96,6 +101,7 @@ export function AppRoutes({
   inviteMember,
   listPendingInvitations,
   listPendingInvitationsForUser,
+  watchPendingInvitationsForUser,
   acceptInvitation,
   acceptInvitationById,
   getWorkspaceRole,
@@ -149,49 +155,57 @@ export function AppRoutes({
       </Route>
       <Route element={<RequireAuth />}>
         <Route
-          path="/workspaces"
           element={
-            <WorkspacesPage
-              logoutUser={logoutUser}
-              listWorkspaces={listWorkspaces}
-              createWorkspaceWithOwner={createWorkspaceWithOwner}
-              deleteWorkspace={deleteWorkspace}
-              duplicateWorkspace={duplicateWorkspace}
-              updateWorkspace={updateWorkspace}
+            <PendingInvitationsProvider
               listPendingInvitationsForUser={listPendingInvitationsForUser}
+              watchPendingInvitationsForUser={watchPendingInvitationsForUser}
               acceptInvitationById={acceptInvitationById}
               sendEmailVerification={sendEmailVerification}
               refreshUser={refreshUser}
             />
           }
-        />
-        <Route
-          path="/workspaces/:workspaceId"
-          element={
-            <WorkspaceShellPage
-              getWorkspace={getWorkspace}
-              loadWorkspaceElements={loadWorkspaceElements}
-              elementPersistenceOrchestrator={elementPersistenceOrchestrator}
-              realtimeSubscriptionManager={realtimeSubscriptionManager}
-              generateElementId={generateElementId}
-              logoutUser={logoutUser}
-              presencePort={presencePort}
-              inviteMember={inviteMember}
-              listPendingInvitations={listPendingInvitations}
-              getWorkspaceRole={getWorkspaceRole}
-              listWorkspaceMembers={listWorkspaceMembers}
-              changeMemberRole={changeMemberRole}
-              removeMember={removeMember}
-              leaveWorkspace={leaveWorkspace}
-              updateWorkspace={updateWorkspace}
-              fileDownload={fileDownload}
-              listWorkspaces={listWorkspaces}
-              comments={comments}
-              imageServices={imageServices}
-              guestLinks={guestLinks}
-            />
-          }
-        />
+        >
+          <Route
+            path="/workspaces"
+            element={
+              <WorkspacesPage
+                logoutUser={logoutUser}
+                listWorkspaces={listWorkspaces}
+                createWorkspaceWithOwner={createWorkspaceWithOwner}
+                deleteWorkspace={deleteWorkspace}
+                duplicateWorkspace={duplicateWorkspace}
+                updateWorkspace={updateWorkspace}
+              />
+            }
+          />
+          <Route
+            path="/workspaces/:workspaceId"
+            element={
+              <WorkspaceShellPage
+                getWorkspace={getWorkspace}
+                loadWorkspaceElements={loadWorkspaceElements}
+                elementPersistenceOrchestrator={elementPersistenceOrchestrator}
+                realtimeSubscriptionManager={realtimeSubscriptionManager}
+                generateElementId={generateElementId}
+                logoutUser={logoutUser}
+                presencePort={presencePort}
+                inviteMember={inviteMember}
+                listPendingInvitations={listPendingInvitations}
+                getWorkspaceRole={getWorkspaceRole}
+                listWorkspaceMembers={listWorkspaceMembers}
+                changeMemberRole={changeMemberRole}
+                removeMember={removeMember}
+                leaveWorkspace={leaveWorkspace}
+                updateWorkspace={updateWorkspace}
+                fileDownload={fileDownload}
+                listWorkspaces={listWorkspaces}
+                comments={comments}
+                imageServices={imageServices}
+                guestLinks={guestLinks}
+              />
+            }
+          />
+        </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

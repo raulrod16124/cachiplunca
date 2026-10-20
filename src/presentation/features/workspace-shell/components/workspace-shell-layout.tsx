@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import styled from 'styled-components';
 import { Button, Text } from '@raulrod/ui';
 import type { Workspace } from '../../../../domain/workspace';
@@ -15,7 +15,7 @@ import type {
   UpdateWorkspaceResult,
 } from '../../../../application/commands';
 import type { ListWorkspaces } from '../../../../application/queries';
-import { connectorCandidateIds } from '../../../../application/services';
+import { connectorCandidateIds, selectPresentationFrames } from '../../../../application/services';
 import type {
   CanvasViewportStore,
   CommandHistory,
@@ -38,6 +38,7 @@ import type {
 } from '../../../canvas/components/task-form-dialog';
 import { KeyboardShortcutsDialog } from './keyboard-shortcuts-dialog';
 import { CommentsPanel } from './comments-panel';
+import { BoardPresentation } from './board-presentation';
 import { TaskPlanPanel } from './task-plan-panel';
 import { WorkspaceCommandPalette } from './workspace-command-palette';
 import { WorkspaceTopBar } from './workspace-top-bar';
@@ -266,6 +267,69 @@ export function WorkspaceShellLayout({
   };
   const canComment = commentServices !== undefined && currentUser !== null;
 
+  const [presentedFrameId, setPresentedFrameId] = useState<string | null>(null);
+  const canvasRegionRef = useRef<HTMLDivElement | null>(null);
+  const wasPresentingRef = useRef(false);
+  const presentationFrames = useMemo(() => selectPresentationFrames(elements), [elements]);
+  const presentedIndex =
+    presentedFrameId === null
+      ? -1
+      : presentationFrames.findIndex((frame) => frame.id.value === presentedFrameId);
+  const presentedFrame = presentedIndex >= 0 ? presentationFrames[presentedIndex] : undefined;
+  const presenting = presentedFrame !== undefined;
+
+  useEffect(() => {
+    if (presentedFrameId !== null && presentedIndex === -1) {
+      setPresentedFrameId(null);
+    }
+  }, [presentedFrameId, presentedIndex]);
+
+  useEffect(() => {
+    const wasPresenting = wasPresentingRef.current;
+    wasPresentingRef.current = presenting;
+
+    if (wasPresenting && !presenting) {
+      canvasRegionRef.current
+        ?.querySelector<HTMLElement>('[role="application"]')
+        ?.focus({ preventScroll: true });
+    }
+  }, [presenting]);
+
+  const startPresentation = (): void => {
+    const firstFrame = presentationFrames[0];
+
+    if (firstFrame === undefined) {
+      return;
+    }
+
+    setPlanOpen(false);
+    setCommentsOpen(false);
+    setShortcutsOpen(false);
+    setCommandPaletteOpen(false);
+    selectionStore.clear();
+    setPresentedFrameId(firstFrame.id.value);
+  };
+
+  const exitPresentation = (): void => {
+    setPresentedFrameId(null);
+  };
+
+  const showPreviousFrame = (): void => {
+    const previousFrame = presentationFrames[presentedIndex - 1];
+
+    if (previousFrame !== undefined) {
+      setPresentedFrameId(previousFrame.id.value);
+    }
+  };
+
+  const showNextFrame = (): void => {
+    const nextFrame = presentationFrames[presentedIndex + 1];
+
+    if (nextFrame !== undefined) {
+      setPresentedFrameId(nextFrame.id.value);
+    }
+  };
+
   return (
     <Shell>
       {accessErrorMessage === null ? null : (
@@ -279,32 +343,36 @@ export function WorkspaceShellLayout({
         </AccessBanner>
       )}
       <CanvasArea>
-        <CanvasRegion>
-          <WorkspaceTopBar
-            workspace={workspace}
-            role={role}
-            readOnly={readOnly}
-            onBack={onBack}
-            syncStatus={syncStatus}
-            connectionStatus={connectionStatus}
-            connectedUsers={connectedUsers}
-            userColors={userColors}
-            currentUser={currentUser}
-            logoutUser={logoutUser}
-            onShare={onShare}
-            planOpen={planOpen}
-            onTogglePlan={togglePlan}
-            commentsOpen={commentsOpen}
-            onToggleComments={canComment ? toggleComments : undefined}
-            onShowShortcuts={() => setShortcutsOpen(true)}
-            onExportJson={onExportJson}
-            onExportPdf={onExportPdf}
-            onRename={onRename}
-            persistenceErrorMessage={persistenceErrorMessage}
-            collaborationErrorMessage={collaborationErrorMessage}
-            creationErrorMessage={creationErrorMessage}
-            exportErrorMessage={exportErrorMessage}
-          />
+        <CanvasRegion ref={canvasRegionRef}>
+          {presenting ? null : (
+            <WorkspaceTopBar
+              workspace={workspace}
+              role={role}
+              readOnly={readOnly}
+              onBack={onBack}
+              syncStatus={syncStatus}
+              connectionStatus={connectionStatus}
+              connectedUsers={connectedUsers}
+              userColors={userColors}
+              currentUser={currentUser}
+              logoutUser={logoutUser}
+              onShare={onShare}
+              planOpen={planOpen}
+              onTogglePlan={togglePlan}
+              commentsOpen={commentsOpen}
+              onToggleComments={canComment ? toggleComments : undefined}
+              onShowShortcuts={() => setShortcutsOpen(true)}
+              onExportJson={onExportJson}
+              onExportPdf={onExportPdf}
+              onRename={onRename}
+              onPresent={startPresentation}
+              canPresent={presentationFrames.length > 0}
+              persistenceErrorMessage={persistenceErrorMessage}
+              collaborationErrorMessage={collaborationErrorMessage}
+              creationErrorMessage={creationErrorMessage}
+              exportErrorMessage={exportErrorMessage}
+            />
+          )}
           <Canvas
             store={canvasViewportStore}
             selectionStore={selectionStore}
@@ -333,7 +401,8 @@ export function WorkspaceShellLayout({
             remoteCursors={remoteCursors}
             userColors={userColors}
             onCursorMove={onCursorMove}
-            readOnly={readOnly}
+            readOnly={readOnly || presenting}
+            presentation={presenting}
             commandRef={commandRef}
             unresolvedCommentCounts={canComment ? unresolvedCommentCounts : undefined}
             onOpenComments={
@@ -345,51 +414,66 @@ export function WorkspaceShellLayout({
                 : undefined
             }
           />
+          {presentedFrame === undefined ? null : (
+            <BoardPresentation
+              frame={presentedFrame}
+              index={presentedIndex}
+              total={presentationFrames.length}
+              store={canvasViewportStore}
+              onPrevious={showPreviousFrame}
+              onNext={showNextFrame}
+              onExit={exitPresentation}
+            />
+          )}
         </CanvasRegion>
-        <TaskPlanPanel
-          open={planOpen}
-          elements={elements}
-          currentUserId={currentUser?.uid}
-          assignees={assignees}
-          canEdit={!readOnly && onUpdateElement !== undefined}
-          canCreateTask={canCreateTask}
-          onClose={() => setPlanOpen(false)}
-          onSelectTask={(elementId) => commandRef.current?.focusElement(elementId)}
-          onChangeStatus={(task, status) => {
-            onUpdateElement?.({ type: 'task', element: task, status });
-          }}
-          onCreateTask={() => commandRef.current?.createElement('task')}
-        />
-        <CommentsPanel
-          open={commentsOpen && canComment}
-          workspaceId={workspace.id.value}
-          element={selectedElement}
-          currentUserId={currentUser?.uid}
-          authorLabels={authorLabels}
-          services={commentServices}
-          onCommentSaved={onCommentSaved}
-          onClose={() => setCommentsOpen(false)}
-        />
       </CanvasArea>
-      <KeyboardShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
-      <WorkspaceCommandPalette
-        open={commandPaletteOpen}
-        onOpenChange={setCommandPaletteOpen}
-        workspaceId={workspace.id.value}
+      <TaskPlanPanel
+        open={planOpen && !presenting}
         elements={elements}
-        commandRef={commandRef}
-        canCreate={canCreate}
-        canCreateFreeConnector={canCreateFreeConnector}
-        canConnectSelected={canConnectSelected}
-        canUndo={canUndo}
-        canRedo={canRedo}
-        onShare={onShare}
-        onShowShortcuts={() => setShortcutsOpen(true)}
-        onBack={onBack}
-        userId={currentUser?.uid}
-        listWorkspaces={listWorkspaces}
-        onOpenWorkspace={onOpenWorkspace}
+        currentUserId={currentUser?.uid}
+        assignees={assignees}
+        canEdit={!readOnly && onUpdateElement !== undefined}
+        canCreateTask={canCreateTask}
+        onClose={() => setPlanOpen(false)}
+        onSelectTask={(elementId) => commandRef.current?.focusElement(elementId)}
+        onChangeStatus={(task, status) => {
+          onUpdateElement?.({ type: 'task', element: task, status });
+        }}
+        onCreateTask={() => commandRef.current?.createElement('task')}
       />
+      <CommentsPanel
+        open={commentsOpen && canComment && !presenting}
+        workspaceId={workspace.id.value}
+        element={selectedElement}
+        currentUserId={currentUser?.uid}
+        authorLabels={authorLabels}
+        services={commentServices}
+        onCommentSaved={onCommentSaved}
+        onClose={() => setCommentsOpen(false)}
+      />
+      {presenting ? null : (
+        <>
+          <KeyboardShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+          <WorkspaceCommandPalette
+            open={commandPaletteOpen}
+            onOpenChange={setCommandPaletteOpen}
+            workspaceId={workspace.id.value}
+            elements={elements}
+            commandRef={commandRef}
+            canCreate={canCreate}
+            canCreateFreeConnector={canCreateFreeConnector}
+            canConnectSelected={canConnectSelected}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            onShare={onShare}
+            onShowShortcuts={() => setShortcutsOpen(true)}
+            onBack={onBack}
+            userId={currentUser?.uid}
+            listWorkspaces={listWorkspaces}
+            onOpenWorkspace={onOpenWorkspace}
+          />
+        </>
+      )}
     </Shell>
   );
 }

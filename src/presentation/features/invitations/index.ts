@@ -1,4 +1,5 @@
 export { AcceptInvitationPage, type AcceptInvitationPageProps } from './accept-invitation-page';
+export { InvitationNotice, type InvitationNoticeProps } from './components/invitation-notice';
 export { InvitePanel, type InvitePanelProps } from './components/invite-panel';
 export {
   InviteMemberForm,
@@ -21,3 +22,10 @@ export {
   describeInviteMemberError,
   describePendingInvitationsError,
 } from './invitation-error-messages';
+export {
+  PendingInvitationsProvider,
+  usePendingInvitations,
+  type PendingInvitationsContextValue,
+  type PendingInvitationsProviderProps,
+  type PendingInvitationsLoadStatus,
+} from './pending-invitations-provider';

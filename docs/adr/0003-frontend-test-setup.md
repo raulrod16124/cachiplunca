@@ -2,7 +2,6 @@
 
 **Fecha:** 2026-10-08
 **Estado:** Aceptado
-**Tarea:** TASK-011 — Registro (`docs/mvp-backlog.md`)
 
 ## Contexto
 

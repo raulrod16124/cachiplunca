@@ -2,7 +2,6 @@
 
 **Fecha:** 2026-10-13
 **Estado:** Aceptado
-**Tarea:** TASK-097 — Firebase Security Rules (`docs/mvp-backlog.md`)
 
 ## Contexto
 

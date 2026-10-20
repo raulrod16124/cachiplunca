@@ -1,14 +1,14 @@
 /**
- * Absolute performance budgets for the canvas regression guard (TASK-115).
+ * Absolute performance budgets for the canvas regression guard.
  *
  * These are deliberately loose ceilings: they only fail on catastrophic
- * regressions (order-of-magnitude above the TASK-114 optimization), so they are
+ * regressions (order-of-magnitude above the optimized rendering), so they are
  * robust to the host and to jsdom noise. The primary, machine-independent guard
  * is the structural render-budget suite, which runs in `npm test`.
  *
- * Baseline reference (`docs/performance/`): at 10.000 elements TASK-113 measured
- * pan/zoom/selection around 400–470 ms and heap ~262 MB; TASK-114 brought them to
- * pan ~1,6 ms, zoom ~1,6 ms, selection ~7,7 ms and heap ~11,9 MB.
+ * Reference (`docs/performance/`): at 10.000 elements the unoptimized canvas
+ * measured pan/zoom/selection around 400–470 ms and heap ~262 MB; the optimized
+ * canvas measures pan ~1,6 ms, zoom ~1,6 ms, selection ~7,7 ms and heap ~11,9 MB.
  */
 import type { MetricSummary } from './measure';
 
@@ -31,8 +31,8 @@ export type BudgetViolation =
 /**
  * Interaction and algorithm ceilings at the worst-case board size (10.000).
  *
- * Interaction ceilings sit far below the TASK-113 baseline and far above the
- * TASK-114 optimization, so a regression to the old re-render-everything
+ * Interaction ceilings sit far below the unoptimized baseline and far above the
+ * optimized rendering, so a regression to the old re-render-everything
  * behaviour fails while normal variance passes.
  */
 export const CANVAS_PERFORMANCE_BUDGETS: readonly PerformanceBudget[] = [

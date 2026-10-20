@@ -2,7 +2,6 @@
 
 **Fecha:** 2026-10-20
 **Estado:** Aceptado
-**Tarea:** PBL-009 — Vista Plan de tareas (`docs/post-mvp-backlog.md`)
 
 ## Contexto
 

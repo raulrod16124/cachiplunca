@@ -2,7 +2,6 @@
 
 **Fecha:** 2026-10-20
 **Estado:** Aceptado
-**Tarea:** PBL-016 — Enlace guest de solo lectura (`docs/post-mvp-backlog.md`)
 
 ## Contexto
 

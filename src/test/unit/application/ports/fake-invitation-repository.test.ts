@@ -40,4 +40,36 @@ describe('FakeInvitationRepository', () => {
 
     await expect(second.findByTokenHash('hash-1')).resolves.toBeNull();
   });
+
+  it('notifies watchers of the matching email on create and status changes', async () => {
+    const repository = new FakeInvitationRepository();
+    const listener = jest.fn();
+    const unsubscribe = repository.watchPendingByEmail(' INVITEE@example.com ', listener);
+
+    expect(listener).toHaveBeenLastCalledWith([]);
+
+    const invitation = makeInvitation('inv-1', 'hash-1');
+    await repository.create(invitation);
+    expect(listener).toHaveBeenLastCalledWith([invitation]);
+
+    await repository.updateStatus(invitation.id, 'accepted');
+    expect(listener).toHaveBeenLastCalledWith([]);
+
+    unsubscribe();
+    await repository.create(makeInvitation('inv-2', 'hash-2'));
+    expect(listener).toHaveBeenCalledTimes(3);
+  });
+
+  it('does not notify watchers subscribed to another email', async () => {
+    const repository = new FakeInvitationRepository();
+    const listener = jest.fn();
+    const unsubscribe = repository.watchPendingByEmail('other@example.com', listener);
+
+    await repository.create(makeInvitation('inv-1', 'hash-1'));
+
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenLastCalledWith([]);
+
+    unsubscribe();
+  });
 });

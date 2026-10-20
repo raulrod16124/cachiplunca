@@ -1,152 +1,154 @@
 # Cachiplunca
 
-**Workspace visual colaborativo para grupos pequeños.** De ideas dispersas a planes compartidos: un canvas infinito donde un equipo recopila información, la organiza visualmente y la convierte en un plan compartido.
+> From scattered ideas to shared plans.
 
-## Producto
+[Live app](https://raulrod16124.github.io/cachiplunca/) · [Architecture](docs/architecture.md) · [ADRs](docs/adr/) · [License](LICENSE)
 
-Journey principal:
+[![CI](https://github.com/raulrod16124/cachiplunca/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/raulrod16124/cachiplunca/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-```text
-Registro/Login → Crear workspace → Invitar personas → Canvas vacío
-  → Añadir y organizar elementos → Colaborar en tiempo real → Plan compartido
-```
+Cachiplunca is a collaborative visual workspace for small teams. It gives a group
+an infinite canvas to collect information, organize it visually and turn it into a
+shared plan — without switching between a whiteboard, a task tracker and a
+presentation tool.
 
-El MVP incluye:
+It is a web application, not a library or an SDK.
 
-- Autenticación email/password (Firebase Auth) y sesiones anónimas para enlaces guest de solo lectura.
-- Workspaces con roles **Owner / Editor / Viewer** e invitaciones por email.
-- Canvas infinito con pan, zoom, selección simple y múltiple, marquee y grid.
-- Seis tipos de elementos: **Text, Note, Task, Frame, Connector y Link** (crear, mover, redimensionar, eliminar, duplicar, copy/paste).
-- Undo/redo, atajos de teclado y autosave con recuperación tras refresh.
-- Realtime, presencia, cursores remotos y reconexión (last-write-wins, sin CRDT).
-- Firebase Security Rules como autorización efectiva (la UI solo refleja permisos).
+## What it solves
 
-## Stack y arquitectura
+- **Brainstorming and workshops.** Capture notes, links and images freely, then
+  group and connect ideas on an infinite canvas.
+- **Retrospectives and project kickoffs.** Start from a template instead of an
+  empty board.
+- **Visual planning.** Organize work in frames, convert notes into tasks and read
+  the plan as a list or a kanban board.
+- **Lightweight collaboration.** Invite teammates with clear roles, work in real
+  time and comment directly on elements.
+- **Sharing without friction.** Publish a read-only link for stakeholders or
+  present frames directly from the board.
 
-| Área     | Tecnología                                   |
-| -------- | -------------------------------------------- |
-| Runtime  | Node 22 (`.nvmrc`)                           |
-| Lenguaje | TypeScript strict                            |
-| UI       | React 19 · styled-components · `@raulrod/ui` |
-| Backend  | Firebase (Auth + Firestore)                  |
-| Build    | Vite                                         |
-| Tests    | Jest (unit/integration, rules, perf)         |
-| Calidad  | Oxlint (sin ESLint) · Prettier               |
+## What you can do
 
-Arquitectura **Clean + Hexagonal** con dependencias dirigidas hacia dentro:
+### Canvas
 
-```text
-Presentation  →  Application  →  Domain
-Infrastructure →  Application ports  →  Domain
-```
+- Infinite canvas with pan, zoom, grid, marquee selection and multi-selection.
+- Seven element types: **text, note, task, frame, connector, link and image**.
+- Rich-text editing, note colors, free connectors and image uploads.
+- Alignment and distribution tools, z-order controls, duplicate and copy/paste.
+- Undo/redo, keyboard shortcuts and autosave with recovery after refresh.
 
-- `src/domain` — entidades, value objects e invariantes. Sin React, Firebase, styled-components ni APIs del navegador.
-- `src/application` — casos de uso, comandos, stores y ports. Sin implementaciones concretas.
-- `src/infrastructure` — adapters de Firebase (repositorios, realtime, presence, crypto).
-- `src/presentation` — componentes React, canvas, hooks y estilos. Nunca importa Firebase.
-- `src/app` — composición: config de servicios, rutas y entrypoint.
+### Collaboration
 
-Las fronteras de capas están vigiladas por un gate ejecutable en `npm test`
-(`src/test/unit/architecture/layer-boundaries.test.ts`). El detalle está en la
-[auditoría de arquitectura](docs/audits/architecture-audit.md) y en
-[ADR-0030](docs/adr/0030-architecture-boundaries.md).
+- Realtime element updates, presence, remote cursors and reconnect handling.
+- Roles: **Owner**, **Editor** and **Viewer**.
+- Email invitations, email verification and pending-invitation notifications.
+- Element comments with unresolved indicators.
+- Read-only guest links backed by anonymous sessions.
 
-## Puesta en marcha
+### Planning and delivery
 
-Prerrequisitos:
+- Task plan derived from the board, with list and kanban views.
+- Create tasks from notes and frames; assign owners and due dates.
+- Workspace templates: blank, retrospective, project kickoff and brainstorming.
+- Board presentation mode that walks through frames.
+- Export to JSON or PDF.
 
-- **Node 22** (`nvm use` para respetar `.nvmrc`).
-- Un proyecto de Firebase con **Email/Password** y **Anonymous** habilitados en Authentication. Para enlaces guest, configura la eliminación automática de cuentas anónimas a los 30 días.
-- Java (solo necesario para `npm run test:rules`, que usa el emulador de Firestore).
+### Everyday usability
 
-Pasos:
+- Command palette (`Ctrl/Cmd + K`) for actions, workspaces and board elements.
+- Local session/focus timer.
+- English and Spanish UI, with system, light and dark themes.
+- Configurable font size and reduced motion.
+- Keyboard-first navigation and accessible labels throughout the canvas.
 
-```bash
-npm install
-cp .env.example .env.local   # rellena la config web de tu proyecto Firebase
-npm run dev
-```
+## How it is built
 
-Variables en `.env.local` (config web de Firebase, _Project settings → Your apps_):
+Cachiplunca follows **Clean Architecture + Hexagonal Architecture**. The UI and
+infrastructure depend on application contracts; the domain is independent of
+React, Firebase and browser APIs.
 
 ```text
-VITE_FIREBASE_API_KEY=
-VITE_FIREBASE_AUTH_DOMAIN=
-VITE_FIREBASE_PROJECT_ID=
-VITE_FIREBASE_STORAGE_BUCKET=
-VITE_FIREBASE_MESSAGING_SENDER_ID=
-VITE_FIREBASE_APP_ID=
-VITE_FIREBASE_MEASUREMENT_ID=
+Presentation ──► Application ──► Domain
+       │               ▲
+       │               │
+       └──────────► Shared ◄──────────┐
+                                      │
+Infrastructure ──► Application ports ─┘
+
+app/ composes every layer and is never imported by them.
 ```
 
-Las Security Rules se despliegan contra el proyecto seleccionado en `.firebaserc` (`cachiplunca-dev`):
+| Layer                | Contents                                                                                    |
+| -------------------- | ------------------------------------------------------------------------------------------- |
+| `src/domain`         | Entities, value objects and invariants: workspaces, elements, memberships, invitations.     |
+| `src/application`    | Commands, queries, ports, stores and pure services for canvas, persistence, realtime, plan. |
+| `src/infrastructure` | Firebase adapters (Auth, Firestore, Storage, presence), browser adapters and crypto.        |
+| `src/presentation`   | React components, canvas, feature UI, hooks, i18n, theme and styles.                        |
+| `src/app`            | Composition root: service factories, providers and routes.                                  |
+| `src/shared`         | Cross-cutting types, errors and small pure utilities.                                       |
 
-```bash
-npm run deploy:rules
-```
+Key architectural choices:
 
-> El despliegue de las rules es manual y debe repetirse cada vez que cambie
-> `firestore.rules`. Si el frontend se despliega con rules antiguas, los usuarios
-> invitados pueden ver un tablero en la lista pero recibir `permission-denied` al
-> abrirlo.
+- **Ports and adapters** isolate Firebase from the application and make use cases
+  testable with in-memory fakes.
+- **Optimistic canvas edits** are persisted through a debounced batcher and
+  reconciled with remote changes. Failed mutations roll back.
+- **Last-write-wins collaboration**, not CRDT; the board remains the single source
+  of truth for tasks and plan views.
+- **Firestore Security Rules are the authorization boundary.** Frontend guards only
+  reflect permissions early.
+- **Viewport culling and memoized rendering** keep large boards responsive, with
+  executable performance budgets.
 
-## Scripts
+Read [Architecture](docs/architecture.md) for the full dependency rules and
+[ADRs](docs/adr/) for the decisions behind them.
 
-| Script                 | Descripción                                                      |
-| ---------------------- | ---------------------------------------------------------------- |
-| `npm run dev`          | Servidor de desarrollo con HMR                                   |
-| `npm run build`        | typecheck (`tsc -b`) + build de producción                       |
-| `npm run preview`      | Vista previa del build                                           |
-| `npm run lint`         | Oxlint                                                           |
-| `npm run lint:fix`     | Oxlint con auto-fix                                              |
-| `npm run format`       | Prettier --write                                                 |
-| `npm run format:check` | Prettier --check                                                 |
-| `npm test`             | Suite unitaria/integración (Jest, `--runInBand`)                 |
-| `npm run test:rules`   | Tests de Firebase Security Rules contra el emulador de Firestore |
-| `npm run deploy:rules` | Despliega `firestore.rules` al proyecto Firebase configurado     |
-| `npm run perf`         | Medición + regression budgets de rendimiento del canvas          |
-| `npm run perf:dev`     | App de rendimiento en modo desarrollo (`perf.html`)              |
+## Stack
 
-## Testing
+| Area     | Technology                                                        |
+| -------- | ----------------------------------------------------------------- |
+| Runtime  | Node 22                                                           |
+| Language | TypeScript strict                                                 |
+| UI       | React 19 · styled-components · `@raulrod/ui` · TipTap             |
+| Backend  | Firebase Auth · Cloud Firestore · Firebase Storage                |
+| Build    | Vite                                                              |
+| Tests    | Jest · Testing Library · Firebase emulators · Playwright          |
+| Quality  | Oxlint · Prettier · executable architecture gate · GitHub Actions |
 
-- **Unit/integration** (`npm test`): dominio, application, presentation (jsdom + Testing Library), fronteras de arquitectura y presupuestos estructurales de render. Fakes de ports en `src/test/fixtures/`.
-- **Security Rules** (`npm run test:rules`): `@firebase/rules-unit-testing` sobre el emulador de Firestore con proyecto demo `demo-cachiplunca` (no toca recursos reales).
-- **Rendimiento** (`npm run perf`): línea base y regression budgets del canvas a 10.000 elementos. Detalle en [`docs/performance/`](docs/performance/).
-
-## Estructura
-
-```text
-src/
-├── app/             # composición: config de servicios, rutas, App.tsx
-├── domain/          # entidades, value objects, invariantes
-├── application/     # comandos, queries, services, ports
-├── infrastructure/  # adapters Firebase (repos, realtime, presence)
-├── presentation/    # componentes, features, hooks, canvas, estilos
-├── shared/          # utils, types, constants, errors
-└── test/            # unit/, integration/, contract/, rules/, perf/, fixtures/
-```
-
-## Documentación
-
-| Documento                                              | Contenido                                                  |
-| ------------------------------------------------------ | ---------------------------------------------------------- |
-| [`AGENTS.md`](AGENTS.md)                               | Reglas de ingeniería y convenciones del repo               |
-| [`docs/mvp-backlog.md`](docs/mvp-backlog.md)           | Backlog operativo del MVP (fuente de verdad)               |
-| [`docs/post-mvp-backlog.md`](docs/post-mvp-backlog.md) | Mini Jira post-MVP: tareas por sesión y quick wins         |
-| [`docs/adr/`](docs/adr/)                               | Architecture Decision Records + session log                |
-| [`docs/audits/`](docs/audits/)                         | Auditorías: errores, seguridad, dependencias, arquitectura |
-| [`docs/performance/`](docs/performance/)               | Línea base, optimización y regression de rendimiento       |
-
-## Quality gates
+## Quality
 
 ```bash
 npm run lint
 npm run format:check
 npx tsc -b --noEmit
 npm test
+npm run test:rules
+npm run test:e2e
 npm run build
 ```
 
-## Licencia
+The repository includes unit, contract, integration, Security Rules, end-to-end
+and performance suites. CI runs the quality gates, rules tests and production
+dependency audit; merging to `main` deploys the app to GitHub Pages.
+
+## Where to use it
+
+- **Hosted app:** [raulrod16124.github.io/cachiplunca](https://raulrod16124.github.io/cachiplunca/)
+  (deployed from `main` through GitHub Pages).
+- **Source:** [github.com/raulrod16124/cachiplunca](https://github.com/raulrod16124/cachiplunca).
+  The MIT license allows self-hosting with your own Firebase project.
+- **Browser support:** desktop-first. The automated end-to-end suite runs on
+  Chromium; mobile layouts are not a current target.
+
+## Documentation
+
+| Document                                       | Content                                                   |
+| ---------------------------------------------- | --------------------------------------------------------- |
+| [`docs/architecture.md`](docs/architecture.md) | Layers, dependency rules, patterns and enforcement.       |
+| [`docs/adr/`](docs/adr/)                       | Architecture Decision Records and their rationale.        |
+| [`docs/performance/`](docs/performance/)       | Canvas performance strategy, budgets and how to run them. |
+| [`AGENTS.md`](AGENTS.md)                       | Engineering conventions for contributors and agents.      |
+
+## License
 
 [MIT](LICENSE) © Raúl Rodríguez

@@ -85,6 +85,7 @@ function AppContent({
             inviteMember={invitationServices.inviteMember}
             listPendingInvitations={invitationServices.listPendingInvitations}
             listPendingInvitationsForUser={invitationServices.listPendingInvitationsForUser}
+            watchPendingInvitationsForUser={invitationServices.watchPendingInvitationsForUser}
             acceptInvitation={invitationServices.acceptInvitation}
             acceptInvitationById={invitationServices.acceptInvitationById}
             listWorkspaceMembers={workspaceServices.listWorkspaceMembers}

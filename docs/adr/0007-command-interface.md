@@ -2,7 +2,6 @@
 
 **Fecha:** 2026-10-11
 **Estado:** Aceptado
-**Tarea:** TASK-063 — Command interface (`docs/mvp-backlog.md`)
 
 ## Contexto
 

@@ -2,7 +2,6 @@
 
 **Fecha:** 2026-10-20
 **Estado:** Aceptado
-**Tarea:** PBL-008 — Command palette (Cmd/Ctrl + K) (`docs/post-mvp-backlog.md`)
 
 ## Contexto
 

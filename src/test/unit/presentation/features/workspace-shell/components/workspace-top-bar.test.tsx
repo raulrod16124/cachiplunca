@@ -288,6 +288,56 @@ describe('WorkspaceTopBar', () => {
     );
   });
 
+  it('starts the presentation when frames are available', () => {
+    const onPresent = jest.fn();
+
+    render(
+      <WorkspaceTopBar
+        workspace={WORKSPACE}
+        role="editor"
+        onBack={jest.fn()}
+        syncStatus="idle"
+        connectionStatus="connected"
+        connectedUsers={[]}
+        currentUser={CURRENT_USER}
+        logoutUser={LOGOUT_USER}
+        onPresent={onPresent}
+        canPresent
+        persistenceErrorMessage={null}
+        collaborationErrorMessage={null}
+        creationErrorMessage={null}
+      />,
+    );
+
+    const present = screen.getByRole('button', { name: 'Present' });
+    expect(present).toBeEnabled();
+
+    fireEvent.click(present);
+    expect(onPresent).toHaveBeenCalledTimes(1);
+  });
+
+  it('disables the presentation when the board has no frames', () => {
+    render(
+      <WorkspaceTopBar
+        workspace={WORKSPACE}
+        role="editor"
+        onBack={jest.fn()}
+        syncStatus="idle"
+        connectionStatus="connected"
+        connectedUsers={[]}
+        currentUser={CURRENT_USER}
+        logoutUser={LOGOUT_USER}
+        onPresent={jest.fn()}
+        canPresent={false}
+        persistenceErrorMessage={null}
+        collaborationErrorMessage={null}
+        creationErrorMessage={null}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Present' })).toBeDisabled();
+  });
+
   it('opens the keyboard shortcuts help from the top bar', () => {
     const onShowShortcuts = jest.fn();
     render(

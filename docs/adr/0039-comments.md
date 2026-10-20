@@ -2,7 +2,6 @@
 
 **Fecha:** 2026-10-20
 **Estado:** Aceptado
-**Tarea:** PBL-013 — Comentarios MVP (`docs/post-mvp-backlog.md`)
 
 ## Contexto
 

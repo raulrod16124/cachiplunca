@@ -2,12 +2,11 @@
 
 **Fecha:** 2026-10-15
 **Estado:** Aceptado
-**Tarea:** TASK-122 — Architecture audit (`docs/mvp-backlog.md`)
 
 ## Contexto
 
-TASK-122 audita que la implementación respeta Clean/Hexagonal. El informe completo
-está en `docs/audits/architecture-audit.md`. Dos decisiones quedaron abiertas:
+TASK-122 audita que la implementación respeta Clean/Hexagonal. La visión vigente de
+la arquitectura está en `docs/architecture.md`. Dos decisiones quedaron abiertas:
 
 1. Las reglas de frontera (Domain sin React/Firebase/DOM, Application sin
    implementaciones concretas, Presentation sin Firebase/Infrastructure, `app/` como

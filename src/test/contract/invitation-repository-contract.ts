@@ -91,6 +91,26 @@ export function describeInvitationRepositoryContract(
       expect(listed[0].id.equals(pending.id)).toBe(true);
     });
 
+    it('watches pending invitations for the authenticated email', async () => {
+      const pending = makeInvitation();
+      const otherEmail = makeInvitation({
+        id: InvitationId.create('inv-2'),
+        email: 'other@example.com',
+        tokenHash: 'hash-2',
+      });
+      await repository.create(pending);
+      await repository.create(otherEmail);
+
+      const listener = jest.fn();
+      const unsubscribe = repository.watchPendingByEmail('  INVITEE@example.com ', listener);
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      const [invitations] = listener.mock.calls[0] as [readonly Invitation[]];
+      expect(invitations.map((invitation) => invitation.id.value)).toEqual(['inv-1']);
+
+      unsubscribe();
+    });
+
     it('lists only pending invitations of a workspace', async () => {
       const pending = makeInvitation();
       const otherWorkspace = makeInvitation({

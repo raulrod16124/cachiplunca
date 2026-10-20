@@ -2,7 +2,6 @@
 
 **Fecha:** 2026-10-13
 **Estado:** Aceptado
-**Tarea:** TASK-093 — Invitation UI (`docs/mvp-backlog.md`)
 
 ## Contexto
 

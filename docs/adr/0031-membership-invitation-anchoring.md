@@ -2,12 +2,11 @@
 
 **Fecha:** 2026-10-15
 **Estado:** Aceptado
-**Tarea:** TASK-126 — Cerrar escalada por self-join de membership (`docs/mvp-backlog.md`)
 
 ## Contexto
 
-El audit de seguridad (ADR-0028, `docs/audits/security-audit.md`) identificó dos
-vulnerabilidades críticas en la frontera de autorización:
+El audit de seguridad (ADR-0028) identificó dos vulnerabilidades críticas en la
+frontera de autorización:
 
 - **F1 (Critical):** `memberships.create` permitía self-join con rol arbitrario.
   Cualquier usuario autenticado podía crear `memberships/{ws}_{uid}` con

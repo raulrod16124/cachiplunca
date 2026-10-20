@@ -28,6 +28,38 @@ describe('AppShell', () => {
     expect(screen.getByText('Content')).toBeInTheDocument();
   });
 
+  it('shows the pending invitations badge with an accessible count', () => {
+    render(
+      <AppShell
+        currentUser={CURRENT_USER}
+        logoutUser={logoutUser}
+        onCreateWorkspace={jest.fn()}
+        pendingInvitationCount={2}
+      >
+        <p>Content</p>
+      </AppShell>,
+    );
+
+    expect(screen.getByRole('link', { name: /Invitations, 2 pending/i })).toBeInTheDocument();
+    expect(screen.getByText('2')).toBeInTheDocument();
+  });
+
+  it('hides the pending invitations badge when the count is zero', () => {
+    render(
+      <AppShell
+        currentUser={CURRENT_USER}
+        logoutUser={logoutUser}
+        onCreateWorkspace={jest.fn()}
+        pendingInvitationCount={0}
+      >
+        <p>Content</p>
+      </AppShell>,
+    );
+
+    expect(screen.getByRole('link', { name: 'Invitations' })).toBeInTheDocument();
+    expect(screen.queryByText(/pending invitations/i)).not.toBeInTheDocument();
+  });
+
   it('forwards the new workspace action', () => {
     const onCreateWorkspace = jest.fn();
     render(

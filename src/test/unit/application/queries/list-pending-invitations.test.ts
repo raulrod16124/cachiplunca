@@ -108,6 +108,7 @@ describe('createListPendingInvitations', () => {
         throw error;
       },
       listPendingByEmail: async () => [],
+      watchPendingByEmail: () => () => undefined,
       updateStatus: async () => {
         throw new Error('not used');
       },
