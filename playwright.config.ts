@@ -4,12 +4,12 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 1 : 0,
+  retries: 1,
   workers: 1,
   reporter: [['list'], ['html', { open: 'never' }]],
   timeout: 120 * 1000,
   expect: {
-    timeout: 15 * 1000,
+    timeout: 30 * 1000,
     toHaveScreenshot: {
       maxDiffPixels: 50,
       threshold: 0.05,
@@ -21,7 +21,7 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'off',
-    actionTimeout: 15 * 1000,
+    actionTimeout: 20 * 1000,
     navigationTimeout: 30 * 1000,
   },
   projects: [

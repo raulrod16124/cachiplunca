@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { registerUser } from './helpers/auth';
-import { addElement, createWorkspace } from './helpers/workspace';
+import { addElement, createWorkspace, waitForBoardSaved } from './helpers/workspace';
 
 test.describe('Board (MVP happy path)', () => {
   test('owner gets a board with a usable toolbar and can add elements', async ({ page }) => {
@@ -113,7 +113,7 @@ test.describe('Board (MVP happy path)', () => {
     await page.keyboard.press('Control+Shift+z');
     await expect(note).toHaveAttribute('style', colorStyle);
 
-    await page.waitForTimeout(1000);
+    await waitForBoardSaved(page);
     await page.reload();
     await expect(canvas).toBeVisible({ timeout: 20000 });
 

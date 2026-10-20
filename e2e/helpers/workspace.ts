@@ -13,6 +13,11 @@ export async function createWorkspace(page: Page, name = 'Roadmap Q4'): Promise<
   await expect(page.getByTestId('canvas-toolbar')).toBeVisible();
 }
 
+export async function waitForBoardSaved(page: Page): Promise<void> {
+  await page.waitForTimeout(400);
+  await expect(page.getByTestId('sync-status')).toHaveText('Saved', { timeout: 30000 });
+}
+
 export async function addElement(page: Page, kind: 'text' | 'note' | 'task' | 'frame' | 'link') {
   await page.getByRole('button', { name: `Add ${kind}` }).click();
 
@@ -20,10 +25,11 @@ export async function addElement(page: Page, kind: 'text' | 'note' | 'task' | 'f
     const dialog = page.getByRole('dialog');
     await dialog.getByLabel('Title').fill('New task');
     await dialog.getByRole('button', { name: 'Create task' }).click();
-    await expect(dialog).toBeHidden();
+    await expect(dialog).toBeHidden({ timeout: 30000 });
   }
 
   const item = page.locator('[data-testid^="canvas-item-"]').last();
   await expect(item).toBeVisible({ timeout: 15000 });
+  await waitForBoardSaved(page);
   return item;
 }

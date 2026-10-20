@@ -52,7 +52,7 @@ export interface SyncStatusIndicatorProps {
 export function SyncStatusIndicator({ status }: SyncStatusIndicatorProps): ReactNode {
   const Icon = status.icon === 'spinner' ? SpinnerIcon : StyledIcon;
   return (
-    <span role="status" aria-live="polite">
+    <span role="status" aria-live="polite" data-testid="sync-status">
       <Tooltip content={status.label} placement="bottom">
         <Icon $icon={status.icon}>{renderIcon(status.icon)}</Icon>
       </Tooltip>
