@@ -8,6 +8,7 @@ import type { Workspace } from '../../../../domain/workspace';
 import { EmptyState } from '../../../components/empty-state';
 import { ErrorState } from '../../../components/error-state';
 import { LoadingState } from '../../../components/loading-state';
+import { DecorativeSpark } from '../../../components/decorative';
 import { formatRelativeDate, useI18n } from '../../../i18n';
 
 const ListGrid = styled.div`
@@ -189,6 +190,9 @@ export function WorkspacesList({
           description={t('workspaces.empty.description')}
           actionLabel={t('workspaces.empty.action')}
           onAction={onCreate}
+          illustration={<DecorativeSpark color="orange-500" size="lg" />}
+          tone="brand"
+          titleVariant="display"
         />
       </CardShell>
     );

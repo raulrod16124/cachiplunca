@@ -70,6 +70,7 @@ describe('WorkspacesList', () => {
     render(<WorkspacesList status="success" workspaces={[]} {...baseProps} />);
 
     expect(screen.getByRole('heading', { name: /no workspaces yet/i })).toBeInTheDocument();
+    expect(screen.getByTestId('state-illustration')).toBeInTheDocument();
     expect(
       screen.getByText(/create your first workspace to start organizing ideas together/i),
     ).toBeInTheDocument();

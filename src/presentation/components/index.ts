@@ -5,6 +5,7 @@ export { ErrorState } from './error-state';
 export type { ErrorStateProps } from './error-state';
 export { EmptyState } from './empty-state';
 export type { EmptyStateProps } from './empty-state';
+export type { StateTitleVariant, StateTone } from './state-shared';
 export { Card } from './card';
 export type { CardProps, SurfacePadding, SurfaceVariant } from './card';
 export { Panel } from './panel';
