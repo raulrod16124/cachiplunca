@@ -16,6 +16,7 @@ import type {
   RemoveMember,
 } from '../../../../application/commands';
 import type { ListPendingInvitations, ListWorkspaceMembers } from '../../../../application/queries';
+import type { GuestLinkServices } from '../../../../application/guest-link-services';
 import type { Membership, MembershipRole } from '../../../../domain/membership';
 import { UserId, WorkspaceId } from '../../../../domain/shared';
 import { toAppError } from '../../../../shared/errors';
@@ -27,10 +28,12 @@ import {
   describeRemoveMemberError,
 } from '../share-error-messages';
 import { MembersList, type MembersStatus } from './members-list';
+import { GuestLinkPanel } from './guest-link-panel';
 import { localizeMessage, useI18n } from '../../../i18n';
 
 const INVITE_TAB = 'invite';
 const PEOPLE_TAB = 'people';
+const VIEW_LINK_TAB = 'view-link';
 
 export interface ShareDialogProps {
   readonly open: boolean;
@@ -47,6 +50,8 @@ export interface ShareDialogProps {
   readonly removeMember?: RemoveMember;
   readonly inviteMember?: InviteMember;
   readonly listPendingInvitations?: ListPendingInvitations;
+  readonly guestLinks?: GuestLinkServices;
+  readonly canManageGuestLinks?: boolean;
   readonly onLeft: () => void;
 }
 
@@ -65,11 +70,14 @@ export function ShareDialog({
   removeMember,
   inviteMember,
   listPendingInvitations,
+  guestLinks,
+  canManageGuestLinks = false,
   onLeft,
 }: ShareDialogProps): ReactNode {
   const { t } = useI18n();
   const canShowInvite =
     canInvite && inviteMember !== undefined && listPendingInvitations !== undefined;
+  const canShowGuestLink = canManageGuestLinks && guestLinks !== undefined;
   const defaultTab = canShowInvite ? INVITE_TAB : PEOPLE_TAB;
 
   const [tab, setTab] = useState<string>(defaultTab);
@@ -200,6 +208,9 @@ export function ShareDialog({
               <Tabs.Trigger value={INVITE_TAB}>{t('share.tabs.invite')}</Tabs.Trigger>
             ) : null}
             <Tabs.Trigger value={PEOPLE_TAB}>{t('share.tabs.people')}</Tabs.Trigger>
+            {canShowGuestLink ? (
+              <Tabs.Trigger value={VIEW_LINK_TAB}>{t('share.tabs.viewLink')}</Tabs.Trigger>
+            ) : null}
           </Tabs.List>
           {canShowInvite && inviteMember !== undefined && listPendingInvitations !== undefined ? (
             <Tabs.Panel value={INVITE_TAB}>
@@ -232,6 +243,16 @@ export function ShareDialog({
               />
             </Stack>
           </Tabs.Panel>
+          {canShowGuestLink && guestLinks !== undefined ? (
+            <Tabs.Panel value={VIEW_LINK_TAB}>
+              <GuestLinkPanel
+                active={open && tab === VIEW_LINK_TAB}
+                workspaceId={workspaceId}
+                currentUserId={currentUserId}
+                services={guestLinks}
+              />
+            </Tabs.Panel>
+          ) : null}
         </Tabs>
       </DialogContent>
     </Dialog>

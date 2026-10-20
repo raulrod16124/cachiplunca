@@ -13,6 +13,9 @@ import {
   createChangeMemberRole,
   createCreateOwnerMembership,
   createCreateWorkspaceWithOwner,
+  createCreateGuestLink,
+  createOpenGuestWorkspace,
+  createRevokeGuestLink,
   createDeleteWorkspace,
   createDuplicateWorkspace,
   createInviteMember,
@@ -31,6 +34,7 @@ import {
   createListPendingInvitationsForUser,
   createListComments,
   createListWorkspaceComments,
+  createListActiveGuestLinks,
   createListWorkspaceMembers,
   createListWorkspaces,
   createLoadWorkspaceElements,
@@ -53,11 +57,13 @@ import { FakePresencePort } from '../fixtures/fake-presence-port';
 import { FakeRealtimePort } from '../fixtures/fake-realtime-port';
 import { FakeWorkspaceRepository } from '../fixtures/fake-workspace-repository';
 import { FakeInvitationRepository } from '../fixtures/fake-invitation-repository';
+import { FakeGuestLinkRepository } from '../fixtures/fake-guest-link-repository';
 import {
   createFakeImageStoragePort,
   type FakeImageStoragePort,
 } from '../fixtures/fake-image-storage-port';
 import { hashInvitationToken } from '../../infrastructure/crypto/invitation-token';
+import { hashGuestLinkToken } from '../../infrastructure/crypto/guest-link-token';
 import { InvitationId } from '../../domain/shared';
 
 export const DEFAULT_CREDENTIALS: AuthCredentials = {
@@ -108,6 +114,7 @@ export interface AppHarness {
   readonly presencePort: FakePresencePort;
   readonly invitationRepository: FakeInvitationRepository;
   readonly imageStoragePort: FakeImageStoragePort;
+  readonly guestLinkRepository: FakeGuestLinkRepository;
   readonly services: AppRoutesProps;
   readonly currentUser: AuthUser | null;
   register(credentials?: AuthCredentials): Promise<AuthUser>;
@@ -130,6 +137,7 @@ export function createAppHarness(): AppHarness {
   const presencePort = new FakePresencePort();
   const invitationRepository = new FakeInvitationRepository();
   const imageStoragePort = createFakeImageStoragePort();
+  const guestLinkRepository = new FakeGuestLinkRepository();
 
   let elementSequence = 0;
   let currentUser: AuthUser | null = null;
@@ -217,6 +225,28 @@ export function createAppHarness(): AppHarness {
         generateImageId: () => `image-${++elementSequence}`,
       }),
     },
+    guestLinks: {
+      createGuestLink: createCreateGuestLink({
+        guestLinkRepository,
+        membershipRepository,
+        issueToken: async () => {
+          const token = `guest-token-${++elementSequence}`;
+          return { token, tokenHash: await hashGuestLinkToken(token) };
+        },
+      }),
+      revokeGuestLink: createRevokeGuestLink({ guestLinkRepository, membershipRepository }),
+      listActiveGuestLinks: createListActiveGuestLinks({
+        guestLinkRepository,
+        membershipRepository,
+      }),
+      openGuestWorkspace: createOpenGuestWorkspace({
+        guestLinkRepository,
+        hashToken: hashGuestLinkToken,
+        signInAnonymously: () => authPort.signInAnonymously(),
+        getWorkspace: createGetWorkspace(workspaceRepository),
+        loadWorkspaceElements: createLoadWorkspaceElements(elementRepository),
+      }),
+    },
   };
 
   return {
@@ -229,6 +259,7 @@ export function createAppHarness(): AppHarness {
     presencePort,
     invitationRepository,
     imageStoragePort,
+    guestLinkRepository,
     services,
     get currentUser(): AuthUser | null {
       return currentUser;

@@ -101,7 +101,7 @@ Definition of Done:
 | PBL-013 | Comentarios MVP                              | R2      | P0        | L        | PBL-001        | No  | DONE   |
 | PBL-014 | Temporizador de sesión local                 | R3      | P2        | S        | —              | Sí  | DONE   |
 | PBL-015 | Imágenes                                     | R3      | P1        | L        | PBL-001        | No  | DONE   |
-| PBL-016 | Enlace guest de solo lectura                 | R3      | P1        | L        | PBL-001        | No  | TODO   |
+| PBL-016 | Enlace guest de solo lectura                 | R3      | P1        | L        | PBL-001        | No  | DONE   |
 | PBL-017 | Vista presentación por frames                | R3      | P2        | M        | PBL-009        | No  | TODO   |
 | PBL-018 | Notificaciones in-app                        | R3      | P2        | S        | —              | Sí  | TODO   |
 
@@ -703,7 +703,7 @@ Cerrar el gap de contenido visual del tablero.
 
 ### PBL-016 — Enlace guest de solo lectura
 
-**Priority:** P1 · **Effort:** L · **Depends:** PBL-001 · **Status:** TODO
+**Priority:** P1 · **Effort:** L · **Depends:** PBL-001 · **Status:** DONE
 
 #### Objetivo
 
@@ -711,19 +711,19 @@ Reducir la fricción para compartir un plan con personas externas sin darles edi
 
 #### Fases
 
-- [ ] **a. Domain/Application:** modelo de enlace con token no adivinable, workspace, rol de solo lectura y estado activo/revocado; casos de uso crear/revocar.
-- [ ] **b. Infrastructure:** persistencia Firestore y mapper.
-- [ ] **c. Rules:** lectura de workspace y elementos solo con token válido; tests.
-- [ ] **d. Presentation:** acción "Copy view link" en el share dialog, modo de solo lectura y estado de enlace revocado.
-- [ ] **e. E2E:** abrir enlace en sesión anónima y verificar que no se puede editar.
+- [x] **a. Domain/Application:** modelo de enlace con token no adivinable, workspace, rol de solo lectura y estado activo/revocado; casos de uso crear/revocar.
+- [x] **b. Infrastructure:** persistencia Firestore y mapper.
+- [x] **c. Rules:** lectura de workspace y elementos solo con token válido; tests.
+- [x] **d. Presentation:** acción "Copy view link" en el share dialog, modo de solo lectura y estado de enlace revocado.
+- [x] **e. E2E:** abrir enlace en sesión anónima y verificar que no se puede editar.
 
 #### Criterios de aceptación
 
-- [ ] El enlace no permite editar ni acceder a miembros, invitaciones o comentarios.
-- [ ] El owner puede revocarlo y deja de funcionar de inmediato.
-- [ ] El token no se deduce del workspaceId.
-- [ ] Rules tests cubren acceso válido, revocado y manipulado.
-- [ ] Quality gates en verde.
+- [x] El enlace no permite editar ni acceder a miembros, invitaciones o comentarios.
+- [x] El owner puede revocarlo y deja de funcionar de inmediato.
+- [x] El token no se deduce del workspaceId.
+- [x] Rules tests cubren acceso válido, revocado y manipulado.
+- [x] Quality gates en verde.
 
 #### Fuera de alcance
 
@@ -734,7 +734,9 @@ Reducir la fricción para compartir un plan con personas externas sin darles edi
 
 - No implementar hasta que PBL-001 esté cerrado.
 - La autorización vive en rules; la UI solo refleja el modo lectura.
-- Revisar impacto en `ListWorkspaces` y navegación.
+- Implementado con `GuestLink` en Domain, `GuestLinkRepository` y casos de uso crear/revocar/listar/abrir en Application, y persistencia en `guest_links/{tokenHash}` + `guest_sessions/{uid}`. El token de 256 bits solo se muestra una vez; se guarda su hash SHA-256.
+- El guest usa autenticación anónima de Firebase (limpieza de cuentas a los 30 días) para que las rules puedan autorizar lecturas reales de `workspaces`, `elements` e imágenes sin copiar el tablero. `/view/:token` vive fuera de `RequireAuth` y monta un Canvas aislado en solo lectura.
+- Las rules permiten `get` del enlace por id no adivinable, reservan el listado a miembros y limitan create/revoke al owner; revocar invalida el acceso inmediatamente. Ver ADR-0041.
 
 ---
 
@@ -834,6 +836,7 @@ Añadir una línea por sesión. El detalle técnico extenso sigue viviendo en `d
 | 2026-10-20 | PBL-014 | DONE      | Temporizador local en la top bar: presets 1/3/5/10 min, reducer puro con `endsAt`, controles iniciar/pausar/reanudar/reiniciar, tiempo accesible sin interrupciones y diálogo central al finalizar con opción de reiniciar; estado aislado sin Firestore, i18n en/es, unit con fake timers, integración y E2E.   |
 
 | 2026-10-20 | PBL-015 | DONE | Imágenes: `ImageElement` con `src`/`alt`, puerto y caso de uso de subida con validación de tipo y 5 MB, adapter Firebase Storage, `storage.rules` por membership y validación en `firestore.rules`, renderer, selector en toolbar, editor de descripción, búsqueda/export, i18n en/es, unit, integración, rules y E2E. |
+| 2026-10-20 | PBL-016 | DONE | Enlace guest de solo lectura: `GuestLink` hasheado (SHA-256) con token de un solo uso, sesión anónima de Firebase, `guest_links` + `guest_sessions`, lectura guest de workspace/elementos/imágenes en rules, `/view/:token` read-only aislado, share dialog owner-only con crear/copiar/revocar, estados inválido/revocado, i18n en/es, unit, integración, rules y E2E. |
 
 ---
 

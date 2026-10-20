@@ -60,6 +60,18 @@ export class FakeAuthPort implements AuthPort {
     return stored.user;
   }
 
+  async signInAnonymously(): Promise<AuthUser> {
+    const user: AuthUser = {
+      uid: `fake-guest-${++this.#sequence}`,
+      email: null,
+      emailVerified: false,
+      displayName: null,
+    };
+
+    this.#setSession(user);
+    return user;
+  }
+
   async signOut(): Promise<void> {
     this.#setSession(null);
   }

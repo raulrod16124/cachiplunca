@@ -14,5 +14,9 @@ export function RequireAuth(): ReactNode {
     return <Navigate to="/login" replace />;
   }
 
+  if (session.user.email === null) {
+    return <Navigate to="/login" replace />;
+  }
+
   return <Outlet />;
 }

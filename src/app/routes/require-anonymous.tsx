@@ -24,7 +24,7 @@ export function RequireAnonymous(): ReactNode {
     return <SessionLoading />;
   }
 
-  if (session.status === 'authenticated') {
+  if (session.status === 'authenticated' && session.user.email !== null) {
     return <Navigate to={resolveRedirect(location.search) ?? '/workspaces'} replace />;
   }
 

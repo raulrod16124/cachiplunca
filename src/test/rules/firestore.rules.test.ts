@@ -46,6 +46,10 @@ const INVITEE_UID = 'invitee-user';
 const INVITEE_EMAIL = 'invitee@example.com';
 const OTHER_EMAIL = 'other@example.com';
 const CREATOR_UID = 'creator-user';
+const GUEST_UID = 'guest-user';
+const OTHER_GUEST_UID = 'other-guest-user';
+const GUEST_TOKEN_HASH = 'a'.repeat(64);
+const REVOKED_TOKEN_HASH = 'b'.repeat(64);
 
 const WS1 = 'ws1';
 const WS2 = 'ws2';
@@ -158,6 +162,26 @@ function invitationData(
   };
 }
 
+function guestLinkData(workspaceId: string, createdBy: string, revokedAt: Date | null = null) {
+  return {
+    workspaceId,
+    role: 'viewer',
+    createdBy,
+    createdAt: now,
+    updatedAt: revokedAt ?? now,
+    revokedAt,
+  };
+}
+
+function guestSessionData(userId: string, workspaceId: string, tokenHash = GUEST_TOKEN_HASH) {
+  return {
+    userId,
+    workspaceId,
+    tokenHash,
+    createdAt: now,
+  };
+}
+
 let testEnv: RulesTestEnvironment;
 
 beforeAll(async () => {
@@ -211,6 +235,12 @@ beforeEach(async () => {
       doc(db, 'invitations', 'inv1'),
       invitationData(WS1, ROLE_UIDS.owner, 'pending', INVITEE_EMAIL),
     );
+    await setDoc(doc(db, 'guest_links', GUEST_TOKEN_HASH), guestLinkData(WS1, ROLE_UIDS.owner));
+    await setDoc(
+      doc(db, 'guest_links', REVOKED_TOKEN_HASH),
+      guestLinkData(WS1, ROLE_UIDS.owner, new Date(now.getTime() + 60_000)),
+    );
+    await setDoc(doc(db, 'guest_sessions', GUEST_UID), guestSessionData(GUEST_UID, WS1));
   });
 });
 
@@ -228,6 +258,18 @@ function dbWithEmail(uid: string, email: string) {
 
 function dbWithUnverifiedEmail(uid: string, email: string) {
   return testEnv.authenticatedContext(uid, { email, email_verified: false }).firestore();
+}
+
+function guestDb(uid = GUEST_UID) {
+  return testEnv
+    .authenticatedContext(uid, { firebase: { sign_in_provider: 'anonymous' } })
+    .firestore();
+}
+
+function anonymousDb(uid: string) {
+  return testEnv
+    .authenticatedContext(uid, { firebase: { sign_in_provider: 'anonymous' } })
+    .firestore();
 }
 
 function unauthed(): RulesTestContext {
@@ -1318,6 +1360,164 @@ describe('firestore.rules — user_settings', () => {
     await assertFails(getDoc(doc(db, 'user_settings', ROLE_UIDS.owner)));
     await assertFails(
       setDoc(doc(db, 'user_settings', ROLE_UIDS.owner), userSettingsData(ROLE_UIDS.owner)),
+    );
+  });
+});
+
+describe('firestore.rules — guest links', () => {
+  test('the token hash acts as a capability: anyone can get it, but not list or write it', async () => {
+    await assertSucceeds(getDoc(doc(unauthed().firestore(), 'guest_links', GUEST_TOKEN_HASH)));
+    await assertFails(getDocs(collection(unauthed().firestore(), 'guest_links')));
+    await assertFails(
+      getDocs(
+        query(collection(dbOf(ROLE_UIDS.editor), 'guest_links'), where('workspaceId', '==', WS1)),
+      ),
+    );
+    await assertSucceeds(
+      getDocs(
+        query(collection(dbOf(ROLE_UIDS.owner), 'guest_links'), where('workspaceId', '==', WS1)),
+      ),
+    );
+    await assertFails(
+      setDoc(
+        doc(dbOf(OUTSIDER_UID), 'guest_links', 'c'.repeat(64)),
+        guestLinkData(WS1, OUTSIDER_UID),
+      ),
+    );
+  });
+
+  test('only the owner can create a valid viewer link', async () => {
+    const tokenHash = 'c'.repeat(64);
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.editor), 'guest_links', tokenHash),
+        guestLinkData(WS1, ROLE_UIDS.editor),
+      ),
+    );
+    await assertFails(
+      setDoc(doc(dbOf(ROLE_UIDS.owner), 'guest_links', tokenHash), {
+        ...guestLinkData(WS1, ROLE_UIDS.owner),
+        role: 'editor',
+      }),
+    );
+    await assertSucceeds(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.owner), 'guest_links', tokenHash),
+        guestLinkData(WS1, ROLE_UIDS.owner),
+      ),
+    );
+  });
+
+  test('only the owner can revoke a link and it cannot be un-revoked', async () => {
+    const revokedAt = new Date(now.getTime() + 120_000);
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.editor), 'guest_links', GUEST_TOKEN_HASH), {
+        revokedAt,
+        updatedAt: revokedAt,
+      }),
+    );
+    await assertSucceeds(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'guest_links', GUEST_TOKEN_HASH), {
+        revokedAt,
+        updatedAt: revokedAt,
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'guest_links', GUEST_TOKEN_HASH), {
+        revokedAt: null,
+        updatedAt: revokedAt,
+      }),
+    );
+  });
+
+  test('a guest session can only be created with an active link and the matching workspace', async () => {
+    await assertSucceeds(
+      setDoc(
+        doc(guestDb(OTHER_GUEST_UID), 'guest_sessions', OTHER_GUEST_UID),
+        guestSessionData(OTHER_GUEST_UID, WS1),
+      ),
+    );
+    await assertFails(
+      setDoc(
+        doc(guestDb(OTHER_GUEST_UID), 'guest_sessions', OTHER_GUEST_UID),
+        guestSessionData(OTHER_GUEST_UID, WS2),
+      ),
+    );
+    await assertFails(
+      setDoc(
+        doc(guestDb(OTHER_GUEST_UID), 'guest_sessions', OTHER_GUEST_UID),
+        guestSessionData(OTHER_GUEST_UID, WS1, REVOKED_TOKEN_HASH),
+      ),
+    );
+    await assertFails(
+      setDoc(
+        doc(guestDb(OTHER_GUEST_UID), 'guest_sessions', OTHER_GUEST_UID),
+        guestSessionData(OTHER_GUEST_UID, WS1, 'f'.repeat(64)),
+      ),
+    );
+    await assertFails(
+      setDoc(
+        doc(guestDb(OTHER_GUEST_UID), 'guest_sessions', GUEST_UID),
+        guestSessionData(OTHER_GUEST_UID, WS1),
+      ),
+    );
+  });
+
+  test('a valid guest session can read the linked workspace and its elements only', async () => {
+    const db = guestDb();
+    await assertSucceeds(getDoc(doc(db, 'workspaces', WS1)));
+    await assertSucceeds(getDoc(doc(db, 'elements', 'e1')));
+    await assertFails(getDoc(doc(db, 'workspaces', WS2)));
+    await assertFails(getDoc(doc(db, 'elements', 'e2')));
+    await assertFails(
+      setDoc(doc(db, 'elements', 'guest-write'), elementData(WS1, GUEST_UID, 'guest-write')),
+    );
+  });
+
+  test('guests cannot read memberships, invitations or comments', async () => {
+    const db = guestDb();
+    await assertFails(getDoc(doc(db, 'memberships', `${WS1}_${ROLE_UIDS.owner}`)));
+    await assertFails(getDoc(doc(db, 'invitations', 'inv1')));
+    await assertFails(getDoc(doc(db, 'workspaces', WS1, 'comments', 'c1')));
+  });
+
+  test('revoking the link or deleting the session immediately removes access', async () => {
+    const revokedAt = new Date(now.getTime() + 120_000);
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await updateDoc(doc(ctx.firestore(), 'guest_links', GUEST_TOKEN_HASH), {
+        revokedAt,
+        updatedAt: revokedAt,
+      });
+    });
+    await assertFails(getDoc(doc(guestDb(), 'workspaces', WS1)));
+    await assertFails(getDoc(doc(guestDb(), 'elements', 'e1')));
+
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), 'guest_sessions', GUEST_UID),
+        guestSessionData(GUEST_UID, WS1),
+      );
+      await setDoc(
+        doc(ctx.firestore(), 'guest_links', GUEST_TOKEN_HASH),
+        guestLinkData(WS1, ROLE_UIDS.owner),
+      );
+      await deleteDoc(doc(ctx.firestore(), 'guest_sessions', GUEST_UID));
+    });
+    await assertFails(getDoc(doc(guestDb(), 'workspaces', WS1)));
+  });
+
+  test('a signed-out visitor cannot read workspaces or elements', async () => {
+    const db = unauthed().firestore();
+    await assertFails(getDoc(doc(db, 'workspaces', WS1)));
+    await assertFails(getDoc(doc(db, 'elements', 'e1')));
+  });
+
+  test('anonymous sessions cannot create workspaces', async () => {
+    await assertFails(
+      setDoc(
+        doc(anonymousDb('anon-creator'), 'workspaces', 'anon-ws'),
+        workspaceData('Anonymous workspace', 'anon-creator'),
+      ),
     );
   });
 });

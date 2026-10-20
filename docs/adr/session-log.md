@@ -1,5 +1,17 @@
 # Session Log
 
+## 2026-10-20 — PBL-016 Enlace guest de solo lectura
+
+- Siguiente tarea del backlog: PBL-016 (R3, P1, L, depende de PBL-001 DONE). Sin IN PROGRESS ni BLOCKED; rama `development` limpia al iniciar.
+- Domain: `GuestLink` con tokenHash SHA-256, workspace, rol `viewer`, timestamps y revocación idempotente; tests de invariantes.
+- Application: `GuestLinkRepository`, casos de uso `createGuestLink` (owner, reemplaza el activo) y `revokeGuestLink`, query `listActiveGuestLinks` y `openGuestWorkspace`; `AuthPort.signInAnonymously` y fakes.
+- Infrastructure: token de 256 bits, mapper y repositorio Firestore en `guest_links/{tokenHash}` + `guest_sessions/{uid}`; wiring en `App.tsx`.
+- Rules: get del enlace por capability, list solo miembros, create/revoke solo owner; sesión guest ligada a enlace activo; lectura guest de workspaces/elements/imágenes; memberships/invitations/comments/presence siguen cerrados; anonymous no crea workspaces. Tests de rules en Firestore y Storage.
+- Presentation: `/view/:token` fuera de `RequireAuth`, `GuestWorkspaceView` con Canvas readOnly, estados inválido/revocado/error; share dialog con pestaña owner-only para crear, copiar y revocar; guards tratan sesiones sin email como guest. i18n en/es.
+- Integración/E2E: harness con `FakeGuestLinkRepository`; test de ruta guest y E2E `18-guest-link` con contexto anónimo, solo lectura y revocación.
+- Docs: PBL-016 → DONE, ADR-0041 y este registro.
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` (270 suites / 2940 tests), `npm run test:rules` (116 tests), `npm run build` y E2E `18-guest-link` en verde.
+
 ## 2026-10-20 — PBL-015 Imágenes
 
 - Siguiente tarea del backlog: PBL-015 (R3, P1, L, depende de PBL-001 DONE). Sin IN PROGRESS ni BLOCKED; rama `development` limpia al iniciar.

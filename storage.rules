@@ -21,6 +21,28 @@ service firebase.storage {
       return signedIn() && firestore.exists(membershipPath(workspaceId));
     }
 
+    function guestSessionPath() {
+      return /databases/(default)/documents/guest_sessions/$(request.auth.uid);
+    }
+
+    function guestLinkPath(tokenHash) {
+      return /databases/(default)/documents/guest_links/$(tokenHash);
+    }
+
+    function isGuestViewer(workspaceId) {
+      return signedIn() &&
+        firestore.exists(guestSessionPath()) &&
+        firestore.get(guestSessionPath()).data.workspaceId == workspaceId &&
+        firestore.get(guestSessionPath()).data.tokenHash is string &&
+        firestore.exists(guestLinkPath(firestore.get(guestSessionPath()).data.tokenHash)) &&
+        firestore.get(
+          guestLinkPath(firestore.get(guestSessionPath()).data.tokenHash)
+        ).data.workspaceId == workspaceId &&
+        firestore.get(
+          guestLinkPath(firestore.get(guestSessionPath()).data.tokenHash)
+        ).data.revokedAt == null;
+    }
+
     function hasRole(workspaceId, roles) {
       return isMember(workspaceId) &&
         firestore.get(membershipPath(workspaceId)).data.role in roles;
@@ -34,7 +56,7 @@ service firebase.storage {
     }
 
     match /workspaces/{workspaceId}/images/{imageId} {
-      allow read: if isMember(workspaceId);
+      allow read: if isMember(workspaceId) || isGuestViewer(workspaceId);
       allow create, update: if hasRole(workspaceId, ['owner', 'editor']) && isValidImage();
       allow delete: if hasRole(workspaceId, ['owner', 'editor']);
     }

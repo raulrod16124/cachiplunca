@@ -78,6 +78,7 @@ import type {
   RealtimeConnectionStatus,
 } from '../../../../application/ports';
 import type { CommentServices } from '../../../../application/comment-services';
+import type { GuestLinkServices } from '../../../../application/guest-link-services';
 import type { ImageServices } from '../../../../application/image-services';
 import { isConnectorElement } from '../../../../domain/element';
 import type { ConnectorElement, Element, ElementType } from '../../../../domain/element';
@@ -164,6 +165,7 @@ export interface WorkspaceShellContainerProps {
   readonly onOpenWorkspace?: (workspaceId: string) => void;
   readonly comments?: CommentServices;
   readonly imageServices?: ImageServices;
+  readonly guestLinks?: GuestLinkServices;
 }
 
 interface TransformGesture {
@@ -199,6 +201,7 @@ export function WorkspaceShellContainer({
   onOpenWorkspace,
   comments,
   imageServices,
+  guestLinks,
 }: WorkspaceShellContainerProps): ReactNode {
   const { t } = useI18n();
   const [status, setStatus] = useState<'loading' | 'notFound' | 'error' | 'success'>('loading');
@@ -1216,6 +1219,7 @@ export function WorkspaceShellContainer({
       listWorkspaceMembers !== undefined &&
       leaveWorkspace !== undefined &&
       (!permissionsEnforced || role !== undefined);
+    const canManageGuestLinks = !permissionsEnforced || permissions.can('workspace:update');
 
     return (
       <>
@@ -1305,6 +1309,8 @@ export function WorkspaceShellContainer({
             removeMember={removeMember}
             inviteMember={inviteMember}
             listPendingInvitations={listPendingInvitations}
+            guestLinks={guestLinks}
+            canManageGuestLinks={canManageGuestLinks}
             onLeft={onBack}
           />
         ) : null}

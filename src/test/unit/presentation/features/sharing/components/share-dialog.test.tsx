@@ -2,21 +2,26 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
   createChangeMemberRole,
+  createCreateGuestLink,
   createInviteMember,
   createLeaveWorkspace,
   createRemoveMember,
+  createRevokeGuestLink,
   type ChangeMemberRole,
 } from '../../../../../../application/commands';
 import {
+  createListActiveGuestLinks,
   createListPendingInvitations,
   createListWorkspaceMembers,
 } from '../../../../../../application/queries';
+import type { GuestLinkServices } from '../../../../../../application/guest-link-services';
 import type { MembershipRole } from '../../../../../../domain/membership';
 import { InvitationId, UserId, WorkspaceId } from '../../../../../../domain/shared';
 import { ShareDialog } from '../../../../../../presentation/features/sharing/components/share-dialog';
 import { createAppError, ERROR_CODES } from '../../../../../../shared/errors';
 import { FakeInvitationRepository } from '../../../../../fixtures/fake-invitation-repository';
 import { FakeMembershipRepository } from '../../../../../fixtures/fake-membership-repository';
+import { FakeGuestLinkRepository } from '../../../../../fixtures/fake-guest-link-repository';
 
 const WORKSPACE_ID = 'ws-1';
 const CURRENT_USER_ID = 'user-a';
@@ -41,6 +46,8 @@ interface RenderOptions {
   readonly changeMemberRole?: ChangeMemberRole;
   readonly inviteMember?: ReturnType<typeof createInviteMember>;
   readonly listPendingInvitations?: ReturnType<typeof createListPendingInvitations>;
+  readonly guestLinks?: GuestLinkServices;
+  readonly canManageGuestLinks?: boolean;
 }
 
 function renderDialog(repository: FakeMembershipRepository, options: RenderOptions = {}) {
@@ -62,6 +69,8 @@ function renderDialog(repository: FakeMembershipRepository, options: RenderOptio
       removeMember={createRemoveMember(repository)}
       inviteMember={options.inviteMember}
       listPendingInvitations={options.listPendingInvitations}
+      guestLinks={options.guestLinks}
+      canManageGuestLinks={options.canManageGuestLinks}
       onLeft={onLeft}
     />,
   );
@@ -225,5 +234,36 @@ describe('ShareDialog', () => {
 
     await screen.findByText('You');
     expect(screen.queryByRole('tab', { name: 'Invite' })).not.toBeInTheDocument();
+  });
+
+  it('shows the read-only link tab to owners when guest link services are available', async () => {
+    const repository = new FakeMembershipRepository();
+    const guestLinks = new FakeGuestLinkRepository();
+    await seed(repository, CURRENT_USER_ID, 'owner');
+
+    const services: GuestLinkServices = {
+      createGuestLink: createCreateGuestLink({
+        guestLinkRepository: guestLinks,
+        membershipRepository: repository,
+        issueToken: async () => ({ token: 'token-1', tokenHash: 'a'.repeat(64) }),
+      }),
+      revokeGuestLink: createRevokeGuestLink({
+        guestLinkRepository: guestLinks,
+        membershipRepository: repository,
+      }),
+      listActiveGuestLinks: createListActiveGuestLinks({
+        guestLinkRepository: guestLinks,
+        membershipRepository: repository,
+      }),
+      openGuestWorkspace: async () => ({ status: 'invalid' }),
+    };
+
+    renderDialog(repository, { guestLinks: services, canManageGuestLinks: true });
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole('tab', { name: 'View link' }));
+
+    expect(await screen.findByRole('heading', { name: 'Read-only link' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Create view link' })).toBeInTheDocument();
   });
 });

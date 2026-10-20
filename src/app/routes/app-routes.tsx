@@ -28,6 +28,7 @@ import type {
 } from '../../application/queries';
 import type { FileDownloadPort, PresencePort } from '../../application/ports';
 import type { CommentServices } from '../../application/comment-services';
+import type { GuestLinkServices } from '../../application/guest-link-services';
 import type { ImageServices } from '../../application/image-services';
 import type {
   ElementPersistenceOrchestrator,
@@ -37,6 +38,7 @@ import type { ElementId } from '../../domain/shared';
 import { LoginPage } from '../../presentation/features/auth/login-page';
 import { RegisterPage } from '../../presentation/features/auth/register-page';
 import { AcceptInvitationPage } from '../../presentation/features/invitations';
+import { GuestWorkspacePage } from '../../presentation/features/guest/guest-workspace-page';
 import { WorkspaceShellPage } from '../../presentation/features/workspace-shell';
 import { WorkspacesPage } from '../../presentation/features/workspaces/workspaces-page';
 import { RequireAnonymous } from './require-anonymous';
@@ -72,6 +74,7 @@ export interface AppRoutesProps {
   readonly fileDownload?: FileDownloadPort;
   readonly comments?: CommentServices;
   readonly imageServices?: ImageServices;
+  readonly guestLinks?: GuestLinkServices;
 }
 
 export function AppRoutes({
@@ -104,6 +107,7 @@ export function AppRoutes({
   fileDownload,
   comments,
   imageServices,
+  guestLinks,
 }: AppRoutesProps): ReactNode {
   return (
     <Routes>
@@ -116,6 +120,17 @@ export function AppRoutes({
               acceptInvitation={acceptInvitation}
               sendEmailVerification={sendEmailVerification}
               refreshUser={refreshUser}
+            />
+          }
+        />
+      )}
+      {guestLinks !== undefined && (
+        <Route
+          path="/view/:token"
+          element={
+            <GuestWorkspacePage
+              openGuestWorkspace={guestLinks.openGuestWorkspace}
+              generateElementId={generateElementId}
             />
           }
         />
@@ -173,6 +188,7 @@ export function AppRoutes({
               listWorkspaces={listWorkspaces}
               comments={comments}
               imageServices={imageServices}
+              guestLinks={guestLinks}
             />
           }
         />

@@ -5,6 +5,7 @@ import { createCommentServices } from './app/config/comment-services';
 import { createElementServices, type ElementServices } from './app/config/element-services';
 import { createExportServices, type ExportServices } from './app/config/export-services';
 import { createImageServices } from './app/config/image-services';
+import { createGuestLinkServices, type GuestLinkServices } from './app/config/guest-link-services';
 import {
   createInvitationServices,
   type InvitationServices,
@@ -36,6 +37,7 @@ interface AppContentProps {
   readonly exportServices: ExportServices;
   readonly commentServices: CommentServices;
   readonly imageServices: ImageServices;
+  readonly guestLinkServices: GuestLinkServices;
 }
 
 function AppContent({
@@ -48,6 +50,7 @@ function AppContent({
   exportServices,
   commentServices,
   imageServices,
+  guestLinkServices,
 }: AppContentProps) {
   const session = useSession();
   const userId = session.status === 'authenticated' ? UserId.create(session.user.uid) : null;
@@ -92,6 +95,7 @@ function AppContent({
             fileDownload={exportServices.fileDownload}
             comments={commentServices}
             imageServices={imageServices}
+            guestLinks={guestLinkServices}
           />
         </ProfileServicesProvider>
       </I18nProvider>
@@ -111,6 +115,9 @@ function App() {
   const [exportServices] = useState(createExportServices);
   const [commentServices] = useState(createCommentServices);
   const [imageServices] = useState(createImageServices);
+  const [guestLinkServices] = useState(() =>
+    createGuestLinkServices({ signInAnonymously: authServices.signInAnonymously }),
+  );
 
   const routerBasename = import.meta.env.BASE_URL.replace(/\/$/, '') || undefined;
 
@@ -128,6 +135,7 @@ function App() {
             exportServices={exportServices}
             commentServices={commentServices}
             imageServices={imageServices}
+            guestLinkServices={guestLinkServices}
           />
         </SessionProvider>
       </BrowserRouter>

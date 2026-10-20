@@ -83,6 +83,22 @@ describe('FakeAuthPort', () => {
     expect(listener).toHaveBeenLastCalledWith(null);
   });
 
+  it('creates an anonymous guest session with no email', async () => {
+    const fake = new FakeAuthPort();
+    const listener = jest.fn();
+    fake.observeSession(listener);
+
+    const user = await fake.signInAnonymously();
+
+    expect(user).toEqual({
+      uid: 'fake-guest-1',
+      email: null,
+      emailVerified: false,
+      displayName: null,
+    });
+    expect(listener).toHaveBeenLastCalledWith(user);
+  });
+
   it('signs out and emits the anonymous session', async () => {
     const fake = new FakeAuthPort();
     await fake.signUp({ email: 'user@example.com', password: 'secret-1' });

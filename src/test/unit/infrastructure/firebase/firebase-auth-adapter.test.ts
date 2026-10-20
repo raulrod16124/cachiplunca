@@ -3,6 +3,7 @@ import {
   onAuthStateChanged,
   reload,
   sendEmailVerification,
+  signInAnonymously,
   signInWithEmailAndPassword,
   signOut,
   type Auth,
@@ -17,6 +18,7 @@ import { ERROR_CODES } from '../../../../shared/errors';
 
 jest.mock('firebase/auth', () => ({
   createUserWithEmailAndPassword: jest.fn(),
+  signInAnonymously: jest.fn(),
   signInWithEmailAndPassword: jest.fn(),
   signOut: jest.fn(),
   onAuthStateChanged: jest.fn(),
@@ -143,6 +145,27 @@ describe('createFirebaseAuthAdapter', () => {
         kind: 'authorization',
         code: ERROR_CODES.AUTH_INVALID_CREDENTIALS,
         message: 'The credentials are not valid.',
+      });
+    });
+  });
+
+  describe('signInAnonymously', () => {
+    it('creates an anonymous session and maps the user', async () => {
+      jest
+        .mocked(signInAnonymously)
+        .mockResolvedValue(
+          makeCredential(makeUser({ uid: 'guest-1', email: null, displayName: null })),
+        );
+      const adapter = createFirebaseAuthAdapter(auth);
+
+      const user = await adapter.signInAnonymously();
+
+      expect(signInAnonymously).toHaveBeenCalledWith(auth);
+      expect(user).toEqual({
+        uid: 'guest-1',
+        email: null,
+        emailVerified: false,
+        displayName: null,
       });
     });
   });
