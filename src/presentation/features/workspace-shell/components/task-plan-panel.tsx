@@ -1,14 +1,5 @@
-import {
-  Badge,
-  Checkbox,
-  DropdownMenu,
-  Heading,
-  IconButton,
-  Select,
-  Tabs,
-  Text,
-} from '@raulrod/ui';
-import { Check, ClipboardList, Ellipsis, X } from '@raulrod/icons';
+import { Badge, Checkbox, DropdownMenu, Heading, Select, Tabs, Text } from '@raulrod/ui';
+import { Check, ClipboardList, Ellipsis } from '@raulrod/icons';
 import { Fragment, useMemo, useState, type ReactNode } from 'react';
 import styled from 'styled-components';
 import type { Element, TaskElement, TaskStatus } from '../../../../domain/element';
@@ -25,6 +16,7 @@ import {
   TASK_STATUS_META,
 } from '../../../canvas/renderers/task-status-meta';
 import { EmptyState } from '../../../components/empty-state';
+import { PanelHeader } from '../../../components/panel-header';
 import { shortUserId } from '../../../collaboration';
 import { formatCalendarDate, useI18n } from '../../../i18n';
 import { SideDrawer } from './side-drawer';
@@ -39,22 +31,6 @@ const Panel = styled.aside`
   min-height: 0;
   overflow: hidden;
   background: ${({ theme }) => theme.canvas.surface};
-`;
-
-const Header = styled.div`
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: ${({ theme }) => theme.space[3]};
-  padding: ${({ theme }) => theme.space[4]};
-  border-bottom: 1px solid ${({ theme }) => theme.canvas.elementBorderSoft};
-`;
-
-const HeaderIdentity = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.space[2]};
-  min-width: 0;
 `;
 
 const Filters = styled.div`
@@ -453,21 +429,12 @@ export function TaskPlanPanel({
       size={view === 'board' ? 'board' : 'default'}
     >
       <Panel id="task-plan-panel" aria-label={t('plan.title')} data-testid="task-plan-panel">
-        <Header>
-          <HeaderIdentity>
-            <ClipboardList aria-hidden="true" size={18} />
-            <Heading as="h2">{t('plan.title')}</Heading>
-          </HeaderIdentity>
-          <IconButton
-            type="button"
-            variant="ghost"
-            size="sm"
-            label={t('plan.close')}
-            onClick={onClose}
-          >
-            <X aria-hidden="true" size={16} />
-          </IconButton>
-        </Header>
+        <PanelHeader
+          icon={<ClipboardList aria-hidden="true" size={18} />}
+          title={t('plan.title')}
+          onClose={onClose}
+          closeLabel={t('plan.close')}
+        />
         <Filters>
           <Select
             value={statusFilter}

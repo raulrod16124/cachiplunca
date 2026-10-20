@@ -203,6 +203,15 @@ describe('CommentsPanel', () => {
     expect(screen.getByRole('textbox', { name: 'Comment' })).toHaveValue('Keep me');
   });
 
+  it('closes from the shared panel header', async () => {
+    const onClose = jest.fn();
+    renderPanel({ onClose });
+
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Close comments' }));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
   it('falls back to the short user id when there is no author label', async () => {
     const authorId = '1234567890abcdef';
     renderPanel({

@@ -1,5 +1,5 @@
-import { Badge, Button, Heading, IconButton, Text, Textarea } from '@raulrod/ui';
-import { Check, MessageSquare, X } from '@raulrod/icons';
+import { Badge, Button, Heading, Text, Textarea } from '@raulrod/ui';
+import { Check, MessageSquare } from '@raulrod/icons';
 import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import styled from 'styled-components';
 import type { CommentServices } from '../../../../application/comment-services';
@@ -10,6 +10,7 @@ import { ElementId, UserId, WorkspaceId } from '../../../../domain/shared';
 import { toAppError } from '../../../../shared/errors';
 import { shortUserId } from '../../../collaboration';
 import { EmptyState } from '../../../components/empty-state';
+import { PanelHeader } from '../../../components/panel-header';
 import { formatRelativeDate, useI18n, type TranslationKey } from '../../../i18n';
 import { describeCommentError } from '../comments-error-messages';
 import { SideDrawer } from './side-drawer';
@@ -32,35 +33,6 @@ const Panel = styled.aside`
   min-height: 0;
   overflow: hidden;
   background: ${({ theme }) => theme.canvas.surface};
-`;
-
-const Header = styled.div`
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: ${({ theme }) => theme.space[3]};
-  padding: ${({ theme }) => theme.space[4]};
-  border-bottom: 1px solid ${({ theme }) => theme.canvas.elementBorderSoft};
-`;
-
-const HeaderIdentity = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.space[1]};
-  min-width: 0;
-`;
-
-const HeaderTitle = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.space[2]};
-`;
-
-const TargetLabel = styled(Text)`
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 `;
 
 const Body = styled.div`
@@ -394,28 +366,13 @@ export function CommentsPanel({
   return (
     <SideDrawer open onClose={onClose} label={t('comments.title')}>
       <Panel id="comments-panel" aria-label={t('comments.title')} data-testid="comments-panel">
-        <Header>
-          <HeaderIdentity>
-            <HeaderTitle>
-              <MessageSquare aria-hidden="true" size={18} />
-              <Heading as="h2">{t('comments.title')}</Heading>
-            </HeaderTitle>
-            {targetLabel === null ? null : (
-              <TargetLabel color="color.text.muted" size="font.size.xs">
-                {targetLabel}
-              </TargetLabel>
-            )}
-          </HeaderIdentity>
-          <IconButton
-            type="button"
-            variant="ghost"
-            size="sm"
-            label={t('comments.close')}
-            onClick={onClose}
-          >
-            <X aria-hidden="true" size={16} />
-          </IconButton>
-        </Header>
+        <PanelHeader
+          icon={<MessageSquare aria-hidden="true" size={18} />}
+          title={t('comments.title')}
+          description={targetLabel ?? undefined}
+          onClose={onClose}
+          closeLabel={t('comments.close')}
+        />
         <Body>
           {errorMessage !== null && status !== 'error' ? (
             <Text role="alert" color="color.text.danger" size="font.size.sm">

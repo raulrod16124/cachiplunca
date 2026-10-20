@@ -10,6 +10,8 @@ export { Card } from './card';
 export type { CardProps, SurfacePadding, SurfaceVariant } from './card';
 export { Panel } from './panel';
 export type { PanelProps } from './panel';
+export { PanelHeader } from './panel-header';
+export type { PanelHeaderProps } from './panel-header';
 export { ActionRow } from './action-row';
 export type { ActionRowProps } from './action-row';
 export { ToolbarButton } from './toolbar-button';

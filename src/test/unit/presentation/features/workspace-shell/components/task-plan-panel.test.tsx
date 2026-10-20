@@ -269,6 +269,15 @@ describe('TaskPlanPanel', () => {
     expect(screen.queryByRole('group', { name: 'Task board' })).not.toBeInTheDocument();
   });
 
+  it('closes from the shared panel header', async () => {
+    const user = userEvent.setup();
+    const props = renderPanel();
+
+    await user.click(screen.getByRole('button', { name: 'Close task plan' }));
+
+    expect(props.onClose).toHaveBeenCalledTimes(1);
+  });
+
   it('renders nothing while closed', () => {
     renderPanel({ open: false });
 
