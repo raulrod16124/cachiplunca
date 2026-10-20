@@ -619,7 +619,7 @@ Habilitar colaboración asíncrona ligada a elementos, sin convertir el producto
 - Una tarea `L` puede ocupar varias sesiones; mantener el estado `IN PROGRESS` y marcar fases.
 - Reutilizar el patrón de puertos/repositorios y mappers de elementos.
 - Subcolección independiente: no inflar el documento del workspace.
-- Implementado con `Comment`/`CommentId` en Domain, `CommentRepository` + casos de uso en Application, adapter Firestore en `workspaces/{workspaceId}/comments`, rules por membership y `CommentsPanel` ligado a la selección única. Cualquier miembro puede resolver; los viewers pueden comentar sin editar el canvas. Sin realtime ni entidades nuevas. Ver ADR-0039.
+- Implementado con `Comment`/`CommentId` en Domain, `CommentRepository` + casos de uso en Application, adapter Firestore en `workspaces/{workspaceId}/comments`, rules por membership y `CommentsPanel` ligado a la selección única. Cualquier miembro puede resolver; los viewers pueden comentar sin editar el canvas. Sin realtime ni entidades nuevas. Los elementos con comentarios sin resolver muestran un indicador con contador que abre el panel; los resueltos dejan de aparecer en el tablero pero conservan el historial en el panel. Ver ADR-0039.
 
 ---
 

@@ -146,6 +146,7 @@ export interface CommentsPanelProps {
   readonly currentUserId: string | undefined;
   readonly authorLabels?: ReadonlyMap<string, string>;
   readonly services?: CommentServices;
+  readonly onCommentSaved?: (comment: Comment) => void;
   readonly onClose: () => void;
 }
 
@@ -156,6 +157,7 @@ export function CommentsPanel({
   currentUserId,
   authorLabels,
   services,
+  onCommentSaved,
   onClose,
 }: CommentsPanelProps): ReactNode {
   const { t, locale } = useI18n();
@@ -250,6 +252,7 @@ export function CommentsPanel({
           setComments((current) => [...current, result.comment]);
           setDraft('');
           setStatus('ready');
+          onCommentSaved?.(result.comment);
         } else {
           setErrorMessage(t(describeCommentError('create', result.error)));
         }
@@ -259,7 +262,7 @@ export function CommentsPanel({
         setSubmitting(false);
       }
     },
-    [currentUserId, draft, elementId, services, t, workspaceId],
+    [currentUserId, draft, elementId, onCommentSaved, services, t, workspaceId],
   );
 
   const handleResolve = useCallback(
@@ -283,6 +286,7 @@ export function CommentsPanel({
               entry.id.value === result.comment.id.value ? result.comment : entry,
             ),
           );
+          onCommentSaved?.(result.comment);
         } else {
           setErrorMessage(t(describeCommentError('resolve', result.error)));
         }
@@ -292,7 +296,7 @@ export function CommentsPanel({
         setResolvingId(null);
       }
     },
-    [services, t, workspaceId],
+    [onCommentSaved, services, t, workspaceId],
   );
 
   if (!open || services === undefined) {

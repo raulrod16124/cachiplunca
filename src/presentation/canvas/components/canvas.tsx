@@ -215,6 +215,8 @@ export interface CanvasProps {
   readonly onUpdateElement?: (input: UpdateElementInput) => void;
   readonly remoteCursors?: readonly RemoteCursor[];
   readonly userColors?: ReadonlyMap<string, string>;
+  readonly unresolvedCommentCounts?: ReadonlyMap<string, number>;
+  readonly onOpenComments?: (elementId: string) => void;
   readonly onCursorMove?: (position: Position) => void;
   readonly readOnly?: boolean;
 }
@@ -255,6 +257,8 @@ export function Canvas({
   onUpdateConnectorEndpoint,
   remoteCursors = [],
   userColors,
+  unresolvedCommentCounts,
+  onOpenComments,
   onCursorMove,
   readOnly = false,
   commandRef,
@@ -281,6 +285,22 @@ export function Canvas({
       onCursorMove?.(position);
     },
     [onCursorMove],
+  );
+  const handleOpenComments = useCallback(
+    (elementId: string) => {
+      if (onOpenComments === undefined) {
+        return;
+      }
+
+      selectionStore.select(elementId);
+      onOpenComments(elementId);
+    },
+    [onOpenComments, selectionStore],
+  );
+  const commentLabel = useCallback(
+    (count: number): string =>
+      count === 1 ? t('comments.indicator.one') : t('comments.indicator.other', { count }),
+    [t],
   );
   const { ref: cursorBroadcastRef } = useCursorBroadcast({
     onCursorMove: handleCursorMove,
@@ -1212,6 +1232,9 @@ export function Canvas({
                   ? assigneeLabels.get(element.assigneeId.value)
                   : undefined
               }
+              commentCount={unresolvedCommentCounts?.get(element.id.value) ?? 0}
+              commentLabel={commentLabel(unresolvedCommentCounts?.get(element.id.value) ?? 0)}
+              onOpenComments={onOpenComments === undefined ? undefined : handleOpenComments}
               onUpdateElement={readOnly ? undefined : onUpdateElement}
               onResizeElement={readOnly ? undefined : handleResizeElement}
             />

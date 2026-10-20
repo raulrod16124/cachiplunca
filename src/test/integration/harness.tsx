@@ -29,6 +29,7 @@ import {
   createListPendingInvitations,
   createListPendingInvitationsForUser,
   createListComments,
+  createListWorkspaceComments,
   createListWorkspaceMembers,
   createListWorkspaces,
   createLoadWorkspaceElements,
@@ -195,6 +196,7 @@ export function createAppHarness(): AppHarness {
     generateElementId,
     presencePort,
     comments: {
+      listWorkspaceComments: createListWorkspaceComments(commentRepository),
       listComments: createListComments(commentRepository),
       createComment: createCreateComment({
         repository: commentRepository,

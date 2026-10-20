@@ -24,6 +24,11 @@ export function createFirebaseCommentRepository(db: Firestore): CommentRepositor
     doc(commentsCollection(workspaceId), commentId.value);
 
   return {
+    async listByWorkspace(workspaceId: WorkspaceId): Promise<Comment[]> {
+      const snapshot = await withMappedErrors(() => getDocs(commentsCollection(workspaceId)));
+      return snapshot.docs.map((document) => readComment(document.data()));
+    },
+
     async listByElement(workspaceId: WorkspaceId, elementId: ElementId): Promise<Comment[]> {
       const snapshot = await withMappedErrors(() =>
         getDocs(query(commentsCollection(workspaceId), where('elementId', '==', elementId.value))),

@@ -67,6 +67,19 @@ describe('createFirebaseCommentRepository', () => {
     });
   });
 
+  it('lists every comment of the workspace subcollection', async () => {
+    const repository = createFirebaseCommentRepository(makeFirestore());
+    await repository.save(makeComment('first'));
+    await repository.save(makeComment('other-element', { elementId: ElementId.create('el-2') }));
+    await repository.save(
+      makeComment('other-workspace', { workspaceId: WorkspaceId.create('ws-2') }),
+    );
+
+    const listed = await repository.listByWorkspace(WORKSPACE);
+
+    expect(listed.map((comment) => comment.id.value).sort()).toEqual(['first', 'other-element']);
+  });
+
   it('lists only comments for the requested element and workspace', async () => {
     const repository = createFirebaseCommentRepository(makeFirestore());
     await repository.save(makeComment('first'));

@@ -32,6 +32,7 @@ import {
   buildElementCreateInput,
   buildFreeConnectorCreateInput,
   connectorCandidateIds,
+  countUnresolvedCommentsByElement,
   createBoardExportFileName,
   createBoardWindowCommand,
   createCanvasViewportStore,
@@ -78,6 +79,7 @@ import type {
 import type { CommentServices } from '../../../../application/comment-services';
 import { isConnectorElement } from '../../../../domain/element';
 import type { ConnectorElement, Element, ElementType } from '../../../../domain/element';
+import type { Comment } from '../../../../domain/comment';
 import type { Membership, MembershipRole } from '../../../../domain/membership';
 import { Presence, resolveUserDisplayName } from '../../../../domain/collaboration';
 import { Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
@@ -179,6 +181,7 @@ export function WorkspaceShellContainer({
   const permissions = useWorkspacePermissions(role);
   const [result, setResult] = useState<GetWorkspaceResult | null>(null);
   const [elements, setElements] = useState<readonly Element[]>([]);
+  const [workspaceComments, setWorkspaceComments] = useState<readonly Comment[]>([]);
   const [elementsStatus, setElementsStatus] = useState<'loading' | 'error' | 'success'>('loading');
   const [elementsError, setElementsError] = useState<AppError | null>(null);
   const [persistenceError, setPersistenceError] = useState<AppError | null>(null);
@@ -812,6 +815,46 @@ export function WorkspaceShellContainer({
     }
   }, [loadWorkspaceElements, workspaceId]);
 
+  useEffect(() => {
+    if (status !== 'success' || comments === undefined) {
+      setWorkspaceComments([]);
+      return;
+    }
+
+    let active = true;
+    comments
+      .listWorkspaceComments({ workspaceId })
+      .then((response) => {
+        if (active) {
+          setWorkspaceComments(response.status === 'ok' ? response.comments : []);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setWorkspaceComments([]);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [comments, status, workspaceId]);
+
+  const handleCommentSaved = useCallback((comment: Comment): void => {
+    setWorkspaceComments((current) => {
+      const exists = current.some((entry) => entry.id.equals(comment.id));
+
+      return exists
+        ? current.map((entry) => (entry.id.equals(comment.id) ? comment : entry))
+        : [...current, comment];
+    });
+  }, []);
+
+  const unresolvedCommentCounts = useMemo(
+    () => countUnresolvedCommentsByElement(workspaceComments),
+    [workspaceComments],
+  );
+
   const workspaceName = result?.status === 'ok' ? result.workspace.name : '';
 
   const handleExportJson = useCallback((): void => {
@@ -1151,7 +1194,9 @@ export function WorkspaceShellContainer({
           onRename={canRename ? handleRenameWorkspace : undefined}
           listWorkspaces={listWorkspaces}
           onOpenWorkspace={onOpenWorkspace}
-          comments={comments}
+          commentServices={comments}
+          unresolvedCommentCounts={unresolvedCommentCounts}
+          onCommentSaved={handleCommentSaved}
         />
         {canShare ? (
           <ShareDialog

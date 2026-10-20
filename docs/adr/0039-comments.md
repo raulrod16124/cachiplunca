@@ -22,7 +22,7 @@ El tablero ya tiene una fuente de verdad para sus elementos, un panel lateral de
 
 5. **Autorización en rules.** Solo los miembros del workspace leen, crean y resuelven. `create` exige coherencia de `workspaceId` e `id` con la ruta, `authorId == request.auth.uid`, body string y ausencia de `resolvedAt`. `update` solo admite añadir `resolvedAt` sobre un comentario abierto; no se puede reescribir el historial ni resolver dos veces. `delete` queda denegado. La UI refleja permisos, pero las rules son la frontera efectiva.
 
-6. **Panel lateral, sin realtime ni nueva entidad de UI.** La top bar añade un toggle de comentarios que abre un panel ligado a la selección única del canvas. Plan y comentarios son mutuamente excluyentes para no estrechar el canvas con dos paneles. El panel carga al abrir o cambiar de elemento y actualiza su estado local al crear o resolver, sin ampliar `RealtimeSubscriptionManager`. Los viewers pueden comentar aunque el canvas sea de solo lectura, porque comentar no es `element:write`.
+6. **Panel lateral y señal mínima en el canvas, sin realtime ni nueva entidad de UI.** La top bar añade un toggle de comentarios que abre un panel ligado a la selección única del canvas. Cada elemento con comentarios sin resolver muestra un indicador compacto con el contador; al pulsarlo se selecciona el elemento y se abre el panel. Los comentarios resueltos dejan de mostrarse en el tablero para distinguir los hilos abiertos, aunque permanecen en el panel como historial. Plan y comentarios son mutuamente excluyentes para no estrechar el canvas con dos paneles. El panel carga al abrir o cambiar de elemento y actualiza su estado local al crear o resolver, sin ampliar `RealtimeSubscriptionManager`. Los viewers pueden comentar aunque el canvas sea de solo lectura, porque comentar no es `element:write`.
 
 7. **Autores sin datos denormalizados.** Domain mantiene solo `authorId`. Presentation reutiliza las etiquetas de miembros/presencia disponibles y cae a `shortUserId` cuando no hay nombre visible, evitando duplicar identidad en cada comentario.
 
@@ -38,6 +38,7 @@ El tablero ya tiene una fuente de verdad para sus elementos, un panel lateral de
 ## Consecuencias
 
 - Los comentarios persisten asociados al elemento correcto y sobreviven a recargas.
+- El tablero muestra solo hilos abiertos mediante un indicador discreto; resolver un comentario lo retira del canvas sin borrar su historial.
 - Las rules cubren lectura, creación, resolución y manipulación de campos sensibles con tests dedicados.
 - El documento del workspace y los elementos no se inflan; las consultas se acotan por `elementId`.
 - Presentation no importa Firebase y reutiliza los componentes y patrones de accesibilidad existentes.

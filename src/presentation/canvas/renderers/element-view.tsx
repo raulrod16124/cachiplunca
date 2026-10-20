@@ -1,3 +1,4 @@
+import { MessageSquare } from '@raulrod/icons';
 import type { CSSProperties, ReactElement } from 'react';
 import { memo, useMemo } from 'react';
 import styled from 'styled-components';
@@ -13,7 +14,45 @@ const Wrapper = styled.div`
   box-sizing: border-box;
   transform-origin: center center;
   will-change: transform;
+`;
+
+const ContentLayer = styled.div`
+  position: absolute;
+  inset: 0;
   contain: layout paint;
+`;
+
+const CommentIndicator = styled.button`
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  transform: translate(40%, -40%);
+  border: 1px solid ${({ theme }) => theme.color.border.strong};
+  border-radius: ${({ theme }) => theme.radius.full};
+  background: ${({ theme }) => theme.color.background.surface};
+  color: ${({ theme }) => theme.color.text.primary};
+  box-shadow: ${({ theme }) => theme.shadow.sm};
+  font-family: ${({ theme }) => theme.font.family.sans};
+  font-size: 11px;
+  font-weight: ${({ theme }) => theme.font.weight.semibold};
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    background: ${({ theme }) => theme.color.background.sunken};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.focusRing};
+    outline-offset: 2px;
+  }
 `;
 
 export interface ElementViewProps {
@@ -25,6 +64,9 @@ export interface ElementViewProps {
   readonly connectorStart?: Position;
   readonly connectorEnd?: Position;
   readonly assigneeLabel?: string;
+  readonly commentCount?: number;
+  readonly commentLabel?: string;
+  readonly onOpenComments?: (elementId: string) => void;
   readonly onUpdateElement?: (input: UpdateElementInput) => void;
   readonly onResizeElement?: (element: Element, size: Size) => void;
 }
@@ -38,6 +80,9 @@ function ElementViewComponent({
   connectorStart,
   connectorEnd,
   assigneeLabel,
+  commentCount = 0,
+  commentLabel,
+  onOpenComments,
   onUpdateElement,
   onResizeElement,
 }: ElementViewProps): ReactElement {
@@ -107,14 +152,33 @@ function ElementViewComponent({
       data-testid={`canvas-item-${element.id.value}`}
       style={style}
     >
-      <Renderer
-        element={element}
-        selected={selected}
-        connectorGeometry={connectorGeometry}
-        assigneeLabel={assigneeLabel}
-        onUpdateElement={onUpdateElement}
-        onResizeElement={onResizeElement}
-      />
+      <ContentLayer>
+        <Renderer
+          element={element}
+          selected={selected}
+          connectorGeometry={connectorGeometry}
+          assigneeLabel={assigneeLabel}
+          onUpdateElement={onUpdateElement}
+          onResizeElement={onResizeElement}
+        />
+      </ContentLayer>
+      {commentCount > 0 && element.type !== 'connector' ? (
+        <CommentIndicator
+          type="button"
+          aria-label={commentLabel}
+          title={commentLabel}
+          data-testid={`comment-indicator-${element.id.value}`}
+          onPointerDown={(event) => event.stopPropagation()}
+          onDoubleClick={(event) => event.stopPropagation()}
+          onClick={(event) => {
+            event.stopPropagation();
+            onOpenComments?.(element.id.value);
+          }}
+        >
+          <MessageSquare aria-hidden="true" size={12} />
+          <span aria-hidden="true">{commentCount}</span>
+        </CommentIndicator>
+      ) : null}
     </Wrapper>
   );
 }

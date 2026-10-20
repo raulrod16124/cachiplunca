@@ -48,6 +48,7 @@ function makeComment(
 
 function makeServices(overrides: Partial<CommentServices> = {}): CommentServices {
   return {
+    listWorkspaceComments: jest.fn().mockResolvedValue({ status: 'ok', comments: [] }),
     listComments: jest.fn().mockResolvedValue({ status: 'ok', comments: [] }),
     createComment: jest.fn(),
     resolveComment: jest.fn(),
@@ -95,7 +96,8 @@ describe('CommentsPanel', () => {
   it('creates a comment and appends it to the list', async () => {
     const created = makeComment('comment-new', { body: 'New comment' });
     const createComment = jest.fn().mockResolvedValue({ status: 'ok', comment: created });
-    renderPanel({ services: makeServices({ createComment }) });
+    const onCommentSaved = jest.fn();
+    renderPanel({ services: makeServices({ createComment }), onCommentSaved });
     const user = userEvent.setup();
 
     await waitFor(() => expect(screen.queryByText('Loading comments…')).not.toBeInTheDocument());
@@ -111,6 +113,7 @@ describe('CommentsPanel', () => {
       authorId: expect.objectContaining({ value: CURRENT_USER }),
       body: 'New comment',
     });
+    expect(onCommentSaved).toHaveBeenCalledWith(created);
     expect(textbox).toHaveValue('');
   });
 
@@ -121,7 +124,9 @@ describe('CommentsPanel', () => {
       status: 'ok',
       comment: comment.resolve(resolvedAt),
     });
+    const onCommentSaved = jest.fn();
     renderPanel({
+      onCommentSaved,
       services: makeServices({
         listComments: jest.fn().mockResolvedValue({ status: 'ok', comments: [comment] }),
         resolveComment,
@@ -136,6 +141,7 @@ describe('CommentsPanel', () => {
       commentId: 'comment-1',
     });
     expect(await screen.findByText('Resolved')).toBeInTheDocument();
+    expect(onCommentSaved).toHaveBeenCalledWith(expect.objectContaining({ resolvedAt }));
     expect(screen.getByText('Looks good to me')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Resolve' })).not.toBeInTheDocument();
   });

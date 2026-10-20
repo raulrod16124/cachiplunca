@@ -60,6 +60,10 @@ describe('comments integration', () => {
     await user.click(screen.getByRole('button', { name: 'Add comment' }));
 
     expect(await screen.findByText('Let us ship on Friday')).toBeInTheDocument();
+    const indicator = await screen.findByTestId('comment-indicator-note-1');
+    expect(indicator).toHaveTextContent('1');
+    await userEvent.setup().click(indicator);
+    expect(screen.getByTestId('comments-panel')).toBeInTheDocument();
     await waitFor(async () => {
       const comments = await harness.commentRepository.listByElement(
         workspace.id,
@@ -77,6 +81,9 @@ describe('comments integration', () => {
     await userEvent.setup().click(screen.getByRole('button', { name: 'Resolve' }));
 
     expect(await screen.findByText('Resolved')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByTestId('comment-indicator-note-1')).not.toBeInTheDocument(),
+    );
     await waitFor(async () => {
       const comment = await harness.commentRepository.findById(
         workspace.id,
@@ -120,6 +127,7 @@ describe('comments integration', () => {
     await user.click(screen.getByRole('button', { name: 'Add comment' }));
 
     expect(await screen.findByText('Viewer feedback')).toBeInTheDocument();
+    expect(await screen.findByTestId('comment-indicator-note-1')).toHaveTextContent('1');
     expect(screen.getByText('Viewer')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add note' })).toBeDisabled();
   });

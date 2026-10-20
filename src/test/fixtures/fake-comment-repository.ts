@@ -9,6 +9,12 @@ function keyOf(workspaceId: WorkspaceId, commentId: CommentId): string {
 export class FakeCommentRepository implements CommentRepository {
   #comments = new Map<string, Comment>();
 
+  async listByWorkspace(workspaceId: WorkspaceId): Promise<Comment[]> {
+    return [...this.#comments.values()].filter((comment) =>
+      comment.workspaceId.equals(workspaceId),
+    );
+  }
+
   async listByElement(workspaceId: WorkspaceId, elementId: ElementId): Promise<Comment[]> {
     return [...this.#comments.values()].filter(
       (comment) => comment.workspaceId.equals(workspaceId) && comment.elementId.equals(elementId),

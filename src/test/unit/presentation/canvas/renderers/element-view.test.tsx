@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { createTextElement } from '../../../../../domain/element';
 import type { TextElement } from '../../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../../domain/shared';
@@ -83,5 +83,31 @@ describe('ElementView', () => {
     expect(
       screen.getByTestId('canvas-item-elem-1').querySelector('[data-element-fallback]'),
     ).toBeNull();
+  });
+
+  it('shows an unresolved comment indicator and opens comments from it', () => {
+    const onOpenComments = jest.fn();
+    render(
+      <ElementView
+        element={createElement()}
+        selected={false}
+        commentCount={2}
+        commentLabel="2 unresolved comments"
+        onOpenComments={onOpenComments}
+      />,
+    );
+
+    const indicator = screen.getByRole('button', { name: '2 unresolved comments' });
+    expect(indicator).toHaveTextContent('2');
+
+    fireEvent.click(indicator);
+
+    expect(onOpenComments).toHaveBeenCalledWith('elem-1');
+  });
+
+  it('does not render the comment indicator without unresolved comments', () => {
+    render(<ElementView element={createElement()} selected={false} commentCount={0} />);
+
+    expect(screen.queryByTestId('comment-indicator-elem-1')).not.toBeInTheDocument();
   });
 });

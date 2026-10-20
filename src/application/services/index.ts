@@ -1,5 +1,6 @@
 export * from './session-store';
 export * from './command-history';
+export * from './comment-summary';
 export * from './canvas-viewport-store';
 export * from './canvas-hit-test';
 export * from './canvas-navigation';

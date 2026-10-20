@@ -38,8 +38,19 @@ export function describeCommentRepositoryContract(
     });
 
     it('starts with no comments for an element', async () => {
+      await expect(repository.listByWorkspace(WORKSPACE)).resolves.toEqual([]);
       await expect(repository.listByElement(WORKSPACE, ELEMENT)).resolves.toEqual([]);
       expect(await repository.findById(WORKSPACE, CommentId.create('missing'))).toBeNull();
+    });
+
+    it('lists every comment of a workspace across elements', async () => {
+      await repository.save(makeComment('first'));
+      await repository.save(makeComment('second', { elementId: OTHER_ELEMENT }));
+      await repository.save(makeComment('other-workspace', { workspaceId: OTHER_WORKSPACE }));
+
+      const listed = await repository.listByWorkspace(WORKSPACE);
+
+      expect(listed.map((entry) => entry.id.value).sort()).toEqual(['first', 'second']);
     });
 
     it('stores a comment and exposes it through findById and listByElement', async () => {

@@ -8,9 +8,10 @@
 - Infrastructure: mapper Firestore con `Date`/`Timestamp` y `resolvedAt` opcional; repositorio en `workspaces/{workspaceId}/comments` con consulta por `elementId` y tests con el Firestore en memoria.
 - Rules: lectura, creación y resolución solo para miembros; creación con autor y ruta coherentes; resolución limitada a añadir `resolvedAt` sobre un hilo abierto; borrado denegado. Tests de roles, spoofing, doble resolución y outsiders.
 - Presentation: `CommentsPanel` en panel lateral ligado a la selección única, toggle en la top bar mutuamente excluyente con el plan, creación y resolución con estados de carga/error, empty states, autores desde miembros/presencia y fallback a id corto; i18n en/es. Los viewers pueden comentar sin editar el canvas.
+- Canvas: `listWorkspaceComments` carga los hilos del workspace y `countUnresolvedCommentsByElement` deriva un contador puro por elemento. Los elementos con comentarios sin resolver muestran un indicador discreto que abre el panel y selecciona el elemento; al resolver, el indicador desaparece del tablero sin perder el historial del panel.
 - Integración: harness con `FakeCommentRepository` y servicios de comentarios; test de crear/recargar/resolver y de viewer. E2E `15-comments` con persistencia y resolución tras recarga.
 - Docs: PBL-013 → DONE (fases y criterios [x]), ADR-0039 y este registro.
-- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` (255 suites / 2848 tests), `npm run test:rules` (96 tests), `npm run build` y E2E `15-comments` en verde.
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` (257 suites / 2859 tests), `npm run test:rules` (96 tests), `npm run build` y E2E `15-comments` en verde.
 
 ## 2026-10-20 — PBL-012 Alineación y distribución
 

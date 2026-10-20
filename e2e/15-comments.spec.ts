@@ -19,21 +19,26 @@ test.describe('Comments', () => {
     await panel.getByRole('textbox', { name: 'Comment' }).fill(commentBody);
     await panel.getByRole('button', { name: 'Add comment' }).click();
     await expect(panel.getByText(commentBody)).toBeVisible();
+    const indicator = note.getByTestId(/^comment-indicator-/);
+    await expect(indicator).toBeVisible();
+    await expect(indicator).toHaveText('1');
 
     await page.reload();
     await expect(page.getByRole('application', { name: 'Canvas' })).toBeVisible({
       timeout: 20000,
     });
 
-    const reloadedNote = page.locator('[data-testid^="canvas-item-"][data-element-type="note"]');
-    await reloadedNote.click();
-    await page.getByRole('button', { name: 'Comments' }).click();
+    const reloadedIndicator = page.getByTestId(/^comment-indicator-/);
+    await expect(reloadedIndicator).toBeVisible({ timeout: 20000 });
+    await reloadedIndicator.click();
+
     const reloadedPanel = page.getByTestId('comments-panel');
     await expect(reloadedPanel.getByText(commentBody)).toBeVisible({ timeout: 20000 });
 
     await reloadedPanel.getByRole('button', { name: 'Resolve' }).click();
     await expect(reloadedPanel.getByText('Resolved')).toBeVisible();
     await expect(reloadedPanel.getByText(commentBody)).toBeVisible();
+    await expect(reloadedIndicator).toBeHidden();
 
     await page.reload();
     await expect(page.getByRole('application', { name: 'Canvas' })).toBeVisible({
@@ -44,5 +49,6 @@ test.describe('Comments', () => {
     await expect(page.getByTestId('comments-panel').getByText('Resolved')).toBeVisible({
       timeout: 20000,
     });
+    await expect(page.getByTestId(/^comment-indicator-/)).toBeHidden();
   });
 });

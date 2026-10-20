@@ -3,6 +3,7 @@ import { useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import styled from 'styled-components';
 import { Button, Text } from '@raulrod/ui';
 import type { Workspace } from '../../../../domain/workspace';
+import type { Comment } from '../../../../domain/comment';
 import type { Element, ElementType } from '../../../../domain/element';
 import type { ElementId, Position } from '../../../../domain/shared';
 import type { MembershipRole } from '../../../../domain/membership';
@@ -121,7 +122,9 @@ export interface WorkspaceShellLayoutProps {
   readonly onRetryRole?: () => void;
   readonly listWorkspaces?: ListWorkspaces;
   readonly onOpenWorkspace?: (workspaceId: string) => void;
-  readonly comments?: CommentServices;
+  readonly commentServices?: CommentServices;
+  readonly unresolvedCommentCounts?: ReadonlyMap<string, number>;
+  readonly onCommentSaved?: (comment: Comment) => void;
 }
 
 export function WorkspaceShellLayout({
@@ -171,7 +174,9 @@ export function WorkspaceShellLayout({
   onRetryRole,
   listWorkspaces,
   onOpenWorkspace,
-  comments,
+  commentServices,
+  unresolvedCommentCounts,
+  onCommentSaved,
 }: WorkspaceShellLayoutProps): ReactNode {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -257,7 +262,7 @@ export function WorkspaceShellLayout({
     setPlanOpen(false);
     setCommentsOpen((open) => !open);
   };
-  const canComment = comments !== undefined && currentUser !== null;
+  const canComment = commentServices !== undefined && currentUser !== null;
 
   return (
     <Shell>
@@ -327,6 +332,15 @@ export function WorkspaceShellLayout({
             onCursorMove={onCursorMove}
             readOnly={readOnly}
             commandRef={commandRef}
+            unresolvedCommentCounts={canComment ? unresolvedCommentCounts : undefined}
+            onOpenComments={
+              canComment
+                ? () => {
+                    setPlanOpen(false);
+                    setCommentsOpen(true);
+                  }
+                : undefined
+            }
           />
         </CanvasRegion>
         <TaskPlanPanel
@@ -349,7 +363,8 @@ export function WorkspaceShellLayout({
           element={selectedElement}
           currentUserId={currentUser?.uid}
           authorLabels={authorLabels}
-          services={comments}
+          services={commentServices}
+          onCommentSaved={onCommentSaved}
           onClose={() => setCommentsOpen(false)}
         />
       </CanvasArea>
