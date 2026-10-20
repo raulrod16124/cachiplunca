@@ -52,6 +52,7 @@ const WS2 = 'ws2';
 const NEW_WS = 'new-ws';
 
 const now = new Date('2026-10-13T00:00:00.000Z');
+const INVITATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 function workspaceData(name = 'Workspace', createdBy = ROLE_UIDS.owner) {
   return { name, description: null, createdBy, createdAt: now, updatedAt: now };
@@ -111,7 +112,7 @@ function invitationData(
     tokenHash: '0a'.repeat(32),
     status,
     invitedBy,
-    expiresAt: new Date('2026-10-20T00:00:00.000Z'),
+    expiresAt: new Date(Date.now() + INVITATION_TTL_MS),
     createdAt: now,
     updatedAt: now,
   };
@@ -562,7 +563,7 @@ describe('firestore.rules — memberships', () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await setDoc(doc(ctx.firestore(), 'invitations', 'inv-expired'), {
         ...invitationData(WS1, ROLE_UIDS.owner, 'pending', INVITEE_EMAIL, 'editor', 'inv-expired'),
-        expiresAt: new Date('2026-01-01T00:00:00.000Z'),
+        expiresAt: new Date(Date.now() - 60_000),
       });
     });
 
