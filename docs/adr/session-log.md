@@ -1,5 +1,16 @@
 # Session Log
 
+## 2026-10-20 — PBL-009 Vista Plan de tareas
+
+- Siguiente tarea del backlog: PBL-009 (R2, P0, M, sin dependencias). PBL-001 a PBL-008 en DONE; rama `development` limpia al iniciar.
+- Application: `selectTaskPlan(elements, filters)` puro, agrupa por `TASK_STATUSES`, filtra por estado y “Mis tareas”, ordena por vencimiento (sin fecha al final) y no muta la entrada. Sin entidad `Plan` ni store.
+- Presentation: `TaskPlanPanel` lateral con filtros accesibles, grupos por estado, título, asignado (`shortUserId`), vencimiento (`formatShortDate`) y cambio de estado con `Select`. Empty state con CTA que abre el formulario de tarea existente y estado filtrado con “Limpiar filtros”.
+- Shell: el panel reduce el ancho del canvas (`CanvasRegion`) para que `CanvasViewportStore.center` siga centrando bien; toggle en la top bar con `aria-expanded`. Selección vía `CanvasCommandHandle.focusElement`; cambio de estado vía `UpdateElement` (historial, persistencia y realtime heredados). En solo lectura se muestran badges sin control de estado.
+- i18n: claves nuevas en inglés y español para panel, filtros, estados, asignado, vencimiento y empty states.
+- Tests: unit de `selectTaskPlan`, panel (filtros, selección, cambio de estado, solo lectura y empty states), toggle del top bar, integración de selección/persistencia/realtime/rol viewer y E2E `11-task-plan`.
+- Docs: PBL-009 → DONE (criterios [x]), ADR-0036 y este registro.
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` (240 suites / 2720 tests) y `npm run build` en verde. `11-task-plan` E2E en verde; la suite E2E completa queda 20/27 por 7 fallos preexistentes reproducidos también sobre HEAD limpio (CTA duplicada de workspaces, persistencia de texto tras reload, verificación de email en emulador y print export), no relacionados con PBL-009.
+
 ## 2026-10-20 — PBL-008 Command palette (Cmd/Ctrl + K)
 
 - Siguiente tarea del backlog: PBL-008 (R1, P1, M, sin dependencias). Sin IN PROGRESS ni BLOCKED; rama `development` limpia al iniciar.

@@ -94,7 +94,7 @@ Definition of Done:
 | PBL-006 | Duplicar workspace                           | R1      | P1        | M        | —              | No  | DONE   |
 | PBL-007 | Plantillas de arranque y empty states        | R1      | P0        | M        | —              | No  | DONE   |
 | PBL-008 | Command palette (Cmd/Ctrl + K)               | R1      | P1        | M        | —              | No  | DONE   |
-| PBL-009 | Vista Plan de tareas                         | R2      | P0        | M        | —              | No  | TODO   |
+| PBL-009 | Vista Plan de tareas                         | R2      | P0        | M        | —              | No  | DONE   |
 | PBL-010 | Crear tarea desde nota o frame               | R2      | P1        | S        | PBL-009        | Sí  | TODO   |
 | PBL-011 | Kanban del plan                              | R2      | P2        | M        | PBL-009        | No  | TODO   |
 | PBL-012 | Alineación y distribución                    | R2      | P1        | M        | —              | No  | TODO   |
@@ -433,7 +433,7 @@ Mejorar descubrimiento y navegación sin añadir nuevas pantallas.
 
 ### PBL-009 — Vista Plan de tareas
 
-**Priority:** P0 · **Effort:** M · **Depends:** — · **Status:** TODO
+**Priority:** P0 · **Effort:** M · **Depends:** — · **Status:** DONE
 
 #### Objetivo
 
@@ -451,11 +451,11 @@ Convertir el canvas en un plan consultable sin salir del workspace.
 
 #### Criterios de aceptación
 
-- [ ] La vista refleja cambios locales y remotos en tiempo real.
-- [ ] No existe estado duplicado de tareas: todo se deriva de `elements`.
-- [ ] Los filtros y el cambio de estado son accesibles con teclado.
-- [ ] En modo solo lectura no se puede cambiar el estado.
-- [ ] Tests del selector puro y de integración del panel.
+- [x] La vista refleja cambios locales y remotos en tiempo real.
+- [x] No existe estado duplicado de tareas: todo se deriva de `elements`.
+- [x] Los filtros y el cambio de estado son accesibles con teclado.
+- [x] En modo solo lectura no se puede cambiar el estado.
+- [x] Tests del selector puro y de integración del panel.
 
 #### Fuera de alcance
 
@@ -467,6 +467,7 @@ Convertir el canvas en un plan consultable sin salir del workspace.
 - Selector puro en Application (`selectTaskPlan`) que reciba `elements` y filtros.
 - Centrar mediante `CanvasViewportStore` y el patrón de fit existente.
 - No añadir entidad `Plan` ni store nuevo.
+- Implementado en `src/application/services/task-plan.ts` (`selectTaskPlan`) y `TaskPlanPanel`; el panel reduce el ancho del canvas para que `focusElement`/`center` sigan siendo correctos. Ver ADR-0036.
 
 ---
 
@@ -819,6 +820,7 @@ Añadir una línea por sesión. El detalle técnico extenso sigue viviendo en `d
 | 2026-10-19 | PBL-006 | DONE      | Follow-up: edición de nombre y descripción desde la card con icono y diálogo; acciones de card compactadas en iconos accesibles; unit, integración y E2E.                                                                                                                       |
 | 2026-10-19 | PBL-007 | DONE      | Plantillas puras de retrospectiva, kickoff y brainstorming; selector Blank/Template en el diálogo; elementos con IDs nuevos y rollback best-effort; empty state del board con CTA; i18n en/es, unit, integración y E2E.                                                         |
 | 2026-10-20 | PBL-008 | DONE      | Command palette en Workspaces y board con Cmd/Ctrl + K; acciones de creación (incluido conector libre y ligado), fit, undo/redo, compartir, atajos y navegación; búsqueda de workspaces y elementos; `CanvasCommandHandle`, búsqueda pura, i18n en/es, unit, integración y E2E. |
+| 2026-10-20 | PBL-009 | DONE      | Vista Plan de tareas derivada de `elements`: selector puro `selectTaskPlan`, panel lateral con filtros por estado y “Mis tareas”, selección/centrado vía `focusElement`, cambio de estado con `UpdateElement`, solo lectura, empty states, i18n en/es, unit, integración y E2E. |
 
 ---
 

@@ -26,6 +26,7 @@ import { createPresenceColorAssigner } from '../../../collaboration';
 import { Canvas, type CanvasCommandHandle, type ConnectorEndpointDragInput } from '../../../canvas';
 import type { TaskFormValues } from '../../../canvas/components/task-form-dialog';
 import { KeyboardShortcutsDialog } from './keyboard-shortcuts-dialog';
+import { TaskPlanPanel } from './task-plan-panel';
 import { WorkspaceCommandPalette } from './workspace-command-palette';
 import { WorkspaceTopBar } from './workspace-top-bar';
 
@@ -47,8 +48,15 @@ const AccessBanner = styled.div`
 
 const CanvasArea = styled.main`
   flex: 1 1 auto;
+  display: flex;
+  min-height: 0;
   background: ${({ theme }) => theme.canvas.surface};
+`;
+
+const CanvasRegion = styled.div`
   position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
   overflow: hidden;
 `;
 
@@ -146,6 +154,7 @@ export function WorkspaceShellLayout({
 }: WorkspaceShellLayoutProps): ReactNode {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [planOpen, setPlanOpen] = useState(false);
   const commandRef = useRef<CanvasCommandHandle | null>(null);
   const selection = useSyncExternalStore(selectionStore.subscribe, selectionStore.getSnapshot);
   const colorAssignerRef = useRef(createPresenceColorAssigner());
@@ -172,6 +181,7 @@ export function WorkspaceShellLayout({
   }, [userIds]);
 
   const canCreate = !readOnly && onCreateElement !== undefined;
+  const canCreateTask = !readOnly && (onCreateTask !== undefined || onCreateElement !== undefined);
   const canCreateFreeConnector = !readOnly && onCreateConnector !== undefined;
   const canConnectSelected =
     canCreateFreeConnector && connectorCandidateIds(elements, selection.selectedIds) !== null;
@@ -191,52 +201,69 @@ export function WorkspaceShellLayout({
         </AccessBanner>
       )}
       <CanvasArea>
-        <WorkspaceTopBar
-          workspace={workspace}
-          role={role}
-          readOnly={readOnly}
-          onBack={onBack}
-          syncStatus={syncStatus}
-          connectionStatus={connectionStatus}
-          connectedUsers={connectedUsers}
-          userColors={userColors}
-          currentUser={currentUser}
-          logoutUser={logoutUser}
-          onShare={onShare}
-          onShowShortcuts={() => setShortcutsOpen(true)}
-          onExportJson={onExportJson}
-          onExportPdf={onExportPdf}
-          onRename={onRename}
-          persistenceErrorMessage={persistenceErrorMessage}
-          collaborationErrorMessage={collaborationErrorMessage}
-          creationErrorMessage={creationErrorMessage}
-          exportErrorMessage={exportErrorMessage}
-        />
-        <Canvas
-          store={canvasViewportStore}
-          selectionStore={selectionStore}
+        <CanvasRegion>
+          <WorkspaceTopBar
+            workspace={workspace}
+            role={role}
+            readOnly={readOnly}
+            onBack={onBack}
+            syncStatus={syncStatus}
+            connectionStatus={connectionStatus}
+            connectedUsers={connectedUsers}
+            userColors={userColors}
+            currentUser={currentUser}
+            logoutUser={logoutUser}
+            onShare={onShare}
+            planOpen={planOpen}
+            onTogglePlan={() => setPlanOpen((open) => !open)}
+            onShowShortcuts={() => setShortcutsOpen(true)}
+            onExportJson={onExportJson}
+            onExportPdf={onExportPdf}
+            onRename={onRename}
+            persistenceErrorMessage={persistenceErrorMessage}
+            collaborationErrorMessage={collaborationErrorMessage}
+            creationErrorMessage={creationErrorMessage}
+            exportErrorMessage={exportErrorMessage}
+          />
+          <Canvas
+            store={canvasViewportStore}
+            selectionStore={selectionStore}
+            elements={elements}
+            history={commandHistory}
+            onMoveElements={onMoveElements}
+            onResizeElements={onResizeElements}
+            onTransformEnd={onTransformEnd}
+            onDeleteElements={onDeleteElements}
+            onDuplicateElements={onDuplicateElements}
+            onPasteElements={onPasteElements}
+            onReorderElements={onReorderElements}
+            onUndoElements={onUndoElements}
+            onRedoElements={onRedoElements}
+            onCreateElement={onCreateElement}
+            onCreateConnector={onCreateConnector}
+            onCreateTask={onCreateTask}
+            onUpdateElement={onUpdateElement}
+            onUpdateConnectorEndpoint={onUpdateConnectorEndpoint}
+            generateId={generateElementId}
+            remoteCursors={remoteCursors}
+            userColors={userColors}
+            onCursorMove={onCursorMove}
+            readOnly={readOnly}
+            commandRef={commandRef}
+          />
+        </CanvasRegion>
+        <TaskPlanPanel
+          open={planOpen}
           elements={elements}
-          history={commandHistory}
-          onMoveElements={onMoveElements}
-          onResizeElements={onResizeElements}
-          onTransformEnd={onTransformEnd}
-          onDeleteElements={onDeleteElements}
-          onDuplicateElements={onDuplicateElements}
-          onPasteElements={onPasteElements}
-          onReorderElements={onReorderElements}
-          onUndoElements={onUndoElements}
-          onRedoElements={onRedoElements}
-          onCreateElement={onCreateElement}
-          onCreateConnector={onCreateConnector}
-          onCreateTask={onCreateTask}
-          onUpdateElement={onUpdateElement}
-          onUpdateConnectorEndpoint={onUpdateConnectorEndpoint}
-          generateId={generateElementId}
-          remoteCursors={remoteCursors}
-          userColors={userColors}
-          onCursorMove={onCursorMove}
-          readOnly={readOnly}
-          commandRef={commandRef}
+          currentUserId={currentUser?.uid}
+          canEdit={!readOnly && onUpdateElement !== undefined}
+          canCreateTask={canCreateTask}
+          onClose={() => setPlanOpen(false)}
+          onSelectTask={(elementId) => commandRef.current?.focusElement(elementId)}
+          onChangeStatus={(task, status) => {
+            onUpdateElement?.({ type: 'task', element: task, status });
+          }}
+          onCreateTask={() => commandRef.current?.createElement('task')}
         />
       </CanvasArea>
       <KeyboardShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />

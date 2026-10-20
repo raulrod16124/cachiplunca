@@ -33,3 +33,4 @@ export * from './user-settings-store';
 export * from './board-export';
 export * from './workspace-duplication';
 export * from './workspace-templates';
+export * from './task-plan';
