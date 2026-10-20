@@ -39,7 +39,7 @@ describe('generateElements', () => {
   it('mixes element types on a board large enough for connectors', () => {
     const types = new Set(generateElements({ count: 60 }).map((element) => element.type));
 
-    expect(types).toEqual(new Set(['text', 'note', 'task', 'frame', 'connector', 'link']));
+    expect(types).toEqual(new Set(['text', 'note', 'task', 'frame', 'connector', 'link', 'image']));
   });
 
   it('avoids connectors on boards too small to hold a valid pair', () => {

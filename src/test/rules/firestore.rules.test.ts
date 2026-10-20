@@ -52,6 +52,7 @@ const WS2 = 'ws2';
 const NEW_WS = 'new-ws';
 
 const now = new Date('2026-10-13T00:00:00.000Z');
+const INVITATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 function workspaceData(name = 'Workspace', createdBy = ROLE_UIDS.owner) {
   return { name, description: null, createdBy, createdAt: now, updatedAt: now };
@@ -86,12 +87,52 @@ function elementData(workspaceId: string, createdBy: string, id: string) {
   };
 }
 
+function imageElementData(
+  workspaceId: string,
+  createdBy: string,
+  id: string,
+  overrides: Record<string, unknown> = {},
+) {
+  return {
+    type: 'image',
+    id,
+    workspaceId,
+    position: { x: 0, y: 0 },
+    size: { width: 320, height: 200 },
+    rotation: 0,
+    src: 'https://firebasestorage.googleapis.com/image.png',
+    alt: 'Diagram',
+    createdBy,
+    createdAt: now,
+    updatedAt: now,
+    ...overrides,
+  };
+}
+
 function presenceData(workspaceId: string, userId: string) {
   return {
     workspaceId,
     userId,
     lastSeenAt: now,
     cursor: { x: 1, y: 2 },
+  };
+}
+
+function commentData(
+  workspaceId: string,
+  elementId: string,
+  authorId: string,
+  id: string,
+  resolvedAt?: Date,
+) {
+  return {
+    id,
+    workspaceId,
+    elementId,
+    authorId,
+    body: 'Looks good to me',
+    createdAt: now,
+    ...(resolvedAt === undefined ? {} : { resolvedAt }),
   };
 }
 
@@ -111,7 +152,7 @@ function invitationData(
     tokenHash: '0a'.repeat(32),
     status,
     invitedBy,
-    expiresAt: new Date('2026-10-20T00:00:00.000Z'),
+    expiresAt: new Date(Date.now() + INVITATION_TTL_MS),
     createdAt: now,
     updatedAt: now,
   };
@@ -154,6 +195,14 @@ beforeEach(async () => {
     );
     await setDoc(doc(db, 'elements', 'e1'), elementData(WS1, ROLE_UIDS.owner, 'e1'));
     await setDoc(doc(db, 'elements', 'e2'), elementData(WS2, ROLE_UIDS.owner, 'e2'));
+    await setDoc(
+      doc(db, 'workspaces', WS1, 'comments', 'c1'),
+      commentData(WS1, 'e1', ROLE_UIDS.owner, 'c1'),
+    );
+    await setDoc(
+      doc(db, 'workspaces', WS1, 'comments', 'c-resolved'),
+      commentData(WS1, 'e1', ROLE_UIDS.owner, 'c-resolved', new Date(now.getTime() + 60_000)),
+    );
     await setDoc(
       doc(db, 'presence', `${WS1}_${ROLE_UIDS.viewer}`),
       presenceData(WS1, ROLE_UIDS.viewer),
@@ -348,6 +397,72 @@ describe('firestore.rules — elements', () => {
     await assertFails(getDoc(doc(dbOf(OUTSIDER_UID), 'elements', 'e1')));
     await assertFails(getDoc(doc(dbOf(ROLE_UIDS.owner), 'elements', 'e2')));
     await assertFails(getDoc(doc(unauthed().firestore(), 'elements', 'e1')));
+  });
+});
+
+describe('firestore.rules — image elements', () => {
+  test('owner and editor can create a valid image element', async () => {
+    for (const role of ['owner', 'editor'] as const) {
+      const uid = ROLE_UIDS[role];
+      await assertSucceeds(
+        setDoc(
+          doc(dbOf(uid), 'elements', `image-${role}`),
+          imageElementData(WS1, uid, `image-${role}`),
+        ),
+      );
+    }
+  });
+
+  test('viewers, outsiders and anonymous users cannot create images', async () => {
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.viewer), 'elements', 'image-viewer'),
+        imageElementData(WS1, ROLE_UIDS.viewer, 'image-viewer'),
+      ),
+    );
+    await assertFails(
+      setDoc(
+        doc(dbOf(OUTSIDER_UID), 'elements', 'image-outsider'),
+        imageElementData(WS1, OUTSIDER_UID, 'image-outsider'),
+      ),
+    );
+    await assertFails(
+      setDoc(
+        doc(unauthed().firestore(), 'elements', 'image-anon'),
+        imageElementData(WS1, ROLE_UIDS.owner, 'image-anon'),
+      ),
+    );
+  });
+
+  test('rejects images without a non-empty src or with a non-string alt', async () => {
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.editor), 'elements', 'image-empty-src'),
+        imageElementData(WS1, ROLE_UIDS.editor, 'image-empty-src', { src: '' }),
+      ),
+    );
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.editor), 'elements', 'image-bad-alt'),
+        imageElementData(WS1, ROLE_UIDS.editor, 'image-bad-alt', { alt: 42 }),
+      ),
+    );
+  });
+
+  test('an editor can update the alt text of an existing image', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), 'elements', 'image-existing'),
+        imageElementData(WS1, ROLE_UIDS.owner, 'image-existing'),
+      );
+    });
+
+    await assertSucceeds(
+      updateDoc(doc(dbOf(ROLE_UIDS.editor), 'elements', 'image-existing'), {
+        alt: 'Updated diagram',
+        updatedAt: now,
+      }),
+    );
   });
 });
 
@@ -562,7 +677,7 @@ describe('firestore.rules — memberships', () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await setDoc(doc(ctx.firestore(), 'invitations', 'inv-expired'), {
         ...invitationData(WS1, ROLE_UIDS.owner, 'pending', INVITEE_EMAIL, 'editor', 'inv-expired'),
-        expiresAt: new Date('2026-01-01T00:00:00.000Z'),
+        expiresAt: new Date(Date.now() - 60_000),
       });
     });
 
@@ -1016,6 +1131,135 @@ describe('firestore.rules — presence', () => {
     await assertFails(
       getDoc(doc(unauthed().firestore(), 'presence', `${WS1}_${ROLE_UIDS.viewer}`)),
     );
+  });
+});
+
+describe('firestore.rules — comments', () => {
+  test('workspace members can read comments individually and by element', async () => {
+    for (const uid of OTHER_ROLE_UIDS) {
+      await assertSucceeds(getDoc(doc(dbOf(uid), 'workspaces', WS1, 'comments', 'c1')));
+      await assertSucceeds(
+        getDocs(
+          query(
+            collection(dbOf(uid), 'workspaces', WS1, 'comments'),
+            where('elementId', '==', 'e1'),
+          ),
+        ),
+      );
+    }
+  });
+
+  test('outsiders and anonymous users cannot read comments', async () => {
+    await assertFails(getDoc(doc(dbOf(OUTSIDER_UID), 'workspaces', WS1, 'comments', 'c1')));
+    await assertFails(
+      getDocs(
+        query(
+          collection(dbOf(OUTSIDER_UID), 'workspaces', WS1, 'comments'),
+          where('elementId', '==', 'e1'),
+        ),
+      ),
+    );
+    await assertFails(getDoc(doc(unauthed().firestore(), 'workspaces', WS1, 'comments', 'c1')));
+  });
+
+  test('members can create their own comments', async () => {
+    for (const uid of OTHER_ROLE_UIDS) {
+      await assertSucceeds(
+        setDoc(
+          doc(dbOf(uid), 'workspaces', WS1, 'comments', `c-${uid}`),
+          commentData(WS1, 'e1', uid, `c-${uid}`),
+        ),
+      );
+    }
+  });
+
+  test('comment creation rejects spoofing, wrong paths and outsiders', async () => {
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.editor), 'workspaces', WS1, 'comments', 'c-spoofed-author'),
+        commentData(WS1, 'e1', ROLE_UIDS.owner, 'c-spoofed-author'),
+      ),
+    );
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.editor), 'workspaces', WS1, 'comments', 'c-wrong-ws'),
+        commentData(WS2, 'e1', ROLE_UIDS.editor, 'c-wrong-ws'),
+      ),
+    );
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.editor), 'workspaces', WS1, 'comments', 'c-wrong-id'),
+        commentData(WS1, 'e1', ROLE_UIDS.editor, 'another-id'),
+      ),
+    );
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.editor), 'workspaces', WS1, 'comments', 'c-pre-resolved'),
+        commentData(WS1, 'e1', ROLE_UIDS.editor, 'c-pre-resolved', now),
+      ),
+    );
+    await assertFails(
+      setDoc(
+        doc(dbOf(OUTSIDER_UID), 'workspaces', WS1, 'comments', 'c-outsider'),
+        commentData(WS1, 'e1', OUTSIDER_UID, 'c-outsider'),
+      ),
+    );
+    await assertFails(
+      setDoc(
+        doc(unauthed().firestore(), 'workspaces', WS1, 'comments', 'c-anon'),
+        commentData(WS1, 'e1', 'anon', 'c-anon'),
+      ),
+    );
+  });
+
+  test('any member can resolve an open comment once', async () => {
+    for (const uid of OTHER_ROLE_UIDS) {
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(
+          doc(ctx.firestore(), 'workspaces', WS1, 'comments', `c-open-${uid}`),
+          commentData(WS1, 'e1', ROLE_UIDS.owner, `c-open-${uid}`),
+        );
+      });
+
+      await assertSucceeds(
+        updateDoc(doc(dbOf(uid), 'workspaces', WS1, 'comments', `c-open-${uid}`), {
+          resolvedAt: new Date(now.getTime() + 60_000),
+        }),
+      );
+    }
+  });
+
+  test('resolving cannot rewrite history or resolve twice', async () => {
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', WS1, 'comments', 'c1'), {
+        body: 'Changed',
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', WS1, 'comments', 'c1'), {
+        resolvedAt: new Date(now.getTime() + 60_000),
+        authorId: ROLE_UIDS.editor,
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', WS1, 'comments', 'c-resolved'), {
+        resolvedAt: new Date(now.getTime() + 120_000),
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(dbOf(OUTSIDER_UID), 'workspaces', WS1, 'comments', 'c1'), {
+        resolvedAt: new Date(now.getTime() + 60_000),
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(unauthed().firestore(), 'workspaces', WS1, 'comments', 'c1'), {
+        resolvedAt: new Date(now.getTime() + 60_000),
+      }),
+    );
+  });
+
+  test('comments cannot be deleted', async () => {
+    await assertFails(deleteDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', WS1, 'comments', 'c1')));
   });
 });
 

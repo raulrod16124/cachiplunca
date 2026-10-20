@@ -1,5 +1,75 @@
 # Session Log
 
+## 2026-10-20 — PBL-015 Imágenes
+
+- Siguiente tarea del backlog: PBL-015 (R3, P1, L, depende de PBL-001 DONE). Sin IN PROGRESS ni BLOCKED; rama `development` limpia al iniciar.
+- Domain: `ImageElement` con `src` y `alt?`, factory `createImageElement`, actualizaciones puras `withImageSrc`/`withImageAlt` y validación en el union discriminado; tests de creación, limpieza de alt y duplicado.
+- Application: `ImageStoragePort`, validación pura de tipo/tamaño (PNG/JPEG/WebP/GIF, 5 MB), derivación de alt desde el nombre, path saneado y caso de uso `createUploadImage`; create/update de elementos, export y búsqueda ampliados; fake y tests.
+- Infrastructure: `getFirebaseStorage` con emulador, adapter `firebase-image-storage` con `uploadBytes`/`getDownloadURL`, errores de Storage mapeados y mapper Firestore de `image`; tests del adapter y del mapper.
+- Rules: `storage.rules` con lectura por membership y escritura owner/editor, límite de tamaño y tipos; `firestore.rules` valida `src`/`alt` de imágenes. Tests de roles, outsiders, anónimos, tipos, tamaño y borrado.
+- Presentation: renderer de imagen accesible, selector desde la toolbar, `onUploadImage` en Canvas, creación con alt derivado del nombre, editor inline de descripción, acción en command palette, búsqueda/export, descripciones y comentarios; i18n en/es y mensajes de error claros.
+- Integración/E2E: harness con `FakeImageStoragePort`; test de subida/persistencia y tipo inválido; E2E `17-images` con subida, recarga, edición de alt y borrado. El emulador de Storage se añadió a los scripts de rules/E2E y a `firebase.json`.
+- Docs: PBL-015 → DONE (fases y criterios [x]), ADR-0040, GAP-02 cerrado y este registro.
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` (265 suites / 2910 tests), `npm run test:rules` (firestore + storage), `npm run build` y E2E `17-images` en verde.
+
+## 2026-10-20 — PBL-013 Comentarios MVP
+
+- Siguiente tarea del backlog: PBL-013 (R2, P0, L, depende de PBL-001 DONE). Sin IN PROGRESS ni BLOCKED; rama `development` limpia al iniciar.
+- Domain: `Comment` y `CommentId` con body recortado de hasta 4.000 caracteres, timestamps coherentes, resolución única y tests de invariantes.
+- Application: `CommentRepository`, casos de uso `createComment`/`resolveComment`, query `listComments` con orden cronológico puro y errores normalizados; fakes, contrato y tests.
+- Infrastructure: mapper Firestore con `Date`/`Timestamp` y `resolvedAt` opcional; repositorio en `workspaces/{workspaceId}/comments` con consulta por `elementId` y tests con el Firestore en memoria.
+- Rules: lectura, creación y resolución solo para miembros; creación con autor y ruta coherentes; resolución limitada a añadir `resolvedAt` sobre un hilo abierto; borrado denegado. Tests de roles, spoofing, doble resolución y outsiders.
+- Presentation: `CommentsPanel` en panel lateral ligado a la selección única, toggle en la top bar mutuamente excluyente con el plan, creación y resolución con estados de carga/error, empty states, autores desde miembros/presencia y fallback a id corto; i18n en/es. Los viewers pueden comentar sin editar el canvas.
+- Canvas: `listWorkspaceComments` carga los hilos del workspace y `countUnresolvedCommentsByElement` deriva un contador puro por elemento. Los elementos con comentarios sin resolver muestran un indicador discreto que abre el panel y selecciona el elemento; al resolver, el indicador desaparece del tablero sin perder el historial del panel.
+- Integración: harness con `FakeCommentRepository` y servicios de comentarios; test de crear/recargar/resolver y de viewer. E2E `15-comments` con persistencia y resolución tras recarga.
+- Docs: PBL-013 → DONE (fases y criterios [x]), ADR-0039 y este registro.
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` (257 suites / 2859 tests), `npm run test:rules` (96 tests), `npm run build` y E2E `15-comments` en verde.
+
+## 2026-10-20 — PBL-012 Alineación y distribución
+
+- Siguiente tarea del backlog: PBL-012 (R2, P1, M, sin dependencias). Sin IN PROGRESS ni BLOCKED; rama `development` limpia al iniciar.
+- Application: `alignElements` y `distributeElements` puros en `element-alignment.ts`; seis modos de alineación sobre el bounding box de la selección y distribución por huecos iguales con primero/último fijos. Excluyen conectores, exigen 2/3 elementos, usan `createMoveElement` con reloj inyectable y devuelven la misma referencia cuando no hay cambios.
+- Presentation: desplegable “Alinear y distribuir” en `CanvasToolbar` con `DropdownMenu`, 6 alineaciones, 2 distribuciones, estados deshabilitados por número de elementos, solo lectura y etiquetas i18n. `Canvas` calcula los ids elegibles y notifica `onAlignElements`/`onDistributeElements`.
+- Persistencia: el contenedor guarda con `commitElements(next, 'Align elements' | 'Distribute elements')`, heredando historial, undo/redo en un paso, persistencia optimista, flush y reconciliación remota.
+- Tests: unit del servicio puro (modos, huecos, solapamiento, conectores, umbrales, no-op, `updatedAt`, no mutación), toolbar (acciones, deshabilitados, ausencia sin handlers), `Canvas` (alinear, distribuir, umbral, solo lectura, conectores) e integración de persistencia + undo. E2E `14-alignment` con distribución, alineación, undo/redo y persistencia tras recarga.
+- Docs: PBL-012 → DONE (criterios [x]), ADR-0038 y este registro.
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` (245 suites / 2796 tests) y `npm run build` en verde. E2E `14-alignment` ejecutado con emuladores (JAVA_HOME a JDK 23) en verde.
+
+## 2026-10-20 — PBL-011 Kanban del plan
+
+- Siguiente tarea del backlog: PBL-011 (R2, P2, M, depende de PBL-009 DONE). Sin IN PROGRESS ni BLOCKED; rama `development` limpia al iniciar.
+- Application: `selectTaskPlanBoard(elements, filters)` puro, una columna por `TASK_STATUSES` incluidas las vacías, compartiendo filtrado y orden con `selectTaskPlan`; este último pasa a derivarse del board filtrando columnas vacías, de modo que lista y board no divergen.
+- Presentation: toggle Lista/Board con `Tabs` de `@raulrod/ui` (tablist, roving tabindex, flechas/Home/End) y estado local efímero. Board con grid horizontal de cuatro columnas, contador por columna, empty state por columna, tarjetas con título, asignado y vencimiento, selección vía `focusElement` y cambio de estado con el `Select` accesible existente. En solo lectura se muestran badges. Los empty states globales de PBL-009 se mantienen cuando no hay tareas o ninguna coincide con los filtros.
+- Refinamiento UI/UX tras validar el board en navegador: el panel se ensancha solo en board (`clamp(720px, 55vw, 960px)` con tope por viewport), grid de 4→2→1 columnas sin scroll horizontal, cabeceras de columna compactas, tarjetas con título a dos líneas y metadatos truncados, menú ⋯ accesible para cambiar estado y contadores con variante semántica. Validado con capturas a 1440, 1024 y 800 px.
+- i18n: claves nuevas en inglés y español para vista, tablero, columnas y empty state.
+- Tests: unit de `selectTaskPlanBoard` (columnas canónicas, vacías, orden, filtros y no mutación), panel (toggle, contadores, empty por columna, selección, cambio de estado, solo lectura y empty global) e integración (persistencia desde board y rol viewer). E2E `11-task-plan` con el nuevo caso de board en verde.
+- Docs: PBL-011 → DONE (criterios [x]), ADR-0037 y este registro.
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` (244 suites / 2764 tests) y `npm run build` en verde. E2E `11-task-plan` ejecutado con emuladores (JDK 23; el `java` por defecto del entorno es 17 y firebase-tools exige 21+).
+
+## 2026-10-20 — PBL-009 Vista Plan de tareas
+
+- Siguiente tarea del backlog: PBL-009 (R2, P0, M, sin dependencias). PBL-001 a PBL-008 en DONE; rama `development` limpia al iniciar.
+- Application: `selectTaskPlan(elements, filters)` puro, agrupa por `TASK_STATUSES`, filtra por estado y “Mis tareas”, ordena por vencimiento (sin fecha al final) y no muta la entrada. Sin entidad `Plan` ni store.
+- Presentation: `TaskPlanPanel` lateral con filtros accesibles, grupos por estado, título, asignado (`shortUserId`), vencimiento (`formatShortDate`) y cambio de estado con `Select`. Empty state con CTA que abre el formulario de tarea existente y estado filtrado con “Limpiar filtros”.
+- Shell: el panel reduce el ancho del canvas (`CanvasRegion`) para que `CanvasViewportStore.center` siga centrando bien; toggle en la top bar con `aria-expanded`. Selección vía `CanvasCommandHandle.focusElement`; cambio de estado vía `UpdateElement` (historial, persistencia y realtime heredados). En solo lectura se muestran badges sin control de estado.
+- i18n: claves nuevas en inglés y español para panel, filtros, estados, asignado, vencimiento y empty states.
+- Tests: unit de `selectTaskPlan`, panel (filtros, selección, cambio de estado, solo lectura y empty states), toggle del top bar, integración de selección/persistencia/realtime/rol viewer y E2E `11-task-plan`.
+- Docs: PBL-009 → DONE (criterios [x]), ADR-0036 y este registro.
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` (240 suites / 2720 tests) y `npm run build` en verde. `11-task-plan` E2E en verde; la suite E2E completa queda 20/27 por 7 fallos preexistentes reproducidos también sobre HEAD limpio (CTA duplicada de workspaces, persistencia de texto tras reload, verificación de email en emulador y print export), no relacionados con PBL-009.
+
+## 2026-10-20 — PBL-008 Command palette (Cmd/Ctrl + K)
+
+- Siguiente tarea del backlog: PBL-008 (R1, P1, M, sin dependencias). Sin IN PROGRESS ni BLOCKED; rama `development` limpia al iniciar.
+- Presentation: `CommandPalette` reutilizable con `Dialog`/`Input`, patrón combobox/listbox, flechas/Home/End/Enter, `aria-activedescendant`, anuncio `aria-live` y foco inicial. Atajo scoped al host mediante `useCommandPaletteShortcut`; ignora inputs/editores/modales y cierra con `Cmd/Ctrl + K` cuando está abierta.
+- Canvas: `CanvasCommandHandle` (`createElement`, `createConnector` libre/ligado, `fitView`, `undo`, `redo`, `focusElement`) delega en los handlers existentes, sin duplicar creación, formulario de tareas, historial ni viewport.
+- Búsqueda: `searchElements` pura en Application (texto plano por tipo, tarea con notas, link con título+URL, sin conectores, límite 8, normalización de mayúsculas/diacríticos). Workspaces por nombre con `useWorkspaceSearch` y `searchWorkspacesByName`; carga bajo demanda.
+- Viewport: `Viewport.center` y `CanvasViewportStore.center` centran bounds conservando la escala; `focusElement` selecciona y centra el resultado.
+- Acciones: crear text/note/task/frame/link, conector libre, conectar selección, fit, undo/redo (deshabilitadas si no aplican), compartir, atajos, volver y buscar workspaces/elementos. En solo lectura no se ofrecen acciones de escritura.
+- i18n: claves nuevas en inglés y español para palette, grupos, tipos y estados de carga/error.
+- Tests: unit de `text-search`/`element-search`, filtro y navegación de palette, `searchWorkspacesByName`, `Viewport.center`, `CanvasViewportStore.center` y componente `CommandPalette`; integración de crear tarea, undo/redo, buscar/seleccionar elemento, conectar dos elementos, atajos, navegación entre workspaces y creación desde Workspaces; E2E `10-command-palette`.
+- Docs: PBL-008 → DONE (criterios [x]), ADR-0035, este registro y nota de PBL-004 actualizada.
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test`, `npm run build` y `npm run test:e2e` en verde.
+
 ## 2026-10-19 — PBL-003 Paleta de colores de nota
 
 - Siguiente tarea del backlog: PBL-003 (R1, P1, S, Quick win; PBL-001 y PBL-002 DONE). Sin IN PROGRESS ni BLOCKED.

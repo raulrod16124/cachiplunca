@@ -16,6 +16,8 @@ import {
   Download,
   FileJson,
   FileText,
+  ListChecks,
+  MessageSquare,
   Share2,
 } from '@raulrod/icons';
 import type { ReactNode } from 'react';
@@ -35,6 +37,7 @@ import {
 import { AccountMenu } from '../../auth/account-menu';
 import { localizeMessage, useI18n, type TranslationKey } from '../../../i18n';
 import { describeConnectionStatus, describeSyncStatus } from '../workspace-sync-status';
+import { SessionTimer } from './session-timer';
 import { SyncStatusIndicator } from './sync-status-indicator';
 import { WorkspaceTitleField } from './workspace-title-field';
 
@@ -197,6 +200,10 @@ const ShareButton = styled(IconButton)`
   flex: none;
 `;
 
+const PlanButton = styled(IconButton)`
+  flex: none;
+`;
+
 const HelpButton = styled(IconButton)`
   flex: none;
 `;
@@ -231,6 +238,10 @@ export interface WorkspaceTopBarProps {
   readonly currentUser: AuthUser | null;
   readonly logoutUser: LogoutUser;
   readonly onShare?: () => void;
+  readonly planOpen?: boolean;
+  readonly onTogglePlan?: () => void;
+  readonly commentsOpen?: boolean;
+  readonly onToggleComments?: () => void;
   readonly onShowShortcuts?: () => void;
   readonly onExportJson?: () => void;
   readonly onExportPdf?: () => void;
@@ -253,6 +264,10 @@ export function WorkspaceTopBar({
   currentUser,
   logoutUser,
   onShare,
+  planOpen = false,
+  onTogglePlan,
+  commentsOpen = false,
+  onToggleComments,
   onShowShortcuts,
   onExportJson,
   onExportPdf,
@@ -398,6 +413,37 @@ export function WorkspaceTopBar({
               </VisuallyHidden>
             </Inline>
           )}
+          {onTogglePlan === undefined ? null : (
+            <Tooltip content={t('plan.title')} placement="bottom">
+              <PlanButton
+                type="button"
+                variant={planOpen ? 'primary' : 'secondary'}
+                size="sm"
+                label={t('plan.title')}
+                aria-expanded={planOpen}
+                aria-controls={planOpen ? 'task-plan-panel' : undefined}
+                onClick={onTogglePlan}
+              >
+                <ListChecks aria-hidden="true" size={16} />
+              </PlanButton>
+            </Tooltip>
+          )}
+          {onToggleComments === undefined ? null : (
+            <Tooltip content={t('comments.open')} placement="bottom">
+              <PlanButton
+                type="button"
+                variant={commentsOpen ? 'primary' : 'secondary'}
+                size="sm"
+                label={t('comments.open')}
+                aria-expanded={commentsOpen}
+                aria-controls={commentsOpen ? 'comments-panel' : undefined}
+                onClick={onToggleComments}
+              >
+                <MessageSquare aria-hidden="true" size={16} />
+              </PlanButton>
+            </Tooltip>
+          )}
+          <SessionTimer />
           {onShare === undefined ? null : (
             <Tooltip content={t('canvas.topbar.share')} placement="bottom">
               <ShareButton

@@ -1,34 +1,51 @@
 import { VisuallyHidden } from '@raulrod/ui';
 import type { Editor } from '@tiptap/core';
-import type { MouseEvent as ReactMouseEvent, ReactElement } from 'react';
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import type { MouseEvent as ReactMouseEvent, ReactElement, Ref } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import styled from 'styled-components';
-import { Bounds, Grid, Position, Size } from '../../../domain/shared';
+import { Bounds, Grid, Position, Size, UserId } from '../../../domain/shared';
 import type { Element, ElementType } from '../../../domain/element';
 import {
   isConnectorElement,
+  isFrameElement,
   isNoteElement,
   isTaskElement,
   richTextToPlain,
 } from '../../../domain/element';
 import type { ElementId } from '../../../domain/shared';
 import type {
+  AlignmentMode,
   CanvasViewportStore,
   CommandHistory,
   ConnectorGeometry,
+  DistributionAxis,
   RemoteCursor,
   SelectionStore,
 } from '../../../application/services';
 import type { UpdateElementInput } from '../../../application/commands';
 import { createResizeElement } from '../../../application/commands';
 import {
+  alignElements,
   bringElementsToFront,
   connectorCandidateIds,
   deleteElements,
+  distributeElements,
   findSelectableAt,
   getVisibleElementIds,
+  IMAGE_ALLOWED_CONTENT_TYPES,
+  parseTaskDueDateInput,
   resolveConnectorGeometry,
   sendElementsToBack,
+  taskDraftFromElement,
+  taskDueDateInputValue,
   toSelectableItems,
 } from '../../../application/services';
 import { describeBoard, describeElement } from '../accessibility';
@@ -64,7 +81,7 @@ import { ElementContextMenu } from './element-context-menu';
 import { ElementEditorOverlay } from './element-editor-overlay';
 import { RemoteCursorsOverlay } from './remote-cursors-overlay';
 import { SelectionOverlay } from './selection-overlay';
-import { TaskFormDialog, type TaskFormValues } from './task-form-dialog';
+import { TaskFormDialog, type TaskAssigneeOption, type TaskFormValues } from './task-form-dialog';
 import { ViewportControls } from './viewport-controls';
 import {
   getEditableRichTextTarget,
@@ -164,6 +181,7 @@ const EDITABLE_ELEMENT_TYPES: ReadonlySet<ElementType> = new Set<ElementType>([
   'note',
   'frame',
   'link',
+  'image',
 ]);
 
 type TaskFormState =
@@ -176,6 +194,8 @@ export interface CanvasProps {
   readonly renderers?: ElementRendererRegistry;
   readonly onMoveElements?: (elements: readonly Element[]) => void;
   readonly onResizeElements?: (elements: readonly Element[]) => void;
+  readonly onAlignElements?: (elements: readonly Element[]) => void;
+  readonly onDistributeElements?: (elements: readonly Element[]) => void;
   readonly onTransformEnd?: () => void;
   readonly onDeleteElements?: (elements: readonly Element[]) => void;
   readonly onDuplicateElements?: (
@@ -189,14 +209,28 @@ export interface CanvasProps {
   readonly onUndoElements?: (elements: readonly Element[]) => void;
   readonly onRedoElements?: (elements: readonly Element[]) => void;
   readonly onCreateElement?: (type: ElementType) => ElementId | void;
+  readonly onUploadImage?: (file: File) => Promise<ElementId | void> | ElementId | void;
   readonly onCreateConnector?: (mode: 'free' | 'bound') => ElementId | void;
   readonly onCreateTask?: (values: TaskFormValues) => ElementId | void;
+  readonly onCreateTaskFromElement?: (element: Element) => ElementId | void;
+  readonly assignees?: readonly TaskAssigneeOption[];
   readonly onUpdateConnectorEndpoint?: (input: ConnectorEndpointDragInput) => void;
   readonly onUpdateElement?: (input: UpdateElementInput) => void;
   readonly remoteCursors?: readonly RemoteCursor[];
   readonly userColors?: ReadonlyMap<string, string>;
+  readonly unresolvedCommentCounts?: ReadonlyMap<string, number>;
+  readonly onOpenComments?: (elementId: string) => void;
   readonly onCursorMove?: (position: Position) => void;
   readonly readOnly?: boolean;
+}
+
+export interface CanvasCommandHandle {
+  readonly createElement: (type: ElementType) => void;
+  readonly createConnector: (mode: 'free' | 'bound') => void;
+  readonly fitView: () => void;
+  readonly undo: () => void;
+  readonly redo: () => void;
+  readonly focusElement: (elementId: string) => void;
 }
 
 export function Canvas({
@@ -206,6 +240,8 @@ export function Canvas({
   renderers,
   onMoveElements,
   onResizeElements,
+  onAlignElements,
+  onDistributeElements,
   onTransformEnd,
   onDeleteElements,
   onDuplicateElements,
@@ -216,15 +252,21 @@ export function Canvas({
   onUndoElements,
   onRedoElements,
   onCreateElement,
+  onUploadImage,
   onCreateConnector,
   onCreateTask,
+  onCreateTaskFromElement,
+  assignees = [],
   onUpdateElement,
   onUpdateConnectorEndpoint,
   remoteCursors = [],
   userColors,
+  unresolvedCommentCounts,
+  onOpenComments,
   onCursorMove,
   readOnly = false,
-}: CanvasProps): ReactElement {
+  commandRef,
+}: CanvasProps & { readonly commandRef?: Ref<CanvasCommandHandle> }): ReactElement {
   const { t } = useI18n();
   const viewport = useSyncExternalStore(store.subscribe, store.getSnapshot);
   const selection = useSyncExternalStore(selectionStore.subscribe, selectionStore.getSnapshot);
@@ -248,6 +290,22 @@ export function Canvas({
     },
     [onCursorMove],
   );
+  const handleOpenComments = useCallback(
+    (elementId: string) => {
+      if (onOpenComments === undefined) {
+        return;
+      }
+
+      selectionStore.select(elementId);
+      onOpenComments(elementId);
+    },
+    [onOpenComments, selectionStore],
+  );
+  const commentLabel = useCallback(
+    (count: number): string =>
+      count === 1 ? t('comments.indicator.one') : t('comments.indicator.other', { count }),
+    [t],
+  );
   const { ref: cursorBroadcastRef } = useCursorBroadcast({
     onCursorMove: handleCursorMove,
     viewport,
@@ -257,6 +315,10 @@ export function Canvas({
   const elementsById = useMemo(
     () => new Map(elements.map((element) => [element.id.value, element])),
     [elements],
+  );
+  const assigneeLabels = useMemo(
+    () => new Map(assignees.map((assignee) => [assignee.userId, assignee.label])),
+    [assignees],
   );
   const connectorGeometries = useMemo(() => {
     const geometries = new Map<string, ConnectorGeometry>();
@@ -475,6 +537,7 @@ export function Canvas({
   const { ref: elementRedoRef } = useElementRedo({ history, onRedoElements, disabled: readOnly });
 
   const [editingElementId, setEditingElementId] = useState<string | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
   const [taskForm, setTaskForm] = useState<TaskFormState | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -506,6 +569,8 @@ export function Canvas({
       status: editingTaskElement.status,
       notes:
         editingTaskElement.notes === undefined ? '' : richTextToPlain(editingTaskElement.notes),
+      assigneeId: editingTaskElement.assigneeId?.value ?? '',
+      dueDate: taskDueDateInputValue(editingTaskElement.dueDate),
     };
   }, [taskForm, editingTaskElement]);
 
@@ -687,6 +752,44 @@ export function Canvas({
     handleClear();
   }, [elements, selection.selectedIds, onDeleteElements, handleClear]);
 
+  const arrangeableSelectedIds = useMemo(() => {
+    const selected = new Set(selection.selectedIds);
+
+    return elements
+      .filter((element) => selected.has(element.id.value) && !isConnectorElement(element))
+      .map((element) => element.id.value);
+  }, [elements, selection.selectedIds]);
+
+  const handleAlignSelection = useCallback(
+    (mode: AlignmentMode): void => {
+      if (readOnly || onAlignElements === undefined) {
+        return;
+      }
+
+      const result = alignElements(elements, arrangeableSelectedIds, mode);
+
+      if (result.status === 'ok') {
+        onAlignElements(result.elements);
+      }
+    },
+    [readOnly, onAlignElements, elements, arrangeableSelectedIds],
+  );
+
+  const handleDistributeSelection = useCallback(
+    (axis: DistributionAxis): void => {
+      if (readOnly || onDistributeElements === undefined) {
+        return;
+      }
+
+      const result = distributeElements(elements, arrangeableSelectedIds, axis);
+
+      if (result.status === 'ok') {
+        onDistributeElements(result.elements);
+      }
+    },
+    [readOnly, onDistributeElements, elements, arrangeableSelectedIds],
+  );
+
   const handleFitView = useCallback((): void => {
     const bounds = items.reduce<Bounds | null>(
       (accumulator, item) => (accumulator === null ? item.bounds : accumulator.union(item.bounds)),
@@ -695,6 +798,20 @@ export function Canvas({
 
     store.fit(bounds);
   }, [store, items]);
+
+  const handleFocusElement = useCallback(
+    (elementId: string): void => {
+      const item = items.find((candidate) => candidate.id === elementId);
+
+      if (item === undefined) {
+        return;
+      }
+
+      selectionStore.select(elementId);
+      store.center(item.bounds);
+    },
+    [items, selectionStore, store],
+  );
 
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
@@ -795,10 +912,36 @@ export function Canvas({
     };
   }, [readOnly, onUpdateElement, contextMenuTarget, closeContextMenu]);
 
+  const createTaskMenu = useMemo(() => {
+    if (readOnly || onCreateTaskFromElement === undefined || contextMenuTarget === null) {
+      return undefined;
+    }
+
+    if (!isNoteElement(contextMenuTarget) && !isFrameElement(contextMenuTarget)) {
+      return undefined;
+    }
+
+    return {
+      elementType: contextMenuTarget.type,
+      disabled: taskDraftFromElement(contextMenuTarget) === null,
+      onSelect: (): void => {
+        closeContextMenu();
+        onCreateTaskFromElement(contextMenuTarget);
+      },
+    };
+  }, [readOnly, onCreateTaskFromElement, contextMenuTarget, closeContextMenu]);
+
   const handleCreateElement = useCallback(
     (type: ElementType): void => {
       if (type === 'task' && onCreateTask !== undefined) {
         setTaskForm({ mode: 'create' });
+        return;
+      }
+
+      if (type === 'image') {
+        if (onUploadImage !== undefined) {
+          imageInputRef.current?.click();
+        }
         return;
       }
 
@@ -810,7 +953,7 @@ export function Canvas({
 
       setEditingElementId(created.value);
     },
-    [onCreateElement, onCreateTask],
+    [onCreateElement, onCreateTask, onUploadImage],
   );
 
   const handleCreateConnector = useCallback(
@@ -818,6 +961,26 @@ export function Canvas({
       onCreateConnector?.(mode);
     },
     [onCreateConnector],
+  );
+
+  useImperativeHandle(
+    commandRef,
+    () => ({
+      createElement: handleCreateElement,
+      createConnector: handleCreateConnector,
+      fitView: handleFitView,
+      undo: handleUndo,
+      redo: handleRedo,
+      focusElement: handleFocusElement,
+    }),
+    [
+      handleCreateElement,
+      handleCreateConnector,
+      handleFitView,
+      handleUndo,
+      handleRedo,
+      handleFocusElement,
+    ],
   );
 
   const handleTaskFormSubmit = useCallback(
@@ -842,12 +1005,26 @@ export function Canvas({
 
       const currentTitle = richTextToPlain(element.title);
       const currentNotes = element.notes === undefined ? '' : richTextToPlain(element.notes);
+      const currentAssigneeId = element.assigneeId?.value ?? '';
+      const currentDueDate = taskDueDateInputValue(element.dueDate);
       const titleChanged = currentTitle !== values.title;
       const statusChanged = element.status !== values.status;
       const notesChanged = currentNotes !== values.notes;
+      const assigneeChanged = currentAssigneeId !== values.assigneeId;
+      const dueDateChanged = currentDueDate !== values.dueDate;
 
-      if (!titleChanged && !statusChanged && !notesChanged) {
+      if (!titleChanged && !statusChanged && !notesChanged && !assigneeChanged && !dueDateChanged) {
         return;
+      }
+
+      let dueDate: Date | null = null;
+
+      if (dueDateChanged && values.dueDate !== '') {
+        try {
+          dueDate = parseTaskDueDateInput(values.dueDate) ?? null;
+        } catch {
+          return;
+        }
       }
 
       onUpdateElement({
@@ -856,6 +1033,10 @@ export function Canvas({
         ...(titleChanged ? { title: values.title } : {}),
         ...(statusChanged ? { status: values.status } : {}),
         ...(notesChanged ? { notes: values.notes === '' ? null : values.notes } : {}),
+        ...(assigneeChanged
+          ? { assigneeId: values.assigneeId === '' ? null : UserId.create(values.assigneeId) }
+          : {}),
+        ...(dueDateChanged ? { dueDate } : {}),
       });
     },
     [taskForm, elements, onCreateTask, onUpdateElement],
@@ -988,16 +1169,21 @@ export function Canvas({
     !readOnly &&
     (onCreateElement !== undefined ||
       onCreateTask !== undefined ||
-      onCreateConnector !== undefined);
+      onCreateConnector !== undefined ||
+      onUploadImage !== undefined);
   const canUndo =
     !readOnly && history !== undefined && onUndoElements !== undefined && history.canUndo();
   const canRedo =
     !readOnly && history !== undefined && onRedoElements !== undefined && history.canRedo();
   const hasSelection = !readOnly && selection.selectedIds.length > 0;
+  const canAlign = !readOnly && onAlignElements !== undefined && arrangeableSelectedIds.length >= 2;
+  const canDistribute =
+    !readOnly && onDistributeElements !== undefined && arrangeableSelectedIds.length >= 3;
   const canCreateConnector =
     canCreateElement &&
     onCreateConnector !== undefined &&
     connectorCandidateIds(elements, selection.selectedIds) !== null;
+  const canCreateImage = canCreateElement && onUploadImage !== undefined;
 
   return (
     <CanvasContainer
@@ -1055,6 +1241,14 @@ export function Canvas({
               ariaLabel={ariaLabels.get(element.id.value)}
               connectorStart={geometry?.start}
               connectorEnd={geometry?.end}
+              assigneeLabel={
+                element.type === 'task' && element.assigneeId !== undefined
+                  ? assigneeLabels.get(element.assigneeId.value)
+                  : undefined
+              }
+              commentCount={unresolvedCommentCounts?.get(element.id.value) ?? 0}
+              commentLabel={commentLabel(unresolvedCommentCounts?.get(element.id.value) ?? 0)}
+              onOpenComments={onOpenComments === undefined ? undefined : handleOpenComments}
               onUpdateElement={readOnly ? undefined : onUpdateElement}
               onResizeElement={readOnly ? undefined : handleResizeElement}
             />
@@ -1105,6 +1299,7 @@ export function Canvas({
         onBringToFront={handleBringToFront}
         onSendToBack={handleSendToBack}
         noteColor={noteColorMenu}
+        createTask={createTaskMenu}
         onClose={closeContextMenu}
       />
       <CanvasToolbar
@@ -1112,15 +1307,37 @@ export function Canvas({
         onCreateConnector={handleCreateConnector}
         onDeleteSelection={handleToolbarDelete}
         onFitView={handleFitView}
+        onAlign={onAlignElements === undefined ? undefined : handleAlignSelection}
+        onDistribute={onDistributeElements === undefined ? undefined : handleDistributeSelection}
         canCreate={canCreateElement}
+        canCreateImage={canCreateImage}
         canCreateFreeConnector={canCreateElement && onCreateConnector !== undefined}
         hasSelection={hasSelection}
         canCreateConnector={canCreateConnector}
+        canAlign={canAlign}
+        canDistribute={canDistribute}
+      />
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept={IMAGE_ALLOWED_CONTENT_TYPES.join(',')}
+        data-testid="image-file-input"
+        aria-label={t('canvas.toolbar.addImage')}
+        hidden
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          event.target.value = '';
+
+          if (file !== undefined) {
+            void onUploadImage?.(file);
+          }
+        }}
       />
       <TaskFormDialog
         open={taskForm !== null}
         mode={taskForm?.mode ?? 'create'}
         initialValues={taskFormInitialValues}
+        assignees={assignees}
         onOpenChange={(open) => {
           if (!open) {
             setTaskForm(null);

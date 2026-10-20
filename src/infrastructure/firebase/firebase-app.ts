@@ -1,6 +1,7 @@
 import { connectAuthEmulator, getAuth, type Auth } from 'firebase/auth';
 import { connectFirestoreEmulator, getFirestore, type Firestore } from 'firebase/firestore';
 import { getApps, initializeApp, type FirebaseApp } from 'firebase/app';
+import { connectStorageEmulator, getStorage, type FirebaseStorage } from 'firebase/storage';
 
 interface FirebaseWebConfig {
   readonly apiKey: string;
@@ -15,9 +16,12 @@ interface FirebaseWebConfig {
 const AUTH_EMULATOR_URL = 'http://127.0.0.1:9099';
 const FIRESTORE_EMULATOR_HOST = '127.0.0.1';
 const FIRESTORE_EMULATOR_PORT = 8080;
+const STORAGE_EMULATOR_HOST = '127.0.0.1';
+const STORAGE_EMULATOR_PORT = 9199;
 
 let cachedAuth: Auth | null = null;
 let cachedFirestore: Firestore | null = null;
+let cachedStorage: FirebaseStorage | null = null;
 
 export function getFirebaseAuth(): Auth {
   if (cachedAuth === null) {
@@ -25,6 +29,20 @@ export function getFirebaseAuth(): Auth {
     connectEmulatorIfEnabled(() => connectAuthEmulator(cachedAuth as Auth, AUTH_EMULATOR_URL));
   }
   return cachedAuth;
+}
+
+export function getFirebaseStorage(): FirebaseStorage {
+  if (cachedStorage === null) {
+    cachedStorage = getStorage(getFirebaseApp());
+    connectEmulatorIfEnabled(() =>
+      connectStorageEmulator(
+        cachedStorage as FirebaseStorage,
+        STORAGE_EMULATOR_HOST,
+        STORAGE_EMULATOR_PORT,
+      ),
+    );
+  }
+  return cachedStorage;
 }
 
 export function getFirebaseFirestore(): Firestore {

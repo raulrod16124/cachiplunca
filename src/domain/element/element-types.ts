@@ -6,7 +6,15 @@ import { WorkspaceId } from '../shared/value-objects/workspace-id';
 import { isEmptyRichText, validateRichTextDocument, validateTitleDocument } from './rich-text';
 import type { RichTextDocument } from './rich-text';
 
-export const ELEMENT_TYPES = ['text', 'note', 'task', 'frame', 'connector', 'link'] as const;
+export const ELEMENT_TYPES = [
+  'text',
+  'note',
+  'task',
+  'frame',
+  'connector',
+  'link',
+  'image',
+] as const;
 
 export type ElementType = (typeof ELEMENT_TYPES)[number];
 
@@ -95,8 +103,20 @@ export interface LinkElement extends BaseElement {
   readonly title?: RichTextDocument;
 }
 
+export interface ImageElement extends BaseElement {
+  readonly type: 'image';
+  readonly src: string;
+  readonly alt?: string;
+}
+
 export type Element =
-  TextElement | NoteElement | TaskElement | FrameElement | ConnectorElement | LinkElement;
+  | TextElement
+  | NoteElement
+  | TaskElement
+  | FrameElement
+  | ConnectorElement
+  | LinkElement
+  | ImageElement;
 
 export function isTextElement(element: Element): element is TextElement {
   return element.type === 'text';
@@ -120,6 +140,10 @@ export function isConnectorElement(element: Element): element is ConnectorElemen
 
 export function isLinkElement(element: Element): element is LinkElement {
   return element.type === 'link';
+}
+
+export function isImageElement(element: Element): element is ImageElement {
+  return element.type === 'image';
 }
 
 export function validateBaseElementProps(props: BaseElement): void {
@@ -248,6 +272,16 @@ export function validateLinkElement(element: LinkElement): void {
   }
 }
 
+export function validateImageElement(element: ImageElement): void {
+  validateBaseElementProps(element);
+  if (typeof element.src !== 'string' || element.src.trim().length === 0) {
+    throw new Error('ImageElement src cannot be empty');
+  }
+  if (element.alt !== undefined && typeof element.alt !== 'string') {
+    throw new Error('ImageElement alt must be a string');
+  }
+}
+
 export function withRotation(
   element: Element,
   rotation: number,
@@ -364,6 +398,9 @@ export function validateElement(element: Element): void {
       break;
     case 'link':
       validateLinkElement(element);
+      break;
+    case 'image':
+      validateImageElement(element);
       break;
     default: {
       const unknownType: never = element;

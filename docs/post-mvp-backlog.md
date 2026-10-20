@@ -93,14 +93,14 @@ Definition of Done:
 | PBL-005 | Export JSON y PDF del tablero                | R1      | P1        | S        | —              | Sí  | DONE   |
 | PBL-006 | Duplicar workspace                           | R1      | P1        | M        | —              | No  | DONE   |
 | PBL-007 | Plantillas de arranque y empty states        | R1      | P0        | M        | —              | No  | DONE   |
-| PBL-008 | Command palette (Cmd/Ctrl + K)               | R1      | P1        | M        | —              | No  | TODO   |
-| PBL-009 | Vista Plan de tareas                         | R2      | P0        | M        | —              | No  | TODO   |
-| PBL-010 | Crear tarea desde nota o frame               | R2      | P1        | S        | PBL-009        | Sí  | TODO   |
-| PBL-011 | Kanban del plan                              | R2      | P2        | M        | PBL-009        | No  | TODO   |
-| PBL-012 | Alineación y distribución                    | R2      | P1        | M        | —              | No  | TODO   |
-| PBL-013 | Comentarios MVP                              | R2      | P0        | L        | PBL-001        | No  | TODO   |
-| PBL-014 | Temporizador de sesión local                 | R3      | P2        | S        | —              | Sí  | TODO   |
-| PBL-015 | Imágenes                                     | R3      | P1        | L        | PBL-001        | No  | TODO   |
+| PBL-008 | Command palette (Cmd/Ctrl + K)               | R1      | P1        | M        | —              | No  | DONE   |
+| PBL-009 | Vista Plan de tareas                         | R2      | P0        | M        | —              | No  | DONE   |
+| PBL-010 | Crear tarea desde nota o frame               | R2      | P1        | S        | PBL-009        | Sí  | DONE   |
+| PBL-011 | Kanban del plan                              | R2      | P2        | M        | PBL-009        | No  | DONE   |
+| PBL-012 | Alineación y distribución                    | R2      | P1        | M        | —              | No  | DONE   |
+| PBL-013 | Comentarios MVP                              | R2      | P0        | L        | PBL-001        | No  | DONE   |
+| PBL-014 | Temporizador de sesión local                 | R3      | P2        | S        | —              | Sí  | DONE   |
+| PBL-015 | Imágenes                                     | R3      | P1        | L        | PBL-001        | No  | DONE   |
 | PBL-016 | Enlace guest de solo lectura                 | R3      | P1        | L        | PBL-001        | No  | TODO   |
 | PBL-017 | Vista presentación por frames                | R3      | P2        | M        | PBL-009        | No  | TODO   |
 | PBL-018 | Notificaciones in-app                        | R3      | P2        | S        | —              | Sí  | TODO   |
@@ -268,7 +268,7 @@ Hacer descubribles los atajos existentes sin añadir funcionalidad nueva al canv
 #### Notas técnicas
 
 - Extraer etiquetas desde las constantes de teclado existentes si es viable; evitar dos fuentes de verdad.
-- No hay atajos propios de colaboración implementados; el catálogo omite grupos vacíos y queda listo para PBL-008.
+- No hay atajos propios de colaboración implementados; el catálogo omite grupos vacíos. La ayuda se incorporó después como acción de la command palette de PBL-008.
 - Catálogo puro en `src/presentation/canvas/keyboard-shortcuts.ts`; el diálogo solo renderiza datos y la apertura con `?` ignora campos editables y modales abiertos.
 
 ---
@@ -389,7 +389,7 @@ Reducir el canvas vacío y acelerar el primer valor con estructuras de planifica
 
 ### PBL-008 — Command palette (Cmd/Ctrl + K)
 
-**Priority:** P1 · **Effort:** M · **Depends:** — · **Status:** TODO
+**Priority:** P1 · **Effort:** M · **Depends:** — · **Status:** DONE
 
 #### Objetivo
 
@@ -406,11 +406,11 @@ Mejorar descubrimiento y navegación sin añadir nuevas pantallas.
 
 #### Criterios de aceptación
 
-- [ ] La palette funciona tanto en Workspaces como en el board.
-- [ ] Las acciones no disponibles no aparecen o están deshabilitadas de forma explícita.
-- [ ] Ejecutar una acción replica el comportamiento existente sin duplicar lógica.
-- [ ] No se introducen dependencias nuevas.
-- [ ] Tests de apertura, filtrado, ejecución y cierre.
+- [x] La palette funciona tanto en Workspaces como en el board.
+- [x] Las acciones no disponibles no aparecen o están deshabilitadas de forma explícita.
+- [x] Ejecutar una acción replica el comportamiento existente sin duplicar lógica.
+- [x] No se introducen dependencias nuevas.
+- [x] Tests de apertura, filtrado, ejecución y cierre.
 
 #### Fuera de alcance
 
@@ -422,6 +422,10 @@ Mejorar descubrimiento y navegación sin añadir nuevas pantallas.
 - Reutilizar handlers y comandos existentes del shell.
 - Mantener el listener de teclado scoped al layout; no crear un event bus global.
 - Usar `Dialog`/`Input` de `@raulrod/ui` y patrones de focus existentes.
+- `CanvasCommandHandle` expone crear elemento/conector libre o ligado, fit, undo/redo y centrar/seleccionar un elemento, reutilizando los handlers internos del canvas.
+- Búsqueda de elementos pura en Application (`searchElements`) y búsqueda de workspaces por nombre en Presentation; resultados acotados y sin entidades nuevas.
+- La selección de un resultado usa `Viewport.center`/`CanvasViewportStore.center`, conservando el zoom.
+- El atajo ignora inputs, editores y modales abiertos; con la palette abierta, Cmd/Ctrl + K la cierra.
 
 ---
 
@@ -429,7 +433,7 @@ Mejorar descubrimiento y navegación sin añadir nuevas pantallas.
 
 ### PBL-009 — Vista Plan de tareas
 
-**Priority:** P0 · **Effort:** M · **Depends:** — · **Status:** TODO
+**Priority:** P0 · **Effort:** M · **Depends:** — · **Status:** DONE
 
 #### Objetivo
 
@@ -447,11 +451,11 @@ Convertir el canvas en un plan consultable sin salir del workspace.
 
 #### Criterios de aceptación
 
-- [ ] La vista refleja cambios locales y remotos en tiempo real.
-- [ ] No existe estado duplicado de tareas: todo se deriva de `elements`.
-- [ ] Los filtros y el cambio de estado son accesibles con teclado.
-- [ ] En modo solo lectura no se puede cambiar el estado.
-- [ ] Tests del selector puro y de integración del panel.
+- [x] La vista refleja cambios locales y remotos en tiempo real.
+- [x] No existe estado duplicado de tareas: todo se deriva de `elements`.
+- [x] Los filtros y el cambio de estado son accesibles con teclado.
+- [x] En modo solo lectura no se puede cambiar el estado.
+- [x] Tests del selector puro y de integración del panel.
 
 #### Fuera de alcance
 
@@ -463,12 +467,13 @@ Convertir el canvas en un plan consultable sin salir del workspace.
 - Selector puro en Application (`selectTaskPlan`) que reciba `elements` y filtros.
 - Centrar mediante `CanvasViewportStore` y el patrón de fit existente.
 - No añadir entidad `Plan` ni store nuevo.
+- Implementado en `src/application/services/task-plan.ts` (`selectTaskPlan`) y `TaskPlanPanel`; el panel reduce el ancho del canvas para que `focusElement`/`center` sigan siendo correctos. Ver ADR-0036.
 
 ---
 
 ### PBL-010 — Crear tarea desde nota o frame
 
-**Priority:** P1 · **Effort:** S · **Depends:** PBL-009 · **Status:** TODO · **Quick win**
+**Priority:** P1 · **Effort:** S · **Depends:** PBL-009 · **Status:** DONE · **Quick win**
 
 #### Objetivo
 
@@ -484,11 +489,11 @@ Convertir información capturada en acciones sin copiar y pegar.
 
 #### Criterios de aceptación
 
-- [ ] La tarea se crea, se selecciona y se puede editar.
-- [ ] La nota o frame original no se modifica ni se elimina.
-- [ ] Si no hay texto utilizable, la acción aparece deshabilitada.
-- [ ] Undo/redo funcionan.
-- [ ] Tests de extracción de texto plano y del flujo de creación.
+- [x] La tarea se crea, se selecciona y se puede editar.
+- [x] La nota o frame original no se modifica ni se elimina.
+- [x] Si no hay texto utilizable, la acción aparece deshabilitada.
+- [x] Undo/redo funcionan.
+- [x] Tests de extracción de texto plano y del flujo de creación.
 
 #### Fuera de alcance
 
@@ -500,12 +505,13 @@ Convertir información capturada en acciones sin copiar y pegar.
 - Reutilizar `createElement` y las factorías de dominio.
 - Extracción de texto plano como función pura testeada.
 - No añadir tipos de dominio.
+- Implementado con `taskDraftFromElement`/`taskPositionFromElement` en `src/application/services/task-from-element.ts`; el menú contextual crea y selecciona la tarea, conserva el elemento origen y pasa por el historial existente.
 
 ---
 
 ### PBL-011 — Kanban del plan
 
-**Priority:** P2 · **Effort:** M · **Depends:** PBL-009 · **Status:** TODO
+**Priority:** P2 · **Effort:** M · **Depends:** PBL-009 · **Status:** DONE
 
 #### Objetivo
 
@@ -522,11 +528,11 @@ Ofrecer una lectura por estado del plan ya existente.
 
 #### Criterios de aceptación
 
-- [ ] El cambio de estado persiste y se refleja en el canvas.
-- [ ] La vista es navegable con teclado y sin drag obligatorio.
-- [ ] En solo lectura no se puede cambiar el estado.
-- [ ] No se crean estados ni entidades nuevas.
-- [ ] Tests de integración del panel.
+- [x] El cambio de estado persiste y se refleja en el canvas.
+- [x] La vista es navegable con teclado y sin drag obligatorio.
+- [x] En solo lectura no se puede cambiar el estado.
+- [x] No se crean estados ni entidades nuevas.
+- [x] Tests de integración del panel.
 
 #### Fuera de alcance
 
@@ -537,12 +543,13 @@ Ofrecer una lectura por estado del plan ya existente.
 
 - Reutilizar los selectores de PBL-009.
 - Persistir con `UpdateElement`; no crear store nuevo.
+- Implementado con `selectTaskPlanBoard` en `src/application/services/task-plan.ts` (misma derivación que `selectTaskPlan`, con columnas vacías) y un toggle Lista/Board con `Tabs` en `TaskPlanPanel`; las tarjetas son compactas (título a dos líneas, metadatos truncados) con menú accesible de estado y el panel se ensancha solo en board sin scroll horizontal. Ver ADR-0037.
 
 ---
 
 ### PBL-012 — Alineación y distribución
 
-**Priority:** P1 · **Effort:** M · **Depends:** — · **Status:** TODO
+**Priority:** P1 · **Effort:** M · **Depends:** — · **Status:** DONE
 
 #### Objetivo
 
@@ -558,11 +565,11 @@ Acelerar la organización visual con operaciones geométricas predecibles.
 
 #### Criterios de aceptación
 
-- [ ] Las operaciones son puras y están cubiertas por tests con casos límite.
-- [ ] Solo cambian posiciones, nunca tamaños.
-- [ ] Undo/redo restauran el estado anterior.
-- [ ] Las acciones son accesibles con teclado.
-- [ ] No se introducen dependencias nuevas.
+- [x] Las operaciones son puras y están cubiertas por tests con casos límite.
+- [x] Solo cambian posiciones, nunca tamaños.
+- [x] Undo/redo restauran el estado anterior.
+- [x] Las acciones son accesibles con teclado.
+- [x] No se introducen dependencias nuevas.
 
 #### Fuera de alcance
 
@@ -573,12 +580,13 @@ Acelerar la organización visual con operaciones geométricas predecibles.
 
 - Función pura en Application que reciba `Element[]` y devuelva posiciones/elementos actualizados.
 - Reutilizar el comando de movimiento y el patrón de historial existente.
+- Implementado con `alignElements`/`distributeElements` en `src/application/services/element-alignment.ts`; los conectores se excluyen, la distribución usa huecos iguales entre bordes y el contenedor persiste con `commitElements` para un único paso de historial. UI en el desplegable “Alinear y distribuir” de la toolbar. Ver ADR-0038.
 
 ---
 
 ### PBL-013 — Comentarios MVP
 
-**Priority:** P0 · **Effort:** L · **Depends:** PBL-001 · **Status:** TODO
+**Priority:** P0 · **Effort:** L · **Depends:** PBL-001 · **Status:** DONE
 
 #### Objetivo
 
@@ -586,20 +594,20 @@ Habilitar colaboración asíncrona ligada a elementos, sin convertir el producto
 
 #### Fases
 
-- [ ] **a. Domain:** entidad `Comment` con `id`, `workspaceId`, `elementId`, `authorId`, `body`, `createdAt` y `resolvedAt?`; invariantes y tests.
-- [ ] **b. Application:** puerto de persistencia y casos de uso crear, listar y resolver; tests con fake.
-- [ ] **c. Infrastructure:** adapter Firestore en subcolección `workspaces/{workspaceId}/comments`, mapper y tests.
-- [ ] **d. Rules:** permisos de lectura/escritura por membership; tests de rules.
-- [ ] **e. Presentation:** panel de comentarios por elemento, crear y resolver; i18n y accesibilidad.
-- [ ] **f. Integración/E2E:** comentar, recargar y ver el comentario; resolver.
+- [x] **a. Domain:** entidad `Comment` con `id`, `workspaceId`, `elementId`, `authorId`, `body`, `createdAt` y `resolvedAt?`; invariantes y tests.
+- [x] **b. Application:** puerto de persistencia y casos de uso crear, listar y resolver; tests con fake.
+- [x] **c. Infrastructure:** adapter Firestore en subcolección `workspaces/{workspaceId}/comments`, mapper y tests.
+- [x] **d. Rules:** permisos de lectura/escritura por membership; tests de rules.
+- [x] **e. Presentation:** panel de comentarios por elemento, crear y resolver; i18n y accesibilidad.
+- [x] **f. Integración/E2E:** comentar, recargar y ver el comentario; resolver.
 
 #### Criterios de aceptación
 
-- [ ] Los comentarios persisten y se asocian al elemento correcto.
-- [ ] Solo los miembros del workspace pueden leer y crear comentarios.
-- [ ] Resolver conserva el historial y marca el hilo como resuelto.
-- [ ] Presentation no importa Firebase.
-- [ ] Quality gates y `npm run test:rules` en verde.
+- [x] Los comentarios persisten y se asocian al elemento correcto.
+- [x] Solo los miembros del workspace pueden leer y crear comentarios.
+- [x] Resolver conserva el historial y marca el hilo como resuelto.
+- [x] Presentation no importa Firebase.
+- [x] Quality gates y `npm run test:rules` en verde.
 
 #### Fuera de alcance
 
@@ -611,6 +619,7 @@ Habilitar colaboración asíncrona ligada a elementos, sin convertir el producto
 - Una tarea `L` puede ocupar varias sesiones; mantener el estado `IN PROGRESS` y marcar fases.
 - Reutilizar el patrón de puertos/repositorios y mappers de elementos.
 - Subcolección independiente: no inflar el documento del workspace.
+- Implementado con `Comment`/`CommentId` en Domain, `CommentRepository` + casos de uso en Application, adapter Firestore en `workspaces/{workspaceId}/comments`, rules por membership y `CommentsPanel` ligado a la selección única. Cualquier miembro puede resolver; los viewers pueden comentar sin editar el canvas. Sin realtime ni entidades nuevas. Los elementos con comentarios sin resolver muestran un indicador con contador que abre el panel; los resueltos dejan de aparecer en el tablero pero conservan el historial en el panel. Ver ADR-0039.
 
 ---
 
@@ -618,7 +627,7 @@ Habilitar colaboración asíncrona ligada a elementos, sin convertir el producto
 
 ### PBL-014 — Temporizador de sesión local
 
-**Priority:** P2 · **Effort:** S · **Depends:** — · **Status:** TODO · **Quick win**
+**Priority:** P2 · **Effort:** S · **Depends:** — · **Status:** DONE · **Quick win**
 
 #### Objetivo
 
@@ -634,11 +643,11 @@ Apoyar sesiones de trabajo sin añadir estado compartido ni backend.
 
 #### Criterios de aceptación
 
-- [ ] El temporizador no escribe en Firestore ni en el workspace.
-- [ ] Los controles son accesibles con teclado.
-- [ ] Los tests usan temporizadores falsos.
-- [ ] No afecta al rendimiento del canvas.
-- [ ] Textos i18n.
+- [x] El temporizador no escribe en Firestore ni en el workspace.
+- [x] Los controles son accesibles con teclado.
+- [x] Los tests usan temporizadores falsos.
+- [x] No afecta al rendimiento del canvas.
+- [x] Textos i18n.
 
 #### Fuera de alcance
 
@@ -649,12 +658,13 @@ Apoyar sesiones de trabajo sin añadir estado compartido ni backend.
 
 - Mantener el estado local en Presentation; extraer un reducer puro si facilita los tests.
 - No crear puerto ni persistencia.
+- Implementado con `sessionTimerReducer` en `src/presentation/features/workspace-shell/session-timer.ts` y `SessionTimer` en la top bar; el tiempo se calcula desde `endsAt`, el intervalo solo corre mientras está activo y al finalizar se abre un diálogo central con opción de reiniciar. Sin animaciones ni cambios de dominio, almacenamiento o reglas.
 
 ---
 
 ### PBL-015 — Imágenes
 
-**Priority:** P1 · **Effort:** L · **Depends:** PBL-001 · **Status:** TODO
+**Priority:** P1 · **Effort:** L · **Depends:** PBL-001 · **Status:** DONE
 
 #### Objetivo
 
@@ -662,20 +672,20 @@ Cerrar el gap de contenido visual del tablero.
 
 #### Fases
 
-- [ ] **a. Domain:** `ImageElement` con URL, texto alternativo y tamaño; validadores y tests.
-- [ ] **b. Application:** puerto de storage y caso de uso de subida; fake y tests.
-- [ ] **c. Infrastructure:** adapter de Firebase Storage, mapper de persistencia y tests.
-- [ ] **d. Rules:** `storage.rules` y `firestore.rules` para el nuevo tipo; tests.
-- [ ] **e. Presentation:** renderer, inserción desde toolbar, redimensionado y eliminación.
-- [ ] **f. Integración/E2E:** subir, ver, recargar y eliminar.
+- [x] **a. Domain:** `ImageElement` con URL, texto alternativo y tamaño; validadores y tests.
+- [x] **b. Application:** puerto de storage y caso de uso de subida; fake y tests.
+- [x] **c. Infrastructure:** adapter de Firebase Storage, mapper de persistencia y tests.
+- [x] **d. Rules:** `storage.rules` y `firestore.rules` para el nuevo tipo; tests.
+- [x] **e. Presentation:** renderer, inserción desde toolbar, redimensionado y eliminación.
+- [x] **f. Integración/E2E:** subir, ver, recargar y eliminar.
 
 #### Criterios de aceptación
 
-- [ ] La imagen se sube, se renderiza y persiste tras recargar.
-- [ ] Se validan tipo y tamaño máximo con errores claros.
-- [ ] El texto alternativo es editable y accesible.
-- [ ] Los permisos respetan roles del workspace.
-- [ ] Rules tests y quality gates en verde.
+- [x] La imagen se sube, se renderiza y persiste tras recargar.
+- [x] Se validan tipo y tamaño máximo con errores claros.
+- [x] El texto alternativo es editable y accesible.
+- [x] Los permisos respetan roles del workspace.
+- [x] Rules tests y quality gates en verde.
 
 #### Fuera de alcance
 
@@ -687,6 +697,7 @@ Cerrar el gap de contenido visual del tablero.
 - GAP-02 es el punto de partida.
 - No importar Firebase en Presentation; subir mediante puerto.
 - Añadir límites de tamaño para controlar costes.
+- Implementado con `ImageElement` (`src`, `alt?`) y `createImageElement`/`withImageSrc`/`withImageAlt`; `ImageStoragePort` + `createUploadImage` validan PNG/JPEG/WebP/GIF hasta 5 MB y construyen `workspaces/{workspaceId}/images/{imageId}-{name}`. Adapter `firebase-image-storage` con `uploadBytes`/`getDownloadURL`, `storage.rules` por membership y validación de forma en `firestore.rules`. UI: selector desde toolbar, `ImageRenderer`, editor inline de descripción, acción en command palette, búsqueda/export y E2E. Ver ADR-0040.
 
 ---
 
@@ -803,17 +814,26 @@ Cerrar el bucle de invitaciones sin introducir email ni backend nuevo.
 
 Añadir una línea por sesión. El detalle técnico extenso sigue viviendo en `docs/adr/session-log.md` cuando haya decisiones relevantes.
 
-| Fecha      | Tarea   | Resultado | Notas                                                                                                                                                                                                                       |
-| ---------- | ------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-10-19 | —       | Creado    | Creación del backlog post-MVP y priorización inicial.                                                                                                                                                                       |
-| 2026-10-19 | PBL-002 | DONE      | Borrado de workspace desde la card con confirmación; roles por workspace desde `ListWorkspaces`; unit, integración y E2E.                                                                                                   |
-| 2026-10-19 | PBL-001 | DONE      | Lecturas de workspaces/invitations acotadas por membership/destinatario; accept con `email_verified`; flujo de verificación con envío y refresh; rules, unit, integración y E2E.                                            |
-| 2026-10-19 | PBL-003 | DONE      | Paleta de 5 colores de tema en el menú contextual de nota, reset a por defecto, `color: null` en `UpdateElement`, undo/redo, persistencia y E2E.                                                                            |
-| 2026-10-19 | PBL-004 | DONE      | Ayuda de atajos accesible desde `?` y la top bar; catálogo puro por contextos, i18n en/es, foco atrapado, cierre con `Escape` y tests de contenido.                                                                         |
-| 2026-10-19 | PBL-005 | DONE      | Export JSON versionado y descarga desde browser; vista imprimible escalada con `window.print()`; disponible para Owner, Editor y Viewer; serializer puro, i18n, unit, integración y E2E.                                    |
-| 2026-10-19 | PBL-006 | DONE      | Duplicado owner-only desde la card con actualización del listado y apertura manual; copia de metadatos y elementos con IDs nuevos, remapeo de conectores y frames, compensación best-effort, i18n, unit, integración y E2E. |
-| 2026-10-19 | PBL-006 | DONE      | Follow-up: edición de nombre y descripción desde la card con icono y diálogo; acciones de card compactadas en iconos accesibles; unit, integración y E2E.                                                                   |
-| 2026-10-19 | PBL-007 | DONE      | Plantillas puras de retrospectiva, kickoff y brainstorming; selector Blank/Template en el diálogo; elementos con IDs nuevos y rollback best-effort; empty state del board con CTA; i18n en/es, unit, integración y E2E.     |
+| Fecha      | Tarea   | Resultado | Notas                                                                                                                                                                                                                                                                                                            |
+| ---------- | ------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-19 | —       | Creado    | Creación del backlog post-MVP y priorización inicial.                                                                                                                                                                                                                                                            |
+| 2026-10-19 | PBL-002 | DONE      | Borrado de workspace desde la card con confirmación; roles por workspace desde `ListWorkspaces`; unit, integración y E2E.                                                                                                                                                                                        |
+| 2026-10-19 | PBL-001 | DONE      | Lecturas de workspaces/invitations acotadas por membership/destinatario; accept con `email_verified`; flujo de verificación con envío y refresh; rules, unit, integración y E2E.                                                                                                                                 |
+| 2026-10-19 | PBL-003 | DONE      | Paleta de 5 colores de tema en el menú contextual de nota, reset a por defecto, `color: null` en `UpdateElement`, undo/redo, persistencia y E2E.                                                                                                                                                                 |
+| 2026-10-19 | PBL-004 | DONE      | Ayuda de atajos accesible desde `?` y la top bar; catálogo puro por contextos, i18n en/es, foco atrapado, cierre con `Escape` y tests de contenido.                                                                                                                                                              |
+| 2026-10-19 | PBL-005 | DONE      | Export JSON versionado y descarga desde browser; vista imprimible escalada con `window.print()`; disponible para Owner, Editor y Viewer; serializer puro, i18n, unit, integración y E2E.                                                                                                                         |
+| 2026-10-19 | PBL-006 | DONE      | Duplicado owner-only desde la card con actualización del listado y apertura manual; copia de metadatos y elementos con IDs nuevos, remapeo de conectores y frames, compensación best-effort, i18n, unit, integración y E2E.                                                                                      |
+| 2026-10-19 | PBL-006 | DONE      | Follow-up: edición de nombre y descripción desde la card con icono y diálogo; acciones de card compactadas en iconos accesibles; unit, integración y E2E.                                                                                                                                                        |
+| 2026-10-19 | PBL-007 | DONE      | Plantillas puras de retrospectiva, kickoff y brainstorming; selector Blank/Template en el diálogo; elementos con IDs nuevos y rollback best-effort; empty state del board con CTA; i18n en/es, unit, integración y E2E.                                                                                          |
+| 2026-10-20 | PBL-008 | DONE      | Command palette en Workspaces y board con Cmd/Ctrl + K; acciones de creación (incluido conector libre y ligado), fit, undo/redo, compartir, atajos y navegación; búsqueda de workspaces y elementos; `CanvasCommandHandle`, búsqueda pura, i18n en/es, unit, integración y E2E.                                  |
+| 2026-10-20 | PBL-009 | DONE      | Vista Plan de tareas derivada de `elements`: selector puro `selectTaskPlan`, panel lateral con filtros por estado y “Mis tareas”, selección/centrado vía `focusElement`, cambio de estado con `UpdateElement`, solo lectura, empty states, i18n en/es, unit, integración y E2E.                                  |
+| 2026-10-20 | PBL-010 | DONE      | Crear tarea desde nota o frame: extracción pura de texto plano y posición desplazada en Application; acción accesible en el menú contextual, deshabilitada sin texto y oculta en solo lectura; título truncado con notas completas, selección de la tarea nueva, undo/redo, i18n en/es, unit, integración y E2E. |
+| 2026-10-20 | PBL-011 | DONE      | Kanban del plan: `selectTaskPlanBoard` con columna por estado y `selectTaskPlan` derivado; toggle Lista/Board con `Tabs`, contadores, empty states por columna, cambio de estado accesible reutilizando `UpdateElement`, solo lectura, i18n en/es, unit, integración y E2E.                                      |
+| 2026-10-20 | PBL-012 | DONE      | Alineación y distribución: `alignElements`/`distributeElements` puros con huecos iguales, conectores excluidos y no-op sin historial; desplegable accesible en la toolbar, persistencia con `commitElements`, undo/redo en un paso, solo lectura, i18n en/es, unit, integración y E2E.                           |
+| 2026-10-20 | PBL-013 | DONE      | Comentarios por elemento: `Comment`/`CommentId` con resolución única, puerto y casos de uso, subcolección Firestore con mapper, rules por membership, panel desde la top bar ligado a la selección, viewers pueden comentar, i18n en/es, unit, integración, rules y E2E.                                         |
+| 2026-10-20 | PBL-014 | DONE      | Temporizador local en la top bar: presets 1/3/5/10 min, reducer puro con `endsAt`, controles iniciar/pausar/reanudar/reiniciar, tiempo accesible sin interrupciones y diálogo central al finalizar con opción de reiniciar; estado aislado sin Firestore, i18n en/es, unit con fake timers, integración y E2E.   |
+
+| 2026-10-20 | PBL-015 | DONE | Imágenes: `ImageElement` con `src`/`alt`, puerto y caso de uso de subida con validación de tipo y 5 MB, adapter Firebase Storage, `storage.rules` por membership y validación en `firestore.rules`, renderer, selector en toolbar, editor de descripción, búsqueda/export, i18n en/es, unit, integración, rules y E2E. |
 
 ---
 

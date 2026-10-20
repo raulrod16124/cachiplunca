@@ -13,6 +13,7 @@ export interface CanvasViewportStore {
   readonly setScale: (scale: number) => void;
   readonly resize: (size: Size) => void;
   readonly reset: (size?: Size) => void;
+  readonly center: (contentBounds: Bounds) => void;
   readonly fit: (contentBounds: Bounds | null, padding?: number) => void;
 }
 
@@ -68,6 +69,9 @@ export function createCanvasViewportStore(
     },
     reset(size) {
       publish(Viewport.default(size ?? viewport.size));
+    },
+    center(contentBounds) {
+      publish(viewport.center(contentBounds));
     },
     fit(contentBounds, padding = DEFAULT_FIT_PADDING) {
       if (contentBounds === null || contentBounds.size.isEmpty()) {

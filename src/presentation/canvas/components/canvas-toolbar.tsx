@@ -1,7 +1,16 @@
-import { Tooltip } from '@raulrod/ui';
+import { DropdownMenu, Tooltip } from '@raulrod/ui';
 import {
+  AlignCenterHorizontal,
+  AlignCenterVertical,
+  AlignEndHorizontal,
+  AlignEndVertical,
+  AlignHorizontalSpaceBetween,
+  AlignStartHorizontal,
+  AlignStartVertical,
+  AlignVerticalSpaceBetween,
   ArrowUpRight,
   Frame,
+  Image as ImageIcon,
   Link2,
   Scan,
   SquareCheck,
@@ -12,12 +21,20 @@ import {
 } from '@raulrod/icons';
 import type { ReactElement, ReactNode } from 'react';
 import styled from 'styled-components';
+import type { AlignmentMode, DistributionAxis } from '../../../application/services';
 import type { ElementType } from '../../../domain/element';
 import { ToolbarButton } from '../../components';
 import { useRovingFocus } from '../../hooks';
 import { useI18n, type TranslationKey } from '../../i18n';
 
 const ICON_SIZE = 16;
+
+const ArrangeTrigger = styled(DropdownMenu.Trigger)`
+  min-width: 32px;
+  padding-left: ${({ theme }) => theme.space[1]};
+  padding-right: ${({ theme }) => theme.space[1]};
+  font-size: ${({ theme }) => theme.font.size.sm};
+`;
 
 const Bar = styled.div`
   position: absolute;
@@ -79,6 +96,69 @@ const ELEMENT_TOOLS: readonly ElementTool[] = [
     label: 'canvas.toolbar.addLink',
     icon: <Link2 aria-hidden="true" size={ICON_SIZE} />,
   },
+  {
+    type: 'image',
+    label: 'canvas.toolbar.addImage',
+    icon: <ImageIcon aria-hidden="true" size={ICON_SIZE} />,
+  },
+];
+
+interface AlignmentTool {
+  readonly mode: AlignmentMode;
+  readonly label: TranslationKey;
+  readonly icon: ReactNode;
+}
+
+const ALIGNMENT_TOOLS: readonly AlignmentTool[] = [
+  {
+    mode: 'left',
+    label: 'canvas.toolbar.alignLeft',
+    icon: <AlignStartVertical aria-hidden="true" size={ICON_SIZE} />,
+  },
+  {
+    mode: 'center-horizontal',
+    label: 'canvas.toolbar.alignCenterHorizontal',
+    icon: <AlignCenterVertical aria-hidden="true" size={ICON_SIZE} />,
+  },
+  {
+    mode: 'right',
+    label: 'canvas.toolbar.alignRight',
+    icon: <AlignEndVertical aria-hidden="true" size={ICON_SIZE} />,
+  },
+  {
+    mode: 'top',
+    label: 'canvas.toolbar.alignTop',
+    icon: <AlignStartHorizontal aria-hidden="true" size={ICON_SIZE} />,
+  },
+  {
+    mode: 'center-vertical',
+    label: 'canvas.toolbar.alignCenterVertical',
+    icon: <AlignCenterHorizontal aria-hidden="true" size={ICON_SIZE} />,
+  },
+  {
+    mode: 'bottom',
+    label: 'canvas.toolbar.alignBottom',
+    icon: <AlignEndHorizontal aria-hidden="true" size={ICON_SIZE} />,
+  },
+];
+
+interface DistributionTool {
+  readonly axis: DistributionAxis;
+  readonly label: TranslationKey;
+  readonly icon: ReactNode;
+}
+
+const DISTRIBUTION_TOOLS: readonly DistributionTool[] = [
+  {
+    axis: 'horizontal',
+    label: 'canvas.toolbar.distributeHorizontal',
+    icon: <AlignHorizontalSpaceBetween aria-hidden="true" size={ICON_SIZE} />,
+  },
+  {
+    axis: 'vertical',
+    label: 'canvas.toolbar.distributeVertical',
+    icon: <AlignVerticalSpaceBetween aria-hidden="true" size={ICON_SIZE} />,
+  },
 ];
 
 interface ToolbarActionProps {
@@ -108,10 +188,15 @@ export interface CanvasToolbarProps {
   readonly onCreateConnector?: (mode: 'free' | 'bound') => void;
   readonly onDeleteSelection: () => void;
   readonly onFitView: () => void;
+  readonly onAlign?: (mode: AlignmentMode) => void;
+  readonly onDistribute?: (axis: DistributionAxis) => void;
   readonly canCreate?: boolean;
+  readonly canCreateImage?: boolean;
   readonly canCreateFreeConnector?: boolean;
   readonly hasSelection?: boolean;
   readonly canCreateConnector?: boolean;
+  readonly canAlign?: boolean;
+  readonly canDistribute?: boolean;
 }
 
 export function CanvasToolbar({
@@ -119,13 +204,19 @@ export function CanvasToolbar({
   onCreateConnector,
   onDeleteSelection,
   onFitView,
+  onAlign,
+  onDistribute,
   canCreate = false,
+  canCreateImage = canCreate,
   canCreateFreeConnector = false,
   hasSelection = false,
   canCreateConnector = false,
+  canAlign = false,
+  canDistribute = false,
 }: CanvasToolbarProps): ReactElement {
   const { ref } = useRovingFocus<HTMLDivElement>();
   const { t } = useI18n();
+  const showArrange = onAlign !== undefined || onDistribute !== undefined;
 
   return (
     <Bar
@@ -137,7 +228,7 @@ export function CanvasToolbar({
     >
       <Group>
         {ELEMENT_TOOLS.map((tool) => {
-          const disabled = !canCreate;
+          const disabled = tool.type === 'image' ? !canCreateImage : !canCreate;
 
           return (
             <ToolbarAction
@@ -162,6 +253,51 @@ export function CanvasToolbar({
           onClick={() => onCreateConnector?.('bound')}
         />
       </Group>
+      {showArrange ? (
+        <>
+          <Separator aria-hidden="true" />
+          <Tooltip content={t('canvas.toolbar.arrange')} placement="bottom">
+            <DropdownMenu>
+              <ArrangeTrigger
+                className="rr-button rr-button--outline rr-button--size-md"
+                aria-label={t('canvas.toolbar.arrange')}
+                disabled={!canAlign && !canDistribute}
+                data-testid="canvas-arrange-trigger"
+              >
+                <AlignHorizontalSpaceBetween aria-hidden="true" size={ICON_SIZE} />
+              </ArrangeTrigger>
+              <DropdownMenu.Content placement="bottom-start">
+                {onAlign === undefined
+                  ? null
+                  : ALIGNMENT_TOOLS.map((tool) => (
+                      <DropdownMenu.Item
+                        key={tool.mode}
+                        onSelect={() => onAlign(tool.mode)}
+                        startIcon={tool.icon}
+                      >
+                        {t(tool.label)}
+                      </DropdownMenu.Item>
+                    ))}
+                {onAlign === undefined || onDistribute === undefined ? null : (
+                  <DropdownMenu.Separator />
+                )}
+                {onDistribute === undefined
+                  ? null
+                  : DISTRIBUTION_TOOLS.map((tool) => (
+                      <DropdownMenu.Item
+                        key={tool.axis}
+                        onSelect={() => onDistribute(tool.axis)}
+                        startIcon={tool.icon}
+                        disabled={!canDistribute}
+                      >
+                        {t(tool.label)}
+                      </DropdownMenu.Item>
+                    ))}
+              </DropdownMenu.Content>
+            </DropdownMenu>
+          </Tooltip>
+        </>
+      ) : null}
       <Separator aria-hidden="true" />
       <Group>
         <ToolbarAction

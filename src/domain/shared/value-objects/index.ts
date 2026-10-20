@@ -1,4 +1,5 @@
 export * from './bounds';
+export * from './comment-id';
 export * from './element-id';
 export * from './grid';
 export * from './invitation-id';

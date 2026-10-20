@@ -56,6 +56,7 @@ describe('WorkspaceTopBar', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'Roadmap Q4' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Back to workspaces' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Session timer' })).toBeInTheDocument();
     expect(screen.getByText('Editor')).toBeInTheDocument();
   });
 
@@ -234,6 +235,57 @@ describe('WorkspaceTopBar', () => {
     );
 
     expect(screen.queryByRole('button', { name: 'Share' })).not.toBeInTheDocument();
+  });
+
+  it('toggles the task plan from the top bar', () => {
+    const onTogglePlan = jest.fn();
+    const { unmount } = render(
+      <WorkspaceTopBar
+        workspace={WORKSPACE}
+        role="editor"
+        onBack={jest.fn()}
+        syncStatus="idle"
+        connectionStatus="connected"
+        connectedUsers={[]}
+        currentUser={CURRENT_USER}
+        logoutUser={LOGOUT_USER}
+        planOpen={false}
+        onTogglePlan={onTogglePlan}
+        persistenceErrorMessage={null}
+        collaborationErrorMessage={null}
+        creationErrorMessage={null}
+      />,
+    );
+
+    const toggle = screen.getByRole('button', { name: 'Task plan' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+
+    fireEvent.click(toggle);
+    expect(onTogglePlan).toHaveBeenCalledTimes(1);
+    unmount();
+
+    render(
+      <WorkspaceTopBar
+        workspace={WORKSPACE}
+        role="editor"
+        onBack={jest.fn()}
+        syncStatus="idle"
+        connectionStatus="connected"
+        connectedUsers={[]}
+        currentUser={CURRENT_USER}
+        logoutUser={LOGOUT_USER}
+        planOpen
+        onTogglePlan={onTogglePlan}
+        persistenceErrorMessage={null}
+        collaborationErrorMessage={null}
+        creationErrorMessage={null}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Task plan' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
   });
 
   it('opens the keyboard shortcuts help from the top bar', () => {

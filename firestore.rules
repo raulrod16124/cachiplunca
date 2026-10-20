@@ -57,6 +57,14 @@ service cloud.firestore {
         get(/databases/$(database)/documents/invitations/$(invitationId)).data.expiresAt > request.time;
     }
 
+    function isValidImageData(data) {
+      return data.type != 'image' || (
+        data.src is string &&
+        data.src.size() > 0 &&
+        (!('alt' in data) || data.alt is string)
+      );
+    }
+
     function canGrantRoleInInvitation(workspaceId, grantedRole) {
       return signedIn() && (
         (grantedRole in ['owner'] && hasRole(workspaceId, ['owner'])) ||
@@ -124,10 +132,12 @@ service cloud.firestore {
     match /elements/{elementId} {
       allow read: if isMember(resource.data.workspaceId);
       allow create: if hasRole(request.resource.data.workspaceId, ['owner', 'editor'])
-        && request.resource.data.createdBy == request.auth.uid;
-      allow update: if hasRole(resource.data.workspaceId, ['owner', 'editor'])
+        && request.resource.data.createdBy == request.auth.uid
+        && isValidImageData(request.resource.data);
+      allow update: if hasRole(request.resource.data.workspaceId, ['owner', 'editor'])
         && request.resource.data.workspaceId == resource.data.workspaceId
-        && request.resource.data.createdBy == resource.data.createdBy;
+        && request.resource.data.createdBy == resource.data.createdBy
+        && isValidImageData(request.resource.data);
       allow delete: if hasRole(resource.data.workspaceId, ['owner', 'editor']);
     }
 
@@ -165,6 +175,26 @@ service cloud.firestore {
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])
         )
       );
+    }
+
+    // comments: colaboración asíncrona ligada a elementos. Solo los miembros
+    // del workspace leen y crean; cualquier miembro puede resolver. Resolver
+    // solo puede añadir resolvedAt y conserva el resto del historial.
+    match /workspaces/{workspaceId}/comments/{commentId} {
+      allow read: if signedIn() && isMember(workspaceId);
+      allow create: if signedIn() &&
+        isMember(workspaceId) &&
+        request.resource.data.workspaceId == workspaceId &&
+        request.resource.data.id == commentId &&
+        request.resource.data.authorId == request.auth.uid &&
+        request.resource.data.body is string &&
+        !('resolvedAt' in request.resource.data);
+      allow update: if signedIn() &&
+        isMember(workspaceId) &&
+        resource.data.workspaceId == workspaceId &&
+        !('resolvedAt' in resource.data) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['resolvedAt']) &&
+        request.resource.data.resolvedAt is timestamp;
     }
 
     // presence: efímera. Solo el dueño del documento la escribe siendo miembro;

@@ -1,17 +1,21 @@
 import type { ReactNode } from 'react';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import styled from 'styled-components';
 import { Button, Text } from '@raulrod/ui';
 import type { Workspace } from '../../../../domain/workspace';
+import type { Comment } from '../../../../domain/comment';
 import type { Element, ElementType } from '../../../../domain/element';
 import type { ElementId, Position } from '../../../../domain/shared';
 import type { MembershipRole } from '../../../../domain/membership';
+import type { Membership } from '../../../../domain/membership';
 import type { Presence } from '../../../../domain/collaboration';
 import type {
   LogoutUser,
   UpdateElementInput,
   UpdateWorkspaceResult,
 } from '../../../../application/commands';
+import type { ListWorkspaces } from '../../../../application/queries';
+import { connectorCandidateIds } from '../../../../application/services';
 import type {
   CanvasViewportStore,
   CommandHistory,
@@ -20,10 +24,22 @@ import type {
   SelectionStore,
 } from '../../../../application/services';
 import type { AuthUser, RealtimeConnectionStatus } from '../../../../application/ports';
-import { createPresenceColorAssigner } from '../../../collaboration';
-import { Canvas, type ConnectorEndpointDragInput } from '../../../canvas';
-import type { TaskFormValues } from '../../../canvas/components/task-form-dialog';
+import type { CommentServices } from '../../../../application/comment-services';
+import {
+  createPresenceColorAssigner,
+  presenceLabel,
+  shortUserId,
+  userLabel,
+} from '../../../collaboration';
+import { Canvas, type CanvasCommandHandle, type ConnectorEndpointDragInput } from '../../../canvas';
+import type {
+  TaskAssigneeOption,
+  TaskFormValues,
+} from '../../../canvas/components/task-form-dialog';
 import { KeyboardShortcutsDialog } from './keyboard-shortcuts-dialog';
+import { CommentsPanel } from './comments-panel';
+import { TaskPlanPanel } from './task-plan-panel';
+import { WorkspaceCommandPalette } from './workspace-command-palette';
 import { WorkspaceTopBar } from './workspace-top-bar';
 
 const Shell = styled.div`
@@ -44,8 +60,15 @@ const AccessBanner = styled.div`
 
 const CanvasArea = styled.main`
   flex: 1 1 auto;
+  display: flex;
+  min-height: 0;
   background: ${({ theme }) => theme.canvas.surface};
+`;
+
+const CanvasRegion = styled.div`
   position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
   overflow: hidden;
 `;
 
@@ -53,6 +76,7 @@ export interface WorkspaceShellLayoutProps {
   readonly workspace: Workspace;
   readonly elements: readonly Element[];
   readonly role: MembershipRole | undefined;
+  readonly members?: readonly Membership[];
   readonly currentUser: AuthUser | null;
   readonly logoutUser: LogoutUser;
   readonly onBack: () => void;
@@ -61,6 +85,8 @@ export interface WorkspaceShellLayoutProps {
   readonly commandHistory: CommandHistory<readonly Element[]>;
   readonly onMoveElements: (elements: readonly Element[]) => void;
   readonly onResizeElements: (elements: readonly Element[]) => void;
+  readonly onAlignElements?: (elements: readonly Element[]) => void;
+  readonly onDistributeElements?: (elements: readonly Element[]) => void;
   readonly onTransformEnd: () => void;
   readonly onDeleteElements: (elements: readonly Element[]) => void;
   readonly onDuplicateElements: (
@@ -72,8 +98,10 @@ export interface WorkspaceShellLayoutProps {
   readonly onUndoElements: (elements: readonly Element[]) => void;
   readonly onRedoElements: (elements: readonly Element[]) => void;
   readonly onCreateElement?: (type: ElementType) => ElementId | void;
+  readonly onUploadImage?: (file: File) => Promise<ElementId | void> | ElementId | void;
   readonly onCreateConnector?: (mode: 'free' | 'bound') => ElementId | void;
   readonly onCreateTask?: (values: TaskFormValues) => ElementId | void;
+  readonly onCreateTaskFromElement?: (element: Element) => ElementId | void;
   readonly onUpdateElement?: (input: UpdateElementInput) => void;
   readonly onUpdateConnectorEndpoint?: (input: ConnectorEndpointDragInput) => void;
   readonly generateElementId: () => ElementId;
@@ -93,12 +121,18 @@ export interface WorkspaceShellLayoutProps {
   readonly readOnly?: boolean;
   readonly accessErrorMessage?: string | null;
   readonly onRetryRole?: () => void;
+  readonly listWorkspaces?: ListWorkspaces;
+  readonly onOpenWorkspace?: (workspaceId: string) => void;
+  readonly commentServices?: CommentServices;
+  readonly unresolvedCommentCounts?: ReadonlyMap<string, number>;
+  readonly onCommentSaved?: (comment: Comment) => void;
 }
 
 export function WorkspaceShellLayout({
   workspace,
   elements,
   role,
+  members = [],
   currentUser,
   logoutUser,
   onBack,
@@ -107,6 +141,8 @@ export function WorkspaceShellLayout({
   commandHistory,
   onMoveElements,
   onResizeElements,
+  onAlignElements,
+  onDistributeElements,
   onTransformEnd,
   onDeleteElements,
   onDuplicateElements,
@@ -115,8 +151,10 @@ export function WorkspaceShellLayout({
   onUndoElements,
   onRedoElements,
   onCreateElement,
+  onUploadImage,
   onCreateConnector,
   onCreateTask,
+  onCreateTaskFromElement,
   onUpdateElement,
   onUpdateConnectorEndpoint,
   generateElementId,
@@ -136,8 +174,18 @@ export function WorkspaceShellLayout({
   readOnly = false,
   accessErrorMessage = null,
   onRetryRole,
+  listWorkspaces,
+  onOpenWorkspace,
+  commentServices,
+  unresolvedCommentCounts,
+  onCommentSaved,
 }: WorkspaceShellLayoutProps): ReactNode {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [planOpen, setPlanOpen] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const commandRef = useRef<CanvasCommandHandle | null>(null);
+  const selection = useSyncExternalStore(selectionStore.subscribe, selectionStore.getSnapshot);
   const colorAssignerRef = useRef(createPresenceColorAssigner());
   const userIds = useMemo(() => {
     const ids = new Set<string>();
@@ -161,6 +209,63 @@ export function WorkspaceShellLayout({
     return colors;
   }, [userIds]);
 
+  const assignees = useMemo<readonly TaskAssigneeOption[]>(() => {
+    const options = new Map<string, TaskAssigneeOption>();
+    const connectedLabels = new Map(
+      connectedUsers.map((presence) => [presence.userId.value, presenceLabel(presence)]),
+    );
+
+    for (const member of members) {
+      const userId = member.userId.value;
+      options.set(userId, {
+        userId,
+        label:
+          currentUser?.uid === userId
+            ? userLabel(currentUser.displayName, userId)
+            : (connectedLabels.get(userId) ?? shortUserId(userId)),
+      });
+    }
+
+    if (currentUser !== null && !options.has(currentUser.uid)) {
+      options.set(currentUser.uid, {
+        userId: currentUser.uid,
+        label: userLabel(currentUser.displayName, currentUser.uid),
+      });
+    }
+
+    return [...options.values()].sort((left, right) => left.label.localeCompare(right.label));
+  }, [connectedUsers, currentUser, members]);
+
+  const selectedElement = useMemo(() => {
+    if (selection.selectedIds.length !== 1) {
+      return undefined;
+    }
+
+    const selectedId = selection.selectedIds[0];
+    return elements.find((element) => element.id.value === selectedId);
+  }, [elements, selection.selectedIds]);
+  const authorLabels = useMemo(
+    () => new Map(assignees.map((assignee) => [assignee.userId, assignee.label])),
+    [assignees],
+  );
+
+  const canCreate = !readOnly && onCreateElement !== undefined;
+  const canCreateTask = !readOnly && (onCreateTask !== undefined || onCreateElement !== undefined);
+  const canCreateFreeConnector = !readOnly && onCreateConnector !== undefined;
+  const canConnectSelected =
+    canCreateFreeConnector && connectorCandidateIds(elements, selection.selectedIds) !== null;
+  const canUndo = !readOnly && commandHistory.canUndo();
+  const canRedo = !readOnly && commandHistory.canRedo();
+  const togglePlan = (): void => {
+    setCommentsOpen(false);
+    setPlanOpen((open) => !open);
+  };
+  const toggleComments = (): void => {
+    setPlanOpen(false);
+    setCommentsOpen((open) => !open);
+  };
+  const canComment = commentServices !== undefined && currentUser !== null;
+
   return (
     <Shell>
       {accessErrorMessage === null ? null : (
@@ -174,54 +279,117 @@ export function WorkspaceShellLayout({
         </AccessBanner>
       )}
       <CanvasArea>
-        <WorkspaceTopBar
-          workspace={workspace}
-          role={role}
-          readOnly={readOnly}
-          onBack={onBack}
-          syncStatus={syncStatus}
-          connectionStatus={connectionStatus}
-          connectedUsers={connectedUsers}
-          userColors={userColors}
-          currentUser={currentUser}
-          logoutUser={logoutUser}
-          onShare={onShare}
-          onShowShortcuts={() => setShortcutsOpen(true)}
-          onExportJson={onExportJson}
-          onExportPdf={onExportPdf}
-          onRename={onRename}
-          persistenceErrorMessage={persistenceErrorMessage}
-          collaborationErrorMessage={collaborationErrorMessage}
-          creationErrorMessage={creationErrorMessage}
-          exportErrorMessage={exportErrorMessage}
-        />
-        <Canvas
-          store={canvasViewportStore}
-          selectionStore={selectionStore}
+        <CanvasRegion>
+          <WorkspaceTopBar
+            workspace={workspace}
+            role={role}
+            readOnly={readOnly}
+            onBack={onBack}
+            syncStatus={syncStatus}
+            connectionStatus={connectionStatus}
+            connectedUsers={connectedUsers}
+            userColors={userColors}
+            currentUser={currentUser}
+            logoutUser={logoutUser}
+            onShare={onShare}
+            planOpen={planOpen}
+            onTogglePlan={togglePlan}
+            commentsOpen={commentsOpen}
+            onToggleComments={canComment ? toggleComments : undefined}
+            onShowShortcuts={() => setShortcutsOpen(true)}
+            onExportJson={onExportJson}
+            onExportPdf={onExportPdf}
+            onRename={onRename}
+            persistenceErrorMessage={persistenceErrorMessage}
+            collaborationErrorMessage={collaborationErrorMessage}
+            creationErrorMessage={creationErrorMessage}
+            exportErrorMessage={exportErrorMessage}
+          />
+          <Canvas
+            store={canvasViewportStore}
+            selectionStore={selectionStore}
+            elements={elements}
+            history={commandHistory}
+            onMoveElements={onMoveElements}
+            onResizeElements={onResizeElements}
+            onAlignElements={onAlignElements}
+            onDistributeElements={onDistributeElements}
+            onTransformEnd={onTransformEnd}
+            onDeleteElements={onDeleteElements}
+            onDuplicateElements={onDuplicateElements}
+            onPasteElements={onPasteElements}
+            onReorderElements={onReorderElements}
+            onUndoElements={onUndoElements}
+            onRedoElements={onRedoElements}
+            onCreateElement={onCreateElement}
+            onUploadImage={onUploadImage}
+            onCreateConnector={onCreateConnector}
+            onCreateTask={onCreateTask}
+            onCreateTaskFromElement={onCreateTaskFromElement}
+            assignees={assignees}
+            onUpdateElement={onUpdateElement}
+            onUpdateConnectorEndpoint={onUpdateConnectorEndpoint}
+            generateId={generateElementId}
+            remoteCursors={remoteCursors}
+            userColors={userColors}
+            onCursorMove={onCursorMove}
+            readOnly={readOnly}
+            commandRef={commandRef}
+            unresolvedCommentCounts={canComment ? unresolvedCommentCounts : undefined}
+            onOpenComments={
+              canComment
+                ? () => {
+                    setPlanOpen(false);
+                    setCommentsOpen(true);
+                  }
+                : undefined
+            }
+          />
+        </CanvasRegion>
+        <TaskPlanPanel
+          open={planOpen}
           elements={elements}
-          history={commandHistory}
-          onMoveElements={onMoveElements}
-          onResizeElements={onResizeElements}
-          onTransformEnd={onTransformEnd}
-          onDeleteElements={onDeleteElements}
-          onDuplicateElements={onDuplicateElements}
-          onPasteElements={onPasteElements}
-          onReorderElements={onReorderElements}
-          onUndoElements={onUndoElements}
-          onRedoElements={onRedoElements}
-          onCreateElement={onCreateElement}
-          onCreateConnector={onCreateConnector}
-          onCreateTask={onCreateTask}
-          onUpdateElement={onUpdateElement}
-          onUpdateConnectorEndpoint={onUpdateConnectorEndpoint}
-          generateId={generateElementId}
-          remoteCursors={remoteCursors}
-          userColors={userColors}
-          onCursorMove={onCursorMove}
-          readOnly={readOnly}
+          currentUserId={currentUser?.uid}
+          assignees={assignees}
+          canEdit={!readOnly && onUpdateElement !== undefined}
+          canCreateTask={canCreateTask}
+          onClose={() => setPlanOpen(false)}
+          onSelectTask={(elementId) => commandRef.current?.focusElement(elementId)}
+          onChangeStatus={(task, status) => {
+            onUpdateElement?.({ type: 'task', element: task, status });
+          }}
+          onCreateTask={() => commandRef.current?.createElement('task')}
+        />
+        <CommentsPanel
+          open={commentsOpen && canComment}
+          workspaceId={workspace.id.value}
+          element={selectedElement}
+          currentUserId={currentUser?.uid}
+          authorLabels={authorLabels}
+          services={commentServices}
+          onCommentSaved={onCommentSaved}
+          onClose={() => setCommentsOpen(false)}
         />
       </CanvasArea>
       <KeyboardShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+      <WorkspaceCommandPalette
+        open={commandPaletteOpen}
+        onOpenChange={setCommandPaletteOpen}
+        workspaceId={workspace.id.value}
+        elements={elements}
+        commandRef={commandRef}
+        canCreate={canCreate}
+        canCreateFreeConnector={canCreateFreeConnector}
+        canConnectSelected={canConnectSelected}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        onShare={onShare}
+        onShowShortcuts={() => setShortcutsOpen(true)}
+        onBack={onBack}
+        userId={currentUser?.uid}
+        listWorkspaces={listWorkspaces}
+        onOpenWorkspace={onOpenWorkspace}
+      />
     </Shell>
   );
 }

@@ -32,6 +32,8 @@ export const ERROR_CODES = {
   PERSISTENCE_UNAVAILABLE: 'persistence/unavailable',
   PERSISTENCE_WRITE_FAILED: 'persistence/write-failed',
   COLLABORATION_SYNC_FAILED: 'collaboration/sync-failed',
+  IMAGE_INVALID_TYPE: 'image/invalid-type',
+  IMAGE_TOO_LARGE: 'image/too-large',
   UNKNOWN_UNEXPECTED: 'unknown/unexpected',
 } as const;
 

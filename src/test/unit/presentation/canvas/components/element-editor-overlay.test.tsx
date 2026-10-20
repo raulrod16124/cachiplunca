@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
   createFrameElement,
+  createImageElement,
   createLinkElement,
   createNoteElement,
   createTextElement,
@@ -47,6 +48,18 @@ function createFrame(title: string) {
     position: Position.create(10, 20),
     size: Size.create(240, 160),
     title,
+  });
+}
+
+function createImage(alt?: string) {
+  return createImageElement({
+    id: ElementId.create('image-1'),
+    workspaceId: WORKSPACE_ID,
+    createdBy: USER_ID,
+    position: Position.create(10, 20),
+    size: Size.create(320, 200),
+    src: 'https://example.com/image.png',
+    alt,
   });
 }
 
@@ -360,6 +373,64 @@ describe('ElementEditorOverlay', () => {
 
       // commitGuardRef should prevent the title commit
       expect(onCommit).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('image', () => {
+    it('edits the alt text and commits on Enter', async () => {
+      const user = userEvent.setup();
+      const element = createImage('Old description');
+      const onCommit = jest.fn();
+
+      render(<ElementEditorOverlay element={element} onCommit={onCommit} onCancel={jest.fn()} />);
+
+      const field = screen.getByLabelText('Image description');
+      expect(field).toHaveValue('Old description');
+      expect(screen.getByRole('img', { name: 'Old description' })).toBeInTheDocument();
+
+      await user.clear(field);
+      await user.type(field, 'New description{Enter}');
+
+      expect(onCommit).toHaveBeenCalledWith({
+        type: 'image',
+        element,
+        alt: 'New description',
+      });
+    });
+
+    it('clears the alt when emptied and cancels when unchanged', async () => {
+      const user = userEvent.setup();
+      const element = createImage('Description');
+      const onCommit = jest.fn();
+
+      render(<ElementEditorOverlay element={element} onCommit={onCommit} onCancel={jest.fn()} />);
+
+      const field = screen.getByLabelText('Image description');
+      await user.clear(field);
+      fireEvent.blur(field, { relatedTarget: null });
+
+      expect(onCommit).toHaveBeenCalledWith({ type: 'image', element, alt: null });
+    });
+
+    it('cancels without committing when the description is unchanged', async () => {
+      const user = userEvent.setup();
+      const onCommit = jest.fn();
+      const onCancel = jest.fn();
+
+      render(
+        <ElementEditorOverlay
+          element={createImage('Same')}
+          onCommit={onCommit}
+          onCancel={onCancel}
+        />,
+      );
+
+      const field = screen.getByLabelText('Image description');
+      await user.click(field);
+      await user.keyboard('{Escape}');
+
+      expect(onCommit).not.toHaveBeenCalled();
+      expect(onCancel).toHaveBeenCalled();
     });
   });
 });

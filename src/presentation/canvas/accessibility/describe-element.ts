@@ -6,6 +6,7 @@ import {
 } from '../../../domain/element';
 import type { ConnectorEndpoint } from '../../../domain/element';
 import type { Element, ElementType, TaskStatus } from '../../../domain/element';
+import { isTaskOverdue } from '../../../application/services';
 
 const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
   todo: 'to do',
@@ -21,6 +22,7 @@ const ELEMENT_TYPE_LABELS: Record<ElementType, string> = {
   frame: 'frame',
   connector: 'connector',
   link: 'link',
+  image: 'image',
 };
 
 const CONTENT_MAX_LENGTH = 80;
@@ -60,6 +62,8 @@ function referenceLabel(element: Element): string {
         'link',
         element.title === undefined ? element.url : richTextToPlain(element.title),
       );
+    case 'image':
+      return contentLabel('image', element.alt ?? element.src);
     case 'connector':
       return 'connector';
     default: {
@@ -91,7 +95,11 @@ function describeConnectorEndpoint(
  * is provided, connector endpoints are resolved to the referenced element's
  * label instead of exposing raw ids.
  */
-export function describeElement(element: Element, elements: readonly Element[] = []): string {
+export function describeElement(
+  element: Element,
+  elements: readonly Element[] = [],
+  now: Date = new Date(),
+): string {
   switch (element.type) {
     case 'text':
       return contentLabel('Text', richTextToPlain(element.content));
@@ -104,7 +112,10 @@ export function describeElement(element: Element, elements: readonly Element[] =
       ];
 
       if (element.dueDate !== undefined) {
-        parts.push(`due ${element.dueDate.toISOString().slice(0, 10)}`);
+        const due = element.dueDate.toISOString().slice(0, 10);
+        const overdue = element.status !== 'completed' && isTaskOverdue(element.dueDate, now);
+
+        parts.push(overdue ? `overdue (due ${due})` : `due ${due}`);
       }
 
       return parts.join(', ');
@@ -130,6 +141,8 @@ export function describeElement(element: Element, elements: readonly Element[] =
         'Link',
         element.title === undefined ? element.url : richTextToPlain(element.title),
       );
+    case 'image':
+      return contentLabel('Image', element.alt ?? element.src);
     default: {
       const unknown: never = element;
       return `Element ${JSON.stringify(unknown)}`;

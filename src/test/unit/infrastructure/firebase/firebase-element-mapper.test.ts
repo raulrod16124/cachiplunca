@@ -1,6 +1,7 @@
 import {
   createConnectorElement,
   createFrameElement,
+  createImageElement,
   createLinkElement,
   createNoteElement,
   createTaskElement,
@@ -183,10 +184,29 @@ describe('toElementDocument', () => {
 
     expect('title' in document).toBe(false);
   });
+
+  it('maps an ImageElement with optional alt', () => {
+    const element = createImageElement({
+      ...buildBase('el-image'),
+      src: 'https://example.com/image.png',
+      alt: 'Diagram',
+    });
+
+    const document = toElementDocument(element);
+
+    expect(document.type).toBe('image');
+    expect(asRecord(document).src).toBe('https://example.com/image.png');
+    expect(asRecord(document).alt).toBe('Diagram');
+
+    const withoutAlt = toElementDocument(
+      createImageElement({ ...buildBase('el-image'), src: 'https://example.com/image.png' }),
+    );
+    expect('alt' in withoutAlt).toBe(false);
+  });
 });
 
 describe('fromElementDocument', () => {
-  it('round-trips every MVP element type', () => {
+  it('round-trips every element type', () => {
     expectRoundTrip(createTextElement({ ...buildBase('el-text'), content: 'Hello' }));
     expectRoundTrip(createNoteElement({ ...buildBase('el-note'), content: 'Note' }));
     expectRoundTrip(
@@ -201,6 +221,13 @@ describe('fromElementDocument', () => {
       }),
     );
     expectRoundTrip(createLinkElement({ ...buildBase('el-link'), url: 'https://example.com' }));
+    expectRoundTrip(
+      createImageElement({
+        ...buildBase('el-image'),
+        src: 'https://example.com/image.png',
+        alt: 'Diagram',
+      }),
+    );
   });
 
   it('maps a non-zero zIndex', () => {

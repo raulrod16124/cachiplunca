@@ -11,22 +11,35 @@ function renderToolbar(overrides: Partial<ToolbarProps> = {}) {
   const onCreateConnector = jest.fn();
   const onDeleteSelection = jest.fn();
   const onFitView = jest.fn();
+  const onAlign = jest.fn();
+  const onDistribute = jest.fn();
 
   const props: ToolbarProps = {
     onCreateElement,
     onCreateConnector,
     onDeleteSelection,
     onFitView,
+    onAlign,
+    onDistribute,
     canCreate: true,
     canCreateFreeConnector: true,
     hasSelection: false,
     canCreateConnector: false,
+    canAlign: false,
+    canDistribute: false,
     ...overrides,
   };
 
   render(<CanvasToolbar {...props} />);
 
-  return { onCreateElement, onCreateConnector, onDeleteSelection, onFitView };
+  return {
+    onCreateElement,
+    onCreateConnector,
+    onDeleteSelection,
+    onFitView,
+    onAlign,
+    onDistribute,
+  };
 }
 
 describe('CanvasToolbar', () => {
@@ -45,6 +58,7 @@ describe('CanvasToolbar', () => {
     await user.click(screen.getByRole('button', { name: 'Add task' }));
     await user.click(screen.getByRole('button', { name: 'Add frame' }));
     await user.click(screen.getByRole('button', { name: 'Add link' }));
+    await user.click(screen.getByRole('button', { name: 'Add image' }));
 
     expect(onCreateElement.mock.calls.map(([type]) => type)).toEqual([
       'text',
@@ -52,6 +66,7 @@ describe('CanvasToolbar', () => {
       'task',
       'frame',
       'link',
+      'image',
     ]);
   });
 
@@ -60,6 +75,7 @@ describe('CanvasToolbar', () => {
 
     expect(screen.getByRole('button', { name: 'Add text' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Add note' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Add image' })).toBeDisabled();
   });
 
   it('adds a free connector through its own button', async () => {
@@ -158,5 +174,53 @@ describe('CanvasToolbar', () => {
     document.removeEventListener('keydown', onDocumentKeyDown);
 
     expect(onDocumentKeyDown).not.toHaveBeenCalled();
+  });
+
+  it('forwards alignment actions from the arrange menu', async () => {
+    const user = userEvent.setup();
+    const { onAlign } = renderToolbar({ canAlign: true });
+
+    await user.click(screen.getByRole('button', { name: 'Align and distribute' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Align left' }));
+
+    expect(onAlign).toHaveBeenCalledWith('left');
+  });
+
+  it('forwards distribution actions from the arrange menu', async () => {
+    const user = userEvent.setup();
+    const { onDistribute } = renderToolbar({ canAlign: true, canDistribute: true });
+
+    await user.click(screen.getByRole('button', { name: 'Align and distribute' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Distribute horizontally' }));
+
+    expect(onDistribute).toHaveBeenCalledWith('horizontal');
+  });
+
+  it('disables arrange when fewer than two elements are selected', () => {
+    renderToolbar({ canAlign: false, canDistribute: false });
+
+    expect(screen.getByRole('button', { name: 'Align and distribute' })).toBeDisabled();
+  });
+
+  it('disables distribution until three elements are selected', async () => {
+    const user = userEvent.setup();
+    renderToolbar({ canAlign: true, canDistribute: false });
+
+    await user.click(screen.getByRole('button', { name: 'Align and distribute' }));
+
+    expect(screen.getByRole('menuitem', { name: 'Distribute horizontally' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+    expect(screen.getByRole('menuitem', { name: 'Distribute vertically' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+  });
+
+  it('omits the arrange menu when no handlers are provided', () => {
+    renderToolbar({ onAlign: undefined, onDistribute: undefined });
+
+    expect(screen.queryByRole('button', { name: 'Align and distribute' })).not.toBeInTheDocument();
   });
 });

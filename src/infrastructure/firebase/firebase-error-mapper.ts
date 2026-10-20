@@ -133,6 +133,26 @@ const FIREBASE_ERROR_MAP: Readonly<Record<string, MappedError>> = {
     code: ERROR_CODES.NETWORK_REQUEST_FAILED,
     message: 'The request was cancelled.',
   },
+  'storage/unauthorized': {
+    kind: 'authorization',
+    code: ERROR_CODES.AUTH_FORBIDDEN,
+    message: 'You do not have permission to perform this action.',
+  },
+  'storage/unauthenticated': {
+    kind: 'authorization',
+    code: ERROR_CODES.AUTH_UNAUTHENTICATED,
+    message: 'You must be signed in to perform this action.',
+  },
+  'storage/quota-exceeded': {
+    kind: 'persistence',
+    code: ERROR_CODES.PERSISTENCE_UNAVAILABLE,
+    message: 'The storage quota has been exceeded.',
+  },
+  'storage/retry-limit-exceeded': {
+    kind: 'network',
+    code: ERROR_CODES.NETWORK_REQUEST_FAILED,
+    message: 'The upload failed after several retries.',
+  },
 };
 
 export function mapFirebaseError(value: unknown): AppError {

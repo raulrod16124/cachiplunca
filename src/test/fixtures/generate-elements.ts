@@ -4,6 +4,7 @@ import {
   TASK_STATUSES,
   createConnectorElement,
   createFrameElement,
+  createImageElement,
   createLinkElement,
   createNoteElement,
   createTaskElement,
@@ -27,6 +28,7 @@ const ELEMENT_SIZES: Record<ElementType, Size> = {
   frame: Size.create(320, 240),
   connector: Size.create(0, 0),
   link: Size.create(220, 64),
+  image: Size.create(320, 200),
 };
 
 export interface GenerateElementsOptions {
@@ -115,6 +117,12 @@ export function generateElements(options: GenerateElementsOptions): readonly Ele
         return createFrameElement({ ...base, title: `Frame ${index}` });
       case 'link':
         return createLinkElement({ ...base, url: `https://example.com/${index}` });
+      case 'image':
+        return createImageElement({
+          ...base,
+          src: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200"/>`,
+          alt: `Image ${index}`,
+        });
       case 'connector':
         return createConnectorElement({
           ...base,

@@ -2,6 +2,8 @@ export * from './get-user-settings';
 export * from './get-workspace';
 export * from './get-workspace-role';
 export * from './list-pending-invitations';
+export * from './list-comments';
+export * from './list-workspace-comments';
 export * from './list-pending-invitations-for-user';
 export * from './list-workspace-members';
 export * from './list-workspaces';

@@ -22,6 +22,7 @@ import type {
   GetWorkspaceRole,
   ListPendingInvitations,
   ListWorkspaceMembers,
+  ListWorkspaces,
   LoadWorkspaceElements,
 } from '../../../../application/queries';
 import {
@@ -31,6 +32,7 @@ import {
   buildElementCreateInput,
   buildFreeConnectorCreateInput,
   connectorCandidateIds,
+  countUnresolvedCommentsByElement,
   createBoardExportFileName,
   createBoardWindowCommand,
   createCanvasViewportStore,
@@ -45,11 +47,15 @@ import {
   DEFAULT_FREE_CONNECTOR_SIZE,
   defaultElementSize,
   elementContentBounds,
+  imageAltFromFileName,
   EMPTY_CONNECTED_USERS_STORE,
   EMPTY_REMOTE_CURSORS_STORE,
+  parseTaskDueDateInput,
   resolveElementCreatePosition,
   rollbackFailedMutation,
   serializeBoardExport,
+  taskDraftFromElement,
+  taskPositionFromElement,
 } from '../../../../application/services';
 import type {
   CanvasViewportStore,
@@ -71,14 +77,17 @@ import type {
   PresencePort,
   RealtimeConnectionStatus,
 } from '../../../../application/ports';
+import type { CommentServices } from '../../../../application/comment-services';
+import type { ImageServices } from '../../../../application/image-services';
 import { isConnectorElement } from '../../../../domain/element';
 import type { ConnectorElement, Element, ElementType } from '../../../../domain/element';
-import type { MembershipRole } from '../../../../domain/membership';
+import type { Comment } from '../../../../domain/comment';
+import type { Membership, MembershipRole } from '../../../../domain/membership';
 import { Presence, resolveUserDisplayName } from '../../../../domain/collaboration';
 import { Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
 import { useWorkspacePermissions } from '../../../hooks';
 import type { ElementId } from '../../../../domain/shared';
-import { toAppError, type AppError } from '../../../../shared/errors';
+import { createAppError, ERROR_CODES, toAppError, type AppError } from '../../../../shared/errors';
 import { EmptyState } from '../../../components/empty-state';
 import { ErrorState } from '../../../components/error-state';
 import { LoadingState } from '../../../components/loading-state';
@@ -95,6 +104,33 @@ import {
   describeLoadWorkspaceElementsError,
   describePersistElementsError,
 } from '../workspace-error-messages';
+
+function readFileBytes(file: File): Promise<ArrayBuffer | null> {
+  if (typeof file.arrayBuffer === 'function') {
+    return file.arrayBuffer().catch(() => null);
+  }
+
+  if (typeof FileReader === 'undefined') {
+    return Promise.resolve(null);
+  }
+
+  return new Promise<ArrayBuffer | null>((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      resolve(reader.result instanceof ArrayBuffer ? reader.result : null);
+    };
+    reader.onerror = () => resolve(null);
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function createInvalidImageFileError() {
+  return createAppError(
+    'validation',
+    ERROR_CODES.IMAGE_INVALID_TYPE,
+    'Choose a PNG, JPEG, WebP or GIF image.',
+  );
+}
 
 const Container = styled.div`
   padding: 24px;
@@ -124,6 +160,10 @@ export interface WorkspaceShellContainerProps {
   readonly leaveWorkspace?: LeaveWorkspace;
   readonly updateWorkspace?: UpdateWorkspace;
   readonly fileDownload?: FileDownloadPort;
+  readonly listWorkspaces?: ListWorkspaces;
+  readonly onOpenWorkspace?: (workspaceId: string) => void;
+  readonly comments?: CommentServices;
+  readonly imageServices?: ImageServices;
 }
 
 interface TransformGesture {
@@ -155,11 +195,16 @@ export function WorkspaceShellContainer({
   leaveWorkspace,
   updateWorkspace,
   fileDownload,
+  listWorkspaces,
+  onOpenWorkspace,
+  comments,
+  imageServices,
 }: WorkspaceShellContainerProps): ReactNode {
   const { t } = useI18n();
   const [status, setStatus] = useState<'loading' | 'notFound' | 'error' | 'success'>('loading');
   const [shareOpen, setShareOpen] = useState(false);
   const [role, setRole] = useState<MembershipRole | undefined>(undefined);
+  const [workspaceMembers, setWorkspaceMembers] = useState<readonly Membership[]>([]);
   const [roleStatus, setRoleStatus] = useState<'idle' | 'loading' | 'settled' | 'failed'>(
     getWorkspaceRole === undefined ? 'idle' : 'loading',
   );
@@ -167,6 +212,7 @@ export function WorkspaceShellContainer({
   const permissions = useWorkspacePermissions(role);
   const [result, setResult] = useState<GetWorkspaceResult | null>(null);
   const [elements, setElements] = useState<readonly Element[]>([]);
+  const [workspaceComments, setWorkspaceComments] = useState<readonly Comment[]>([]);
   const [elementsStatus, setElementsStatus] = useState<'loading' | 'error' | 'success'>('loading');
   const [elementsError, setElementsError] = useState<AppError | null>(null);
   const [persistenceError, setPersistenceError] = useState<AppError | null>(null);
@@ -405,7 +451,7 @@ export function WorkspaceShellContainer({
 
   const handleCreateElement = useCallback(
     (type: ElementType): ElementId | void => {
-      if (localUserId === undefined || type === 'connector') {
+      if (localUserId === undefined || type === 'connector' || type === 'image') {
         return;
       }
 
@@ -438,6 +484,63 @@ export function WorkspaceShellContainer({
       return result.element.id;
     },
     [localUserId, workspaceId, createElement, commitElements],
+  );
+
+  const handleUploadImage = useCallback(
+    async (file: File): Promise<ElementId | void> => {
+      if (imageServices === undefined || localUserId === undefined) {
+        return;
+      }
+
+      const bytes = await readFileBytes(file);
+
+      if (bytes === null) {
+        setCreationError(createInvalidImageFileError());
+        return;
+      }
+
+      const result = await imageServices.uploadImage({
+        workspaceId: WorkspaceId.create(workspaceId),
+        file: {
+          name: file.name,
+          contentType: file.type,
+          size: file.size,
+          data: bytes,
+        },
+      });
+
+      if (result.status === 'error') {
+        setCreationError(result.error);
+        return;
+      }
+
+      const size = defaultElementSize('image');
+      const position = resolveElementCreatePosition(
+        canvasViewportStoreRef.current.getSnapshot(),
+        size,
+      );
+      const created = createElement({
+        type: 'image',
+        workspaceId: WorkspaceId.create(workspaceId),
+        createdBy: UserId.create(localUserId),
+        position,
+        size,
+        src: result.image.url,
+        alt: imageAltFromFileName(file.name),
+      });
+
+      if (created.status === 'error') {
+        setCreationError(created.error);
+        return;
+      }
+
+      setCreationError(null);
+      commitElements([...elementsRef.current, created.element], 'Create image');
+      selectionStoreRef.current.select(created.element.id.value);
+
+      return created.element.id;
+    },
+    [imageServices, localUserId, workspaceId, createElement, commitElements],
   );
 
   const handleCreateConnector = useCallback(
@@ -558,6 +661,15 @@ export function WorkspaceShellContainer({
         size,
       );
       const notes = values.notes.trim();
+      let dueDate: Date | undefined;
+
+      try {
+        dueDate = parseTaskDueDateInput(values.dueDate);
+      } catch (error) {
+        setCreationError(toAppError(error));
+        return;
+      }
+
       const input: CreateElementInput = {
         type: 'task',
         workspaceId: WorkspaceId.create(workspaceId),
@@ -567,6 +679,8 @@ export function WorkspaceShellContainer({
         title: values.title,
         status: values.status,
         ...(notes === '' ? {} : { notes }),
+        ...(values.assigneeId === '' ? {} : { assigneeId: UserId.create(values.assigneeId) }),
+        ...(dueDate === undefined ? {} : { dueDate }),
       };
 
       const result = createElement(input);
@@ -578,6 +692,46 @@ export function WorkspaceShellContainer({
 
       setCreationError(null);
       commitElements([...elementsRef.current, result.element], 'Create task');
+      selectionStoreRef.current.select(result.element.id.value);
+
+      return result.element.id;
+    },
+    [localUserId, workspaceId, createElement, commitElements],
+  );
+
+  const handleCreateTaskFromElement = useCallback(
+    (source: Element): ElementId | void => {
+      if (localUserId === undefined) {
+        return;
+      }
+
+      const draft = taskDraftFromElement(source);
+
+      if (draft === null) {
+        return;
+      }
+
+      const size = defaultElementSize('task');
+      const input: CreateElementInput = {
+        type: 'task',
+        workspaceId: WorkspaceId.create(workspaceId),
+        createdBy: UserId.create(localUserId),
+        position: taskPositionFromElement(source),
+        size,
+        title: draft.title,
+        status: 'todo',
+        ...(draft.notes === undefined ? {} : { notes: draft.notes }),
+      };
+
+      const result = createElement(input);
+
+      if (result.status === 'error') {
+        setCreationError(result.error);
+        return;
+      }
+
+      setCreationError(null);
+      commitElements([...elementsRef.current, result.element], 'Create task from element');
       selectionStoreRef.current.select(result.element.id.value);
 
       return result.element.id;
@@ -611,6 +765,20 @@ export function WorkspaceShellContainer({
       persistElements(previous, next);
     },
     [persistElements],
+  );
+
+  const handleAlignElements = useCallback(
+    (next: readonly Element[]) => {
+      commitElements(next, 'Align elements');
+    },
+    [commitElements],
+  );
+
+  const handleDistributeElements = useCallback(
+    (next: readonly Element[]) => {
+      commitElements(next, 'Distribute elements');
+    },
+    [commitElements],
   );
 
   const handleTransformEnd = useCallback((): void => {
@@ -735,6 +903,46 @@ export function WorkspaceShellContainer({
     }
   }, [loadWorkspaceElements, workspaceId]);
 
+  useEffect(() => {
+    if (status !== 'success' || comments === undefined) {
+      setWorkspaceComments([]);
+      return;
+    }
+
+    let active = true;
+    comments
+      .listWorkspaceComments({ workspaceId })
+      .then((response) => {
+        if (active) {
+          setWorkspaceComments(response.status === 'ok' ? response.comments : []);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setWorkspaceComments([]);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [comments, status, workspaceId]);
+
+  const handleCommentSaved = useCallback((comment: Comment): void => {
+    setWorkspaceComments((current) => {
+      const exists = current.some((entry) => entry.id.equals(comment.id));
+
+      return exists
+        ? current.map((entry) => (entry.id.equals(comment.id) ? comment : entry))
+        : [...current, comment];
+    });
+  }, []);
+
+  const unresolvedCommentCounts = useMemo(
+    () => countUnresolvedCommentsByElement(workspaceComments),
+    [workspaceComments],
+  );
+
   const workspaceName = result?.status === 'ok' ? result.workspace.name : '';
 
   const handleExportJson = useCallback((): void => {
@@ -838,6 +1046,32 @@ export function WorkspaceShellContainer({
   const handleRetryRole = useCallback(() => {
     setRoleAttempt((attempt) => attempt + 1);
   }, []);
+
+  useEffect(() => {
+    if (status !== 'success' || listWorkspaceMembers === undefined) {
+      setWorkspaceMembers([]);
+      return;
+    }
+
+    let active = true;
+
+    void (async () => {
+      try {
+        const response = await listWorkspaceMembers(workspaceId);
+        if (active && response.status === 'ok') {
+          setWorkspaceMembers(response.members);
+        }
+      } catch {
+        if (active) {
+          setWorkspaceMembers([]);
+        }
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [listWorkspaceMembers, status, workspaceId]);
 
   useEffect(() => {
     if (status === 'success') {
@@ -989,6 +1223,7 @@ export function WorkspaceShellContainer({
           workspace={result.workspace}
           elements={elements}
           role={role}
+          members={workspaceMembers}
           currentUser={currentUser}
           connectedUsers={connectedUsers}
           logoutUser={logoutUser}
@@ -998,6 +1233,8 @@ export function WorkspaceShellContainer({
           commandHistory={commandHistoryRef.current}
           onMoveElements={handleMoveElements}
           onResizeElements={handleResizeElements}
+          onAlignElements={handleAlignElements}
+          onDistributeElements={handleDistributeElements}
           onTransformEnd={handleTransformEnd}
           onDeleteElements={handleDeleteElements}
           onDuplicateElements={handleDuplicateElements}
@@ -1006,8 +1243,12 @@ export function WorkspaceShellContainer({
           onUndoElements={handleUndoElements}
           onRedoElements={handleRedoElements}
           onCreateElement={canCreateElement ? handleCreateElement : undefined}
+          onUploadImage={
+            canCreateElement && imageServices !== undefined ? handleUploadImage : undefined
+          }
           onCreateConnector={canCreateElement ? handleCreateConnector : undefined}
           onCreateTask={canCreateElement ? handleCreateTask : undefined}
+          onCreateTaskFromElement={canCreateElement ? handleCreateTaskFromElement : undefined}
           onUpdateElement={canElementWrite ? handleUpdateElement : undefined}
           onUpdateConnectorEndpoint={canElementWrite ? handleUpdateConnectorEndpoint : undefined}
           generateElementId={generateElementId}
@@ -1042,6 +1283,11 @@ export function WorkspaceShellContainer({
           onExportPdf={fileDownload === undefined ? undefined : handleExportPdf}
           exportErrorMessage={exportError}
           onRename={canRename ? handleRenameWorkspace : undefined}
+          listWorkspaces={listWorkspaces}
+          onOpenWorkspace={onOpenWorkspace}
+          commentServices={comments}
+          unresolvedCommentCounts={unresolvedCommentCounts}
+          onCommentSaved={handleCommentSaved}
         />
         {canShare ? (
           <ShareDialog

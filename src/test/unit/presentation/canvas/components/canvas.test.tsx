@@ -69,6 +69,8 @@ function renderCanvas(
   onTransformEnd?: () => void,
   onReorderElements?: (next: readonly Element[]) => void,
   onUpdateElement?: (input: UpdateElementInput) => void,
+  onAlignElements?: (next: readonly Element[]) => void,
+  onDistributeElements?: (next: readonly Element[]) => void,
 ) {
   const store = createCanvasViewportStore(Size.create(800, 600));
   const selectionStore = createSelectionStore();
@@ -90,6 +92,38 @@ function renderCanvas(
       onTransformEnd={onTransformEnd}
       onReorderElements={onReorderElements}
       onUpdateElement={onUpdateElement}
+      onAlignElements={onAlignElements}
+      onDistributeElements={onDistributeElements}
+    />,
+  );
+
+  return { store, selectionStore };
+}
+
+interface ArrangeCanvasOptions {
+  readonly elements: readonly Element[];
+  readonly onAlignElements?: (next: readonly Element[]) => void;
+  readonly onDistributeElements?: (next: readonly Element[]) => void;
+  readonly readOnly?: boolean;
+}
+
+function renderArrangeCanvas({
+  elements,
+  onAlignElements,
+  onDistributeElements,
+  readOnly = false,
+}: ArrangeCanvasOptions) {
+  const store = createCanvasViewportStore(Size.create(800, 600));
+  const selectionStore = createSelectionStore();
+
+  render(
+    <Canvas
+      store={store}
+      selectionStore={selectionStore}
+      elements={elements}
+      onAlignElements={onAlignElements}
+      onDistributeElements={onDistributeElements}
+      readOnly={readOnly}
     />,
   );
 
@@ -135,12 +169,16 @@ const FIRST_ITEM = createElement('first', 100, 100, 120, 80);
 
 const SECOND_ITEM = createElement('second', 300, 200, 100, 100);
 
+const THIRD_ITEM = createElement('third', 700, 400, 80, 60);
+
 function createTask(
   id: string,
   options: {
     readonly title?: string;
     readonly status?: 'todo' | 'in_progress';
     readonly notes?: string;
+    readonly assigneeId?: string;
+    readonly dueDate?: Date;
   } = {},
 ): TaskElement {
   return createTaskElement({
@@ -152,6 +190,8 @@ function createTask(
     title: options.title ?? 'Draft spec',
     status: options.status ?? 'todo',
     notes: options.notes,
+    assigneeId: options.assigneeId === undefined ? undefined : UserId.create(options.assigneeId),
+    dueDate: options.dueDate,
   });
 }
 
@@ -803,6 +843,97 @@ describe('Canvas', () => {
     });
   });
 
+  describe('alignment and distribution', () => {
+    it('aligns the selected items from the toolbar', async () => {
+      const onAlignElements = jest.fn();
+      const user = userEvent.setup();
+      const { selectionStore } = renderArrangeCanvas({
+        elements: [FIRST_ITEM, SECOND_ITEM],
+        onAlignElements,
+      });
+
+      act(() => selectionStore.selectMany(['first', 'second']));
+      await user.click(screen.getByRole('button', { name: 'Align and distribute' }));
+      await user.click(screen.getByRole('menuitem', { name: 'Align left' }));
+
+      expect(onAlignElements).toHaveBeenCalledTimes(1);
+      const arranged: readonly Element[] = onAlignElements.mock.calls[0][0];
+      expect(arranged.map((element) => element.position.x)).toEqual([100, 100]);
+      expect(arranged.map((element) => element.position.y)).toEqual([100, 200]);
+      expect(arranged.map((element) => element.size.width)).toEqual([120, 100]);
+    });
+
+    it('distributes the selected items from the toolbar', async () => {
+      const onDistributeElements = jest.fn();
+      const user = userEvent.setup();
+      const { selectionStore } = renderArrangeCanvas({
+        elements: [FIRST_ITEM, SECOND_ITEM, THIRD_ITEM],
+        onAlignElements: jest.fn(),
+        onDistributeElements,
+      });
+
+      act(() => selectionStore.selectMany(['first', 'second', 'third']));
+      await user.click(screen.getByRole('button', { name: 'Align and distribute' }));
+      await user.click(screen.getByRole('menuitem', { name: 'Distribute horizontally' }));
+
+      expect(onDistributeElements).toHaveBeenCalledTimes(1);
+      const distributed: readonly Element[] = onDistributeElements.mock.calls[0][0];
+      expect(distributed.map((element) => element.position.x)).toEqual([100, 410, 700]);
+    });
+
+    it('only enables distribution with three selected items', async () => {
+      const user = userEvent.setup();
+      const { selectionStore } = renderArrangeCanvas({
+        elements: [FIRST_ITEM, SECOND_ITEM, THIRD_ITEM],
+        onAlignElements: jest.fn(),
+        onDistributeElements: jest.fn(),
+      });
+
+      act(() => selectionStore.selectMany(['first', 'second']));
+      await user.click(screen.getByRole('button', { name: 'Align and distribute' }));
+
+      expect(screen.getByRole('menuitem', { name: 'Distribute horizontally' })).toHaveAttribute(
+        'aria-disabled',
+        'true',
+      );
+    });
+
+    it('disables arrangement in read-only mode', () => {
+      const { selectionStore } = renderArrangeCanvas({
+        elements: [FIRST_ITEM, SECOND_ITEM],
+        onAlignElements: jest.fn(),
+        onDistributeElements: jest.fn(),
+        readOnly: true,
+      });
+
+      act(() => selectionStore.selectMany(['first', 'second']));
+
+      expect(screen.getByRole('button', { name: 'Align and distribute' })).toBeDisabled();
+    });
+
+    it('ignores connectors when deciding whether arrangement is available', async () => {
+      const user = userEvent.setup();
+      const connector = createConnectorElement({
+        id: ElementId.create('connector'),
+        workspaceId: WorkspaceId.create('ws-1'),
+        createdBy: UserId.create('user-1'),
+        position: Position.create(100, 100),
+        size: Size.create(100, 40),
+        sourcePoint: Position.create(0, 0),
+        targetPoint: Position.create(100, 40),
+      });
+      const { selectionStore } = renderArrangeCanvas({
+        elements: [FIRST_ITEM, connector],
+        onAlignElements: jest.fn(),
+      });
+
+      act(() => selectionStore.selectMany(['first', 'connector']));
+      await user.click(screen.getByRole('button', { name: 'Align and distribute' }));
+
+      expect(screen.getByRole('button', { name: 'Align and distribute' })).toBeDisabled();
+    });
+  });
+
   describe('resizing', () => {
     it('resizes the single selected item when dragging a resize handle', async () => {
       const calls: (readonly Element[])[] = [];
@@ -1352,6 +1483,101 @@ describe('Canvas', () => {
       expect(screen.queryByRole('menuitem', { name: 'Note color' })).not.toBeInTheDocument();
     });
 
+    it('creates a task from a note through the context menu', async () => {
+      const note = createNote('note-1', 100, 100, 120, 80);
+      const onCreateTaskFromElement = jest.fn();
+      const user = userEvent.setup();
+
+      render(
+        <Canvas
+          store={createCanvasViewportStore(Size.create(800, 600))}
+          selectionStore={createSelectionStore()}
+          elements={[note]}
+          onCreateTaskFromElement={onCreateTaskFromElement}
+        />,
+      );
+
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      fireEvent.contextMenu(canvas, { clientX: 150, clientY: 130 });
+      await user.click(screen.getByRole('menuitem', { name: 'Create task from note' }));
+
+      expect(onCreateTaskFromElement).toHaveBeenCalledWith(note);
+    });
+
+    it('disables task creation when the note has no usable text', async () => {
+      const emptyNote = createNoteElement({
+        id: ElementId.create('note-1'),
+        workspaceId: WorkspaceId.create('ws-1'),
+        createdBy: UserId.create('user-1'),
+        position: Position.create(100, 100),
+        size: Size.create(120, 80),
+        content: '   ',
+      });
+      const onCreateTaskFromElement = jest.fn();
+      const user = userEvent.setup();
+
+      render(
+        <Canvas
+          store={createCanvasViewportStore(Size.create(800, 600))}
+          selectionStore={createSelectionStore()}
+          elements={[emptyNote]}
+          onCreateTaskFromElement={onCreateTaskFromElement}
+        />,
+      );
+
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      fireEvent.contextMenu(canvas, { clientX: 150, clientY: 130 });
+
+      const item = screen.getByRole('menuitem', { name: 'Create task from note' });
+      expect(item).toHaveAttribute('aria-disabled', 'true');
+
+      await user.click(item);
+
+      expect(onCreateTaskFromElement).not.toHaveBeenCalled();
+    });
+
+    it('does not offer task creation from elements that are not notes or frames', async () => {
+      render(
+        <Canvas
+          store={createCanvasViewportStore(Size.create(800, 600))}
+          selectionStore={createSelectionStore()}
+          elements={[FIRST_ITEM]}
+          onCreateTaskFromElement={jest.fn()}
+        />,
+      );
+
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      fireEvent.contextMenu(canvas, { clientX: 150, clientY: 130 });
+
+      expect(await screen.findByRole('menuitem', { name: 'Bring to front' })).toBeInTheDocument();
+      expect(
+        screen.queryByRole('menuitem', { name: 'Create task from note' }),
+      ).not.toBeInTheDocument();
+    });
+
+    it('does not open the context menu for task creation in read-only mode', () => {
+      render(
+        <Canvas
+          store={createCanvasViewportStore(Size.create(800, 600))}
+          selectionStore={createSelectionStore()}
+          elements={[createNote('note-1', 100, 100, 120, 80)]}
+          onCreateTaskFromElement={jest.fn()}
+          readOnly
+        />,
+      );
+
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      fireEvent.contextMenu(canvas, { clientX: 150, clientY: 130 });
+
+      expect(
+        screen.queryByRole('menuitem', { name: 'Create task from note' }),
+      ).not.toBeInTheDocument();
+    });
+
     it('shows text formatting options when right-clicking a text element', async () => {
       const { selectionStore } = renderCanvas(
         [FIRST_ITEM],
@@ -1562,6 +1788,7 @@ describe('Canvas', () => {
       readonly elements?: readonly Element[];
       readonly onCreateElement?: (type: ElementType) => void;
       readonly onCreateConnector?: (mode: 'free' | 'bound') => void;
+      readonly onUploadImage?: (file: File) => Promise<ElementId | void> | ElementId | void;
       readonly history?: CommandHistory<readonly Element[]>;
       readonly onUndoElements?: (elements: readonly Element[]) => void;
       readonly onRedoElements?: (elements: readonly Element[]) => void;
@@ -1578,6 +1805,7 @@ describe('Canvas', () => {
           selectionStore={selectionStore}
           elements={options.elements}
           onCreateElement={options.onCreateElement}
+          onUploadImage={options.onUploadImage}
           onCreateConnector={options.onCreateConnector}
           history={options.history}
           onUndoElements={options.onUndoElements}
@@ -1597,6 +1825,24 @@ describe('Canvas', () => {
       await user.click(screen.getByRole('button', { name: 'Add note' }));
 
       expect(onCreateElement).toHaveBeenCalledWith('note');
+    });
+
+    it('opens the image picker and forwards the selected file', async () => {
+      const onUploadImage = jest.fn();
+      renderToolbarCanvas({ onUploadImage });
+      const user = userEvent.setup();
+      const file = new File(['image'], 'diagram.png', { type: 'image/png' });
+
+      await user.upload(screen.getByTestId('image-file-input'), file);
+
+      expect(onUploadImage).toHaveBeenCalledWith(file);
+      expect(screen.getByRole('button', { name: 'Add image' })).toBeEnabled();
+    });
+
+    it('hides image creation when no upload handler is available', () => {
+      renderToolbarCanvas();
+
+      expect(screen.getByRole('button', { name: 'Add image' })).toBeDisabled();
     });
 
     it('enables the connect-selected button only with two selected elements', async () => {
@@ -1883,7 +2129,13 @@ describe('Canvas', () => {
         title: string;
         status: 'todo' | 'in_progress' | 'completed' | 'blocked';
         notes: string;
+        assigneeId: string;
+        dueDate: string;
       }) => ElementId | void;
+      readonly assignees?: readonly {
+        readonly userId: string;
+        readonly label: string;
+      }[];
       readonly onUpdateElement?: (input: UpdateElementInput) => void;
       readonly readOnly?: boolean;
     }
@@ -1895,6 +2147,7 @@ describe('Canvas', () => {
           selectionStore={createSelectionStore()}
           elements={options.elements}
           onCreateTask={options.onCreateTask}
+          assignees={options.assignees}
           onUpdateElement={options.onUpdateElement}
           readOnly={options.readOnly}
         />,
@@ -1911,6 +2164,11 @@ describe('Canvas', () => {
 
     function selectStatus(label: string): void {
       fireEvent.click(screen.getByRole('combobox', { name: 'Status' }));
+      fireEvent.click(screen.getByRole('option', { name: label }));
+    }
+
+    function selectAssignee(label: string): void {
+      fireEvent.click(screen.getByRole('combobox', { name: 'Assignee' }));
       fireEvent.click(screen.getByRole('option', { name: label }));
     }
 
@@ -1941,8 +2199,62 @@ describe('Canvas', () => {
         title: 'Ship the MVP',
         status: 'in_progress',
         notes: 'Wait for review',
+        assigneeId: '',
+        dueDate: '',
       });
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    it('creates the task with an assignee and due date', () => {
+      const onCreateTask = jest.fn();
+      renderTaskFormCanvas({
+        onCreateTask,
+        assignees: [
+          { userId: 'user-1', label: 'Ada Lovelace' },
+          { userId: 'user-2', label: 'Grace Hopper' },
+        ],
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: 'Add task' }));
+      fillTitle('Ship the MVP');
+      selectAssignee('Grace Hopper');
+      fireEvent.change(screen.getByLabelText('Due date'), {
+        target: { value: '2026-03-15' },
+      });
+      submitCreate();
+
+      expect(onCreateTask).toHaveBeenCalledWith({
+        title: 'Ship the MVP',
+        status: 'todo',
+        notes: '',
+        assigneeId: 'user-2',
+        dueDate: '2026-03-15',
+      });
+    });
+
+    it('clears the assignee and due date from the edit dialog', () => {
+      const task = createTask('task-1', {
+        assigneeId: 'user-2',
+        dueDate: new Date('2026-03-15T00:00:00.000Z'),
+      });
+      const onUpdateElement = jest.fn();
+      renderTaskFormCanvas({
+        elements: [task],
+        onUpdateElement,
+        assignees: [{ userId: 'user-2', label: 'Grace Hopper' }],
+      });
+
+      fireEvent.doubleClick(screen.getByTestId('canvas-item-task-1'));
+      selectAssignee('Unassigned');
+      fireEvent.change(screen.getByLabelText('Due date'), { target: { value: '' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+
+      expect(onUpdateElement).toHaveBeenCalledWith({
+        type: 'task',
+        element: task,
+        assigneeId: null,
+        dueDate: null,
+      });
     });
 
     it('does not create the task when the title is empty', () => {

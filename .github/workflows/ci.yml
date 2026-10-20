@@ -43,7 +43,7 @@ jobs:
         run: npm run build
 
       - name: Audit production dependencies
-        run: npm audit --omit=dev
+        run: npm audit --omit=dev --audit-level=high
 
   rules-tests:
     name: Firestore rules tests
@@ -66,6 +66,14 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Cache Firebase emulator
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            firebase-emulators-
 
       - name: Run Firestore rules tests
         run: npm run test:rules

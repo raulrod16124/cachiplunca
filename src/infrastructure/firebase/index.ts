@@ -1,5 +1,7 @@
 export * from './firebase-app';
 export * from './firebase-auth-adapter';
+export * from './firebase-comment-mapper';
+export * from './firebase-comment-repository';
 export * from './firebase-element-mapper';
 export * from './firebase-element-repository';
 export * from './firebase-error-mapper';

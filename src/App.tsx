@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { createAuthServices, type AuthServices } from './app/config/auth-services';
+import { createCommentServices } from './app/config/comment-services';
 import { createElementServices, type ElementServices } from './app/config/element-services';
 import { createExportServices, type ExportServices } from './app/config/export-services';
+import { createImageServices } from './app/config/image-services';
 import {
   createInvitationServices,
   type InvitationServices,
@@ -13,6 +15,8 @@ import {
   type UserSettingsServices,
 } from './app/config/user-settings-services';
 import { createWorkspaceServices, type WorkspaceServices } from './app/config/workspace-services';
+import type { CommentServices } from './application/comment-services';
+import type { ImageServices } from './application/image-services';
 import { AppRoutes } from './app/routes/app-routes';
 import { UserId } from './domain/shared/value-objects/user-id';
 import { getFirebaseFirestore } from './infrastructure/firebase/firebase-app';
@@ -30,6 +34,8 @@ interface AppContentProps {
   readonly invitationServices: InvitationServices;
   readonly userSettingsServices: UserSettingsServices;
   readonly exportServices: ExportServices;
+  readonly commentServices: CommentServices;
+  readonly imageServices: ImageServices;
 }
 
 function AppContent({
@@ -40,6 +46,8 @@ function AppContent({
   invitationServices,
   userSettingsServices,
   exportServices,
+  commentServices,
+  imageServices,
 }: AppContentProps) {
   const session = useSession();
   const userId = session.status === 'authenticated' ? UserId.create(session.user.uid) : null;
@@ -82,6 +90,8 @@ function AppContent({
             leaveWorkspace={workspaceServices.leaveWorkspace}
             updateWorkspace={workspaceServices.updateWorkspace}
             fileDownload={exportServices.fileDownload}
+            comments={commentServices}
+            imageServices={imageServices}
           />
         </ProfileServicesProvider>
       </I18nProvider>
@@ -99,6 +109,8 @@ function App() {
   const [invitationServices] = useState(createInvitationServices);
   const [userSettingsServices] = useState(() => createUserSettingsServices(getFirebaseFirestore()));
   const [exportServices] = useState(createExportServices);
+  const [commentServices] = useState(createCommentServices);
+  const [imageServices] = useState(createImageServices);
 
   const routerBasename = import.meta.env.BASE_URL.replace(/\/$/, '') || undefined;
 
@@ -114,6 +126,8 @@ function App() {
             invitationServices={invitationServices}
             userSettingsServices={userSettingsServices}
             exportServices={exportServices}
+            commentServices={commentServices}
+            imageServices={imageServices}
           />
         </SessionProvider>
       </BrowserRouter>

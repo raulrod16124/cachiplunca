@@ -378,4 +378,34 @@ describe('Viewport', () => {
       expect(fitted).toEqual(Viewport.default(Size.create(800, 600)));
     });
   });
+
+  describe('center', () => {
+    it('centers the bounds in the viewport without changing the scale', () => {
+      const viewport = Viewport.create(
+        Transform.create(Position.create(50, 20), 2),
+        Size.create(800, 600),
+      );
+
+      const centered = viewport.center(Bounds.fromXYWH(1000, 500, 200, 100));
+
+      expect(centered.scale).toBe(2);
+      expect(centered.worldToScreen(Position.create(1100, 550))).toEqual(Position.create(400, 300));
+    });
+
+    it('preserves the viewport size', () => {
+      const viewport = Viewport.default(Size.create(1024, 768));
+
+      const centered = viewport.center(Bounds.fromXYWH(0, 0, 10, 10));
+
+      expect(centered.size).toEqual(Size.create(1024, 768));
+    });
+
+    it('does not mutate the original viewport', () => {
+      const viewport = Viewport.default(Size.create(800, 600));
+
+      viewport.center(Bounds.fromXYWH(100, 100, 50, 50));
+
+      expect(viewport.transform).toEqual(Transform.identity());
+    });
+  });
 });

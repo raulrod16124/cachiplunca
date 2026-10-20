@@ -40,3 +40,17 @@ export function formatShortDate(date: Date, locale: AppLocale): string {
     day: 'numeric',
   }).format(date);
 }
+
+/**
+ * Formats a calendar date without applying the viewer's timezone. Due dates are
+ * stored as UTC calendar dates, so formatting them with the local timezone can
+ * shift the day for users west of UTC.
+ */
+export function formatCalendarDate(date: Date, locale: AppLocale): string {
+  return new Intl.DateTimeFormat(locale, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'UTC',
+  }).format(date);
+}

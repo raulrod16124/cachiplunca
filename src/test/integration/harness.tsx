@@ -6,7 +6,9 @@ import { AppRoutes, type AppRoutesProps } from '../../app/routes/app-routes';
 import {
   createAcceptInvitation,
   createAcceptInvitationById,
+  createCreateComment,
   createRefreshUser,
+  createResolveComment,
   createSendEmailVerification,
   createChangeMemberRole,
   createCreateOwnerMembership,
@@ -20,12 +22,15 @@ import {
   createRegisterUser,
   createRemoveMember,
   createUpdateWorkspace,
+  createUploadImage,
 } from '../../application/commands';
 import {
   createGetWorkspace,
   createGetWorkspaceRole,
   createListPendingInvitations,
   createListPendingInvitationsForUser,
+  createListComments,
+  createListWorkspaceComments,
   createListWorkspaceMembers,
   createListWorkspaces,
   createLoadWorkspaceElements,
@@ -39,13 +44,19 @@ import {
 import type { AuthCredentials, AuthPort, AuthUser } from '../../application/ports';
 import type { Workspace } from '../../domain/workspace';
 import { ElementId, UserId } from '../../domain/shared';
+import { CommentId } from '../../domain/shared';
 import { FakeAuthPort } from '../fixtures/fake-auth-port';
+import { FakeCommentRepository } from '../fixtures/fake-comment-repository';
 import { FakeElementRepository } from '../fixtures/fake-element-repository';
 import { FakeMembershipRepository } from '../fixtures/fake-membership-repository';
 import { FakePresencePort } from '../fixtures/fake-presence-port';
 import { FakeRealtimePort } from '../fixtures/fake-realtime-port';
 import { FakeWorkspaceRepository } from '../fixtures/fake-workspace-repository';
 import { FakeInvitationRepository } from '../fixtures/fake-invitation-repository';
+import {
+  createFakeImageStoragePort,
+  type FakeImageStoragePort,
+} from '../fixtures/fake-image-storage-port';
 import { hashInvitationToken } from '../../infrastructure/crypto/invitation-token';
 import { InvitationId } from '../../domain/shared';
 
@@ -92,9 +103,11 @@ export interface AppHarness {
   readonly workspaceRepository: FakeWorkspaceRepository;
   readonly membershipRepository: FakeMembershipRepository;
   readonly elementRepository: FakeElementRepository;
+  readonly commentRepository: FakeCommentRepository;
   readonly realtimePort: FakeRealtimePort;
   readonly presencePort: FakePresencePort;
   readonly invitationRepository: FakeInvitationRepository;
+  readonly imageStoragePort: FakeImageStoragePort;
   readonly services: AppRoutesProps;
   readonly currentUser: AuthUser | null;
   register(credentials?: AuthCredentials): Promise<AuthUser>;
@@ -112,9 +125,11 @@ export function createAppHarness(): AppHarness {
   const workspaceRepository = new FakeWorkspaceRepository();
   const membershipRepository = new FakeMembershipRepository();
   const elementRepository = new FakeElementRepository();
+  const commentRepository = new FakeCommentRepository();
   const realtimePort = new FakeRealtimePort();
   const presencePort = new FakePresencePort();
   const invitationRepository = new FakeInvitationRepository();
+  const imageStoragePort = createFakeImageStoragePort();
 
   let elementSequence = 0;
   let currentUser: AuthUser | null = null;
@@ -187,6 +202,21 @@ export function createAppHarness(): AppHarness {
     realtimeSubscriptionManager: createRealtimeSubscriptionManager(realtimePort),
     generateElementId,
     presencePort,
+    comments: {
+      listWorkspaceComments: createListWorkspaceComments(commentRepository),
+      listComments: createListComments(commentRepository),
+      createComment: createCreateComment({
+        repository: commentRepository,
+        generateId: () => CommentId.create(`comment-${++elementSequence}`),
+      }),
+      resolveComment: createResolveComment({ repository: commentRepository }),
+    },
+    imageServices: {
+      uploadImage: createUploadImage({
+        storage: imageStoragePort,
+        generateImageId: () => `image-${++elementSequence}`,
+      }),
+    },
   };
 
   return {
@@ -194,9 +224,11 @@ export function createAppHarness(): AppHarness {
     workspaceRepository,
     membershipRepository,
     elementRepository,
+    commentRepository,
     realtimePort,
     presencePort,
     invitationRepository,
+    imageStoragePort,
     services,
     get currentUser(): AuthUser | null {
       return currentUser;

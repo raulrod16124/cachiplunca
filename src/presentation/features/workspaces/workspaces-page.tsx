@@ -24,6 +24,7 @@ import { useI18n } from '../../i18n';
 import { AppShell } from '../app-shell/app-shell';
 import { CreateWorkspaceDialog } from './components/create-workspace-dialog';
 import { PendingInvitationsPanel } from './components/pending-invitations-panel';
+import { WorkspacesCommandPalette } from './components/workspaces-command-palette';
 import { WorkspacesListContainer } from './components/workspaces-list-container';
 
 const Main = styled.main`
@@ -81,6 +82,7 @@ export function WorkspacesPage({
   const navigate = useNavigate();
   const { t } = useI18n();
   const [createOpen, setCreateOpen] = useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [refreshToken, setRefreshToken] = useState(0);
   const currentUser = session.status === 'authenticated' ? session.user : null;
   const ownerId =
@@ -164,6 +166,14 @@ export function WorkspacesPage({
         createWorkspace={createWorkspace}
         createdBy={ownerId}
         onCreated={handleCreated}
+      />
+      <WorkspacesCommandPalette
+        open={commandPaletteOpen}
+        onOpenChange={setCommandPaletteOpen}
+        userId={session.status === 'authenticated' ? session.user.uid : undefined}
+        listWorkspaces={listWorkspaces}
+        onCreateWorkspace={handleCreateWorkspace}
+        onOpenWorkspace={(workspace) => navigate(`/workspaces/${workspace.id.value}`)}
       />
     </AppShell>
   );

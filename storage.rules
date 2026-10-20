@@ -1,10 +1,44 @@
 rules_version = '2';
 
-// Craft rules based on data in your Firestore database
-// allow write: if firestore.get(
-//    /databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin;
+// Las imágenes viven en workspaces/{workspaceId}/images/{imageId}.
+// La autorización se deriva de la membership en Firestore, igual que en
+// firestore.rules: los miembros leen y owner/editor escriben.
 service firebase.storage {
   match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function membershipId(workspaceId) {
+      return workspaceId + '_' + request.auth.uid;
+    }
+
+    function membershipPath(workspaceId) {
+      return /databases/(default)/documents/memberships/$(membershipId(workspaceId));
+    }
+
+    function isMember(workspaceId) {
+      return signedIn() && firestore.exists(membershipPath(workspaceId));
+    }
+
+    function hasRole(workspaceId, roles) {
+      return isMember(workspaceId) &&
+        firestore.get(membershipPath(workspaceId)).data.role in roles;
+    }
+
+    function isValidImage() {
+      return request.resource.contentType is string &&
+        request.resource.contentType.matches('image/(png|jpeg|webp|gif)') &&
+        request.resource.size > 0 &&
+        request.resource.size <= 5 * 1024 * 1024;
+    }
+
+    match /workspaces/{workspaceId}/images/{imageId} {
+      allow read: if isMember(workspaceId);
+      allow create, update: if hasRole(workspaceId, ['owner', 'editor']) && isValidImage();
+      allow delete: if hasRole(workspaceId, ['owner', 'editor']);
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }
