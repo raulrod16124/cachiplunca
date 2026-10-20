@@ -27,21 +27,18 @@ import {
 import { EmptyState } from '../../../components/empty-state';
 import { shortUserId } from '../../../collaboration';
 import { formatCalendarDate, useI18n } from '../../../i18n';
+import { SideDrawer } from './side-drawer';
 
 export type TaskPlanView = 'list' | 'board';
 
-const Panel = styled.aside<{ readonly $view: TaskPlanView }>`
-  flex: 0 0
-    ${({ $view }) =>
-      $view === 'board' ? 'clamp(640px, 55vw, 960px)' : 'clamp(280px, 24vw, 360px)'};
-  max-width: calc(100vw - 280px);
-  min-width: 0;
+const Panel = styled.aside`
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
+  min-width: 0;
   min-height: 0;
+  overflow: hidden;
   background: ${({ theme }) => theme.canvas.surface};
-  border-left: 1px solid ${({ theme }) => theme.canvas.elementBorder};
-  box-shadow: ${({ theme }) => theme.shadow.sm};
 `;
 
 const Header = styled.div`
@@ -449,138 +446,143 @@ export function TaskPlanPanel({
   };
 
   return (
-    <Panel
-      $view={view}
-      id="task-plan-panel"
-      aria-label={t('plan.title')}
-      data-testid="task-plan-panel"
+    <SideDrawer
+      open
+      onClose={onClose}
+      label={t('plan.title')}
+      size={view === 'board' ? 'board' : 'default'}
     >
-      <Header>
-        <HeaderIdentity>
-          <ClipboardList aria-hidden="true" size={18} />
-          <Heading as="h2">{t('plan.title')}</Heading>
-        </HeaderIdentity>
-        <IconButton
-          type="button"
-          variant="ghost"
-          size="sm"
-          label={t('plan.close')}
-          onClick={onClose}
+      <Panel id="task-plan-panel" aria-label={t('plan.title')} data-testid="task-plan-panel">
+        <Header>
+          <HeaderIdentity>
+            <ClipboardList aria-hidden="true" size={18} />
+            <Heading as="h2">{t('plan.title')}</Heading>
+          </HeaderIdentity>
+          <IconButton
+            type="button"
+            variant="ghost"
+            size="sm"
+            label={t('plan.close')}
+            onClick={onClose}
+          >
+            <X aria-hidden="true" size={16} />
+          </IconButton>
+        </Header>
+        <Filters>
+          <Select
+            value={statusFilter}
+            onValueChange={(value) => setStatusFilter(value as TaskPlanStatusFilter)}
+          >
+            <Select.Trigger size="sm" aria-label={t('plan.filter.status')}>
+              <Select.Value />
+            </Select.Trigger>
+            <Select.Content>
+              <Select.Item value="all">{t('plan.filter.all')}</Select.Item>
+              {TASK_STATUSES.map((status) => (
+                <Select.Item key={status} value={status}>
+                  {t(TASK_STATUS_LABEL_KEYS[status])}
+                </Select.Item>
+              ))}
+            </Select.Content>
+          </Select>
+          <MineFilter>
+            <Checkbox checked={onlyMine} onChange={(event) => setOnlyMine(event.target.checked)} />
+            <Text size="font.size.sm">{t('plan.filter.mine')}</Text>
+          </MineFilter>
+        </Filters>
+        <Tabs
+          value={view}
+          onValueChange={(value) => setView(value as TaskPlanView)}
+          classNames={{ panel: 'task-plan-view-panel' }}
         >
-          <X aria-hidden="true" size={16} />
-        </IconButton>
-      </Header>
-      <Filters>
-        <Select
-          value={statusFilter}
-          onValueChange={(value) => setStatusFilter(value as TaskPlanStatusFilter)}
-        >
-          <Select.Trigger size="sm" aria-label={t('plan.filter.status')}>
-            <Select.Value />
-          </Select.Trigger>
-          <Select.Content>
-            <Select.Item value="all">{t('plan.filter.all')}</Select.Item>
-            {TASK_STATUSES.map((status) => (
-              <Select.Item key={status} value={status}>
-                {t(TASK_STATUS_LABEL_KEYS[status])}
-              </Select.Item>
-            ))}
-          </Select.Content>
-        </Select>
-        <MineFilter>
-          <Checkbox checked={onlyMine} onChange={(event) => setOnlyMine(event.target.checked)} />
-          <Text size="font.size.sm">{t('plan.filter.mine')}</Text>
-        </MineFilter>
-      </Filters>
-      <Tabs
-        value={view}
-        onValueChange={(value) => setView(value as TaskPlanView)}
-        classNames={{ panel: 'task-plan-view-panel' }}
-      >
-        <ViewTabs>
-          <Tabs.List aria-label={t('plan.view.label')}>
-            <Tabs.Trigger value="list">{t('plan.view.list')}</Tabs.Trigger>
-            <Tabs.Trigger value="board">{t('plan.view.board')}</Tabs.Trigger>
-          </Tabs.List>
-        </ViewTabs>
-        <Body>
-          {groups.length === 0 ? (
-            <EmptyState
-              title={hasAnyTask ? t('plan.emptyFiltered.title') : t('plan.empty.title')}
-              description={
-                hasAnyTask ? t('plan.emptyFiltered.description') : t('plan.empty.description')
-              }
-              actionLabel={
-                hasAnyTask
-                  ? t('plan.clearFilters')
-                  : canCreateTask
-                    ? t('plan.empty.action')
-                    : undefined
-              }
-              onAction={hasAnyTask ? clearFilters : canCreateTask ? onCreateTask : undefined}
-            />
-          ) : (
-            <>
-              <Tabs.Panel value="list">
-                {view === 'list' ? (
-                  <Groups>
-                    {groups.map((group) => (
-                      <section
-                        key={group.status}
-                        aria-labelledby={`task-plan-group-${group.status}`}
-                      >
-                        <GroupHeader>
-                          <Heading as="h3" id={`task-plan-group-${group.status}`}>
-                            {t(TASK_STATUS_LABEL_KEYS[group.status])}
-                          </Heading>
-                          <Badge variant="neutral">{group.tasks.length}</Badge>
-                        </GroupHeader>
-                        <TaskList>
-                          {group.tasks.map((task) => (
-                            <li key={task.id.value}>{renderTask(task)}</li>
-                          ))}
-                        </TaskList>
-                      </section>
-                    ))}
-                  </Groups>
-                ) : null}
-              </Tabs.Panel>
-              <Tabs.Panel value="board">
-                {view === 'board' ? (
-                  <Board role="group" aria-label={t('plan.board.label')}>
-                    {boardGroups.map((group) => (
-                      <BoardColumn
-                        key={group.status}
-                        aria-labelledby={`task-plan-board-group-${group.status}`}
-                      >
-                        <GroupHeader>
-                          <BoardColumnHeading as="h3" id={`task-plan-board-group-${group.status}`}>
-                            {t(TASK_STATUS_LABEL_KEYS[group.status])}
-                          </BoardColumnHeading>
-                          <Badge variant={TASK_STATUS_META[group.status].variant}>
-                            {group.tasks.length}
-                          </Badge>
-                        </GroupHeader>
-                        {group.tasks.length === 0 ? (
-                          <BoardEmpty color="color.text.muted" size="font.size.xs">
-                            {t('plan.board.empty')}
-                          </BoardEmpty>
-                        ) : (
+          <ViewTabs>
+            <Tabs.List aria-label={t('plan.view.label')}>
+              <Tabs.Trigger value="list">{t('plan.view.list')}</Tabs.Trigger>
+              <Tabs.Trigger value="board">{t('plan.view.board')}</Tabs.Trigger>
+            </Tabs.List>
+          </ViewTabs>
+          <Body>
+            {groups.length === 0 ? (
+              <EmptyState
+                title={hasAnyTask ? t('plan.emptyFiltered.title') : t('plan.empty.title')}
+                description={
+                  hasAnyTask ? t('plan.emptyFiltered.description') : t('plan.empty.description')
+                }
+                actionLabel={
+                  hasAnyTask
+                    ? t('plan.clearFilters')
+                    : canCreateTask
+                      ? t('plan.empty.action')
+                      : undefined
+                }
+                onAction={hasAnyTask ? clearFilters : canCreateTask ? onCreateTask : undefined}
+              />
+            ) : (
+              <>
+                <Tabs.Panel value="list">
+                  {view === 'list' ? (
+                    <Groups>
+                      {groups.map((group) => (
+                        <section
+                          key={group.status}
+                          aria-labelledby={`task-plan-group-${group.status}`}
+                        >
+                          <GroupHeader>
+                            <Heading as="h3" id={`task-plan-group-${group.status}`}>
+                              {t(TASK_STATUS_LABEL_KEYS[group.status])}
+                            </Heading>
+                            <Badge variant="neutral">{group.tasks.length}</Badge>
+                          </GroupHeader>
                           <TaskList>
                             {group.tasks.map((task) => (
-                              <Fragment key={task.id.value}>{renderBoardCard(task)}</Fragment>
+                              <li key={task.id.value}>{renderTask(task)}</li>
                             ))}
                           </TaskList>
-                        )}
-                      </BoardColumn>
-                    ))}
-                  </Board>
-                ) : null}
-              </Tabs.Panel>
-            </>
-          )}
-        </Body>
-      </Tabs>
-    </Panel>
+                        </section>
+                      ))}
+                    </Groups>
+                  ) : null}
+                </Tabs.Panel>
+                <Tabs.Panel value="board">
+                  {view === 'board' ? (
+                    <Board role="group" aria-label={t('plan.board.label')}>
+                      {boardGroups.map((group) => (
+                        <BoardColumn
+                          key={group.status}
+                          aria-labelledby={`task-plan-board-group-${group.status}`}
+                        >
+                          <GroupHeader>
+                            <BoardColumnHeading
+                              as="h3"
+                              id={`task-plan-board-group-${group.status}`}
+                            >
+                              {t(TASK_STATUS_LABEL_KEYS[group.status])}
+                            </BoardColumnHeading>
+                            <Badge variant={TASK_STATUS_META[group.status].variant}>
+                              {group.tasks.length}
+                            </Badge>
+                          </GroupHeader>
+                          {group.tasks.length === 0 ? (
+                            <BoardEmpty color="color.text.muted" size="font.size.xs">
+                              {t('plan.board.empty')}
+                            </BoardEmpty>
+                          ) : (
+                            <TaskList>
+                              {group.tasks.map((task) => (
+                                <Fragment key={task.id.value}>{renderBoardCard(task)}</Fragment>
+                              ))}
+                            </TaskList>
+                          )}
+                        </BoardColumn>
+                      ))}
+                    </Board>
+                  ) : null}
+                </Tabs.Panel>
+              </>
+            )}
+          </Body>
+        </Tabs>
+      </Panel>
+    </SideDrawer>
   );
 }

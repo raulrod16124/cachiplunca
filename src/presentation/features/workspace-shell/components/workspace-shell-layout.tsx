@@ -426,31 +426,31 @@ export function WorkspaceShellLayout({
             />
           )}
         </CanvasRegion>
-        <TaskPlanPanel
-          open={planOpen && !presenting}
-          elements={elements}
-          currentUserId={currentUser?.uid}
-          assignees={assignees}
-          canEdit={!readOnly && onUpdateElement !== undefined}
-          canCreateTask={canCreateTask}
-          onClose={() => setPlanOpen(false)}
-          onSelectTask={(elementId) => commandRef.current?.focusElement(elementId)}
-          onChangeStatus={(task, status) => {
-            onUpdateElement?.({ type: 'task', element: task, status });
-          }}
-          onCreateTask={() => commandRef.current?.createElement('task')}
-        />
-        <CommentsPanel
-          open={commentsOpen && canComment && !presenting}
-          workspaceId={workspace.id.value}
-          element={selectedElement}
-          currentUserId={currentUser?.uid}
-          authorLabels={authorLabels}
-          services={commentServices}
-          onCommentSaved={onCommentSaved}
-          onClose={() => setCommentsOpen(false)}
-        />
       </CanvasArea>
+      <TaskPlanPanel
+        open={planOpen && !presenting}
+        elements={elements}
+        currentUserId={currentUser?.uid}
+        assignees={assignees}
+        canEdit={!readOnly && onUpdateElement !== undefined}
+        canCreateTask={canCreateTask}
+        onClose={() => setPlanOpen(false)}
+        onSelectTask={(elementId) => commandRef.current?.focusElement(elementId)}
+        onChangeStatus={(task, status) => {
+          onUpdateElement?.({ type: 'task', element: task, status });
+        }}
+        onCreateTask={() => commandRef.current?.createElement('task')}
+      />
+      <CommentsPanel
+        open={commentsOpen && canComment && !presenting}
+        workspaceId={workspace.id.value}
+        element={selectedElement}
+        currentUserId={currentUser?.uid}
+        authorLabels={authorLabels}
+        services={commentServices}
+        onCommentSaved={onCommentSaved}
+        onClose={() => setCommentsOpen(false)}
+      />
       {presenting ? null : (
         <>
           <KeyboardShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />

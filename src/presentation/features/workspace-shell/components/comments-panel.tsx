@@ -12,6 +12,7 @@ import { shortUserId } from '../../../collaboration';
 import { EmptyState } from '../../../components/empty-state';
 import { formatRelativeDate, useI18n, type TranslationKey } from '../../../i18n';
 import { describeCommentError } from '../comments-error-messages';
+import { SideDrawer } from './side-drawer';
 
 const ELEMENT_TYPE_KEYS: Readonly<Record<ElementType, TranslationKey>> = {
   text: 'commandPalette.element.text',
@@ -24,15 +25,13 @@ const ELEMENT_TYPE_KEYS: Readonly<Record<ElementType, TranslationKey>> = {
 };
 
 const Panel = styled.aside`
-  flex: 0 0 clamp(300px, 26vw, 380px);
-  max-width: calc(100vw - 280px);
-  min-width: 0;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
+  min-width: 0;
   min-height: 0;
+  overflow: hidden;
   background: ${({ theme }) => theme.canvas.surface};
-  border-left: 1px solid ${({ theme }) => theme.canvas.elementBorder};
-  box-shadow: ${({ theme }) => theme.shadow.sm};
 `;
 
 const Header = styled.div`
@@ -393,61 +392,63 @@ export function CommentsPanel({
   };
 
   return (
-    <Panel id="comments-panel" aria-label={t('comments.title')} data-testid="comments-panel">
-      <Header>
-        <HeaderIdentity>
-          <HeaderTitle>
-            <MessageSquare aria-hidden="true" size={18} />
-            <Heading as="h2">{t('comments.title')}</Heading>
-          </HeaderTitle>
-          {targetLabel === null ? null : (
-            <TargetLabel color="color.text.muted" size="font.size.xs">
-              {targetLabel}
-            </TargetLabel>
-          )}
-        </HeaderIdentity>
-        <IconButton
-          type="button"
-          variant="ghost"
-          size="sm"
-          label={t('comments.close')}
-          onClick={onClose}
-        >
-          <X aria-hidden="true" size={16} />
-        </IconButton>
-      </Header>
-      <Body>
-        {errorMessage !== null && status !== 'error' ? (
-          <Text role="alert" color="color.text.danger" size="font.size.sm">
-            {errorMessage}
-          </Text>
-        ) : null}
-        {renderBody()}
-      </Body>
-      {elementId === undefined || !canComment ? null : (
-        <Form onSubmit={(event) => void handleSubmit(event)}>
-          <Textarea
-            aria-label={t('comments.bodyLabel')}
-            placeholder={t('comments.placeholder')}
-            rows={3}
-            maxLength={COMMENT_BODY_MAX_LENGTH}
-            value={draft}
-            disabled={submitting}
-            onChange={(event) => setDraft(event.target.value)}
-          />
-          <FormActions>
-            <Button
-              type="submit"
-              variant="primary"
-              size="sm"
-              disabled={busy || draft.trim().length === 0}
-            >
-              {submitting ? t('comments.submitting') : t('comments.submit')}
-            </Button>
-          </FormActions>
-        </Form>
-      )}
-    </Panel>
+    <SideDrawer open onClose={onClose} label={t('comments.title')}>
+      <Panel id="comments-panel" aria-label={t('comments.title')} data-testid="comments-panel">
+        <Header>
+          <HeaderIdentity>
+            <HeaderTitle>
+              <MessageSquare aria-hidden="true" size={18} />
+              <Heading as="h2">{t('comments.title')}</Heading>
+            </HeaderTitle>
+            {targetLabel === null ? null : (
+              <TargetLabel color="color.text.muted" size="font.size.xs">
+                {targetLabel}
+              </TargetLabel>
+            )}
+          </HeaderIdentity>
+          <IconButton
+            type="button"
+            variant="ghost"
+            size="sm"
+            label={t('comments.close')}
+            onClick={onClose}
+          >
+            <X aria-hidden="true" size={16} />
+          </IconButton>
+        </Header>
+        <Body>
+          {errorMessage !== null && status !== 'error' ? (
+            <Text role="alert" color="color.text.danger" size="font.size.sm">
+              {errorMessage}
+            </Text>
+          ) : null}
+          {renderBody()}
+        </Body>
+        {elementId === undefined || !canComment ? null : (
+          <Form onSubmit={(event) => void handleSubmit(event)}>
+            <Textarea
+              aria-label={t('comments.bodyLabel')}
+              placeholder={t('comments.placeholder')}
+              rows={3}
+              maxLength={COMMENT_BODY_MAX_LENGTH}
+              value={draft}
+              disabled={submitting}
+              onChange={(event) => setDraft(event.target.value)}
+            />
+            <FormActions>
+              <Button
+                type="submit"
+                variant="primary"
+                size="sm"
+                disabled={busy || draft.trim().length === 0}
+              >
+                {submitting ? t('comments.submitting') : t('comments.submit')}
+              </Button>
+            </FormActions>
+          </Form>
+        )}
+      </Panel>
+    </SideDrawer>
   );
 }
 

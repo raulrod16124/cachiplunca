@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { registerUser } from './helpers/auth';
-import { createWorkspace } from './helpers/workspace';
+import { addElement, createWorkspace } from './helpers/workspace';
 
 test.describe('Task plan', () => {
   test('creates, selects and updates tasks from the plan panel', async ({ page }) => {
@@ -14,7 +14,7 @@ test.describe('Task plan', () => {
 
     await panel.getByRole('button', { name: 'Create task' }).click();
 
-    const dialog = page.getByRole('dialog');
+    const dialog = page.getByTestId('task-form-dialog');
     await dialog.getByLabel('Title').fill('Plan launch');
     await dialog.getByRole('combobox', { name: 'Status' }).click();
     await page.getByRole('option', { name: 'In progress' }).click();
@@ -59,7 +59,7 @@ test.describe('Task plan board', () => {
     await panel.getByRole('tab', { name: 'Board' }).click();
 
     await panel.getByRole('button', { name: 'Create task' }).click();
-    const dialog = page.getByRole('dialog');
+    const dialog = page.getByTestId('task-form-dialog');
     await dialog.getByLabel('Title').fill('Board task');
     await dialog.getByRole('button', { name: 'Create task' }).click();
     await expect(dialog).toBeHidden();
@@ -75,5 +75,23 @@ test.describe('Task plan board', () => {
       blockedColumn.getByRole('button', { name: 'Select task Board task' }),
     ).toBeVisible();
     await expect(todoColumn.getByRole('button', { name: 'Select task Board task' })).toHaveCount(0);
+  });
+});
+
+test.describe('Task plan drawer layout', () => {
+  test('opens over the board without moving the canvas or the top bar', async ({ page }) => {
+    await registerUser(page);
+    await createWorkspace(page, 'No reflow');
+
+    const note = await addElement(page, 'note');
+    const planToggle = page.getByRole('button', { name: 'Task plan' });
+    const boardBefore = await note.boundingBox();
+    const topBarBefore = await planToggle.boundingBox();
+
+    await planToggle.click();
+    await expect(page.getByTestId('task-plan-panel')).toBeVisible();
+
+    expect(await note.boundingBox()).toEqual(boardBefore);
+    expect(await planToggle.boundingBox()).toEqual(topBarBefore);
   });
 });
