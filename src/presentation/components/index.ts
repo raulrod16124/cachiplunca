@@ -11,3 +11,5 @@ export { Spinner } from './spinner';
 export type { SpinnerProps } from './spinner';
 export { FieldError } from './field-error';
 export type { FieldErrorProps } from './field-error';
+export { BrandLogo } from './brand-logo';
+export type { BrandLogoProps, BrandLogoSize, BrandLogoVariant } from './brand-logo';

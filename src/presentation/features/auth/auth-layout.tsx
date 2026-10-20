@@ -1,6 +1,7 @@
 import { Check } from '@raulrod/icons';
 import type { ReactNode } from 'react';
 import styled from 'styled-components';
+import { BrandLogo } from '../../components';
 import { useI18n, type TranslationKey } from '../../i18n';
 
 const Screen = styled.main`
@@ -55,25 +56,6 @@ const Brand = styled.div`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.space[2]};
-`;
-
-const BrandMark = styled.span`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: ${({ theme }) => theme.space[10]};
-  height: ${({ theme }) => theme.space[10]};
-  border-radius: ${({ theme }) => theme.radius.md};
-  background: ${({ theme }) => theme.color.action.primary.text};
-  color: ${({ theme }) => theme.color.action.primary.background};
-  font-size: ${({ theme }) => theme.font.size.xl};
-  font-weight: ${({ theme }) => theme.font.weight.bold};
-`;
-
-const BrandName = styled.span`
-  font-size: ${({ theme }) => theme.font.size.xl};
-  font-weight: ${({ theme }) => theme.font.weight.semibold};
-  letter-spacing: ${({ theme }) => theme.font.tracking.tight};
 `;
 
 const Pitch = styled.div`
@@ -142,8 +124,7 @@ export function AuthLayout({ children }: AuthLayoutProps): ReactNode {
       <Shell>
         <BrandPanel>
           <Brand>
-            <BrandMark aria-hidden="true">C</BrandMark>
-            <BrandName>{t('brand.name')}</BrandName>
+            <BrandLogo variant="wordmark" size="lg" />
           </Brand>
           <Pitch>
             <PitchTitle>{t('brand.tagline')}</PitchTitle>

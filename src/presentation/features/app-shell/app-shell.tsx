@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import type { LogoutUser } from '../../../application/commands';
 import type { AuthUser } from '../../../application/ports';
 import { useI18n } from '../../i18n';
+import { BrandLogo } from '../../components';
 import { AccountMenu } from '../auth/account-menu';
 
 const Layout = styled.div`
@@ -49,29 +50,6 @@ const Brand = styled.div`
   align-items: center;
   gap: ${({ theme }) => theme.space[2]};
   min-width: 0;
-`;
-
-const BrandMark = styled.span`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: ${({ theme }) => theme.space[8]};
-  height: ${({ theme }) => theme.space[8]};
-  border-radius: ${({ theme }) => theme.radius.md};
-  background: ${({ theme }) => theme.color.action.primary.background};
-  color: ${({ theme }) => theme.color.action.primary.text};
-  font-size: ${({ theme }) => theme.font.size.lg};
-  font-weight: ${({ theme }) => theme.font.weight.bold};
-`;
-
-const BrandName = styled.span`
-  overflow: hidden;
-  font-size: ${({ theme }) => theme.font.size.lg};
-  font-weight: ${({ theme }) => theme.font.weight.semibold};
-  letter-spacing: ${({ theme }) => theme.font.tracking.tight};
-  text-overflow: ellipsis;
-  white-space: nowrap;
 `;
 
 const Nav = styled.nav`
@@ -178,8 +156,7 @@ export function AppShell({
       <Sidebar>
         <BrandRow>
           <Brand>
-            <BrandMark aria-hidden="true">C</BrandMark>
-            <BrandName>{t('brand.name')}</BrandName>
+            <BrandLogo variant="wordmark" responsive size="md" />
           </Brand>
         </BrandRow>
 
