@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import styled from 'styled-components';
 import { Button, Text } from '@raulrod/ui';
 import type { Workspace } from '../../../../domain/workspace';
@@ -12,6 +12,8 @@ import type {
   UpdateElementInput,
   UpdateWorkspaceResult,
 } from '../../../../application/commands';
+import type { ListWorkspaces } from '../../../../application/queries';
+import { connectorCandidateIds } from '../../../../application/services';
 import type {
   CanvasViewportStore,
   CommandHistory,
@@ -21,9 +23,10 @@ import type {
 } from '../../../../application/services';
 import type { AuthUser, RealtimeConnectionStatus } from '../../../../application/ports';
 import { createPresenceColorAssigner } from '../../../collaboration';
-import { Canvas, type ConnectorEndpointDragInput } from '../../../canvas';
+import { Canvas, type CanvasCommandHandle, type ConnectorEndpointDragInput } from '../../../canvas';
 import type { TaskFormValues } from '../../../canvas/components/task-form-dialog';
 import { KeyboardShortcutsDialog } from './keyboard-shortcuts-dialog';
+import { WorkspaceCommandPalette } from './workspace-command-palette';
 import { WorkspaceTopBar } from './workspace-top-bar';
 
 const Shell = styled.div`
@@ -93,6 +96,8 @@ export interface WorkspaceShellLayoutProps {
   readonly readOnly?: boolean;
   readonly accessErrorMessage?: string | null;
   readonly onRetryRole?: () => void;
+  readonly listWorkspaces?: ListWorkspaces;
+  readonly onOpenWorkspace?: (workspaceId: string) => void;
 }
 
 export function WorkspaceShellLayout({
@@ -136,8 +141,13 @@ export function WorkspaceShellLayout({
   readOnly = false,
   accessErrorMessage = null,
   onRetryRole,
+  listWorkspaces,
+  onOpenWorkspace,
 }: WorkspaceShellLayoutProps): ReactNode {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const commandRef = useRef<CanvasCommandHandle | null>(null);
+  const selection = useSyncExternalStore(selectionStore.subscribe, selectionStore.getSnapshot);
   const colorAssignerRef = useRef(createPresenceColorAssigner());
   const userIds = useMemo(() => {
     const ids = new Set<string>();
@@ -160,6 +170,13 @@ export function WorkspaceShellLayout({
 
     return colors;
   }, [userIds]);
+
+  const canCreate = !readOnly && onCreateElement !== undefined;
+  const canCreateFreeConnector = !readOnly && onCreateConnector !== undefined;
+  const canConnectSelected =
+    canCreateFreeConnector && connectorCandidateIds(elements, selection.selectedIds) !== null;
+  const canUndo = !readOnly && commandHistory.canUndo();
+  const canRedo = !readOnly && commandHistory.canRedo();
 
   return (
     <Shell>
@@ -219,9 +236,28 @@ export function WorkspaceShellLayout({
           userColors={userColors}
           onCursorMove={onCursorMove}
           readOnly={readOnly}
+          commandRef={commandRef}
         />
       </CanvasArea>
       <KeyboardShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+      <WorkspaceCommandPalette
+        open={commandPaletteOpen}
+        onOpenChange={setCommandPaletteOpen}
+        workspaceId={workspace.id.value}
+        elements={elements}
+        commandRef={commandRef}
+        canCreate={canCreate}
+        canCreateFreeConnector={canCreateFreeConnector}
+        canConnectSelected={canConnectSelected}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        onShare={onShare}
+        onShowShortcuts={() => setShortcutsOpen(true)}
+        onBack={onBack}
+        userId={currentUser?.uid}
+        listWorkspaces={listWorkspaces}
+        onOpenWorkspace={onOpenWorkspace}
+      />
     </Shell>
   );
 }

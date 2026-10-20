@@ -14,6 +14,7 @@ import type {
   GetWorkspaceRole,
   ListPendingInvitations,
   ListWorkspaceMembers,
+  ListWorkspaces,
   LoadWorkspaceElements,
 } from '../../../application/queries';
 import type {
@@ -41,6 +42,7 @@ export interface WorkspaceShellPageProps {
   readonly leaveWorkspace?: LeaveWorkspace;
   readonly updateWorkspace?: UpdateWorkspace;
   readonly fileDownload?: FileDownloadPort;
+  readonly listWorkspaces?: ListWorkspaces;
 }
 
 export function WorkspaceShellPage({
@@ -60,6 +62,7 @@ export function WorkspaceShellPage({
   leaveWorkspace,
   updateWorkspace,
   fileDownload,
+  listWorkspaces,
 }: WorkspaceShellPageProps): ReactNode {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const navigate = useNavigate();
@@ -93,6 +96,8 @@ export function WorkspaceShellPage({
       leaveWorkspace={leaveWorkspace}
       updateWorkspace={updateWorkspace}
       fileDownload={fileDownload}
+      listWorkspaces={listWorkspaces}
+      onOpenWorkspace={(nextWorkspaceId) => navigate(`/workspaces/${nextWorkspaceId}`)}
       onBack={() => navigate('/workspaces')}
     />
   );

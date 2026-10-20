@@ -83,6 +83,15 @@ export class Viewport {
     }
   }
 
+  center(bounds: Bounds): Viewport {
+    const translation = Position.create(
+      bounds.centerX - this._size.width / (2 * this._transform.scale),
+      bounds.centerY - this._size.height / (2 * this._transform.scale),
+    );
+
+    return Viewport.create(this._transform.withTranslation(translation), this._size);
+  }
+
   fit(bounds: Bounds, padding = 0, minScale?: number, maxScale?: number): Viewport {
     const availableWidth = this._size.width - padding * 2;
     const availableHeight = this._size.height - padding * 2;

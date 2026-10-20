@@ -1,5 +1,5 @@
 export { Canvas } from './canvas';
-export type { CanvasProps } from './canvas';
+export type { CanvasCommandHandle, CanvasProps } from './canvas';
 export { ViewportControls } from './viewport-controls';
 export type { ViewportControlsProps } from './viewport-controls';
 export { CanvasToolbar } from './canvas-toolbar';

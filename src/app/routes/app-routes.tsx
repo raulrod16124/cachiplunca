@@ -164,6 +164,7 @@ export function AppRoutes({
               leaveWorkspace={leaveWorkspace}
               updateWorkspace={updateWorkspace}
               fileDownload={fileDownload}
+              listWorkspaces={listWorkspaces}
             />
           }
         />

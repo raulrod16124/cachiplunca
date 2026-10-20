@@ -1,6 +1,6 @@
 import { Heading, IconButton, Input, Tooltip } from '@raulrod/ui';
 import { Pencil } from '@raulrod/icons';
-import { useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
 import styled from 'styled-components';
 import type { UpdateWorkspaceResult } from '../../../../application/commands';
@@ -71,6 +71,15 @@ export function WorkspaceTitleField({ name, onRename }: WorkspaceTitleFieldProps
 
   const editing = draft !== null;
 
+  useLayoutEffect(() => {
+    if (!editing) {
+      return;
+    }
+
+    inputRef.current?.focus();
+    inputRef.current?.select();
+  }, [editing]);
+
   if (onRename === undefined) {
     return (
       <TitleGroup>
@@ -85,10 +94,6 @@ export function WorkspaceTitleField({ name, onRename }: WorkspaceTitleFieldProps
     cancelledRef.current = false;
     setError(null);
     setDraft(name);
-    requestAnimationFrame(() => {
-      inputRef.current?.focus();
-      inputRef.current?.select();
-    });
   }
 
   function cancelEdit(): void {

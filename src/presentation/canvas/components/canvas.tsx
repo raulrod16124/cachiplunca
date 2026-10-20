@@ -1,7 +1,15 @@
 import { VisuallyHidden } from '@raulrod/ui';
 import type { Editor } from '@tiptap/core';
-import type { MouseEvent as ReactMouseEvent, ReactElement } from 'react';
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import type { MouseEvent as ReactMouseEvent, ReactElement, Ref } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import styled from 'styled-components';
 import { Bounds, Grid, Position, Size } from '../../../domain/shared';
 import type { Element, ElementType } from '../../../domain/element';
@@ -199,6 +207,15 @@ export interface CanvasProps {
   readonly readOnly?: boolean;
 }
 
+export interface CanvasCommandHandle {
+  readonly createElement: (type: ElementType) => void;
+  readonly createConnector: (mode: 'free' | 'bound') => void;
+  readonly fitView: () => void;
+  readonly undo: () => void;
+  readonly redo: () => void;
+  readonly focusElement: (elementId: string) => void;
+}
+
 export function Canvas({
   store,
   selectionStore,
@@ -224,7 +241,8 @@ export function Canvas({
   userColors,
   onCursorMove,
   readOnly = false,
-}: CanvasProps): ReactElement {
+  commandRef,
+}: CanvasProps & { readonly commandRef?: Ref<CanvasCommandHandle> }): ReactElement {
   const { t } = useI18n();
   const viewport = useSyncExternalStore(store.subscribe, store.getSnapshot);
   const selection = useSyncExternalStore(selectionStore.subscribe, selectionStore.getSnapshot);
@@ -696,6 +714,20 @@ export function Canvas({
     store.fit(bounds);
   }, [store, items]);
 
+  const handleFocusElement = useCallback(
+    (elementId: string): void => {
+      const item = items.find((candidate) => candidate.id === elementId);
+
+      if (item === undefined) {
+        return;
+      }
+
+      selectionStore.select(elementId);
+      store.center(item.bounds);
+    },
+    [items, selectionStore, store],
+  );
+
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
   const closeContextMenu = useCallback((): void => {
@@ -818,6 +850,26 @@ export function Canvas({
       onCreateConnector?.(mode);
     },
     [onCreateConnector],
+  );
+
+  useImperativeHandle(
+    commandRef,
+    () => ({
+      createElement: handleCreateElement,
+      createConnector: handleCreateConnector,
+      fitView: handleFitView,
+      undo: handleUndo,
+      redo: handleRedo,
+      focusElement: handleFocusElement,
+    }),
+    [
+      handleCreateElement,
+      handleCreateConnector,
+      handleFitView,
+      handleUndo,
+      handleRedo,
+      handleFocusElement,
+    ],
   );
 
   const handleTaskFormSubmit = useCallback(

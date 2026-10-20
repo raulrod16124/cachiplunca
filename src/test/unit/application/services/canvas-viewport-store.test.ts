@@ -225,6 +225,32 @@ describe('createCanvasViewportStore', () => {
     });
   });
 
+  describe('center', () => {
+    it('centers the bounds while preserving the current scale', () => {
+      const store = createCanvasViewportStore(Size.create(800, 600));
+
+      store.setScale(2);
+      store.center(Bounds.fromXYWH(1000, 500, 200, 100));
+
+      expect(store.getSnapshot().scale).toBe(2);
+      expect(store.getSnapshot().worldToScreen(Position.create(1100, 550))).toEqual(
+        Position.create(400, 300),
+      );
+    });
+
+    it('notifies subscribers when the viewport changes', () => {
+      const store = createCanvasViewportStore(Size.create(800, 600));
+      const listener = jest.fn();
+
+      const unsubscribe = store.subscribe(listener);
+      store.center(Bounds.fromXYWH(100, 100, 50, 50));
+
+      expect(listener).toHaveBeenCalledTimes(1);
+
+      unsubscribe();
+    });
+  });
+
   describe('fit', () => {
     it('resets the viewport when the content bounds are null', () => {
       const store = createCanvasViewportStore(Size.create(800, 600));

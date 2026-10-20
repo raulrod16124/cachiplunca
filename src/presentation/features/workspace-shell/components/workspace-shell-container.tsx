@@ -22,6 +22,7 @@ import type {
   GetWorkspaceRole,
   ListPendingInvitations,
   ListWorkspaceMembers,
+  ListWorkspaces,
   LoadWorkspaceElements,
 } from '../../../../application/queries';
 import {
@@ -124,6 +125,8 @@ export interface WorkspaceShellContainerProps {
   readonly leaveWorkspace?: LeaveWorkspace;
   readonly updateWorkspace?: UpdateWorkspace;
   readonly fileDownload?: FileDownloadPort;
+  readonly listWorkspaces?: ListWorkspaces;
+  readonly onOpenWorkspace?: (workspaceId: string) => void;
 }
 
 interface TransformGesture {
@@ -155,6 +158,8 @@ export function WorkspaceShellContainer({
   leaveWorkspace,
   updateWorkspace,
   fileDownload,
+  listWorkspaces,
+  onOpenWorkspace,
 }: WorkspaceShellContainerProps): ReactNode {
   const { t } = useI18n();
   const [status, setStatus] = useState<'loading' | 'notFound' | 'error' | 'success'>('loading');
@@ -1042,6 +1047,8 @@ export function WorkspaceShellContainer({
           onExportPdf={fileDownload === undefined ? undefined : handleExportPdf}
           exportErrorMessage={exportError}
           onRename={canRename ? handleRenameWorkspace : undefined}
+          listWorkspaces={listWorkspaces}
+          onOpenWorkspace={onOpenWorkspace}
         />
         {canShare ? (
           <ShareDialog

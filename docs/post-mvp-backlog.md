@@ -93,7 +93,7 @@ Definition of Done:
 | PBL-005 | Export JSON y PDF del tablero                | R1      | P1        | S        | —              | Sí  | DONE   |
 | PBL-006 | Duplicar workspace                           | R1      | P1        | M        | —              | No  | DONE   |
 | PBL-007 | Plantillas de arranque y empty states        | R1      | P0        | M        | —              | No  | DONE   |
-| PBL-008 | Command palette (Cmd/Ctrl + K)               | R1      | P1        | M        | —              | No  | TODO   |
+| PBL-008 | Command palette (Cmd/Ctrl + K)               | R1      | P1        | M        | —              | No  | DONE   |
 | PBL-009 | Vista Plan de tareas                         | R2      | P0        | M        | —              | No  | TODO   |
 | PBL-010 | Crear tarea desde nota o frame               | R2      | P1        | S        | PBL-009        | Sí  | TODO   |
 | PBL-011 | Kanban del plan                              | R2      | P2        | M        | PBL-009        | No  | TODO   |
@@ -268,7 +268,7 @@ Hacer descubribles los atajos existentes sin añadir funcionalidad nueva al canv
 #### Notas técnicas
 
 - Extraer etiquetas desde las constantes de teclado existentes si es viable; evitar dos fuentes de verdad.
-- No hay atajos propios de colaboración implementados; el catálogo omite grupos vacíos y queda listo para PBL-008.
+- No hay atajos propios de colaboración implementados; el catálogo omite grupos vacíos. La ayuda se incorporó después como acción de la command palette de PBL-008.
 - Catálogo puro en `src/presentation/canvas/keyboard-shortcuts.ts`; el diálogo solo renderiza datos y la apertura con `?` ignora campos editables y modales abiertos.
 
 ---
@@ -389,7 +389,7 @@ Reducir el canvas vacío y acelerar el primer valor con estructuras de planifica
 
 ### PBL-008 — Command palette (Cmd/Ctrl + K)
 
-**Priority:** P1 · **Effort:** M · **Depends:** — · **Status:** TODO
+**Priority:** P1 · **Effort:** M · **Depends:** — · **Status:** DONE
 
 #### Objetivo
 
@@ -406,11 +406,11 @@ Mejorar descubrimiento y navegación sin añadir nuevas pantallas.
 
 #### Criterios de aceptación
 
-- [ ] La palette funciona tanto en Workspaces como en el board.
-- [ ] Las acciones no disponibles no aparecen o están deshabilitadas de forma explícita.
-- [ ] Ejecutar una acción replica el comportamiento existente sin duplicar lógica.
-- [ ] No se introducen dependencias nuevas.
-- [ ] Tests de apertura, filtrado, ejecución y cierre.
+- [x] La palette funciona tanto en Workspaces como en el board.
+- [x] Las acciones no disponibles no aparecen o están deshabilitadas de forma explícita.
+- [x] Ejecutar una acción replica el comportamiento existente sin duplicar lógica.
+- [x] No se introducen dependencias nuevas.
+- [x] Tests de apertura, filtrado, ejecución y cierre.
 
 #### Fuera de alcance
 
@@ -422,6 +422,10 @@ Mejorar descubrimiento y navegación sin añadir nuevas pantallas.
 - Reutilizar handlers y comandos existentes del shell.
 - Mantener el listener de teclado scoped al layout; no crear un event bus global.
 - Usar `Dialog`/`Input` de `@raulrod/ui` y patrones de focus existentes.
+- `CanvasCommandHandle` expone crear elemento/conector libre o ligado, fit, undo/redo y centrar/seleccionar un elemento, reutilizando los handlers internos del canvas.
+- Búsqueda de elementos pura en Application (`searchElements`) y búsqueda de workspaces por nombre en Presentation; resultados acotados y sin entidades nuevas.
+- La selección de un resultado usa `Viewport.center`/`CanvasViewportStore.center`, conservando el zoom.
+- El atajo ignora inputs, editores y modales abiertos; con la palette abierta, Cmd/Ctrl + K la cierra.
 
 ---
 
@@ -803,17 +807,18 @@ Cerrar el bucle de invitaciones sin introducir email ni backend nuevo.
 
 Añadir una línea por sesión. El detalle técnico extenso sigue viviendo en `docs/adr/session-log.md` cuando haya decisiones relevantes.
 
-| Fecha      | Tarea   | Resultado | Notas                                                                                                                                                                                                                       |
-| ---------- | ------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-10-19 | —       | Creado    | Creación del backlog post-MVP y priorización inicial.                                                                                                                                                                       |
-| 2026-10-19 | PBL-002 | DONE      | Borrado de workspace desde la card con confirmación; roles por workspace desde `ListWorkspaces`; unit, integración y E2E.                                                                                                   |
-| 2026-10-19 | PBL-001 | DONE      | Lecturas de workspaces/invitations acotadas por membership/destinatario; accept con `email_verified`; flujo de verificación con envío y refresh; rules, unit, integración y E2E.                                            |
-| 2026-10-19 | PBL-003 | DONE      | Paleta de 5 colores de tema en el menú contextual de nota, reset a por defecto, `color: null` en `UpdateElement`, undo/redo, persistencia y E2E.                                                                            |
-| 2026-10-19 | PBL-004 | DONE      | Ayuda de atajos accesible desde `?` y la top bar; catálogo puro por contextos, i18n en/es, foco atrapado, cierre con `Escape` y tests de contenido.                                                                         |
-| 2026-10-19 | PBL-005 | DONE      | Export JSON versionado y descarga desde browser; vista imprimible escalada con `window.print()`; disponible para Owner, Editor y Viewer; serializer puro, i18n, unit, integración y E2E.                                    |
-| 2026-10-19 | PBL-006 | DONE      | Duplicado owner-only desde la card con actualización del listado y apertura manual; copia de metadatos y elementos con IDs nuevos, remapeo de conectores y frames, compensación best-effort, i18n, unit, integración y E2E. |
-| 2026-10-19 | PBL-006 | DONE      | Follow-up: edición de nombre y descripción desde la card con icono y diálogo; acciones de card compactadas en iconos accesibles; unit, integración y E2E.                                                                   |
-| 2026-10-19 | PBL-007 | DONE      | Plantillas puras de retrospectiva, kickoff y brainstorming; selector Blank/Template en el diálogo; elementos con IDs nuevos y rollback best-effort; empty state del board con CTA; i18n en/es, unit, integración y E2E.     |
+| Fecha      | Tarea   | Resultado | Notas                                                                                                                                                                                                                                                                           |
+| ---------- | ------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-19 | —       | Creado    | Creación del backlog post-MVP y priorización inicial.                                                                                                                                                                                                                           |
+| 2026-10-19 | PBL-002 | DONE      | Borrado de workspace desde la card con confirmación; roles por workspace desde `ListWorkspaces`; unit, integración y E2E.                                                                                                                                                       |
+| 2026-10-19 | PBL-001 | DONE      | Lecturas de workspaces/invitations acotadas por membership/destinatario; accept con `email_verified`; flujo de verificación con envío y refresh; rules, unit, integración y E2E.                                                                                                |
+| 2026-10-19 | PBL-003 | DONE      | Paleta de 5 colores de tema en el menú contextual de nota, reset a por defecto, `color: null` en `UpdateElement`, undo/redo, persistencia y E2E.                                                                                                                                |
+| 2026-10-19 | PBL-004 | DONE      | Ayuda de atajos accesible desde `?` y la top bar; catálogo puro por contextos, i18n en/es, foco atrapado, cierre con `Escape` y tests de contenido.                                                                                                                             |
+| 2026-10-19 | PBL-005 | DONE      | Export JSON versionado y descarga desde browser; vista imprimible escalada con `window.print()`; disponible para Owner, Editor y Viewer; serializer puro, i18n, unit, integración y E2E.                                                                                        |
+| 2026-10-19 | PBL-006 | DONE      | Duplicado owner-only desde la card con actualización del listado y apertura manual; copia de metadatos y elementos con IDs nuevos, remapeo de conectores y frames, compensación best-effort, i18n, unit, integración y E2E.                                                     |
+| 2026-10-19 | PBL-006 | DONE      | Follow-up: edición de nombre y descripción desde la card con icono y diálogo; acciones de card compactadas en iconos accesibles; unit, integración y E2E.                                                                                                                       |
+| 2026-10-19 | PBL-007 | DONE      | Plantillas puras de retrospectiva, kickoff y brainstorming; selector Blank/Template en el diálogo; elementos con IDs nuevos y rollback best-effort; empty state del board con CTA; i18n en/es, unit, integración y E2E.                                                         |
+| 2026-10-20 | PBL-008 | DONE      | Command palette en Workspaces y board con Cmd/Ctrl + K; acciones de creación (incluido conector libre y ligado), fit, undo/redo, compartir, atajos y navegación; búsqueda de workspaces y elementos; `CanvasCommandHandle`, búsqueda pura, i18n en/es, unit, integración y E2E. |
 
 ---
 

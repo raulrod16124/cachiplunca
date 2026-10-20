@@ -1,5 +1,18 @@
 # Session Log
 
+## 2026-10-20 — PBL-008 Command palette (Cmd/Ctrl + K)
+
+- Siguiente tarea del backlog: PBL-008 (R1, P1, M, sin dependencias). Sin IN PROGRESS ni BLOCKED; rama `development` limpia al iniciar.
+- Presentation: `CommandPalette` reutilizable con `Dialog`/`Input`, patrón combobox/listbox, flechas/Home/End/Enter, `aria-activedescendant`, anuncio `aria-live` y foco inicial. Atajo scoped al host mediante `useCommandPaletteShortcut`; ignora inputs/editores/modales y cierra con `Cmd/Ctrl + K` cuando está abierta.
+- Canvas: `CanvasCommandHandle` (`createElement`, `createConnector` libre/ligado, `fitView`, `undo`, `redo`, `focusElement`) delega en los handlers existentes, sin duplicar creación, formulario de tareas, historial ni viewport.
+- Búsqueda: `searchElements` pura en Application (texto plano por tipo, tarea con notas, link con título+URL, sin conectores, límite 8, normalización de mayúsculas/diacríticos). Workspaces por nombre con `useWorkspaceSearch` y `searchWorkspacesByName`; carga bajo demanda.
+- Viewport: `Viewport.center` y `CanvasViewportStore.center` centran bounds conservando la escala; `focusElement` selecciona y centra el resultado.
+- Acciones: crear text/note/task/frame/link, conector libre, conectar selección, fit, undo/redo (deshabilitadas si no aplican), compartir, atajos, volver y buscar workspaces/elementos. En solo lectura no se ofrecen acciones de escritura.
+- i18n: claves nuevas en inglés y español para palette, grupos, tipos y estados de carga/error.
+- Tests: unit de `text-search`/`element-search`, filtro y navegación de palette, `searchWorkspacesByName`, `Viewport.center`, `CanvasViewportStore.center` y componente `CommandPalette`; integración de crear tarea, undo/redo, buscar/seleccionar elemento, conectar dos elementos, atajos, navegación entre workspaces y creación desde Workspaces; E2E `10-command-palette`.
+- Docs: PBL-008 → DONE (criterios [x]), ADR-0035, este registro y nota de PBL-004 actualizada.
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test`, `npm run build` y `npm run test:e2e` en verde.
+
 ## 2026-10-19 — PBL-003 Paleta de colores de nota
 
 - Siguiente tarea del backlog: PBL-003 (R1, P1, S, Quick win; PBL-001 y PBL-002 DONE). Sin IN PROGRESS ni BLOCKED.

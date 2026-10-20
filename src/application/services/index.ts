@@ -7,6 +7,8 @@ export * from './canvas-visibility';
 export * from './element-move';
 export * from './element-resize';
 export * from './element-creation';
+export * from './element-search';
+export * from './text-search';
 export * from './connector-geometry';
 export * from './element-delete';
 export * from './element-duplicate';
