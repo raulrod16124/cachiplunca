@@ -658,7 +658,7 @@ Apoyar sesiones de trabajo sin añadir estado compartido ni backend.
 
 - Mantener el estado local en Presentation; extraer un reducer puro si facilita los tests.
 - No crear puerto ni persistencia.
-- Implementado con `sessionTimerReducer` en `src/presentation/features/workspace-shell/session-timer.ts` y `SessionTimer` en la top bar; el tiempo se calcula desde `endsAt`, el intervalo solo corre mientras está activo y el anuncio de finalización queda fuera del popover. Sin animaciones ni cambios de dominio, almacenamiento o reglas.
+- Implementado con `sessionTimerReducer` en `src/presentation/features/workspace-shell/session-timer.ts` y `SessionTimer` en la top bar; el tiempo se calcula desde `endsAt`, el intervalo solo corre mientras está activo y al finalizar se abre un diálogo central con opción de reiniciar. Sin animaciones ni cambios de dominio, almacenamiento o reglas.
 
 ---
 
@@ -830,7 +830,7 @@ Añadir una línea por sesión. El detalle técnico extenso sigue viviendo en `d
 | 2026-10-20 | PBL-011 | DONE      | Kanban del plan: `selectTaskPlanBoard` con columna por estado y `selectTaskPlan` derivado; toggle Lista/Board con `Tabs`, contadores, empty states por columna, cambio de estado accesible reutilizando `UpdateElement`, solo lectura, i18n en/es, unit, integración y E2E.                                      |
 | 2026-10-20 | PBL-012 | DONE      | Alineación y distribución: `alignElements`/`distributeElements` puros con huecos iguales, conectores excluidos y no-op sin historial; desplegable accesible en la toolbar, persistencia con `commitElements`, undo/redo en un paso, solo lectura, i18n en/es, unit, integración y E2E.                           |
 | 2026-10-20 | PBL-013 | DONE      | Comentarios por elemento: `Comment`/`CommentId` con resolución única, puerto y casos de uso, subcolección Firestore con mapper, rules por membership, panel desde la top bar ligado a la selección, viewers pueden comentar, i18n en/es, unit, integración, rules y E2E.                                         |
-| 2026-10-20 | PBL-014 | DONE      | Temporizador local en la top bar: presets 1/3/5/10 min, reducer puro con `endsAt`, controles iniciar/pausar/reanudar/reiniciar, tiempo accesible sin interrupciones y anuncio al finalizar; estado aislado sin Firestore, i18n en/es, unit con fake timers, integración y E2E.                                   |
+| 2026-10-20 | PBL-014 | DONE      | Temporizador local en la top bar: presets 1/3/5/10 min, reducer puro con `endsAt`, controles iniciar/pausar/reanudar/reiniciar, tiempo accesible sin interrupciones y diálogo central al finalizar con opción de reiniciar; estado aislado sin Firestore, i18n en/es, unit con fake timers, integración y E2E.   |
 
 ---
 

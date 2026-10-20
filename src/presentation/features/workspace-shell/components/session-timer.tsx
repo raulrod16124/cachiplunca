@@ -1,6 +1,17 @@
-import { Button, Inline, Popover, Text, VisuallyHidden } from '@raulrod/ui';
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Inline,
+  Popover,
+  Text,
+} from '@raulrod/ui';
 import { Pause, Play, RotateCcw, Timer as TimerIcon } from '@raulrod/icons';
-import { useEffect, useReducer, type ReactNode } from 'react';
+import { useEffect, useReducer, useState, type ReactNode } from 'react';
 import styled from 'styled-components';
 import { useI18n, type TranslationKey } from '../../../i18n';
 import {
@@ -69,7 +80,9 @@ export function SessionTimer(): ReactNode {
   const [state, dispatch] = useReducer(sessionTimerReducer, undefined, () =>
     createSessionTimerState(),
   );
+  const [finishedDialogOpen, setFinishedDialogOpen] = useState(false);
   const formattedRemaining = formatSessionTimerRemaining(state.remainingMs);
+  const formattedDuration = formatSessionTimerRemaining(state.durationMs);
 
   useEffect(() => {
     if (state.status !== 'running') {
@@ -84,6 +97,17 @@ export function SessionTimer(): ReactNode {
       window.clearInterval(interval);
     };
   }, [state.status]);
+
+  useEffect(() => {
+    if (state.status === 'finished') {
+      setFinishedDialogOpen(true);
+    }
+  }, [state.status]);
+
+  const restart = (): void => {
+    setFinishedDialogOpen(false);
+    dispatch({ type: 'start', now: Date.now() });
+  };
 
   const triggerLabel =
     state.status === 'idle'
@@ -170,11 +194,24 @@ export function SessionTimer(): ReactNode {
           </Panel>
         </Popover.Content>
       </Popover>
-      {state.status === 'finished' ? (
-        <VisuallyHidden role="status" aria-live="polite">
-          {t('sessionTimer.finished')}
-        </VisuallyHidden>
-      ) : null}
+      <Dialog open={finishedDialogOpen} onOpenChange={setFinishedDialogOpen}>
+        <DialogContent data-testid="session-timer-finished-dialog">
+          <DialogHeader>
+            <DialogTitle>{t('sessionTimer.finishedTitle')}</DialogTitle>
+            <DialogDescription>
+              {t('sessionTimer.finishedDescription', { time: formattedDuration })}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={() => setFinishedDialogOpen(false)}>
+              {t('common.close')}
+            </Button>
+            <Button type="button" onClick={restart}>
+              {t('sessionTimer.finishedRestart')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

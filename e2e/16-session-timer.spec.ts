@@ -41,4 +41,23 @@ test.describe('Session timer', () => {
     await expect(page.getByRole('button', { name: 'Session timer' })).toBeVisible();
     await expect(items).toHaveCount(0);
   });
+
+  test('shows a central dialog when the timer finishes', async ({ page }) => {
+    await registerUser(page);
+    await createWorkspace(page, 'Timer completion board');
+    await page.clock.install();
+
+    await page.getByRole('button', { name: 'Session timer' }).click();
+    await page.getByRole('button', { name: '1 min' }).click();
+    await page.getByRole('button', { name: 'Start' }).click();
+    await page.clock.fastForward(60_000);
+
+    const dialog = page.getByRole('dialog', { name: 'Time is up' });
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toContainText('Your 1:00 session timer has finished.');
+
+    await dialog.getByRole('button', { name: 'Close' }).click();
+    await expect(dialog).toBeHidden();
+    await expect(page.locator('[data-testid^="canvas-item-"]')).toHaveCount(0);
+  });
 });

@@ -65,7 +65,7 @@ describe('SessionTimer', () => {
     expect(screen.getByTestId('session-timer-display')).toHaveTextContent('0:58');
   });
 
-  it('announces completion outside the popover even when it is closed', () => {
+  it('opens a central dialog when the timer finishes', () => {
     render(<SessionTimer />);
     openTimer();
 
@@ -80,7 +80,37 @@ describe('SessionTimer', () => {
 
     advance(60_000);
 
-    expect(screen.getByRole('status')).toHaveTextContent('Session timer finished.');
+    expect(screen.getByRole('dialog', { name: 'Time is up' })).toBeInTheDocument();
+    expect(screen.getByText('Your 1:00 session timer has finished.')).toBeInTheDocument();
+    expect(screen.getByTestId('session-timer-trigger')).toHaveAccessibleName(
+      'Session timer: 0:00 remaining',
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+
+    expect(screen.queryByRole('dialog', { name: 'Time is up' })).not.toBeInTheDocument();
+  });
+
+  it('restarts the timer from the completion dialog', () => {
+    render(<SessionTimer />);
+    openTimer();
+
+    fireEvent.click(screen.getByRole('button', { name: '1 min' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+    advance(60_000);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start again' }));
+
+    expect(screen.queryByRole('dialog', { name: 'Time is up' })).not.toBeInTheDocument();
+    expect(screen.getByTestId('session-timer-trigger')).toHaveAccessibleName(
+      'Session timer: 1:00 remaining',
+    );
+
+    advance(1000);
+
+    expect(screen.getByTestId('session-timer-trigger')).toHaveAccessibleName(
+      'Session timer: 0:59 remaining',
+    );
   });
 
   it('resets a running timer to the selected duration', () => {
