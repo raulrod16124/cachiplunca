@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import '@raulrod/tokens/styles.css';
 import '@raulrod/ui/styles.css';
+import './presentation/styles/brand/brand-theme.css';
 import './index.css';
 import App from './App.tsx';
 import { setPublicBasePath } from './presentation/config/public-base';
