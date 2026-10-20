@@ -34,3 +34,13 @@ export type BrandPrimitiveKey = keyof typeof brandPrimitives;
 export function brandVar(key: BrandPrimitiveKey): string {
   return `var(--cach-${key})`;
 }
+
+export const brandTypography = {
+  'font-display': "'Bangers', 'Inter', 'Helvetica Neue', Arial, sans-serif",
+} as const;
+
+export type BrandTypographyKey = keyof typeof brandTypography;
+
+export function brandFontVar(key: BrandTypographyKey): string {
+  return `var(--cach-${key})`;
+}

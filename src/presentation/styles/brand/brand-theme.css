@@ -36,6 +36,7 @@
 
   /* Theme-agnostic overrides */
   --rr-font-family-sans: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --cach-font-display: 'Bangers', 'Inter', 'Helvetica Neue', Arial, sans-serif;
   --rr-radius-md: 10px;
   --rr-radius-lg: 14px;
   --rr-shadow-sm:

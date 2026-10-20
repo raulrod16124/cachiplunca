@@ -50,6 +50,7 @@ describe('appTheme', () => {
     expect(appTheme.color.text.primary).toBe('var(--rr-color-text-primary)');
     expect(appTheme.color.link.text).toBe('var(--rr-color-link-text)');
     expect(appTheme.font.size.sm).toBe('var(--rr-font-size-sm)');
+    expect(appTheme.font.family.display).toBe('var(--cach-font-display)');
     expect(appTheme.space[2]).toBe('var(--rr-space-2)');
     expect(appTheme.radius.sm).toBe('var(--rr-radius-sm)');
   });

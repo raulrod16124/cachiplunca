@@ -1,9 +1,12 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import {
+  brandFontVar,
   brandPrimitives,
+  brandTypography,
   brandVar,
   type BrandPrimitiveKey,
+  type BrandTypographyKey,
 } from '../../../../presentation/styles/brand/brand-tokens';
 
 const BRAND_THEME_CSS = readFileSync(
@@ -23,6 +26,16 @@ describe('brand tokens', () => {
     for (const [key, value] of Object.entries(brandPrimitives)) {
       expect(BRAND_THEME_CSS).toContain(`--cach-${key}: ${value};`);
     }
+  });
+
+  it('maps typography keys to --cach-font-* custom properties', () => {
+    const key: BrandTypographyKey = 'font-display';
+
+    expect(brandFontVar(key)).toBe('var(--cach-font-display)');
+  });
+
+  it('declares the display stack in brand-theme.css', () => {
+    expect(BRAND_THEME_CSS).toContain(`--cach-font-display: ${brandTypography['font-display']};`);
   });
 
   it('does not leave the default blue palette in the brand layer', () => {

@@ -1,3 +1,4 @@
+import { brandFontVar } from './brand/brand-tokens';
 import { token } from './tokens';
 
 const action = {
@@ -77,6 +78,7 @@ export const appTheme = {
     family: {
       sans: token('font.family.sans'),
       mono: token('font.family.mono'),
+      display: brandFontVar('font-display'),
     },
     size: {
       '2xs': token('font.size.2xs'),
