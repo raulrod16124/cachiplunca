@@ -123,6 +123,7 @@ const en = {
   'workspaces.errors.nameRequired': 'Enter a workspace name.',
   'workspaces.errors.nameTooLong': 'Workspace names cannot exceed 100 characters.',
 
+  'shell.nav.label': 'Primary navigation',
   'shell.nav.workspaces': 'Workspaces',
   'shell.nav.invitations': 'Invitations',
   'shell.nav.pendingInvitations': 'Invitations, {count} pending',
@@ -644,6 +645,7 @@ const es: Record<TranslationKey, string> = {
   'workspaces.errors.nameRequired': 'Escribe un nombre para el workspace.',
   'workspaces.errors.nameTooLong': 'El nombre no puede superar los 100 caracteres.',
 
+  'shell.nav.label': 'Navegación principal',
   'shell.nav.workspaces': 'Workspaces',
   'shell.nav.invitations': 'Invitaciones',
   'shell.nav.pendingInvitations': 'Invitaciones, {count} pendientes',

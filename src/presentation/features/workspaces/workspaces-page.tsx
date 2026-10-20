@@ -111,7 +111,7 @@ export function WorkspacesPage({
       onCreateWorkspace={handleCreateWorkspace}
       pendingInvitationCount={pendingInvitations.unreadCount}
     >
-      <Main>
+      <Main id="main-content">
         <Header>
           <Heading as="h1">{t('workspaces.title')}</Heading>
           <Button type="button" variant="primary" onClick={handleCreateWorkspace}>

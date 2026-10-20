@@ -21,6 +21,7 @@ test.describe('visual baseline — workspaces', () => {
     test(`empty theme:${theme}`, async ({ page }) => {
       await registerUser(page);
       await page.goto('/workspaces');
+      await expect(page.getByRole('heading', { level: 1, name: 'Your workspaces' })).toBeVisible();
       await setTheme(page, theme);
       await waitForStable(page);
       await expect(page).toHaveScreenshot(`workspaces-empty-${theme}.png`, {
@@ -32,6 +33,7 @@ test.describe('visual baseline — workspaces', () => {
       await registerUser(page);
       await createWorkspace(page, 'Baseline workspace');
       await page.goto('/workspaces');
+      await expect(page.getByRole('heading', { level: 1, name: 'Your workspaces' })).toBeVisible();
       await setTheme(page, theme);
       await waitForStable(page);
       await expect(page).toHaveScreenshot(`workspaces-populated-${theme}.png`, {
@@ -43,6 +45,7 @@ test.describe('visual baseline — workspaces', () => {
   test('narrow viewport', async ({ page }) => {
     await registerUser(page);
     await page.goto('/workspaces');
+    await expect(page.getByRole('heading', { level: 1, name: 'Your workspaces' })).toBeVisible();
     await page.setViewportSize({ width: 900, height: 800 });
     await setTheme(page, 'light');
     await waitForStable(page);

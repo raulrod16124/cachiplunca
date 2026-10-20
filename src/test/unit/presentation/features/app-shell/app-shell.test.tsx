@@ -22,7 +22,12 @@ describe('AppShell', () => {
     );
 
     expect(screen.getByText('Cachiplunca')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Workspaces' })).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: 'Primary navigation' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Workspaces' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    expect(screen.getByRole('link', { name: 'Invitations' })).not.toHaveAttribute('aria-current');
     expect(screen.getByText('Ada Lovelace')).toBeInTheDocument();
     expect(screen.queryByText('ada@example.com')).not.toBeInTheDocument();
     expect(screen.getByText('Content')).toBeInTheDocument();
