@@ -38,8 +38,8 @@ const Trigger = styled(Popover.Trigger)`
   padding: ${({ theme }) => `${theme.space[1]} ${theme.space[2]}`};
   border: 1px solid ${({ theme }) => theme.color.border.strong};
   border-radius: ${({ theme }) => theme.radius.md};
-  background: ${({ theme }) => theme.color.action.secondary.background};
-  color: ${({ theme }) => theme.color.action.secondary.text};
+  background: transparent;
+  color: ${({ theme }) => theme.color.text.primary};
   font-family: ${({ theme }) => theme.font.family.sans};
   font-size: ${({ theme }) => theme.font.size.sm};
   font-weight: ${({ theme }) => theme.font.weight.medium};
@@ -48,7 +48,7 @@ const Trigger = styled(Popover.Trigger)`
   cursor: pointer;
 
   &:hover {
-    background: ${({ theme }) => theme.color.action.secondary.backgroundHover};
+    background: ${({ theme }) => theme.color.background.sunken};
   }
 
   &:focus-visible {
@@ -140,7 +140,7 @@ export function SessionTimer(): ReactNode {
                   key={durationMs}
                   type="button"
                   size="sm"
-                  variant={state.durationMs === durationMs ? 'primary' : 'secondary'}
+                  variant={state.durationMs === durationMs ? 'primary' : 'outline'}
                   aria-pressed={state.durationMs === durationMs}
                   onClick={() => dispatch({ type: 'select', durationMs })}
                 >
@@ -182,7 +182,7 @@ export function SessionTimer(): ReactNode {
               )}
               <Button
                 type="button"
-                variant="secondary"
+                variant="outline"
                 size="sm"
                 startIcon={<RotateCcw aria-hidden="true" size={ICON_SIZE} />}
                 disabled={state.status === 'idle'}
@@ -203,7 +203,7 @@ export function SessionTimer(): ReactNode {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button type="button" variant="secondary" onClick={() => setFinishedDialogOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setFinishedDialogOpen(false)}>
               {t('common.close')}
             </Button>
             <Button type="button" onClick={restart}>

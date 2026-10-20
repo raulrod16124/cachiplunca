@@ -12,9 +12,12 @@ describe('ToolbarButton', () => {
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
-  it('supports active state', () => {
-    render(<ToolbarButton active>Active</ToolbarButton>);
-    expect(screen.getByRole('button', { name: 'Active' })).toBeInTheDocument();
+  it('uses the ghost variant when idle and primary when active', () => {
+    const { rerender } = render(<ToolbarButton>Idle</ToolbarButton>);
+    expect(screen.getByRole('button', { name: 'Idle' })).toHaveClass('rr-button--ghost');
+
+    rerender(<ToolbarButton active>Idle</ToolbarButton>);
+    expect(screen.getByRole('button', { name: 'Idle' })).toHaveClass('rr-button--primary');
   });
 
   it('supports disabled state', () => {

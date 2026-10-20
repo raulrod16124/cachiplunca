@@ -30,10 +30,45 @@ import { useI18n, type TranslationKey } from '../../i18n';
 const ICON_SIZE = 16;
 
 const ArrangeTrigger = styled(DropdownMenu.Trigger)`
-  min-width: 32px;
-  padding-left: ${({ theme }) => theme.space[1]};
-  padding-right: ${({ theme }) => theme.space[1]};
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: ${({ theme }) => theme.space[8]};
+  min-height: calc(${({ theme }) => theme.font.size.base} + ${({ theme }) => theme.space[4]} + 2px);
+  padding: 0 ${({ theme }) => theme.space[1]};
+  border: 1px solid transparent;
+  border-radius: ${({ theme }) => theme.radius.md};
+  background: transparent;
+  color: ${({ theme }) => theme.color.text.primary};
+  font-family: ${({ theme }) => theme.font.family.sans};
   font-size: ${({ theme }) => theme.font.size.sm};
+  font-weight: ${({ theme }) => theme.font.weight.medium};
+  line-height: ${({ theme }) => theme.font.leading.none};
+  cursor: pointer;
+  transition:
+    background-color ${({ theme }) => theme.motion.duration.fast}
+      ${({ theme }) => theme.motion.easing.standard},
+    color ${({ theme }) => theme.motion.duration.fast}
+      ${({ theme }) => theme.motion.easing.standard};
+
+  &:hover:not(:disabled) {
+    background: ${({ theme }) => theme.color.action.secondary.background};
+  }
+
+  &:active:not(:disabled) {
+    background: ${({ theme }) => theme.color.action.secondary.backgroundHover};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.focusRing};
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    background: ${({ theme }) => theme.color.action.disabled.background};
+    color: ${({ theme }) => theme.color.action.disabled.text};
+    cursor: not-allowed;
+  }
 `;
 
 const Bar = styled.div`
@@ -259,7 +294,6 @@ export function CanvasToolbar({
           <Tooltip content={t('canvas.toolbar.arrange')} placement="bottom">
             <DropdownMenu>
               <ArrangeTrigger
-                className="rr-button rr-button--outline rr-button--size-md"
                 aria-label={t('canvas.toolbar.arrange')}
                 disabled={!canAlign && !canDistribute}
                 data-testid="canvas-arrange-trigger"

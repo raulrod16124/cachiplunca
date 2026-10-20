@@ -161,7 +161,7 @@ export function MembersList({
                   : canRemove && (
                       <Button
                         type="button"
-                        variant="outline"
+                        variant="destructive"
                         size="sm"
                         loading={isPending}
                         onClick={() => onRemove(userId)}

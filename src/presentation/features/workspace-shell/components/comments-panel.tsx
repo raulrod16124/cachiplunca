@@ -375,7 +375,7 @@ export function CommentsPanel({
                 ) : (
                   <Button
                     type="button"
-                    variant="secondary"
+                    variant="outline"
                     size="sm"
                     disabled={busy}
                     onClick={() => void handleResolve(comment)}
@@ -468,7 +468,7 @@ function ErrorBody({ title, message, retryLabel, onRetry }: ErrorBodyProps): Rea
           {message}
         </Text>
       )}
-      <Button type="button" variant="secondary" size="sm" onClick={onRetry}>
+      <Button type="button" variant="outline" size="sm" onClick={onRetry}>
         {retryLabel}
       </Button>
     </div>

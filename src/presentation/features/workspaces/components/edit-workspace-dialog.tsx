@@ -142,7 +142,7 @@ export function EditWorkspaceDialog({
             <DialogFooter>
               <Button
                 type="button"
-                variant="secondary"
+                variant="outline"
                 disabled={submitting}
                 onClick={() => onOpenChange(false)}
               >

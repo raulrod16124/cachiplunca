@@ -156,7 +156,7 @@ export function BoardPresentation({
         <Tooltip content={t('presentation.previous')} placement="top">
           <IconButton
             type="button"
-            variant="secondary"
+            variant="outline"
             size="sm"
             label={t('presentation.previous')}
             disabled={isFirst}
@@ -171,7 +171,7 @@ export function BoardPresentation({
         <Tooltip content={t('presentation.next')} placement="top">
           <IconButton
             type="button"
-            variant="secondary"
+            variant="outline"
             size="sm"
             label={t('presentation.next')}
             disabled={isLast}

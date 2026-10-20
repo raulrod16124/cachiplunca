@@ -141,7 +141,7 @@ export function KeyboardShortcutsDialog({
           })}
         </Stack>
         <DialogFooter>
-          <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             {t('common.close')}
           </Button>
         </DialogFooter>

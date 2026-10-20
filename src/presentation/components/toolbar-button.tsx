@@ -20,7 +20,7 @@ export function ToolbarButton({
   ...rest
 }: ToolbarButtonProps): ReactNode {
   return (
-    <StyledToolbarButton type="button" variant={active ? 'primary' : 'outline'} {...rest}>
+    <StyledToolbarButton type="button" variant={active ? 'primary' : 'ghost'} {...rest}>
       {children}
     </StyledToolbarButton>
   );

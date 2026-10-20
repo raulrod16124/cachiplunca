@@ -65,7 +65,7 @@ export function InvitationNotice({
         </Stack>
       </NoticeHeading>
       <Actions>
-        <Button type="button" variant="secondary" size="sm" onClick={onDismiss}>
+        <Button type="button" variant="outline" size="sm" onClick={onDismiss}>
           {t('invitations.notice.dismiss')}
         </Button>
         <Button

@@ -143,7 +143,7 @@ export function GuestLinkPanel({
           <Text role="alert" color="color.text.danger">
             {errorMessage}
           </Text>
-          <Button type="button" variant="secondary" onClick={() => void fetchLinks()}>
+          <Button type="button" variant="outline" onClick={() => void fetchLinks()}>
             {t('common.retry')}
           </Button>
         </Stack>
@@ -171,7 +171,7 @@ export function GuestLinkPanel({
                 onFocus={(event) => event.target.select()}
               />
               <Stack gap="space-1">
-                <Button type="button" variant="secondary" onClick={() => void handleCopy()}>
+                <Button type="button" variant="outline" onClick={() => void handleCopy()}>
                   {t('common.copyLink')}
                 </Button>
                 {copied ? (
@@ -201,7 +201,7 @@ export function GuestLinkPanel({
             {activeLink === undefined ? null : (
               <Button
                 type="button"
-                variant="secondary"
+                variant="outline"
                 disabled={busy}
                 onClick={() => void handleRevoke()}
               >

@@ -39,7 +39,7 @@ function SettingsDialog({
         </DialogHeader>
         <SettingsControls />
         <DialogFooter>
-          <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             {t('common.close')}
           </Button>
         </DialogFooter>

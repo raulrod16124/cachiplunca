@@ -133,7 +133,7 @@ export function AcceptInvitationPage({
             </Button>
             <Button
               type="button"
-              variant="secondary"
+              variant="outline"
               onClick={() => navigate(redirect.replace('/login?', '/register?'))}
             >
               {t('auth.accept.createAccount')}
@@ -168,7 +168,7 @@ export function AcceptInvitationPage({
             {sendEmailVerification !== undefined && (
               <Button
                 type="button"
-                variant="secondary"
+                variant="outline"
                 loading={verificationStatus === 'sending'}
                 onClick={() => void handleSendVerification()}
               >

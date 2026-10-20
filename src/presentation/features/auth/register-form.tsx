@@ -98,7 +98,7 @@ export function RegisterForm({
             ) : (
               <Button
                 type="button"
-                variant="secondary"
+                variant="outline"
                 loading={verificationStatus === 'sending'}
                 onClick={() => void sendVerification()}
               >

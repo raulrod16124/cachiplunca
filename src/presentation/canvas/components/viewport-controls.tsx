@@ -1,4 +1,4 @@
-import { Button, Inline, Popover, Text, Tooltip } from '@raulrod/ui';
+import { Button, IconButton, Inline, Popover, Text, Tooltip } from '@raulrod/ui';
 import { Maximize, Redo2, Undo2 } from '@raulrod/icons';
 import type { ChangeEvent, ReactElement } from 'react';
 import { useSyncExternalStore } from 'react';
@@ -109,28 +109,28 @@ export function ViewportControls({
     <Controls data-testid="viewport-controls">
       <Group>
         <Tooltip content="Undo" placement="top">
-          <Button
+          <IconButton
             type="button"
             variant="ghost"
             size="sm"
-            aria-label="Undo"
+            label="Undo"
             disabled={!canUndo}
             onClick={onUndo}
           >
             <Undo2 aria-hidden="true" size={ICON_SIZE} />
-          </Button>
+          </IconButton>
         </Tooltip>
         <Tooltip content="Redo" placement="top">
-          <Button
+          <IconButton
             type="button"
             variant="ghost"
             size="sm"
-            aria-label="Redo"
+            label="Redo"
             disabled={!canRedo}
             onClick={onRedo}
           >
             <Redo2 aria-hidden="true" size={ICON_SIZE} />
-          </Button>
+          </IconButton>
         </Tooltip>
       </Group>
       <Separator aria-hidden="true" />

@@ -451,7 +451,7 @@ function ChangeEmailForm({ currentEmail }: { readonly currentEmail: string | nul
           </Text>
         )}
         <FormActions>
-          <Button type="submit" size="sm" variant="secondary" loading={submitting}>
+          <Button type="submit" size="sm" variant="primary" loading={submitting}>
             {t('profile.email.submit')}
           </Button>
         </FormActions>

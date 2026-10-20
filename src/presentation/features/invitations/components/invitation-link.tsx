@@ -44,7 +44,7 @@ export function InvitationLink({
         onFocus={(event) => event.target.select()}
       />
       <Stack gap="space-1">
-        <Button type="button" variant="secondary" onClick={handleCopy}>
+        <Button type="button" variant="outline" onClick={handleCopy}>
           {t('common.copyLink')}
         </Button>
         {copied && (

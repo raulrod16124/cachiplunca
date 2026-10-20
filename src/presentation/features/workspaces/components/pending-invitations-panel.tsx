@@ -76,7 +76,7 @@ export function PendingInvitationsPanel({
           {loadError ?? t('workspaces.pending.error')}
         </Text>
         <Inline>
-          <Button type="button" variant="secondary" onClick={onRetry}>
+          <Button type="button" variant="outline" onClick={onRetry}>
             {t('workspaces.pending.retry')}
           </Button>
         </Inline>
@@ -139,7 +139,7 @@ export function PendingInvitationsPanel({
               {t('workspaces.pending.verificationSent')}
             </Text>
           ) : (
-            <Button type="button" variant="secondary" onClick={onSendVerification}>
+            <Button type="button" variant="outline" onClick={onSendVerification}>
               {t('workspaces.pending.resendVerification')}
             </Button>
           )}

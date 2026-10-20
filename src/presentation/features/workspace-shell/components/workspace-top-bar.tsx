@@ -214,21 +214,46 @@ const HelpButton = styled(IconButton)`
 `;
 
 const ExportTrigger = styled(DropdownMenu.Trigger)`
-  && {
-    padding: ${({ theme }) => theme.space[1]};
-    border: 1px solid ${({ theme }) => theme.color.border.strong};
-    border-radius: ${({ theme }) => theme.radius.md};
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: calc(${({ theme }) => theme.font.size.sm} + ${({ theme }) => theme.space[2]} + 2px);
+  height: calc(${({ theme }) => theme.font.size.sm} + ${({ theme }) => theme.space[2]} + 2px);
+  padding: ${({ theme }) => theme.space[1]};
+  border: 1px solid transparent;
+  border-radius: ${({ theme }) => theme.radius.md};
+  background: transparent;
+  color: ${({ theme }) => theme.color.text.primary};
+  font-family: ${({ theme }) => theme.font.family.sans};
+  font-size: ${({ theme }) => theme.font.size.sm};
+  font-weight: ${({ theme }) => theme.font.weight.medium};
+  line-height: ${({ theme }) => theme.font.leading.none};
+  letter-spacing: ${({ theme }) => theme.font.tracking.normal};
+  cursor: pointer;
+  transition:
+    background-color ${({ theme }) => theme.motion.duration.fast}
+      ${({ theme }) => theme.motion.easing.standard},
+    color ${({ theme }) => theme.motion.duration.fast}
+      ${({ theme }) => theme.motion.easing.standard};
+
+  &:hover:not(:disabled) {
     background: ${({ theme }) => theme.color.action.secondary.background};
-    color: ${({ theme }) => theme.color.action.secondary.text};
-    font-family: ${({ theme }) => theme.font.family.sans};
-    font-size: ${({ theme }) => theme.font.size.sm};
-    font-weight: ${({ theme }) => theme.font.weight.medium};
-    line-height: ${({ theme }) => theme.font.leading.none};
-    letter-spacing: ${({ theme }) => theme.font.tracking.normal};
   }
 
-  &&:hover {
+  &:active:not(:disabled) {
     background: ${({ theme }) => theme.color.action.secondary.backgroundHover};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.focusRing};
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    background: ${({ theme }) => theme.color.action.disabled.background};
+    color: ${({ theme }) => theme.color.action.disabled.text};
+    cursor: not-allowed;
   }
 `;
 
@@ -426,7 +451,7 @@ export function WorkspaceTopBar({
             <Tooltip content={t('plan.title')} placement="bottom">
               <PlanButton
                 type="button"
-                variant={planOpen ? 'primary' : 'secondary'}
+                variant={planOpen ? 'primary' : 'ghost'}
                 size="sm"
                 label={t('plan.title')}
                 aria-expanded={planOpen}
@@ -441,7 +466,7 @@ export function WorkspaceTopBar({
             <Tooltip content={t('comments.open')} placement="bottom">
               <PlanButton
                 type="button"
-                variant={commentsOpen ? 'primary' : 'secondary'}
+                variant={commentsOpen ? 'primary' : 'ghost'}
                 size="sm"
                 label={t('comments.open')}
                 aria-expanded={commentsOpen}
@@ -459,7 +484,7 @@ export function WorkspaceTopBar({
             >
               <PresentButton
                 type="button"
-                variant="secondary"
+                variant="ghost"
                 size="sm"
                 label={t('presentation.start')}
                 disabled={!canPresent}
@@ -486,13 +511,8 @@ export function WorkspaceTopBar({
           {canExport ? (
             <DropdownMenu>
               <Tooltip content={t('canvas.export.label')} placement="bottom">
-                <ExportTrigger
-                  className="rr-icon-button rr-icon-button--secondary rr-icon-button--size-sm"
-                  aria-label={t('canvas.export.label')}
-                >
-                  <span className="rr-icon-button__icon">
-                    <Download aria-hidden="true" size={16} />
-                  </span>
+                <ExportTrigger aria-label={t('canvas.export.label')}>
+                  <Download aria-hidden="true" size={16} />
                 </ExportTrigger>
               </Tooltip>
               <DropdownMenu.Content placement="bottom-end">
@@ -517,7 +537,7 @@ export function WorkspaceTopBar({
             <Tooltip content={t('shortcuts.open')} placement="bottom">
               <HelpButton
                 type="button"
-                variant="secondary"
+                variant="ghost"
                 size="sm"
                 label={t('shortcuts.open')}
                 aria-keyshortcuts="?"

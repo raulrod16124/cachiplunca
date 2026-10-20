@@ -336,7 +336,7 @@ export function WorkspaceShellLayout({
         <AccessBanner role="alert">
           <Text color="color.text.primary">{accessErrorMessage}</Text>
           {onRetryRole === undefined ? null : (
-            <Button type="button" variant="secondary" size="sm" onClick={onRetryRole}>
+            <Button type="button" variant="outline" size="sm" onClick={onRetryRole}>
               Retry
             </Button>
           )}
