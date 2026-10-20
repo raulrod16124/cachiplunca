@@ -24,6 +24,10 @@ export class PendingAuthPort implements AuthPort {
     throw new Error('unexpected signIn call');
   }
 
+  async signInAnonymously(): Promise<AuthUser> {
+    throw new Error('unexpected signInAnonymously call');
+  }
+
   async signOut(): Promise<void> {
     throw new Error('unexpected signOut call');
   }

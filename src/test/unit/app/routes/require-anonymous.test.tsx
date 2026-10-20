@@ -59,6 +59,15 @@ describe('RequireAnonymous', () => {
     expect(screen.queryByText('Workspaces page')).not.toBeInTheDocument();
   });
 
+  it('keeps the guest route available for an anonymous Firebase session', async () => {
+    const authPort = new FakeAuthPort();
+    await authPort.signInAnonymously();
+    renderGuard(authPort);
+
+    expect(await screen.findByText('Guest content')).toBeInTheDocument();
+    expect(screen.queryByText('Workspaces page')).not.toBeInTheDocument();
+  });
+
   it('redirects an authenticated visitor away from the guest route', async () => {
     const authPort = new FakeAuthPort();
     await authPort.signUp({ email: 'user@example.com', password: 'secret123' });

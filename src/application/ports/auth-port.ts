@@ -30,6 +30,7 @@ export type SessionErrorListener = (error: AppError) => void;
 export interface AuthPort {
   signUp(credentials: AuthCredentials): Promise<AuthUser>;
   signIn(credentials: AuthCredentials): Promise<AuthUser>;
+  signInAnonymously(): Promise<AuthUser>;
   signOut(): Promise<void>;
   updateDisplayName(displayName: string): Promise<AuthUser>;
   changeEmail(input: ChangeEmailInput): Promise<AuthUser>;

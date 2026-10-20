@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { FileDownloadPort, PresencePort } from '../../../application/ports';
 import type { CommentServices } from '../../../application/comment-services';
+import type { GuestLinkServices } from '../../../application/guest-link-services';
 import type { ImageServices } from '../../../application/image-services';
 import type {
   ChangeMemberRole,
@@ -47,6 +48,7 @@ export interface WorkspaceShellPageProps {
   readonly listWorkspaces?: ListWorkspaces;
   readonly comments?: CommentServices;
   readonly imageServices?: ImageServices;
+  readonly guestLinks?: GuestLinkServices;
 }
 
 export function WorkspaceShellPage({
@@ -69,6 +71,7 @@ export function WorkspaceShellPage({
   listWorkspaces,
   comments,
   imageServices,
+  guestLinks,
 }: WorkspaceShellPageProps): ReactNode {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const navigate = useNavigate();
@@ -105,6 +108,7 @@ export function WorkspaceShellPage({
       listWorkspaces={listWorkspaces}
       comments={comments}
       imageServices={imageServices}
+      guestLinks={guestLinks}
       onOpenWorkspace={(nextWorkspaceId) => navigate(`/workspaces/${nextWorkspaceId}`)}
       onBack={() => navigate('/workspaces')}
     />

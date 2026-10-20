@@ -53,6 +53,15 @@ describe('RequireAuth', () => {
     expect(screen.queryByText('Protected content')).not.toBeInTheDocument();
   });
 
+  it('redirects an anonymous guest session away from protected routes', async () => {
+    const authPort = new FakeAuthPort();
+    await authPort.signInAnonymously();
+    renderGuard(authPort);
+
+    expect(await screen.findByText('Login page')).toBeInTheDocument();
+    expect(screen.queryByText('Protected content')).not.toBeInTheDocument();
+  });
+
   it('renders the protected route for an authenticated session', async () => {
     const authPort = new FakeAuthPort();
     await authPort.signUp({ email: 'user@example.com', password: 'secret123' });

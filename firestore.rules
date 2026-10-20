@@ -10,6 +10,11 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isAnonymous() {
+      return signedIn() &&
+        request.auth.token.firebase.sign_in_provider == 'anonymous';
+    }
+
     function emailVerified() {
       return request.auth.token.email_verified == true;
     }
@@ -36,6 +41,24 @@ service cloud.firestore {
 
     function workspacePath(workspaceId) {
       return /databases/$(database)/documents/workspaces/$(workspaceId);
+    }
+
+    function guestLinkPath(tokenHash) {
+      return /databases/$(database)/documents/guest_links/$(tokenHash);
+    }
+
+    function guestSessionPath() {
+      return /databases/$(database)/documents/guest_sessions/$(request.auth.uid);
+    }
+
+    function isGuestViewer(workspaceId) {
+      return signedIn() &&
+        exists(guestSessionPath()) &&
+        get(guestSessionPath()).data.workspaceId == workspaceId &&
+        get(guestSessionPath()).data.tokenHash is string &&
+        exists(guestLinkPath(get(guestSessionPath()).data.tokenHash)) &&
+        get(guestLinkPath(get(guestSessionPath()).data.tokenHash)).data.workspaceId == workspaceId &&
+        get(guestLinkPath(get(guestSessionPath()).data.tokenHash)).data.revokedAt == null;
     }
 
     function isWorkspaceCreator(workspaceId) {
@@ -82,13 +105,15 @@ service cloud.firestore {
         request.resource.data.userId == userId;
     }
 
-    // workspaces: lectura limitada a miembros del workspace (ADR-0034).
-    // create exige que el creador quede registrado como createdBy para poder
-    // crear su membership de owner.
-    // update/delete exclusivos de owner.
+    // workspaces: lectura limitada a miembros del workspace (ADR-0034) o a
+    // guests con un enlace válido. create exige que el creador quede registrado
+    // como createdBy para poder crear su membership de owner y rechaza sesiones
+    // anónimas. update/delete exclusivos de owner.
     match /workspaces/{workspaceId} {
-      allow read: if signedIn() && isMember(workspaceId);
-      allow create: if signedIn() && request.resource.data.createdBy == request.auth.uid;
+      allow read: if isMember(workspaceId) || isGuestViewer(workspaceId);
+      allow create: if signedIn() &&
+        !isAnonymous() &&
+        request.resource.data.createdBy == request.auth.uid;
       allow update, delete: if hasRole(workspaceId, ['owner']);
     }
 
@@ -127,10 +152,12 @@ service cloud.firestore {
       );
     }
 
-    // elements: escritura solo owner/editor (element:write); los miembros leen.
-    // create exige createdBy == uid; update no permite cambiar workspaceId.
+    // elements: escritura solo owner/editor (element:write); los miembros y los
+    // guests con enlace válido leen. create exige createdBy == uid; update no
+    // permite cambiar workspaceId.
     match /elements/{elementId} {
-      allow read: if isMember(resource.data.workspaceId);
+      allow read: if isMember(resource.data.workspaceId) ||
+        isGuestViewer(resource.data.workspaceId);
       allow create: if hasRole(request.resource.data.workspaceId, ['owner', 'editor'])
         && request.resource.data.createdBy == request.auth.uid
         && isValidImageData(request.resource.data);
@@ -175,6 +202,47 @@ service cloud.firestore {
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])
         )
       );
+    }
+
+    // guest_links: enlaces de solo lectura. El id es el hash SHA-256 del token,
+    // por lo que un get por id funciona como capability no adivinable. El list
+    // queda reservado a miembros (la UI de owner lista el enlace activo). Solo
+    // el owner crea y revoca; el enlace no se puede borrar ni des-revocar.
+    match /guest_links/{tokenHash} {
+      allow get: if true;
+      allow list: if signedIn() && hasRole(resource.data.workspaceId, ['owner']);
+      allow create: if signedIn() &&
+        tokenHash.matches('^[a-f0-9]{64}$') &&
+        hasRole(request.resource.data.workspaceId, ['owner']) &&
+        request.resource.data.role == 'viewer' &&
+        request.resource.data.createdBy == request.auth.uid &&
+        request.resource.data.revokedAt == null;
+      allow update: if signedIn() &&
+        hasRole(resource.data.workspaceId, ['owner']) &&
+        resource.data.revokedAt == null &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'revokedAt',
+          'updatedAt'
+        ]) &&
+        request.resource.data.revokedAt is timestamp;
+      allow delete: if false;
+    }
+
+    // guest_sessions: sesión efímera que vincula un uid (normalmente anónimo)
+    // con un enlace activo. Crear o actualizar exige conocer el tokenHash del
+    // enlace y que este siga activo; así el workspaceId no se puede falsificar.
+    match /guest_sessions/{userId} {
+      allow get: if signedIn() && request.auth.uid == userId;
+      allow create, update: if signedIn() &&
+        request.auth.uid == userId &&
+        request.resource.data.userId == userId &&
+        request.resource.data.tokenHash is string &&
+        request.resource.data.tokenHash.matches('^[a-f0-9]{64}$') &&
+        exists(guestLinkPath(request.resource.data.tokenHash)) &&
+        get(guestLinkPath(request.resource.data.tokenHash)).data.revokedAt == null &&
+        get(guestLinkPath(request.resource.data.tokenHash)).data.workspaceId ==
+          request.resource.data.workspaceId;
+      allow delete: if signedIn() && request.auth.uid == userId;
     }
 
     // comments: colaboración asíncrona ligada a elementos. Solo los miembros

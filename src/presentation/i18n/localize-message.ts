@@ -59,6 +59,13 @@ const MESSAGE_KEYS: Readonly<Record<string, TranslationKey>> = {
   'This invitation link is not valid.': 'errors.invitationLinkInvalid',
   'You do not have permission to view the invitations of this workspace.':
     'errors.inviteListForbidden',
+  'Only the workspace owner can create a view link.': 'share.guest.ownerOnlyCreate',
+  'Only the workspace owner can revoke the view link.': 'share.guest.ownerOnlyRevoke',
+  'Only the workspace owner can manage the view link.': 'share.guest.ownerOnlyManage',
+  'This view link is no longer available. Ask the owner for a new one.':
+    'guest.revoked.description',
+  'This view link no longer exists.': 'share.guest.notFound',
+  'This workspace no longer exists.': 'share.guest.workspaceGone',
   'Saving…': 'errors.syncSaving',
   Saved: 'errors.syncSaved',
   'Not saved': 'errors.syncNotSaved',

@@ -13,7 +13,7 @@ Registro/Login → Crear workspace → Invitar personas → Canvas vacío
 
 El MVP incluye:
 
-- Autenticación email/password (Firebase Auth).
+- Autenticación email/password (Firebase Auth) y sesiones anónimas para enlaces guest de solo lectura.
 - Workspaces con roles **Owner / Editor / Viewer** e invitaciones por email.
 - Canvas infinito con pan, zoom, selección simple y múltiple, marquee y grid.
 - Seis tipos de elementos: **Text, Note, Task, Frame, Connector y Link** (crear, mover, redimensionar, eliminar, duplicar, copy/paste).
@@ -56,7 +56,7 @@ Las fronteras de capas están vigiladas por un gate ejecutable en `npm test`
 Prerrequisitos:
 
 - **Node 22** (`nvm use` para respetar `.nvmrc`).
-- Un proyecto de Firebase con **Email/Password** habilitado en Authentication.
+- Un proyecto de Firebase con **Email/Password** y **Anonymous** habilitados en Authentication. Para enlaces guest, configura la eliminación automática de cuentas anónimas a los 30 días.
 - Java (solo necesario para `npm run test:rules`, que usa el emulador de Firestore).
 
 Pasos:

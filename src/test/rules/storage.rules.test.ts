@@ -22,6 +22,8 @@ const ROLE_UIDS: Readonly<Record<MembershipRole, string>> = {
   viewer: 'viewer-user',
 };
 const OUTSIDER_UID = 'outsider-user';
+const GUEST_UID = 'guest-user';
+const GUEST_TOKEN_HASH = 'a'.repeat(64);
 const now = new Date('2026-10-20T00:00:00.000Z');
 const MAX_SIZE = 5 * 1024 * 1024;
 
@@ -67,6 +69,20 @@ beforeEach(async () => {
         membershipData(WS1, ROLE_UIDS[role], role),
       );
     }
+    await setDoc(doc(db, 'guest_links', GUEST_TOKEN_HASH), {
+      workspaceId: WS1,
+      role: 'viewer',
+      createdBy: ROLE_UIDS.owner,
+      createdAt: now,
+      updatedAt: now,
+      revokedAt: null,
+    });
+    await setDoc(doc(db, 'guest_sessions', GUEST_UID), {
+      userId: GUEST_UID,
+      workspaceId: WS1,
+      tokenHash: GUEST_TOKEN_HASH,
+      createdAt: now,
+    });
   });
 });
 
@@ -80,6 +96,12 @@ function storageFor(uid: string) {
 
 function anonymousStorage() {
   return testEnv.unauthenticatedContext().storage();
+}
+
+function guestStorage(uid = GUEST_UID) {
+  return testEnv
+    .authenticatedContext(uid, { firebase: { sign_in_provider: 'anonymous' } })
+    .storage();
 }
 
 async function upload(uid: string, path = imagePath(WS1), contentType = 'image/png') {
@@ -161,5 +183,29 @@ describe('storage.rules — images', () => {
         },
       ),
     );
+  });
+  test('a guest with a valid link can read images, but loses access when revoked', async () => {
+    const path = imagePath(WS1, 'image-guest');
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await uploadBytes(storageRef(context.storage(), path), bytes(), {
+        contentType: 'image/png',
+      });
+    });
+
+    await assertSucceeds(getBytes(storageRef(guestStorage(), path)));
+    await assertFails(getBytes(storageRef(guestStorage('other-guest-user'), path)));
+
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'guest_links', GUEST_TOKEN_HASH), {
+        workspaceId: WS1,
+        role: 'viewer',
+        createdBy: ROLE_UIDS.owner,
+        createdAt: now,
+        updatedAt: new Date(now.getTime() + 60_000),
+        revokedAt: new Date(now.getTime() + 60_000),
+      });
+    });
+
+    await assertFails(getBytes(storageRef(guestStorage(), path)));
   });
 });

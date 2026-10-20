@@ -28,6 +28,7 @@ function createPendingAuthPort(): PendingAuthPort {
   const port: AuthPort = {
     signUp: () => Promise.reject(new Error('unexpected signUp call')),
     signIn: () => Promise.reject(new Error('unexpected signIn call')),
+    signInAnonymously: () => Promise.reject(new Error('unexpected signInAnonymously call')),
     signOut: () => Promise.reject(new Error('unexpected signOut call')),
     updateDisplayName: () => Promise.reject(new Error('unexpected updateDisplayName call')),
     changeEmail: () => Promise.reject(new Error('unexpected changeEmail call')),

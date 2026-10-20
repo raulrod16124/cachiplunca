@@ -5,6 +5,7 @@ import {
   reauthenticateWithCredential,
   reload,
   sendEmailVerification as firebaseSendEmailVerification,
+  signInAnonymously as firebaseSignInAnonymously,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   updateEmail,
@@ -74,6 +75,15 @@ export function createFirebaseAuthAdapter(auth: Auth): AuthPort {
           credentials.email,
           credentials.password,
         );
+        return mapFirebaseUserToAuthUser(credential.user);
+      } catch (error) {
+        throw mapFirebaseError(error);
+      }
+    },
+
+    async signInAnonymously(): Promise<AuthUser> {
+      try {
+        const credential = await firebaseSignInAnonymously(auth);
         return mapFirebaseUserToAuthUser(credential.user);
       } catch (error) {
         throw mapFirebaseError(error);
