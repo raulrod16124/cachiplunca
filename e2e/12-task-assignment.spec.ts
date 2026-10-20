@@ -20,7 +20,8 @@ test.describe('Task assignment and due dates', () => {
     await expect(dialog).toBeHidden();
 
     const item = page.locator('[data-testid^="canvas-item-"]').first();
-    await expect(item).toHaveAttribute('data-task-overdue', 'true');
+    const taskContent = item.locator('[data-element-content="true"]');
+    await expect(taskContent).toHaveAttribute('data-task-overdue', 'true');
     await expect(item).toContainText('Overdue');
 
     await page.reload();
@@ -29,7 +30,10 @@ test.describe('Task assignment and due dates', () => {
     });
 
     const reloaded = page.locator('[data-testid^="canvas-item-"]').first();
-    await expect(reloaded).toHaveAttribute('data-task-overdue', 'true', { timeout: 20000 });
+    const reloadedTaskContent = reloaded.locator('[data-element-content="true"]');
+    await expect(reloadedTaskContent).toHaveAttribute('data-task-overdue', 'true', {
+      timeout: 20000,
+    });
     await expect(reloaded).toContainText('Overdue');
 
     await reloaded.dblclick();
@@ -41,7 +45,7 @@ test.describe('Task assignment and due dates', () => {
     await editDialog.getByLabel('Due date').fill('');
     await editDialog.getByRole('button', { name: 'Save changes' }).click();
 
-    await expect(reloaded).not.toHaveAttribute('data-task-overdue', 'true');
+    await expect(reloadedTaskContent).not.toHaveAttribute('data-task-overdue', 'true');
     await expect(reloaded).not.toContainText('Overdue');
   });
 });

@@ -1,5 +1,5 @@
 import { DropdownMenu } from '@raulrod/ui';
-import { BringToFront, Check, Palette, SendToBack } from '@raulrod/icons';
+import { BringToFront, Check, ClipboardList, Palette, SendToBack } from '@raulrod/icons';
 import type { ReactElement } from 'react';
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
@@ -40,6 +40,12 @@ export interface ElementContextMenuNoteColor {
   readonly onClear: () => void;
 }
 
+export interface ElementContextMenuCreateTask {
+  readonly elementType: 'note' | 'frame';
+  readonly disabled: boolean;
+  readonly onSelect: () => void;
+}
+
 export interface ElementContextMenuProps {
   /** Viewport-relative coordinates the menu should appear at. */
   readonly position: { readonly x: number; readonly y: number } | null;
@@ -47,6 +53,8 @@ export interface ElementContextMenuProps {
   readonly onSendToBack: () => void;
   /** Present only when the menu targets a writable note. */
   readonly noteColor?: ElementContextMenuNoteColor;
+  /** Present only when the menu targets a writable note or frame. */
+  readonly createTask?: ElementContextMenuCreateTask;
   readonly onClose: () => void;
 }
 
@@ -55,6 +63,7 @@ export function ElementContextMenu({
   onBringToFront,
   onSendToBack,
   noteColor,
+  createTask,
   onClose,
 }: ElementContextMenuProps): ReactElement | null {
   const { t } = useI18n();
@@ -87,6 +96,22 @@ export function ElementContextMenu({
         style={{ left: position.x, top: position.y }}
       />
       <DropdownMenu.Content placement="bottom-start">
+        {createTask === undefined ? null : (
+          <>
+            <DropdownMenu.Item
+              onSelect={createTask.onSelect}
+              disabled={createTask.disabled}
+              startIcon={<ClipboardList aria-hidden="true" size={16} />}
+            >
+              {t(
+                createTask.elementType === 'note'
+                  ? 'canvas.contextMenu.createTaskFromNote'
+                  : 'canvas.contextMenu.createTaskFromFrame',
+              )}
+            </DropdownMenu.Item>
+            <DropdownMenu.Separator />
+          </>
+        )}
         {noteColor === undefined ? null : (
           <>
             <DropdownMenu.Sub>

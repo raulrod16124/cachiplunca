@@ -95,6 +95,7 @@ export interface WorkspaceShellLayoutProps {
   readonly onCreateElement?: (type: ElementType) => ElementId | void;
   readonly onCreateConnector?: (mode: 'free' | 'bound') => ElementId | void;
   readonly onCreateTask?: (values: TaskFormValues) => ElementId | void;
+  readonly onCreateTaskFromElement?: (element: Element) => ElementId | void;
   readonly onUpdateElement?: (input: UpdateElementInput) => void;
   readonly onUpdateConnectorEndpoint?: (input: ConnectorEndpointDragInput) => void;
   readonly generateElementId: () => ElementId;
@@ -141,6 +142,7 @@ export function WorkspaceShellLayout({
   onCreateElement,
   onCreateConnector,
   onCreateTask,
+  onCreateTaskFromElement,
   onUpdateElement,
   onUpdateConnectorEndpoint,
   generateElementId,
@@ -280,6 +282,7 @@ export function WorkspaceShellLayout({
             onCreateElement={onCreateElement}
             onCreateConnector={onCreateConnector}
             onCreateTask={onCreateTask}
+            onCreateTaskFromElement={onCreateTaskFromElement}
             assignees={assignees}
             onUpdateElement={onUpdateElement}
             onUpdateConnectorEndpoint={onUpdateConnectorEndpoint}

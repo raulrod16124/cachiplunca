@@ -1356,6 +1356,101 @@ describe('Canvas', () => {
       expect(screen.queryByRole('menuitem', { name: 'Note color' })).not.toBeInTheDocument();
     });
 
+    it('creates a task from a note through the context menu', async () => {
+      const note = createNote('note-1', 100, 100, 120, 80);
+      const onCreateTaskFromElement = jest.fn();
+      const user = userEvent.setup();
+
+      render(
+        <Canvas
+          store={createCanvasViewportStore(Size.create(800, 600))}
+          selectionStore={createSelectionStore()}
+          elements={[note]}
+          onCreateTaskFromElement={onCreateTaskFromElement}
+        />,
+      );
+
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      fireEvent.contextMenu(canvas, { clientX: 150, clientY: 130 });
+      await user.click(screen.getByRole('menuitem', { name: 'Create task from note' }));
+
+      expect(onCreateTaskFromElement).toHaveBeenCalledWith(note);
+    });
+
+    it('disables task creation when the note has no usable text', async () => {
+      const emptyNote = createNoteElement({
+        id: ElementId.create('note-1'),
+        workspaceId: WorkspaceId.create('ws-1'),
+        createdBy: UserId.create('user-1'),
+        position: Position.create(100, 100),
+        size: Size.create(120, 80),
+        content: '   ',
+      });
+      const onCreateTaskFromElement = jest.fn();
+      const user = userEvent.setup();
+
+      render(
+        <Canvas
+          store={createCanvasViewportStore(Size.create(800, 600))}
+          selectionStore={createSelectionStore()}
+          elements={[emptyNote]}
+          onCreateTaskFromElement={onCreateTaskFromElement}
+        />,
+      );
+
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      fireEvent.contextMenu(canvas, { clientX: 150, clientY: 130 });
+
+      const item = screen.getByRole('menuitem', { name: 'Create task from note' });
+      expect(item).toHaveAttribute('aria-disabled', 'true');
+
+      await user.click(item);
+
+      expect(onCreateTaskFromElement).not.toHaveBeenCalled();
+    });
+
+    it('does not offer task creation from elements that are not notes or frames', async () => {
+      render(
+        <Canvas
+          store={createCanvasViewportStore(Size.create(800, 600))}
+          selectionStore={createSelectionStore()}
+          elements={[FIRST_ITEM]}
+          onCreateTaskFromElement={jest.fn()}
+        />,
+      );
+
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      fireEvent.contextMenu(canvas, { clientX: 150, clientY: 130 });
+
+      expect(await screen.findByRole('menuitem', { name: 'Bring to front' })).toBeInTheDocument();
+      expect(
+        screen.queryByRole('menuitem', { name: 'Create task from note' }),
+      ).not.toBeInTheDocument();
+    });
+
+    it('does not open the context menu for task creation in read-only mode', () => {
+      render(
+        <Canvas
+          store={createCanvasViewportStore(Size.create(800, 600))}
+          selectionStore={createSelectionStore()}
+          elements={[createNote('note-1', 100, 100, 120, 80)]}
+          onCreateTaskFromElement={jest.fn()}
+          readOnly
+        />,
+      );
+
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      fireEvent.contextMenu(canvas, { clientX: 150, clientY: 130 });
+
+      expect(
+        screen.queryByRole('menuitem', { name: 'Create task from note' }),
+      ).not.toBeInTheDocument();
+    });
+
     it('shows text formatting options when right-clicking a text element', async () => {
       const { selectionStore } = renderCanvas(
         [FIRST_ITEM],

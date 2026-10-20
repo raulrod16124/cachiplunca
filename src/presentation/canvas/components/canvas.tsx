@@ -15,6 +15,7 @@ import { Bounds, Grid, Position, Size, UserId } from '../../../domain/shared';
 import type { Element, ElementType } from '../../../domain/element';
 import {
   isConnectorElement,
+  isFrameElement,
   isNoteElement,
   isTaskElement,
   richTextToPlain,
@@ -38,6 +39,7 @@ import {
   parseTaskDueDateInput,
   resolveConnectorGeometry,
   sendElementsToBack,
+  taskDraftFromElement,
   taskDueDateInputValue,
   toSelectableItems,
 } from '../../../application/services';
@@ -201,6 +203,7 @@ export interface CanvasProps {
   readonly onCreateElement?: (type: ElementType) => ElementId | void;
   readonly onCreateConnector?: (mode: 'free' | 'bound') => ElementId | void;
   readonly onCreateTask?: (values: TaskFormValues) => ElementId | void;
+  readonly onCreateTaskFromElement?: (element: Element) => ElementId | void;
   readonly assignees?: readonly TaskAssigneeOption[];
   readonly onUpdateConnectorEndpoint?: (input: ConnectorEndpointDragInput) => void;
   readonly onUpdateElement?: (input: UpdateElementInput) => void;
@@ -238,6 +241,7 @@ export function Canvas({
   onCreateElement,
   onCreateConnector,
   onCreateTask,
+  onCreateTaskFromElement,
   assignees = [],
   onUpdateElement,
   onUpdateConnectorEndpoint,
@@ -837,6 +841,25 @@ export function Canvas({
     };
   }, [readOnly, onUpdateElement, contextMenuTarget, closeContextMenu]);
 
+  const createTaskMenu = useMemo(() => {
+    if (readOnly || onCreateTaskFromElement === undefined || contextMenuTarget === null) {
+      return undefined;
+    }
+
+    if (!isNoteElement(contextMenuTarget) && !isFrameElement(contextMenuTarget)) {
+      return undefined;
+    }
+
+    return {
+      elementType: contextMenuTarget.type,
+      disabled: taskDraftFromElement(contextMenuTarget) === null,
+      onSelect: (): void => {
+        closeContextMenu();
+        onCreateTaskFromElement(contextMenuTarget);
+      },
+    };
+  }, [readOnly, onCreateTaskFromElement, contextMenuTarget, closeContextMenu]);
+
   const handleCreateElement = useCallback(
     (type: ElementType): void => {
       if (type === 'task' && onCreateTask !== undefined) {
@@ -1190,6 +1213,7 @@ export function Canvas({
         onBringToFront={handleBringToFront}
         onSendToBack={handleSendToBack}
         noteColor={noteColorMenu}
+        createTask={createTaskMenu}
         onClose={closeContextMenu}
       />
       <CanvasToolbar

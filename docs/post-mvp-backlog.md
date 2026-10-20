@@ -95,7 +95,7 @@ Definition of Done:
 | PBL-007 | Plantillas de arranque y empty states        | R1      | P0        | M        | —              | No  | DONE   |
 | PBL-008 | Command palette (Cmd/Ctrl + K)               | R1      | P1        | M        | —              | No  | DONE   |
 | PBL-009 | Vista Plan de tareas                         | R2      | P0        | M        | —              | No  | DONE   |
-| PBL-010 | Crear tarea desde nota o frame               | R2      | P1        | S        | PBL-009        | Sí  | TODO   |
+| PBL-010 | Crear tarea desde nota o frame               | R2      | P1        | S        | PBL-009        | Sí  | DONE   |
 | PBL-011 | Kanban del plan                              | R2      | P2        | M        | PBL-009        | No  | TODO   |
 | PBL-012 | Alineación y distribución                    | R2      | P1        | M        | —              | No  | TODO   |
 | PBL-013 | Comentarios MVP                              | R2      | P0        | L        | PBL-001        | No  | TODO   |
@@ -473,7 +473,7 @@ Convertir el canvas en un plan consultable sin salir del workspace.
 
 ### PBL-010 — Crear tarea desde nota o frame
 
-**Priority:** P1 · **Effort:** S · **Depends:** PBL-009 · **Status:** TODO · **Quick win**
+**Priority:** P1 · **Effort:** S · **Depends:** PBL-009 · **Status:** DONE · **Quick win**
 
 #### Objetivo
 
@@ -489,11 +489,11 @@ Convertir información capturada en acciones sin copiar y pegar.
 
 #### Criterios de aceptación
 
-- [ ] La tarea se crea, se selecciona y se puede editar.
-- [ ] La nota o frame original no se modifica ni se elimina.
-- [ ] Si no hay texto utilizable, la acción aparece deshabilitada.
-- [ ] Undo/redo funcionan.
-- [ ] Tests de extracción de texto plano y del flujo de creación.
+- [x] La tarea se crea, se selecciona y se puede editar.
+- [x] La nota o frame original no se modifica ni se elimina.
+- [x] Si no hay texto utilizable, la acción aparece deshabilitada.
+- [x] Undo/redo funcionan.
+- [x] Tests de extracción de texto plano y del flujo de creación.
 
 #### Fuera de alcance
 
@@ -505,6 +505,7 @@ Convertir información capturada en acciones sin copiar y pegar.
 - Reutilizar `createElement` y las factorías de dominio.
 - Extracción de texto plano como función pura testeada.
 - No añadir tipos de dominio.
+- Implementado con `taskDraftFromElement`/`taskPositionFromElement` en `src/application/services/task-from-element.ts`; el menú contextual crea y selecciona la tarea, conserva el elemento origen y pasa por el historial existente.
 
 ---
 
@@ -808,19 +809,20 @@ Cerrar el bucle de invitaciones sin introducir email ni backend nuevo.
 
 Añadir una línea por sesión. El detalle técnico extenso sigue viviendo en `docs/adr/session-log.md` cuando haya decisiones relevantes.
 
-| Fecha      | Tarea   | Resultado | Notas                                                                                                                                                                                                                                                                           |
-| ---------- | ------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-10-19 | —       | Creado    | Creación del backlog post-MVP y priorización inicial.                                                                                                                                                                                                                           |
-| 2026-10-19 | PBL-002 | DONE      | Borrado de workspace desde la card con confirmación; roles por workspace desde `ListWorkspaces`; unit, integración y E2E.                                                                                                                                                       |
-| 2026-10-19 | PBL-001 | DONE      | Lecturas de workspaces/invitations acotadas por membership/destinatario; accept con `email_verified`; flujo de verificación con envío y refresh; rules, unit, integración y E2E.                                                                                                |
-| 2026-10-19 | PBL-003 | DONE      | Paleta de 5 colores de tema en el menú contextual de nota, reset a por defecto, `color: null` en `UpdateElement`, undo/redo, persistencia y E2E.                                                                                                                                |
-| 2026-10-19 | PBL-004 | DONE      | Ayuda de atajos accesible desde `?` y la top bar; catálogo puro por contextos, i18n en/es, foco atrapado, cierre con `Escape` y tests de contenido.                                                                                                                             |
-| 2026-10-19 | PBL-005 | DONE      | Export JSON versionado y descarga desde browser; vista imprimible escalada con `window.print()`; disponible para Owner, Editor y Viewer; serializer puro, i18n, unit, integración y E2E.                                                                                        |
-| 2026-10-19 | PBL-006 | DONE      | Duplicado owner-only desde la card con actualización del listado y apertura manual; copia de metadatos y elementos con IDs nuevos, remapeo de conectores y frames, compensación best-effort, i18n, unit, integración y E2E.                                                     |
-| 2026-10-19 | PBL-006 | DONE      | Follow-up: edición de nombre y descripción desde la card con icono y diálogo; acciones de card compactadas en iconos accesibles; unit, integración y E2E.                                                                                                                       |
-| 2026-10-19 | PBL-007 | DONE      | Plantillas puras de retrospectiva, kickoff y brainstorming; selector Blank/Template en el diálogo; elementos con IDs nuevos y rollback best-effort; empty state del board con CTA; i18n en/es, unit, integración y E2E.                                                         |
-| 2026-10-20 | PBL-008 | DONE      | Command palette en Workspaces y board con Cmd/Ctrl + K; acciones de creación (incluido conector libre y ligado), fit, undo/redo, compartir, atajos y navegación; búsqueda de workspaces y elementos; `CanvasCommandHandle`, búsqueda pura, i18n en/es, unit, integración y E2E. |
-| 2026-10-20 | PBL-009 | DONE      | Vista Plan de tareas derivada de `elements`: selector puro `selectTaskPlan`, panel lateral con filtros por estado y “Mis tareas”, selección/centrado vía `focusElement`, cambio de estado con `UpdateElement`, solo lectura, empty states, i18n en/es, unit, integración y E2E. |
+| Fecha      | Tarea   | Resultado | Notas                                                                                                                                                                                                                                                                                                            |
+| ---------- | ------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-19 | —       | Creado    | Creación del backlog post-MVP y priorización inicial.                                                                                                                                                                                                                                                            |
+| 2026-10-19 | PBL-002 | DONE      | Borrado de workspace desde la card con confirmación; roles por workspace desde `ListWorkspaces`; unit, integración y E2E.                                                                                                                                                                                        |
+| 2026-10-19 | PBL-001 | DONE      | Lecturas de workspaces/invitations acotadas por membership/destinatario; accept con `email_verified`; flujo de verificación con envío y refresh; rules, unit, integración y E2E.                                                                                                                                 |
+| 2026-10-19 | PBL-003 | DONE      | Paleta de 5 colores de tema en el menú contextual de nota, reset a por defecto, `color: null` en `UpdateElement`, undo/redo, persistencia y E2E.                                                                                                                                                                 |
+| 2026-10-19 | PBL-004 | DONE      | Ayuda de atajos accesible desde `?` y la top bar; catálogo puro por contextos, i18n en/es, foco atrapado, cierre con `Escape` y tests de contenido.                                                                                                                                                              |
+| 2026-10-19 | PBL-005 | DONE      | Export JSON versionado y descarga desde browser; vista imprimible escalada con `window.print()`; disponible para Owner, Editor y Viewer; serializer puro, i18n, unit, integración y E2E.                                                                                                                         |
+| 2026-10-19 | PBL-006 | DONE      | Duplicado owner-only desde la card con actualización del listado y apertura manual; copia de metadatos y elementos con IDs nuevos, remapeo de conectores y frames, compensación best-effort, i18n, unit, integración y E2E.                                                                                      |
+| 2026-10-19 | PBL-006 | DONE      | Follow-up: edición de nombre y descripción desde la card con icono y diálogo; acciones de card compactadas en iconos accesibles; unit, integración y E2E.                                                                                                                                                        |
+| 2026-10-19 | PBL-007 | DONE      | Plantillas puras de retrospectiva, kickoff y brainstorming; selector Blank/Template en el diálogo; elementos con IDs nuevos y rollback best-effort; empty state del board con CTA; i18n en/es, unit, integración y E2E.                                                                                          |
+| 2026-10-20 | PBL-008 | DONE      | Command palette en Workspaces y board con Cmd/Ctrl + K; acciones de creación (incluido conector libre y ligado), fit, undo/redo, compartir, atajos y navegación; búsqueda de workspaces y elementos; `CanvasCommandHandle`, búsqueda pura, i18n en/es, unit, integración y E2E.                                  |
+| 2026-10-20 | PBL-009 | DONE      | Vista Plan de tareas derivada de `elements`: selector puro `selectTaskPlan`, panel lateral con filtros por estado y “Mis tareas”, selección/centrado vía `focusElement`, cambio de estado con `UpdateElement`, solo lectura, empty states, i18n en/es, unit, integración y E2E.                                  |
+| 2026-10-20 | PBL-010 | DONE      | Crear tarea desde nota o frame: extracción pura de texto plano y posición desplazada en Application; acción accesible en el menú contextual, deshabilitada sin texto y oculta en solo lectura; título truncado con notas completas, selección de la tarea nueva, undo/redo, i18n en/es, unit, integración y E2E. |
 
 ---
 

@@ -52,6 +52,8 @@ import {
   resolveElementCreatePosition,
   rollbackFailedMutation,
   serializeBoardExport,
+  taskDraftFromElement,
+  taskPositionFromElement,
 } from '../../../../application/services';
 import type {
   CanvasViewportStore,
@@ -603,6 +605,46 @@ export function WorkspaceShellContainer({
     [localUserId, workspaceId, createElement, commitElements],
   );
 
+  const handleCreateTaskFromElement = useCallback(
+    (source: Element): ElementId | void => {
+      if (localUserId === undefined) {
+        return;
+      }
+
+      const draft = taskDraftFromElement(source);
+
+      if (draft === null) {
+        return;
+      }
+
+      const size = defaultElementSize('task');
+      const input: CreateElementInput = {
+        type: 'task',
+        workspaceId: WorkspaceId.create(workspaceId),
+        createdBy: UserId.create(localUserId),
+        position: taskPositionFromElement(source),
+        size,
+        title: draft.title,
+        status: 'todo',
+        ...(draft.notes === undefined ? {} : { notes: draft.notes }),
+      };
+
+      const result = createElement(input);
+
+      if (result.status === 'error') {
+        setCreationError(result.error);
+        return;
+      }
+
+      setCreationError(null);
+      commitElements([...elementsRef.current, result.element], 'Create task from element');
+      selectionStoreRef.current.select(result.element.id.value);
+
+      return result.element.id;
+    },
+    [localUserId, workspaceId, createElement, commitElements],
+  );
+
   const handleMoveElements = useCallback(
     (next: readonly Element[]) => {
       const previous = elementsRef.current;
@@ -1053,6 +1095,7 @@ export function WorkspaceShellContainer({
           onCreateElement={canCreateElement ? handleCreateElement : undefined}
           onCreateConnector={canCreateElement ? handleCreateConnector : undefined}
           onCreateTask={canCreateElement ? handleCreateTask : undefined}
+          onCreateTaskFromElement={canCreateElement ? handleCreateTaskFromElement : undefined}
           onUpdateElement={canElementWrite ? handleUpdateElement : undefined}
           onUpdateConnectorEndpoint={canElementWrite ? handleUpdateConnectorEndpoint : undefined}
           generateElementId={generateElementId}
