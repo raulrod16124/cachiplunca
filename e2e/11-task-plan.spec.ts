@@ -84,7 +84,7 @@ test.describe('Task plan drawer layout', () => {
     await createWorkspace(page, 'No reflow');
 
     const note = await addElement(page, 'note');
-    const planToggle = page.getByRole('button', { name: 'Task plan' });
+    const planToggle = page.getByRole('button', { name: 'Task plan', exact: true });
     const boardBefore = await note.boundingBox();
     const topBarBefore = await planToggle.boundingBox();
 

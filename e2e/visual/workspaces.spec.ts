@@ -1,0 +1,51 @@
+import { expect, test } from '@playwright/test';
+import { registerUser } from '../helpers/auth';
+import { createWorkspace } from '../helpers/workspace';
+import {
+  disableAnimations,
+  dynamicMaskLocators,
+  setLanguage,
+  setTheme,
+  waitForStable,
+} from './helpers/visual';
+
+test.describe('visual baseline — workspaces', () => {
+  test.use({ viewport: { width: 1280, height: 900 } });
+
+  test.beforeEach(async ({ page }) => {
+    await disableAnimations(page);
+    await setLanguage(page, 'en');
+  });
+
+  for (const theme of ['light', 'dark'] as const) {
+    test(`empty theme:${theme}`, async ({ page }) => {
+      await registerUser(page);
+      await page.goto('/workspaces');
+      await setTheme(page, theme);
+      await waitForStable(page);
+      await expect(page).toHaveScreenshot(`workspaces-empty-${theme}.png`, {
+        mask: [page.locator('[data-testid="skeleton"]')],
+      });
+    });
+
+    test(`populated theme:${theme}`, async ({ page }) => {
+      await registerUser(page);
+      await createWorkspace(page, 'Baseline workspace');
+      await page.goto('/workspaces');
+      await setTheme(page, theme);
+      await waitForStable(page);
+      await expect(page).toHaveScreenshot(`workspaces-populated-${theme}.png`, {
+        mask: dynamicMaskLocators(page),
+      });
+    });
+  }
+
+  test('narrow viewport', async ({ page }) => {
+    await registerUser(page);
+    await page.goto('/workspaces');
+    await page.setViewportSize({ width: 900, height: 800 });
+    await setTheme(page, 'light');
+    await waitForStable(page);
+    await expect(page).toHaveScreenshot('workspaces-narrow-light.png');
+  });
+});
