@@ -1,14 +1,14 @@
 /*
- * CACHIPLUNCA brand theme — light semantic overrides.
+ * CACHIPLUNCA brand theme — warm light and dark semantic overrides.
  *
  * Loaded after `@raulrod/tokens/styles.css` and `@raulrod/ui/styles.css` so
  * these custom properties win the cascade without forking the packages.
  *
- * Color overrides are scoped to light contexts on purpose: dark mode still
- * uses the upstream dark palette until CACH-RED-004 lands. The explicit
- * `[data-theme="light"]` selector covers the logged-in app, while the
- * `prefers-color-scheme: light` block covers unauthenticated pages (where
- * `useThemeMode` removes `data-theme`).
+ * Each theme is expressed twice: the explicit `[data-theme]` selector covers
+ * the logged-in app (`useThemeMode` always resolves a concrete mode), while
+ * the `prefers-color-scheme` block covers unauthenticated pages, where
+ * `useThemeMode` removes `data-theme` and lets the OS decide. Keep both
+ * blocks in sync.
  */
 
 :root {
@@ -181,5 +181,141 @@
     --rr-color-focus-ring: var(--cach-green-900);
     --rr-color-link-text: var(--cach-green-900);
     --rr-color-link-text-hover: var(--cach-green-950);
+  }
+}
+
+/*
+ * Dark theme: warm paper-and-ink inverted onto deep green. Mustard becomes
+ * the primary action color because green-900 is indistinguishable from the
+ * background; its text is graphite (7.99:1). Text/background pairs in this
+ * block stay at or above WCAG AA (4.5:1 text, 3:1 non-text).
+ */
+:root[data-theme='dark'] {
+  --rr-color-background-default: #14201b;
+  --rr-color-background-surface: #1b2a23;
+  --rr-color-background-sunken: #243830;
+  --rr-color-text-primary: var(--cach-cream-50);
+  --rr-color-text-muted: #b9c0ae;
+  --rr-color-text-inverse: #14201b;
+  --rr-color-text-danger: #fca5a5;
+  --rr-color-border-default: #5e7265;
+  --rr-color-border-strong: var(--cach-olive-500);
+  --rr-color-border-danger: #e57373;
+  --rr-color-border-primary: var(--cach-mustard-500);
+  --rr-color-border-primary-hover: var(--cach-mustard-600);
+  --rr-color-action-primary-background: var(--cach-mustard-500);
+  --rr-color-action-primary-background-hover: var(--cach-mustard-600);
+  --rr-color-action-primary-background-active: color-mix(
+    in srgb,
+    var(--cach-mustard-600) 85%,
+    var(--cach-graphite-900)
+  );
+  --rr-color-action-primary-text: var(--cach-graphite-900);
+  --rr-color-action-secondary-background: #2b3b32;
+  --rr-color-action-secondary-background-hover: color-mix(
+    in srgb,
+    var(--cach-olive-500) 22%,
+    var(--cach-graphite-900)
+  );
+  --rr-color-action-secondary-text: var(--cach-cream-50);
+  --rr-color-action-destructive-background: var(--cach-error-700);
+  --rr-color-action-destructive-background-hover: color-mix(
+    in srgb,
+    var(--cach-error-700) 86%,
+    var(--cach-graphite-900)
+  );
+  --rr-color-action-destructive-text: var(--cach-cream-50);
+  --rr-color-action-disabled-background: #2b3b32;
+  --rr-color-action-disabled-text: #b9c0ae;
+  --rr-color-action-success-background: var(--cach-success-700);
+  --rr-color-action-success-background-hover: color-mix(
+    in srgb,
+    var(--cach-success-700) 86%,
+    var(--cach-graphite-900)
+  );
+  --rr-color-action-success-text: var(--cach-cream-50);
+  --rr-color-action-info-background: var(--cach-info-700);
+  --rr-color-action-info-background-hover: color-mix(
+    in srgb,
+    var(--cach-info-700) 86%,
+    var(--cach-graphite-900)
+  );
+  --rr-color-action-info-text: var(--cach-cream-50);
+  --rr-color-text-success: #86efac;
+  --rr-color-background-success: color-mix(in srgb, var(--cach-success-700) 18%, #1b2a23);
+  --rr-color-text-warning: var(--cach-mustard-500);
+  --rr-color-background-warning: color-mix(in srgb, var(--cach-mustard-500) 18%, #1b2a23);
+  --rr-color-text-info: #93c5fd;
+  --rr-color-background-info: color-mix(in srgb, var(--cach-info-700) 18%, #1b2a23);
+  --rr-color-text-destructive: #fca5a5;
+  --rr-color-background-destructive: color-mix(in srgb, var(--cach-error-700) 18%, #1b2a23);
+  --rr-color-focus-ring: var(--cach-mustard-500);
+  --rr-color-link-text: #ff9a5c;
+  --rr-color-link-text-hover: var(--cach-mustard-500);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --rr-color-background-default: #14201b;
+    --rr-color-background-surface: #1b2a23;
+    --rr-color-background-sunken: #243830;
+    --rr-color-text-primary: var(--cach-cream-50);
+    --rr-color-text-muted: #b9c0ae;
+    --rr-color-text-inverse: #14201b;
+    --rr-color-text-danger: #fca5a5;
+    --rr-color-border-default: #5e7265;
+    --rr-color-border-strong: var(--cach-olive-500);
+    --rr-color-border-danger: #e57373;
+    --rr-color-border-primary: var(--cach-mustard-500);
+    --rr-color-border-primary-hover: var(--cach-mustard-600);
+    --rr-color-action-primary-background: var(--cach-mustard-500);
+    --rr-color-action-primary-background-hover: var(--cach-mustard-600);
+    --rr-color-action-primary-background-active: color-mix(
+      in srgb,
+      var(--cach-mustard-600) 85%,
+      var(--cach-graphite-900)
+    );
+    --rr-color-action-primary-text: var(--cach-graphite-900);
+    --rr-color-action-secondary-background: #2b3b32;
+    --rr-color-action-secondary-background-hover: color-mix(
+      in srgb,
+      var(--cach-olive-500) 22%,
+      var(--cach-graphite-900)
+    );
+    --rr-color-action-secondary-text: var(--cach-cream-50);
+    --rr-color-action-destructive-background: var(--cach-error-700);
+    --rr-color-action-destructive-background-hover: color-mix(
+      in srgb,
+      var(--cach-error-700) 86%,
+      var(--cach-graphite-900)
+    );
+    --rr-color-action-destructive-text: var(--cach-cream-50);
+    --rr-color-action-disabled-background: #2b3b32;
+    --rr-color-action-disabled-text: #b9c0ae;
+    --rr-color-action-success-background: var(--cach-success-700);
+    --rr-color-action-success-background-hover: color-mix(
+      in srgb,
+      var(--cach-success-700) 86%,
+      var(--cach-graphite-900)
+    );
+    --rr-color-action-success-text: var(--cach-cream-50);
+    --rr-color-action-info-background: var(--cach-info-700);
+    --rr-color-action-info-background-hover: color-mix(
+      in srgb,
+      var(--cach-info-700) 86%,
+      var(--cach-graphite-900)
+    );
+    --rr-color-action-info-text: var(--cach-cream-50);
+    --rr-color-text-success: #86efac;
+    --rr-color-background-success: color-mix(in srgb, var(--cach-success-700) 18%, #1b2a23);
+    --rr-color-text-warning: var(--cach-mustard-500);
+    --rr-color-background-warning: color-mix(in srgb, var(--cach-mustard-500) 18%, #1b2a23);
+    --rr-color-text-info: #93c5fd;
+    --rr-color-background-info: color-mix(in srgb, var(--cach-info-700) 18%, #1b2a23);
+    --rr-color-text-destructive: #fca5a5;
+    --rr-color-background-destructive: color-mix(in srgb, var(--cach-error-700) 18%, #1b2a23);
+    --rr-color-focus-ring: var(--cach-mustard-500);
+    --rr-color-link-text: #ff9a5c;
+    --rr-color-link-text-hover: var(--cach-mustard-500);
   }
 }
