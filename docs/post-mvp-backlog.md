@@ -96,7 +96,7 @@ Definition of Done:
 | PBL-008 | Command palette (Cmd/Ctrl + K)               | R1      | P1        | M        | —              | No  | DONE   |
 | PBL-009 | Vista Plan de tareas                         | R2      | P0        | M        | —              | No  | DONE   |
 | PBL-010 | Crear tarea desde nota o frame               | R2      | P1        | S        | PBL-009        | Sí  | DONE   |
-| PBL-011 | Kanban del plan                              | R2      | P2        | M        | PBL-009        | No  | TODO   |
+| PBL-011 | Kanban del plan                              | R2      | P2        | M        | PBL-009        | No  | DONE   |
 | PBL-012 | Alineación y distribución                    | R2      | P1        | M        | —              | No  | TODO   |
 | PBL-013 | Comentarios MVP                              | R2      | P0        | L        | PBL-001        | No  | TODO   |
 | PBL-014 | Temporizador de sesión local                 | R3      | P2        | S        | —              | Sí  | TODO   |
@@ -511,7 +511,7 @@ Convertir información capturada en acciones sin copiar y pegar.
 
 ### PBL-011 — Kanban del plan
 
-**Priority:** P2 · **Effort:** M · **Depends:** PBL-009 · **Status:** TODO
+**Priority:** P2 · **Effort:** M · **Depends:** PBL-009 · **Status:** DONE
 
 #### Objetivo
 
@@ -528,11 +528,11 @@ Ofrecer una lectura por estado del plan ya existente.
 
 #### Criterios de aceptación
 
-- [ ] El cambio de estado persiste y se refleja en el canvas.
-- [ ] La vista es navegable con teclado y sin drag obligatorio.
-- [ ] En solo lectura no se puede cambiar el estado.
-- [ ] No se crean estados ni entidades nuevas.
-- [ ] Tests de integración del panel.
+- [x] El cambio de estado persiste y se refleja en el canvas.
+- [x] La vista es navegable con teclado y sin drag obligatorio.
+- [x] En solo lectura no se puede cambiar el estado.
+- [x] No se crean estados ni entidades nuevas.
+- [x] Tests de integración del panel.
 
 #### Fuera de alcance
 
@@ -543,6 +543,7 @@ Ofrecer una lectura por estado del plan ya existente.
 
 - Reutilizar los selectores de PBL-009.
 - Persistir con `UpdateElement`; no crear store nuevo.
+- Implementado con `selectTaskPlanBoard` en `src/application/services/task-plan.ts` (misma derivación que `selectTaskPlan`, con columnas vacías) y un toggle Lista/Board con `Tabs` en `TaskPlanPanel`; las tarjetas son compactas (título a dos líneas, metadatos truncados) con menú accesible de estado y el panel se ensancha solo en board sin scroll horizontal. Ver ADR-0037.
 
 ---
 
@@ -823,6 +824,7 @@ Añadir una línea por sesión. El detalle técnico extenso sigue viviendo en `d
 | 2026-10-20 | PBL-008 | DONE      | Command palette en Workspaces y board con Cmd/Ctrl + K; acciones de creación (incluido conector libre y ligado), fit, undo/redo, compartir, atajos y navegación; búsqueda de workspaces y elementos; `CanvasCommandHandle`, búsqueda pura, i18n en/es, unit, integración y E2E.                                  |
 | 2026-10-20 | PBL-009 | DONE      | Vista Plan de tareas derivada de `elements`: selector puro `selectTaskPlan`, panel lateral con filtros por estado y “Mis tareas”, selección/centrado vía `focusElement`, cambio de estado con `UpdateElement`, solo lectura, empty states, i18n en/es, unit, integración y E2E.                                  |
 | 2026-10-20 | PBL-010 | DONE      | Crear tarea desde nota o frame: extracción pura de texto plano y posición desplazada en Application; acción accesible en el menú contextual, deshabilitada sin texto y oculta en solo lectura; título truncado con notas completas, selección de la tarea nueva, undo/redo, i18n en/es, unit, integración y E2E. |
+| 2026-10-20 | PBL-011 | DONE      | Kanban del plan: `selectTaskPlanBoard` con columna por estado y `selectTaskPlan` derivado; toggle Lista/Board con `Tabs`, contadores, empty states por columna, cambio de estado accesible reutilizando `UpdateElement`, solo lectura, i18n en/es, unit, integración y E2E.                                      |
 
 ---
 

@@ -1,5 +1,16 @@
 # Session Log
 
+## 2026-10-20 — PBL-011 Kanban del plan
+
+- Siguiente tarea del backlog: PBL-011 (R2, P2, M, depende de PBL-009 DONE). Sin IN PROGRESS ni BLOCKED; rama `development` limpia al iniciar.
+- Application: `selectTaskPlanBoard(elements, filters)` puro, una columna por `TASK_STATUSES` incluidas las vacías, compartiendo filtrado y orden con `selectTaskPlan`; este último pasa a derivarse del board filtrando columnas vacías, de modo que lista y board no divergen.
+- Presentation: toggle Lista/Board con `Tabs` de `@raulrod/ui` (tablist, roving tabindex, flechas/Home/End) y estado local efímero. Board con grid horizontal de cuatro columnas, contador por columna, empty state por columna, tarjetas con título, asignado y vencimiento, selección vía `focusElement` y cambio de estado con el `Select` accesible existente. En solo lectura se muestran badges. Los empty states globales de PBL-009 se mantienen cuando no hay tareas o ninguna coincide con los filtros.
+- Refinamiento UI/UX tras validar el board en navegador: el panel se ensancha solo en board (`clamp(720px, 55vw, 960px)` con tope por viewport), grid de 4→2→1 columnas sin scroll horizontal, cabeceras de columna compactas, tarjetas con título a dos líneas y metadatos truncados, menú ⋯ accesible para cambiar estado y contadores con variante semántica. Validado con capturas a 1440, 1024 y 800 px.
+- i18n: claves nuevas en inglés y español para vista, tablero, columnas y empty state.
+- Tests: unit de `selectTaskPlanBoard` (columnas canónicas, vacías, orden, filtros y no mutación), panel (toggle, contadores, empty por columna, selección, cambio de estado, solo lectura y empty global) e integración (persistencia desde board y rol viewer). E2E `11-task-plan` con el nuevo caso de board en verde.
+- Docs: PBL-011 → DONE (criterios [x]), ADR-0037 y este registro.
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` (244 suites / 2764 tests) y `npm run build` en verde. E2E `11-task-plan` ejecutado con emuladores (JDK 23; el `java` por defecto del entorno es 17 y firebase-tools exige 21+).
+
 ## 2026-10-20 — PBL-009 Vista Plan de tareas
 
 - Siguiente tarea del backlog: PBL-009 (R2, P0, M, sin dependencias). PBL-001 a PBL-008 en DONE; rama `development` limpia al iniciar.

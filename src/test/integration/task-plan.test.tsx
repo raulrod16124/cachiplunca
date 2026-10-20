@@ -119,6 +119,77 @@ describe('task plan', () => {
     expect(screen.queryByRole('heading', { level: 3, name: 'Todo' })).not.toBeInTheDocument();
   });
 
+  it('persists a status change made from the board view', async () => {
+    const harness = createAppHarness();
+    await harness.register(DEFAULT_CREDENTIALS);
+    const workspace = await harness.createOwnerWorkspace('Board plan');
+    const createdBy = UserId.create(harness.currentUser?.uid ?? 'user-1');
+    const user = userEvent.setup();
+
+    await harness.elementRepository.save(createTask(workspace, createdBy, 'task-1', 'Plan launch'));
+
+    harness.render({ initialPath: `/workspaces/${workspace.id.value}` });
+    await screen.findByRole('application', { name: 'Canvas' });
+    const panel = await openTaskPlan();
+
+    await user.click(within(panel).getByRole('tab', { name: 'Board' }));
+
+    const todoColumn = within(panel).getByRole('region', { name: 'Todo' });
+    expect(
+      within(todoColumn).getByRole('button', { name: 'Select task Plan launch' }),
+    ).toBeVisible();
+
+    await user.click(within(panel).getByRole('button', { name: 'Change status for Plan launch' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Completed' }));
+
+    await waitFor(async () => {
+      const stored = await harness.elementRepository.findById(ElementId.create('task-1'));
+      expect(stored?.type === 'task' ? stored.status : undefined).toBe('completed');
+    });
+
+    await waitFor(() => {
+      const completedColumn = within(panel).getByRole('region', { name: 'Completed' });
+      expect(
+        within(completedColumn).getByRole('button', { name: 'Select task Plan launch' }),
+      ).toBeVisible();
+    });
+  });
+
+  it('does not allow viewers to change task status from the board', async () => {
+    const harness = createAppHarness();
+    await harness.register(DEFAULT_CREDENTIALS);
+    const currentUser = harness.currentUser;
+
+    if (currentUser === null) {
+      throw new Error('Expected an authenticated user');
+    }
+
+    const createdBy = UserId.create(currentUser.uid);
+    const workspace = await harness.workspaceRepository.create({
+      name: 'Read only board',
+      createdBy,
+    });
+    await harness.membershipRepository.create({
+      userId: createdBy,
+      workspaceId: workspace.id,
+      role: 'viewer',
+    });
+    await harness.elementRepository.save(createTask(workspace, createdBy, 'task-1', 'Plan launch'));
+
+    harness.render({ initialPath: `/workspaces/${workspace.id.value}` });
+    await screen.findByRole('application', { name: 'Canvas' });
+    const panel = await openTaskPlan();
+
+    await userEvent.setup().click(within(panel).getByRole('tab', { name: 'Board' }));
+
+    expect(
+      within(panel).getByRole('button', { name: 'Select task Plan launch' }),
+    ).toBeInTheDocument();
+    expect(
+      within(panel).queryByRole('button', { name: 'Change status for Plan launch' }),
+    ).not.toBeInTheDocument();
+  });
+
   it('does not allow viewers to change task status from the panel', async () => {
     const harness = createAppHarness();
     await harness.register(DEFAULT_CREDENTIALS);

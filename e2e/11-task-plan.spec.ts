@@ -48,3 +48,32 @@ test.describe('Task plan', () => {
     ).toBeVisible();
   });
 });
+
+test.describe('Task plan board', () => {
+  test('moves a task between columns from an accessible status control', async ({ page }) => {
+    await registerUser(page);
+    await createWorkspace(page, 'Board view');
+
+    await page.getByRole('button', { name: 'Task plan' }).click();
+    const panel = page.getByTestId('task-plan-panel');
+    await panel.getByRole('tab', { name: 'Board' }).click();
+
+    await panel.getByRole('button', { name: 'Create task' }).click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByLabel('Title').fill('Board task');
+    await dialog.getByRole('button', { name: 'Create task' }).click();
+    await expect(dialog).toBeHidden();
+
+    const todoColumn = panel.getByRole('region', { name: 'Todo' });
+    await expect(todoColumn.getByRole('button', { name: 'Select task Board task' })).toBeVisible();
+
+    await panel.getByRole('button', { name: 'Change status for Board task' }).click();
+    await page.getByRole('menuitem', { name: 'Blocked' }).click();
+
+    const blockedColumn = panel.getByRole('region', { name: 'Blocked' });
+    await expect(
+      blockedColumn.getByRole('button', { name: 'Select task Board task' }),
+    ).toBeVisible();
+    await expect(todoColumn.getByRole('button', { name: 'Select task Board task' })).toHaveCount(0);
+  });
+});

@@ -5,7 +5,7 @@ import {
   type TaskElement,
 } from '../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
-import { selectTaskPlan } from '../../../../application/services/task-plan';
+import { selectTaskPlan, selectTaskPlanBoard } from '../../../../application/services/task-plan';
 
 const WORKSPACE_ID = WorkspaceId.create('ws-1');
 const USER_ID = UserId.create('user-1');
@@ -139,6 +139,82 @@ describe('selectTaskPlan', () => {
     const elements = [first, second];
 
     selectTaskPlan(elements, ALL_FILTERS);
+
+    expect(elements).toEqual([first, second]);
+  });
+});
+
+describe('selectTaskPlanBoard', () => {
+  it('returns one column per canonical status, including empty ones', () => {
+    const columns = selectTaskPlanBoard(
+      [task('todo'), task('blocked', { status: 'blocked' })],
+      ALL_FILTERS,
+    );
+
+    expect(columns.map((column) => column.status)).toEqual([
+      'todo',
+      'in_progress',
+      'completed',
+      'blocked',
+    ]);
+    expect(columns.map((column) => column.tasks.length)).toEqual([1, 0, 0, 1]);
+  });
+
+  it('returns all four empty columns when there are no tasks', () => {
+    const columns = selectTaskPlanBoard([], ALL_FILTERS);
+
+    expect(columns.map((column) => column.status)).toEqual([
+      'todo',
+      'in_progress',
+      'completed',
+      'blocked',
+    ]);
+    expect(columns.every((column) => column.tasks.length === 0)).toBe(true);
+  });
+
+  it('ignores non-task elements and orders tasks inside each column', () => {
+    const note = createNoteElement({
+      ...BASE,
+      id: ElementId.create('note-1'),
+      content: 'Not a task',
+    });
+    const columns = selectTaskPlanBoard(
+      [
+        note,
+        task('late', { dueDate: new Date('2024-03-01T00:00:00.000Z') }),
+        task('undated'),
+        task('early', { dueDate: new Date('2024-02-01T00:00:00.000Z') }),
+      ],
+      ALL_FILTERS,
+    );
+
+    expect(columns[0]?.tasks.map((entry) => entry.id.value)).toEqual(['early', 'late', 'undated']);
+  });
+
+  it('applies the same filters as the list view', () => {
+    const columns = selectTaskPlanBoard(
+      [
+        task('mine', { assigneeId: USER_ID }),
+        task('theirs', { assigneeId: OTHER_USER_ID }),
+        task('progress', { status: 'in_progress', assigneeId: USER_ID }),
+      ],
+      { status: 'in_progress', onlyMine: true, currentUserId: USER_ID.value },
+    );
+
+    expect(columns.map((column) => column.tasks.map((entry) => entry.id.value))).toEqual([
+      [],
+      ['progress'],
+      [],
+      [],
+    ]);
+  });
+
+  it('does not mutate the input elements', () => {
+    const first = task('first', { dueDate: new Date('2024-03-01T00:00:00.000Z') });
+    const second = task('second', { dueDate: new Date('2024-02-01T00:00:00.000Z') });
+    const elements = [first, second];
+
+    selectTaskPlanBoard(elements, ALL_FILTERS);
 
     expect(elements).toEqual([first, second]);
   });

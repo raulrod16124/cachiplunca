@@ -18,18 +18,19 @@ export function selectTaskPlan(
   elements: readonly Element[],
   filters: TaskPlanFilters,
 ): readonly TaskPlanGroup[] {
+  return selectTaskPlanBoard(elements, filters).filter((group) => group.tasks.length > 0);
+}
+
+export function selectTaskPlanBoard(
+  elements: readonly Element[],
+  filters: TaskPlanFilters,
+): readonly TaskPlanGroup[] {
   const tasks = elements.filter(isTaskElement).filter((task) => matchesFilters(task, filters));
-  const groups: TaskPlanGroup[] = [];
 
-  for (const status of TASK_STATUSES) {
-    const statusTasks = tasks.filter((task) => task.status === status).sort(compareTasks);
-
-    if (statusTasks.length > 0) {
-      groups.push({ status, tasks: statusTasks });
-    }
-  }
-
-  return groups;
+  return TASK_STATUSES.map((status) => ({
+    status,
+    tasks: tasks.filter((task) => task.status === status).sort(compareTasks),
+  }));
 }
 
 function matchesFilters(task: TaskElement, filters: TaskPlanFilters): boolean {
