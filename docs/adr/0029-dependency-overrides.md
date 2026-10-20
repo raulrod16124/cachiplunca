@@ -2,12 +2,11 @@
 
 **Fecha:** 2026-10-15
 **Estado:** Aceptado
-**Tarea:** TASK-121 — Dependency audit (`docs/mvp-backlog.md`)
 
 ## Contexto
 
-TASK-121 audita las dependencias del MVP. El informe completo está en
-`docs/audits/dependency-audit.md`.
+TASK-121 audita las dependencias del MVP. Este ADR resume el hallazgo y la
+corrección aplicada.
 
 El grafo **de producción** presentaba 4 vulnerabilidades `high` sin corrección
 dentro de rango: `@firebase/firestore@4.17.2` (dependencia de `firebase@12.19.0`)

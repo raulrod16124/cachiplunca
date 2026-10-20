@@ -2,7 +2,6 @@
 
 **Fecha:** 2026-10-14
 **Estado:** Aceptado
-**Tarea:** TASK-113 — Canvas performance baseline (`docs/mvp-backlog.md`)
 
 ## Contexto
 
@@ -38,8 +37,8 @@ transform` en CSS y la dependencia transitiva `@firebase/performance`.
 
 3. **Registro versionado.** El artefacto canónico es
    `docs/performance/canvas-baseline.json` (regenerado con `PERF_WRITE=1 npm run perf`)
-   y su lectura humana en `docs/performance/canvas-baseline.md`. No se commitean
-   cifras del harness de navegador (dependen de la máquina/el navegador).
+   y su lectura humana en `docs/performance/README.md`. No se commitean cifras del
+   harness de navegador (dependen de la máquina/el navegador).
 
 4. **Aislamiento del tooling.** Nueva config `jest.perf.config.cjs` (extiende la
    principal) + script `npm run perf` (con `--expose-gc` para una memoria fiable) y

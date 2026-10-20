@@ -2,7 +2,6 @@
 
 **Fecha:** 2026-10-20
 **Estado:** Aceptado
-**Tarea:** PBL-017 — Vista presentación por frames (`docs/post-mvp-backlog.md`)
 
 ## Contexto
 

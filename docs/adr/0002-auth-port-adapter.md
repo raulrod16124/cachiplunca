@@ -2,7 +2,6 @@
 
 **Fecha:** 2026-10-08
 **Estado:** Aceptado
-**Tarea:** TASK-010 — Auth port y adapter (`docs/mvp-backlog.md`)
 
 ## Contexto
 
@@ -41,4 +40,4 @@ El tri-anticipado en el punto 3 se implementó como `createSessionStore(authPort
 
 ## Actualización (TASK-122)
 
-`SessionProvider`/`useSession` se movieron a `src/presentation/providers/` para eliminar la dependencia Presentation → `app/` (ver ADR-0030 y `docs/audits/architecture-audit.md`, hallazgo A1). El store, el puerto y el contrato de este ADR no cambian.
+`SessionProvider`/`useSession` se movieron a `src/presentation/providers/` para eliminar la dependencia Presentation → `app/` (ver ADR-0030, hallazgo A1). El store, el puerto y el contrato de este ADR no cambian.

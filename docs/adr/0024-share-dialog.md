@@ -2,7 +2,6 @@
 
 **Fecha:** 2026-10-14
 **Estado:** Aceptado
-**Tarea:** TASK-107 — Share dialog (`docs/mvp-backlog.md`)
 
 ## Contexto
 

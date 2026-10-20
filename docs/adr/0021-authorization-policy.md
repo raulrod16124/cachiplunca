@@ -2,7 +2,6 @@
 
 **Fecha:** 2026-10-13
 **Estado:** Aceptado
-**Tarea:** TASK-095 — Authorization policy (`docs/mvp-backlog.md`)
 
 ## Contexto
 

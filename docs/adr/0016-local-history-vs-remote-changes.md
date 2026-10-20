@@ -2,7 +2,6 @@
 
 **Fecha:** 2026-10-13
 **Estado:** Aceptado
-**Tarea:** TASK-088 — Local history vs remote changes (`docs/mvp-backlog.md`)
 
 ## Contexto
 

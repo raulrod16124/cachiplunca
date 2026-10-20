@@ -2,7 +2,6 @@
 
 **Fecha:** 2026-10-15
 **Estado:** Aceptado
-**Tarea:** TASK-115 — Performance regression test (`docs/mvp-backlog.md`)
 
 ## Contexto
 
@@ -81,6 +80,6 @@ regresión real (volver a montar/re-renderizar todo el tablero).
 - `npm test` no cambia su coste de forma perceptible (~0,35 s del guard estructural);
   el guard de tiempo solo corre en `npm run perf`.
 - Los techos siguen siendo mismo-host; recalibrarlos requiere una nueva medición
-  (`docs/performance/canvas-regression.md`).
+  (`docs/performance/README.md`).
 - Sin nuevas dependencias ni tooling; el evaluador de presupuestos es una función pura
   y testeada.

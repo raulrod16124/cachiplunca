@@ -2,7 +2,6 @@
 
 **Fecha:** 2026-10-14
 **Estado:** Aceptado
-**Tarea:** TASK-111 — Canvas accessibility strategy (`docs/mvp-backlog.md`)
 
 ## Contexto
 

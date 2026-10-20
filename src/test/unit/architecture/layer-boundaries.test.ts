@@ -2,10 +2,10 @@ import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 /**
- * Architecture boundary gate (TASK-122).
+ * Architecture boundary gate.
  *
  * Enforces the dependency rules declared in AGENTS.md and
- * docs/mvp-backlog.md (section 3):
+ * docs/architecture.md:
  *
  * Presentation → Application → Domain
  * Infrastructure → Application ports → Domain

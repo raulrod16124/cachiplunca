@@ -2,7 +2,6 @@
 
 **Fecha:** 2026-10-20
 **Estado:** Aceptado
-**Tarea:** PBL-015 — Imágenes (`docs/post-mvp-backlog.md`)
 
 ## Contexto
 

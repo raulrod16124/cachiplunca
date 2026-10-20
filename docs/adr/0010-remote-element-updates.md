@@ -2,7 +2,6 @@
 
 **Fecha:** 2026-10-12
 **Estado:** Aceptado
-**Tarea:** TASK-078 — Remote element updates (`docs/mvp-backlog.md`)
 
 ## Contexto
 

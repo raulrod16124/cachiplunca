@@ -25,9 +25,9 @@ import { buildReport, isPerfWriteEnabled, writePerfReport } from './report';
 
 /**
  * Reproducible canvas performance baseline. This is measurement only: it never
- * asserts a performance budget (TASK-115) and never changes production code
- * (TASK-114). Run with `npm run perf`; add `PERF_WRITE=1` to persist the JSON
- * artifact under `docs/performance/`.
+ * asserts a performance budget and never changes production code. Run with
+ * `npm run perf`; add `PERF_WRITE=1` to persist the JSON artifact under
+ * `docs/performance/`.
  */
 const SIZES: readonly number[] = [100, 1000, 5000, 10000];
 

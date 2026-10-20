@@ -2,7 +2,6 @@
 
 **Fecha:** 2026-10-12
 **Estado:** Aceptado
-**Tarea:** TASK-077 — Firestore realtime adapter (`docs/mvp-backlog.md`)
 
 ## Contexto
 

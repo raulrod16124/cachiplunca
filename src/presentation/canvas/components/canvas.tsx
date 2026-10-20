@@ -168,7 +168,7 @@ const CANVAS_GRID = Grid.default();
 
 const resizeElement = createResizeElement();
 
-/** World-space margin kept mounted around the viewport to avoid flicker (TASK-114). */
+/** World-space margin kept mounted around the viewport to avoid flicker. */
 export const CULLING_MARGIN = 64;
 
 const BOARD_SUMMARY_ID = 'canvas-board-summary';

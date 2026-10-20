@@ -22,7 +22,7 @@ import type { MeasureOptions, MetricSummary } from './measure';
 import { CANVAS_PERFORMANCE_BUDGETS, evaluateBudgets, formatBudgetViolation } from './budgets';
 
 /**
- * Canvas performance-regression guard (TASK-115), run with `npm run perf`.
+ * Canvas performance-regression guard, run with `npm run perf`.
  *
  * Unlike `canvas.perf.test.tsx` (measurement only), this suite asserts absolute
  * ceilings from `budgets.ts` so a catastrophic regression fails the perf task.

@@ -2,7 +2,6 @@
 
 **Fecha:** 2026-10-20
 **Estado:** Aceptado
-**Tarea:** PBL-012 — Alineación y distribución (`docs/post-mvp-backlog.md`)
 
 ## Contexto
 

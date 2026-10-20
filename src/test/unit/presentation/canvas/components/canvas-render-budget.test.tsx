@@ -22,11 +22,11 @@ import { CULLING_MARGIN, Canvas } from '../../../../../presentation/canvas/compo
 import { generateElements } from '../../../../fixtures/generate-elements';
 
 /**
- * Deterministic performance-regression guard for the TASK-114 optimization.
+ * Deterministic performance-regression guard for canvas viewport culling.
  *
- * TASK-113 found that pan/zoom/selection re-rendered *every* element, so the
- * fix (TASK-114) culls the mounted `ElementView`s to the visible world area.
- * This suite asserts that structural contract instead of wall-clock time: it is
+ * Pan, zoom and selection used to re-render *every* element. The optimized
+ * canvas culls the mounted `ElementView`s to the visible world area. This suite
+ * asserts that structural contract instead of wall-clock time: it is
  * machine-independent, so it fails reliably (in `npm test`) whenever the culling
  * is removed or degraded, without the flakiness of timing budgets.
  */

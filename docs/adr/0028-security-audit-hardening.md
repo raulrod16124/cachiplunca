@@ -2,14 +2,13 @@
 
 **Fecha:** 2026-10-15
 **Estado:** Aceptado
-**Tarea:** TASK-120 — Security audit (`docs/mvp-backlog.md`)
 
 ## Contexto
 
 TASK-120 audita la postura de seguridad del MVP. La autorización efectiva vive en
 `firestore.rules` (ADR-0023), replicando la `PERMISSION_MATRIX` de ADR-0021; la UI
-solo refleja permisos (ADR-0022). El informe completo está en
-`docs/audits/security-audit.md`.
+solo refleja permisos (ADR-0022). Este ADR resume los hallazgos y las correcciones
+aplicadas.
 
 La auditoría confirma controles sólidos (sin sinks XSS, token de invitación con
 CSPRNG + SHA-256, errores traducidos, `storage.rules` deny-all) y detecta una

@@ -2,7 +2,6 @@
 
 **Fecha:** 2026-10-19
 **Estado:** Aceptado
-**Tarea:** PBL-001 — Seguridad de lectura y verificación de email (`docs/post-mvp-backlog.md`)
 
 ## Contexto
 

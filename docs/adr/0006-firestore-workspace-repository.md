@@ -2,7 +2,6 @@
 
 **Fecha:** 2026-10-08
 **Estado:** Aceptado
-**Tarea:** TASK-018 — Firestore workspace repository (`docs/mvp-backlog.md`)
 
 ## Contexto
 
