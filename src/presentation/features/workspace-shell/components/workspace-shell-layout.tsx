@@ -23,6 +23,7 @@ import type {
   SelectionStore,
 } from '../../../../application/services';
 import type { AuthUser, RealtimeConnectionStatus } from '../../../../application/ports';
+import type { CommentServices } from '../../../../application/comment-services';
 import {
   createPresenceColorAssigner,
   presenceLabel,
@@ -35,6 +36,7 @@ import type {
   TaskFormValues,
 } from '../../../canvas/components/task-form-dialog';
 import { KeyboardShortcutsDialog } from './keyboard-shortcuts-dialog';
+import { CommentsPanel } from './comments-panel';
 import { TaskPlanPanel } from './task-plan-panel';
 import { WorkspaceCommandPalette } from './workspace-command-palette';
 import { WorkspaceTopBar } from './workspace-top-bar';
@@ -119,6 +121,7 @@ export interface WorkspaceShellLayoutProps {
   readonly onRetryRole?: () => void;
   readonly listWorkspaces?: ListWorkspaces;
   readonly onOpenWorkspace?: (workspaceId: string) => void;
+  readonly comments?: CommentServices;
 }
 
 export function WorkspaceShellLayout({
@@ -168,10 +171,12 @@ export function WorkspaceShellLayout({
   onRetryRole,
   listWorkspaces,
   onOpenWorkspace,
+  comments,
 }: WorkspaceShellLayoutProps): ReactNode {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [planOpen, setPlanOpen] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
   const commandRef = useRef<CanvasCommandHandle | null>(null);
   const selection = useSyncExternalStore(selectionStore.subscribe, selectionStore.getSnapshot);
   const colorAssignerRef = useRef(createPresenceColorAssigner());
@@ -224,6 +229,19 @@ export function WorkspaceShellLayout({
     return [...options.values()].sort((left, right) => left.label.localeCompare(right.label));
   }, [connectedUsers, currentUser, members]);
 
+  const selectedElement = useMemo(() => {
+    if (selection.selectedIds.length !== 1) {
+      return undefined;
+    }
+
+    const selectedId = selection.selectedIds[0];
+    return elements.find((element) => element.id.value === selectedId);
+  }, [elements, selection.selectedIds]);
+  const authorLabels = useMemo(
+    () => new Map(assignees.map((assignee) => [assignee.userId, assignee.label])),
+    [assignees],
+  );
+
   const canCreate = !readOnly && onCreateElement !== undefined;
   const canCreateTask = !readOnly && (onCreateTask !== undefined || onCreateElement !== undefined);
   const canCreateFreeConnector = !readOnly && onCreateConnector !== undefined;
@@ -231,6 +249,15 @@ export function WorkspaceShellLayout({
     canCreateFreeConnector && connectorCandidateIds(elements, selection.selectedIds) !== null;
   const canUndo = !readOnly && commandHistory.canUndo();
   const canRedo = !readOnly && commandHistory.canRedo();
+  const togglePlan = (): void => {
+    setCommentsOpen(false);
+    setPlanOpen((open) => !open);
+  };
+  const toggleComments = (): void => {
+    setPlanOpen(false);
+    setCommentsOpen((open) => !open);
+  };
+  const canComment = comments !== undefined && currentUser !== null;
 
   return (
     <Shell>
@@ -259,7 +286,9 @@ export function WorkspaceShellLayout({
             logoutUser={logoutUser}
             onShare={onShare}
             planOpen={planOpen}
-            onTogglePlan={() => setPlanOpen((open) => !open)}
+            onTogglePlan={togglePlan}
+            commentsOpen={commentsOpen}
+            onToggleComments={canComment ? toggleComments : undefined}
             onShowShortcuts={() => setShortcutsOpen(true)}
             onExportJson={onExportJson}
             onExportPdf={onExportPdf}
@@ -313,6 +342,15 @@ export function WorkspaceShellLayout({
             onUpdateElement?.({ type: 'task', element: task, status });
           }}
           onCreateTask={() => commandRef.current?.createElement('task')}
+        />
+        <CommentsPanel
+          open={commentsOpen && canComment}
+          workspaceId={workspace.id.value}
+          element={selectedElement}
+          currentUserId={currentUser?.uid}
+          authorLabels={authorLabels}
+          services={comments}
+          onClose={() => setCommentsOpen(false)}
         />
       </CanvasArea>
       <KeyboardShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />

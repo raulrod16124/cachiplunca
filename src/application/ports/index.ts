@@ -1,4 +1,5 @@
 export * from './auth-port';
+export * from './comment-repository';
 export * from './element-repository';
 export * from './file-download-port';
 export * from './invitation-repository';

@@ -75,6 +75,7 @@ import type {
   PresencePort,
   RealtimeConnectionStatus,
 } from '../../../../application/ports';
+import type { CommentServices } from '../../../../application/comment-services';
 import { isConnectorElement } from '../../../../domain/element';
 import type { ConnectorElement, Element, ElementType } from '../../../../domain/element';
 import type { Membership, MembershipRole } from '../../../../domain/membership';
@@ -130,6 +131,7 @@ export interface WorkspaceShellContainerProps {
   readonly fileDownload?: FileDownloadPort;
   readonly listWorkspaces?: ListWorkspaces;
   readonly onOpenWorkspace?: (workspaceId: string) => void;
+  readonly comments?: CommentServices;
 }
 
 interface TransformGesture {
@@ -163,6 +165,7 @@ export function WorkspaceShellContainer({
   fileDownload,
   listWorkspaces,
   onOpenWorkspace,
+  comments,
 }: WorkspaceShellContainerProps): ReactNode {
   const { t } = useI18n();
   const [status, setStatus] = useState<'loading' | 'notFound' | 'error' | 'success'>('loading');
@@ -1148,6 +1151,7 @@ export function WorkspaceShellContainer({
           onRename={canRename ? handleRenameWorkspace : undefined}
           listWorkspaces={listWorkspaces}
           onOpenWorkspace={onOpenWorkspace}
+          comments={comments}
         />
         {canShare ? (
           <ShareDialog

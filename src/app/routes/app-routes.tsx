@@ -27,6 +27,7 @@ import type {
   LoadWorkspaceElements,
 } from '../../application/queries';
 import type { FileDownloadPort, PresencePort } from '../../application/ports';
+import type { CommentServices } from '../../application/comment-services';
 import type {
   ElementPersistenceOrchestrator,
   RealtimeSubscriptionManager,
@@ -68,6 +69,7 @@ export interface AppRoutesProps {
   readonly leaveWorkspace?: LeaveWorkspace;
   readonly updateWorkspace?: UpdateWorkspace;
   readonly fileDownload?: FileDownloadPort;
+  readonly comments?: CommentServices;
 }
 
 export function AppRoutes({
@@ -98,6 +100,7 @@ export function AppRoutes({
   leaveWorkspace,
   updateWorkspace,
   fileDownload,
+  comments,
 }: AppRoutesProps): ReactNode {
   return (
     <Routes>
@@ -165,6 +168,7 @@ export function AppRoutes({
               updateWorkspace={updateWorkspace}
               fileDownload={fileDownload}
               listWorkspaces={listWorkspaces}
+              comments={comments}
             />
           }
         />

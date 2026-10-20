@@ -1,0 +1,489 @@
+import { Badge, Button, Heading, IconButton, Text, Textarea } from '@raulrod/ui';
+import { Check, MessageSquare, X } from '@raulrod/icons';
+import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import styled from 'styled-components';
+import type { CommentServices } from '../../../../application/comment-services';
+import type { Comment } from '../../../../domain/comment';
+import { COMMENT_BODY_MAX_LENGTH } from '../../../../domain/comment';
+import { richTextToPlain, type Element, type ElementType } from '../../../../domain/element';
+import { ElementId, UserId, WorkspaceId } from '../../../../domain/shared';
+import { toAppError } from '../../../../shared/errors';
+import { shortUserId } from '../../../collaboration';
+import { EmptyState } from '../../../components/empty-state';
+import { formatRelativeDate, useI18n, type TranslationKey } from '../../../i18n';
+import { describeCommentError } from '../comments-error-messages';
+
+const ELEMENT_TYPE_KEYS: Readonly<Record<ElementType, TranslationKey>> = {
+  text: 'commandPalette.element.text',
+  note: 'commandPalette.element.note',
+  task: 'commandPalette.element.task',
+  frame: 'commandPalette.element.frame',
+  link: 'commandPalette.element.link',
+  connector: 'comments.element.connector',
+};
+
+const Panel = styled.aside`
+  flex: 0 0 clamp(300px, 26vw, 380px);
+  max-width: calc(100vw - 280px);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: ${({ theme }) => theme.canvas.surface};
+  border-left: 1px solid ${({ theme }) => theme.canvas.elementBorder};
+  box-shadow: ${({ theme }) => theme.shadow.sm};
+`;
+
+const Header = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.space[3]};
+  padding: ${({ theme }) => theme.space[4]};
+  border-bottom: 1px solid ${({ theme }) => theme.canvas.elementBorderSoft};
+`;
+
+const HeaderIdentity = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.space[1]};
+  min-width: 0;
+`;
+
+const HeaderTitle = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.space[2]};
+`;
+
+const TargetLabel = styled(Text)`
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const Body = styled.div`
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: ${({ theme }) => theme.space[4]};
+`;
+
+const CommentList = styled.ul`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.space[3]};
+  margin: 0;
+  padding: 0;
+  list-style: none;
+`;
+
+const CommentCard = styled.li<{ readonly $resolved: boolean }>`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.space[2]};
+  padding: ${({ theme }) => theme.space[3]};
+  border: 1px solid ${({ theme }) => theme.canvas.elementBorderSoft};
+  border-radius: ${({ theme }) => theme.radius.md};
+  background: ${({ theme, $resolved }) =>
+    $resolved ? theme.canvas.surfaceMuted : theme.color.background.surface};
+  opacity: ${({ $resolved }) => ($resolved ? 0.82 : 1)};
+`;
+
+const CommentMeta = styled.div`
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.space[2]};
+`;
+
+const CommentAuthor = styled.span`
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const CommentText = styled.p`
+  margin: 0;
+  color: ${({ theme }) => theme.color.text.primary};
+  font-size: ${({ theme }) => theme.font.size.sm};
+  line-height: ${({ theme }) => theme.font.leading.normal};
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+`;
+
+const CommentActions = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: ${({ theme }) => theme.space[2]};
+`;
+
+const Form = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.space[2]};
+  padding: ${({ theme }) => theme.space[4]};
+  border-top: 1px solid ${({ theme }) => theme.canvas.elementBorderSoft};
+`;
+
+const FormActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+`;
+
+const StatusMessage = styled(Text)`
+  display: block;
+  padding: ${({ theme }) => `${theme.space[2]} 0`};
+`;
+
+export interface CommentsPanelProps {
+  readonly open: boolean;
+  readonly workspaceId: string;
+  readonly element: Element | undefined;
+  readonly currentUserId: string | undefined;
+  readonly authorLabels?: ReadonlyMap<string, string>;
+  readonly services?: CommentServices;
+  readonly onClose: () => void;
+}
+
+export function CommentsPanel({
+  open,
+  workspaceId,
+  element,
+  currentUserId,
+  authorLabels,
+  services,
+  onClose,
+}: CommentsPanelProps): ReactNode {
+  const { t, locale } = useI18n();
+  const elementId = element?.id.value;
+  const [comments, setComments] = useState<readonly Comment[]>([]);
+  const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [draft, setDraft] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const targetLabel = useMemo(() => {
+    if (element === undefined) {
+      return null;
+    }
+
+    const type = t(ELEMENT_TYPE_KEYS[element.type]);
+    const title = elementTitle(element);
+
+    return title.length === 0 ? type : t('comments.target', { type, title });
+  }, [element, t]);
+
+  useEffect(() => {
+    setDraft('');
+
+    if (!open || services === undefined || elementId === undefined) {
+      setComments([]);
+      setStatus('idle');
+      setErrorMessage(null);
+      return;
+    }
+
+    let active = true;
+    setStatus('loading');
+    setErrorMessage(null);
+
+    services
+      .listComments({ workspaceId, elementId })
+      .then((result) => {
+        if (!active) {
+          return;
+        }
+        if (result.status === 'ok') {
+          setComments(result.comments);
+          setStatus('ready');
+          return;
+        }
+        setComments([]);
+        setErrorMessage(t(describeCommentError('load', result.error)));
+        setStatus('error');
+      })
+      .catch((error: unknown) => {
+        if (!active) {
+          return;
+        }
+        setComments([]);
+        setErrorMessage(t(describeCommentError('load', toAppError(error))));
+        setStatus('error');
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [elementId, open, reloadKey, services, t, workspaceId]);
+
+  const handleSubmit = useCallback(
+    async (event: FormEvent<HTMLFormElement>): Promise<void> => {
+      event.preventDefault();
+
+      if (services === undefined || currentUserId === undefined || elementId === undefined) {
+        return;
+      }
+
+      const body = draft.trim();
+      if (body.length === 0) {
+        return;
+      }
+
+      setSubmitting(true);
+      setErrorMessage(null);
+
+      try {
+        const result = await services.createComment({
+          workspaceId: WorkspaceId.create(workspaceId),
+          elementId: ElementId.create(elementId),
+          authorId: UserId.create(currentUserId),
+          body,
+        });
+
+        if (result.status === 'ok') {
+          setComments((current) => [...current, result.comment]);
+          setDraft('');
+          setStatus('ready');
+        } else {
+          setErrorMessage(t(describeCommentError('create', result.error)));
+        }
+      } catch (error) {
+        setErrorMessage(t(describeCommentError('create', toAppError(error))));
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [currentUserId, draft, elementId, services, t, workspaceId],
+  );
+
+  const handleResolve = useCallback(
+    async (comment: Comment): Promise<void> => {
+      if (services === undefined) {
+        return;
+      }
+
+      setResolvingId(comment.id.value);
+      setErrorMessage(null);
+
+      try {
+        const result = await services.resolveComment({
+          workspaceId,
+          commentId: comment.id.value,
+        });
+
+        if (result.status === 'ok') {
+          setComments((current) =>
+            current.map((entry) =>
+              entry.id.value === result.comment.id.value ? result.comment : entry,
+            ),
+          );
+        } else {
+          setErrorMessage(t(describeCommentError('resolve', result.error)));
+        }
+      } catch (error) {
+        setErrorMessage(t(describeCommentError('resolve', toAppError(error))));
+      } finally {
+        setResolvingId(null);
+      }
+    },
+    [services, t, workspaceId],
+  );
+
+  if (!open || services === undefined) {
+    return null;
+  }
+
+  const canComment = currentUserId !== undefined && elementId !== undefined;
+  const busy = submitting || resolvingId !== null;
+  const authoredLabel = (comment: Comment): string =>
+    authorLabels?.get(comment.authorId.value) ?? shortUserId(comment.authorId.value);
+
+  const renderBody = (): ReactNode => {
+    if (elementId === undefined) {
+      return (
+        <EmptyState
+          title={t('comments.selectElement.title')}
+          description={t('comments.selectElement.description')}
+        />
+      );
+    }
+
+    if (status === 'idle' || status === 'loading') {
+      return (
+        <StatusMessage role="status" color="color.text.muted">
+          {t('comments.loading')}
+        </StatusMessage>
+      );
+    }
+
+    if (status === 'error') {
+      return (
+        <ErrorBody
+          title={t('comments.error.title')}
+          message={errorMessage}
+          retryLabel={t('common.retry')}
+          onRetry={() => setReloadKey((value) => value + 1)}
+        />
+      );
+    }
+
+    if (comments.length === 0) {
+      return (
+        <EmptyState
+          title={t('comments.empty.title')}
+          description={t('comments.empty.description')}
+        />
+      );
+    }
+
+    return (
+      <CommentList aria-label={t('comments.title')}>
+        {comments.map((comment) => {
+          const resolved = comment.isResolved();
+          const resolving = resolvingId === comment.id.value;
+
+          return (
+            <CommentCard key={comment.id.value} $resolved={resolved}>
+              <CommentMeta>
+                <CommentAuthor>
+                  <Text weight="font.weight.semibold" size="font.size.sm">
+                    {authoredLabel(comment)}
+                  </Text>
+                </CommentAuthor>
+                <Text color="color.text.muted" size="font.size.xs">
+                  {t('comments.created', {
+                    when: formatRelativeDate(comment.createdAt, locale),
+                  })}
+                </Text>
+              </CommentMeta>
+              <CommentText>{comment.body}</CommentText>
+              <CommentActions>
+                {resolved ? (
+                  <Badge variant="success">
+                    <Check aria-hidden="true" size={12} /> {t('comments.resolved')}
+                  </Badge>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    disabled={busy}
+                    onClick={() => void handleResolve(comment)}
+                  >
+                    {resolving ? t('comments.resolving') : t('comments.resolve')}
+                  </Button>
+                )}
+              </CommentActions>
+            </CommentCard>
+          );
+        })}
+      </CommentList>
+    );
+  };
+
+  return (
+    <Panel id="comments-panel" aria-label={t('comments.title')} data-testid="comments-panel">
+      <Header>
+        <HeaderIdentity>
+          <HeaderTitle>
+            <MessageSquare aria-hidden="true" size={18} />
+            <Heading as="h2">{t('comments.title')}</Heading>
+          </HeaderTitle>
+          {targetLabel === null ? null : (
+            <TargetLabel color="color.text.muted" size="font.size.xs">
+              {targetLabel}
+            </TargetLabel>
+          )}
+        </HeaderIdentity>
+        <IconButton
+          type="button"
+          variant="ghost"
+          size="sm"
+          label={t('comments.close')}
+          onClick={onClose}
+        >
+          <X aria-hidden="true" size={16} />
+        </IconButton>
+      </Header>
+      <Body>
+        {errorMessage !== null && status !== 'error' ? (
+          <Text role="alert" color="color.text.danger" size="font.size.sm">
+            {errorMessage}
+          </Text>
+        ) : null}
+        {renderBody()}
+      </Body>
+      {elementId === undefined || !canComment ? null : (
+        <Form onSubmit={(event) => void handleSubmit(event)}>
+          <Textarea
+            aria-label={t('comments.bodyLabel')}
+            placeholder={t('comments.placeholder')}
+            rows={3}
+            maxLength={COMMENT_BODY_MAX_LENGTH}
+            value={draft}
+            disabled={submitting}
+            onChange={(event) => setDraft(event.target.value)}
+          />
+          <FormActions>
+            <Button
+              type="submit"
+              variant="primary"
+              size="sm"
+              disabled={busy || draft.trim().length === 0}
+            >
+              {submitting ? t('comments.submitting') : t('comments.submit')}
+            </Button>
+          </FormActions>
+        </Form>
+      )}
+    </Panel>
+  );
+}
+
+interface ErrorBodyProps {
+  readonly title: string;
+  readonly message: string | null;
+  readonly retryLabel: string;
+  readonly onRetry: () => void;
+}
+
+function ErrorBody({ title, message, retryLabel, onRetry }: ErrorBodyProps): ReactNode {
+  return (
+    <div role="alert">
+      <Heading as="h3">{title}</Heading>
+      {message === null ? null : (
+        <Text color="color.text.muted" size="font.size.sm">
+          {message}
+        </Text>
+      )}
+      <Button type="button" variant="secondary" size="sm" onClick={onRetry}>
+        {retryLabel}
+      </Button>
+    </div>
+  );
+}
+
+function elementTitle(element: Element): string {
+  switch (element.type) {
+    case 'text':
+    case 'note':
+      return richTextToPlain(element.content);
+    case 'task':
+    case 'frame':
+      return richTextToPlain(element.title);
+    case 'link':
+      return element.title === undefined ? element.url : richTextToPlain(element.title);
+    case 'connector':
+      return '';
+    default: {
+      const unknown: never = element;
+      return JSON.stringify(unknown);
+    }
+  }
+}

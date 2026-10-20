@@ -96,6 +96,24 @@ function presenceData(workspaceId: string, userId: string) {
   };
 }
 
+function commentData(
+  workspaceId: string,
+  elementId: string,
+  authorId: string,
+  id: string,
+  resolvedAt?: Date,
+) {
+  return {
+    id,
+    workspaceId,
+    elementId,
+    authorId,
+    body: 'Looks good to me',
+    createdAt: now,
+    ...(resolvedAt === undefined ? {} : { resolvedAt }),
+  };
+}
+
 function invitationData(
   workspaceId: string,
   invitedBy: string,
@@ -155,6 +173,14 @@ beforeEach(async () => {
     );
     await setDoc(doc(db, 'elements', 'e1'), elementData(WS1, ROLE_UIDS.owner, 'e1'));
     await setDoc(doc(db, 'elements', 'e2'), elementData(WS2, ROLE_UIDS.owner, 'e2'));
+    await setDoc(
+      doc(db, 'workspaces', WS1, 'comments', 'c1'),
+      commentData(WS1, 'e1', ROLE_UIDS.owner, 'c1'),
+    );
+    await setDoc(
+      doc(db, 'workspaces', WS1, 'comments', 'c-resolved'),
+      commentData(WS1, 'e1', ROLE_UIDS.owner, 'c-resolved', new Date(now.getTime() + 60_000)),
+    );
     await setDoc(
       doc(db, 'presence', `${WS1}_${ROLE_UIDS.viewer}`),
       presenceData(WS1, ROLE_UIDS.viewer),
@@ -1017,6 +1043,135 @@ describe('firestore.rules — presence', () => {
     await assertFails(
       getDoc(doc(unauthed().firestore(), 'presence', `${WS1}_${ROLE_UIDS.viewer}`)),
     );
+  });
+});
+
+describe('firestore.rules — comments', () => {
+  test('workspace members can read comments individually and by element', async () => {
+    for (const uid of OTHER_ROLE_UIDS) {
+      await assertSucceeds(getDoc(doc(dbOf(uid), 'workspaces', WS1, 'comments', 'c1')));
+      await assertSucceeds(
+        getDocs(
+          query(
+            collection(dbOf(uid), 'workspaces', WS1, 'comments'),
+            where('elementId', '==', 'e1'),
+          ),
+        ),
+      );
+    }
+  });
+
+  test('outsiders and anonymous users cannot read comments', async () => {
+    await assertFails(getDoc(doc(dbOf(OUTSIDER_UID), 'workspaces', WS1, 'comments', 'c1')));
+    await assertFails(
+      getDocs(
+        query(
+          collection(dbOf(OUTSIDER_UID), 'workspaces', WS1, 'comments'),
+          where('elementId', '==', 'e1'),
+        ),
+      ),
+    );
+    await assertFails(getDoc(doc(unauthed().firestore(), 'workspaces', WS1, 'comments', 'c1')));
+  });
+
+  test('members can create their own comments', async () => {
+    for (const uid of OTHER_ROLE_UIDS) {
+      await assertSucceeds(
+        setDoc(
+          doc(dbOf(uid), 'workspaces', WS1, 'comments', `c-${uid}`),
+          commentData(WS1, 'e1', uid, `c-${uid}`),
+        ),
+      );
+    }
+  });
+
+  test('comment creation rejects spoofing, wrong paths and outsiders', async () => {
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.editor), 'workspaces', WS1, 'comments', 'c-spoofed-author'),
+        commentData(WS1, 'e1', ROLE_UIDS.owner, 'c-spoofed-author'),
+      ),
+    );
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.editor), 'workspaces', WS1, 'comments', 'c-wrong-ws'),
+        commentData(WS2, 'e1', ROLE_UIDS.editor, 'c-wrong-ws'),
+      ),
+    );
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.editor), 'workspaces', WS1, 'comments', 'c-wrong-id'),
+        commentData(WS1, 'e1', ROLE_UIDS.editor, 'another-id'),
+      ),
+    );
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.editor), 'workspaces', WS1, 'comments', 'c-pre-resolved'),
+        commentData(WS1, 'e1', ROLE_UIDS.editor, 'c-pre-resolved', now),
+      ),
+    );
+    await assertFails(
+      setDoc(
+        doc(dbOf(OUTSIDER_UID), 'workspaces', WS1, 'comments', 'c-outsider'),
+        commentData(WS1, 'e1', OUTSIDER_UID, 'c-outsider'),
+      ),
+    );
+    await assertFails(
+      setDoc(
+        doc(unauthed().firestore(), 'workspaces', WS1, 'comments', 'c-anon'),
+        commentData(WS1, 'e1', 'anon', 'c-anon'),
+      ),
+    );
+  });
+
+  test('any member can resolve an open comment once', async () => {
+    for (const uid of OTHER_ROLE_UIDS) {
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(
+          doc(ctx.firestore(), 'workspaces', WS1, 'comments', `c-open-${uid}`),
+          commentData(WS1, 'e1', ROLE_UIDS.owner, `c-open-${uid}`),
+        );
+      });
+
+      await assertSucceeds(
+        updateDoc(doc(dbOf(uid), 'workspaces', WS1, 'comments', `c-open-${uid}`), {
+          resolvedAt: new Date(now.getTime() + 60_000),
+        }),
+      );
+    }
+  });
+
+  test('resolving cannot rewrite history or resolve twice', async () => {
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', WS1, 'comments', 'c1'), {
+        body: 'Changed',
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', WS1, 'comments', 'c1'), {
+        resolvedAt: new Date(now.getTime() + 60_000),
+        authorId: ROLE_UIDS.editor,
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', WS1, 'comments', 'c-resolved'), {
+        resolvedAt: new Date(now.getTime() + 120_000),
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(dbOf(OUTSIDER_UID), 'workspaces', WS1, 'comments', 'c1'), {
+        resolvedAt: new Date(now.getTime() + 60_000),
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(unauthed().firestore(), 'workspaces', WS1, 'comments', 'c1'), {
+        resolvedAt: new Date(now.getTime() + 60_000),
+      }),
+    );
+  });
+
+  test('comments cannot be deleted', async () => {
+    await assertFails(deleteDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', WS1, 'comments', 'c1')));
   });
 });
 

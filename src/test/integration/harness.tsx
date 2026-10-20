@@ -6,7 +6,9 @@ import { AppRoutes, type AppRoutesProps } from '../../app/routes/app-routes';
 import {
   createAcceptInvitation,
   createAcceptInvitationById,
+  createCreateComment,
   createRefreshUser,
+  createResolveComment,
   createSendEmailVerification,
   createChangeMemberRole,
   createCreateOwnerMembership,
@@ -26,6 +28,7 @@ import {
   createGetWorkspaceRole,
   createListPendingInvitations,
   createListPendingInvitationsForUser,
+  createListComments,
   createListWorkspaceMembers,
   createListWorkspaces,
   createLoadWorkspaceElements,
@@ -39,7 +42,9 @@ import {
 import type { AuthCredentials, AuthPort, AuthUser } from '../../application/ports';
 import type { Workspace } from '../../domain/workspace';
 import { ElementId, UserId } from '../../domain/shared';
+import { CommentId } from '../../domain/shared';
 import { FakeAuthPort } from '../fixtures/fake-auth-port';
+import { FakeCommentRepository } from '../fixtures/fake-comment-repository';
 import { FakeElementRepository } from '../fixtures/fake-element-repository';
 import { FakeMembershipRepository } from '../fixtures/fake-membership-repository';
 import { FakePresencePort } from '../fixtures/fake-presence-port';
@@ -92,6 +97,7 @@ export interface AppHarness {
   readonly workspaceRepository: FakeWorkspaceRepository;
   readonly membershipRepository: FakeMembershipRepository;
   readonly elementRepository: FakeElementRepository;
+  readonly commentRepository: FakeCommentRepository;
   readonly realtimePort: FakeRealtimePort;
   readonly presencePort: FakePresencePort;
   readonly invitationRepository: FakeInvitationRepository;
@@ -112,6 +118,7 @@ export function createAppHarness(): AppHarness {
   const workspaceRepository = new FakeWorkspaceRepository();
   const membershipRepository = new FakeMembershipRepository();
   const elementRepository = new FakeElementRepository();
+  const commentRepository = new FakeCommentRepository();
   const realtimePort = new FakeRealtimePort();
   const presencePort = new FakePresencePort();
   const invitationRepository = new FakeInvitationRepository();
@@ -187,6 +194,14 @@ export function createAppHarness(): AppHarness {
     realtimeSubscriptionManager: createRealtimeSubscriptionManager(realtimePort),
     generateElementId,
     presencePort,
+    comments: {
+      listComments: createListComments(commentRepository),
+      createComment: createCreateComment({
+        repository: commentRepository,
+        generateId: () => CommentId.create(`comment-${++elementSequence}`),
+      }),
+      resolveComment: createResolveComment({ repository: commentRepository }),
+    },
   };
 
   return {
@@ -194,6 +209,7 @@ export function createAppHarness(): AppHarness {
     workspaceRepository,
     membershipRepository,
     elementRepository,
+    commentRepository,
     realtimePort,
     presencePort,
     invitationRepository,

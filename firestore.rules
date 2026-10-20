@@ -167,6 +167,26 @@ service cloud.firestore {
       );
     }
 
+    // comments: colaboración asíncrona ligada a elementos. Solo los miembros
+    // del workspace leen y crean; cualquier miembro puede resolver. Resolver
+    // solo puede añadir resolvedAt y conserva el resto del historial.
+    match /workspaces/{workspaceId}/comments/{commentId} {
+      allow read: if signedIn() && isMember(workspaceId);
+      allow create: if signedIn() &&
+        isMember(workspaceId) &&
+        request.resource.data.workspaceId == workspaceId &&
+        request.resource.data.id == commentId &&
+        request.resource.data.authorId == request.auth.uid &&
+        request.resource.data.body is string &&
+        !('resolvedAt' in request.resource.data);
+      allow update: if signedIn() &&
+        isMember(workspaceId) &&
+        resource.data.workspaceId == workspaceId &&
+        !('resolvedAt' in resource.data) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['resolvedAt']) &&
+        request.resource.data.resolvedAt is timestamp;
+    }
+
     // presence: efímera. Solo el dueño del documento la escribe siendo miembro;
     // los miembros la leen.
     match /presence/{presenceId} {

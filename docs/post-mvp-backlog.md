@@ -98,7 +98,7 @@ Definition of Done:
 | PBL-010 | Crear tarea desde nota o frame               | R2      | P1        | S        | PBL-009        | Sí  | DONE   |
 | PBL-011 | Kanban del plan                              | R2      | P2        | M        | PBL-009        | No  | DONE   |
 | PBL-012 | Alineación y distribución                    | R2      | P1        | M        | —              | No  | DONE   |
-| PBL-013 | Comentarios MVP                              | R2      | P0        | L        | PBL-001        | No  | TODO   |
+| PBL-013 | Comentarios MVP                              | R2      | P0        | L        | PBL-001        | No  | DONE   |
 | PBL-014 | Temporizador de sesión local                 | R3      | P2        | S        | —              | Sí  | TODO   |
 | PBL-015 | Imágenes                                     | R3      | P1        | L        | PBL-001        | No  | TODO   |
 | PBL-016 | Enlace guest de solo lectura                 | R3      | P1        | L        | PBL-001        | No  | TODO   |
@@ -586,7 +586,7 @@ Acelerar la organización visual con operaciones geométricas predecibles.
 
 ### PBL-013 — Comentarios MVP
 
-**Priority:** P0 · **Effort:** L · **Depends:** PBL-001 · **Status:** TODO
+**Priority:** P0 · **Effort:** L · **Depends:** PBL-001 · **Status:** DONE
 
 #### Objetivo
 
@@ -594,20 +594,20 @@ Habilitar colaboración asíncrona ligada a elementos, sin convertir el producto
 
 #### Fases
 
-- [ ] **a. Domain:** entidad `Comment` con `id`, `workspaceId`, `elementId`, `authorId`, `body`, `createdAt` y `resolvedAt?`; invariantes y tests.
-- [ ] **b. Application:** puerto de persistencia y casos de uso crear, listar y resolver; tests con fake.
-- [ ] **c. Infrastructure:** adapter Firestore en subcolección `workspaces/{workspaceId}/comments`, mapper y tests.
-- [ ] **d. Rules:** permisos de lectura/escritura por membership; tests de rules.
-- [ ] **e. Presentation:** panel de comentarios por elemento, crear y resolver; i18n y accesibilidad.
-- [ ] **f. Integración/E2E:** comentar, recargar y ver el comentario; resolver.
+- [x] **a. Domain:** entidad `Comment` con `id`, `workspaceId`, `elementId`, `authorId`, `body`, `createdAt` y `resolvedAt?`; invariantes y tests.
+- [x] **b. Application:** puerto de persistencia y casos de uso crear, listar y resolver; tests con fake.
+- [x] **c. Infrastructure:** adapter Firestore en subcolección `workspaces/{workspaceId}/comments`, mapper y tests.
+- [x] **d. Rules:** permisos de lectura/escritura por membership; tests de rules.
+- [x] **e. Presentation:** panel de comentarios por elemento, crear y resolver; i18n y accesibilidad.
+- [x] **f. Integración/E2E:** comentar, recargar y ver el comentario; resolver.
 
 #### Criterios de aceptación
 
-- [ ] Los comentarios persisten y se asocian al elemento correcto.
-- [ ] Solo los miembros del workspace pueden leer y crear comentarios.
-- [ ] Resolver conserva el historial y marca el hilo como resuelto.
-- [ ] Presentation no importa Firebase.
-- [ ] Quality gates y `npm run test:rules` en verde.
+- [x] Los comentarios persisten y se asocian al elemento correcto.
+- [x] Solo los miembros del workspace pueden leer y crear comentarios.
+- [x] Resolver conserva el historial y marca el hilo como resuelto.
+- [x] Presentation no importa Firebase.
+- [x] Quality gates y `npm run test:rules` en verde.
 
 #### Fuera de alcance
 
@@ -619,6 +619,7 @@ Habilitar colaboración asíncrona ligada a elementos, sin convertir el producto
 - Una tarea `L` puede ocupar varias sesiones; mantener el estado `IN PROGRESS` y marcar fases.
 - Reutilizar el patrón de puertos/repositorios y mappers de elementos.
 - Subcolección independiente: no inflar el documento del workspace.
+- Implementado con `Comment`/`CommentId` en Domain, `CommentRepository` + casos de uso en Application, adapter Firestore en `workspaces/{workspaceId}/comments`, rules por membership y `CommentsPanel` ligado a la selección única. Cualquier miembro puede resolver; los viewers pueden comentar sin editar el canvas. Sin realtime ni entidades nuevas. Ver ADR-0039.
 
 ---
 
@@ -827,6 +828,7 @@ Añadir una línea por sesión. El detalle técnico extenso sigue viviendo en `d
 | 2026-10-20 | PBL-010 | DONE      | Crear tarea desde nota o frame: extracción pura de texto plano y posición desplazada en Application; acción accesible en el menú contextual, deshabilitada sin texto y oculta en solo lectura; título truncado con notas completas, selección de la tarea nueva, undo/redo, i18n en/es, unit, integración y E2E. |
 | 2026-10-20 | PBL-011 | DONE      | Kanban del plan: `selectTaskPlanBoard` con columna por estado y `selectTaskPlan` derivado; toggle Lista/Board con `Tabs`, contadores, empty states por columna, cambio de estado accesible reutilizando `UpdateElement`, solo lectura, i18n en/es, unit, integración y E2E.                                      |
 | 2026-10-20 | PBL-012 | DONE      | Alineación y distribución: `alignElements`/`distributeElements` puros con huecos iguales, conectores excluidos y no-op sin historial; desplegable accesible en la toolbar, persistencia con `commitElements`, undo/redo en un paso, solo lectura, i18n en/es, unit, integración y E2E.                           |
+| 2026-10-20 | PBL-013 | DONE      | Comentarios por elemento: `Comment`/`CommentId` con resolución única, puerto y casos de uso, subcolección Firestore con mapper, rules por membership, panel desde la top bar ligado a la selección, viewers pueden comentar, i18n en/es, unit, integración, rules y E2E.                                         |
 
 ---
 

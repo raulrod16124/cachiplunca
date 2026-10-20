@@ -1,5 +1,17 @@
 # Session Log
 
+## 2026-10-20 — PBL-013 Comentarios MVP
+
+- Siguiente tarea del backlog: PBL-013 (R2, P0, L, depende de PBL-001 DONE). Sin IN PROGRESS ni BLOCKED; rama `development` limpia al iniciar.
+- Domain: `Comment` y `CommentId` con body recortado de hasta 4.000 caracteres, timestamps coherentes, resolución única y tests de invariantes.
+- Application: `CommentRepository`, casos de uso `createComment`/`resolveComment`, query `listComments` con orden cronológico puro y errores normalizados; fakes, contrato y tests.
+- Infrastructure: mapper Firestore con `Date`/`Timestamp` y `resolvedAt` opcional; repositorio en `workspaces/{workspaceId}/comments` con consulta por `elementId` y tests con el Firestore en memoria.
+- Rules: lectura, creación y resolución solo para miembros; creación con autor y ruta coherentes; resolución limitada a añadir `resolvedAt` sobre un hilo abierto; borrado denegado. Tests de roles, spoofing, doble resolución y outsiders.
+- Presentation: `CommentsPanel` en panel lateral ligado a la selección única, toggle en la top bar mutuamente excluyente con el plan, creación y resolución con estados de carga/error, empty states, autores desde miembros/presencia y fallback a id corto; i18n en/es. Los viewers pueden comentar sin editar el canvas.
+- Integración: harness con `FakeCommentRepository` y servicios de comentarios; test de crear/recargar/resolver y de viewer. E2E `15-comments` con persistencia y resolución tras recarga.
+- Docs: PBL-013 → DONE (fases y criterios [x]), ADR-0039 y este registro.
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` (255 suites / 2848 tests), `npm run test:rules` (96 tests), `npm run build` y E2E `15-comments` en verde.
+
 ## 2026-10-20 — PBL-012 Alineación y distribución
 
 - Siguiente tarea del backlog: PBL-012 (R2, P1, M, sin dependencias). Sin IN PROGRESS ni BLOCKED; rama `development` limpia al iniciar.

@@ -17,6 +17,7 @@ import {
   FileJson,
   FileText,
   ListChecks,
+  MessageSquare,
   Share2,
 } from '@raulrod/icons';
 import type { ReactNode } from 'react';
@@ -238,6 +239,8 @@ export interface WorkspaceTopBarProps {
   readonly onShare?: () => void;
   readonly planOpen?: boolean;
   readonly onTogglePlan?: () => void;
+  readonly commentsOpen?: boolean;
+  readonly onToggleComments?: () => void;
   readonly onShowShortcuts?: () => void;
   readonly onExportJson?: () => void;
   readonly onExportPdf?: () => void;
@@ -262,6 +265,8 @@ export function WorkspaceTopBar({
   onShare,
   planOpen = false,
   onTogglePlan,
+  commentsOpen = false,
+  onToggleComments,
   onShowShortcuts,
   onExportJson,
   onExportPdf,
@@ -419,6 +424,21 @@ export function WorkspaceTopBar({
                 onClick={onTogglePlan}
               >
                 <ListChecks aria-hidden="true" size={16} />
+              </PlanButton>
+            </Tooltip>
+          )}
+          {onToggleComments === undefined ? null : (
+            <Tooltip content={t('comments.open')} placement="bottom">
+              <PlanButton
+                type="button"
+                variant={commentsOpen ? 'primary' : 'secondary'}
+                size="sm"
+                label={t('comments.open')}
+                aria-expanded={commentsOpen}
+                aria-controls={commentsOpen ? 'comments-panel' : undefined}
+                onClick={onToggleComments}
+              >
+                <MessageSquare aria-hidden="true" size={16} />
               </PlanButton>
             </Tooltip>
           )}

@@ -1,4 +1,5 @@
 export * from './collaboration';
+export * from './comment';
 export * from './element';
 export * from './invitation';
 export * from './membership';
