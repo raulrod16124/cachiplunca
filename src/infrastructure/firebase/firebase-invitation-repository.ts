@@ -3,16 +3,22 @@ import {
   doc,
   getDoc,
   getDocs,
+  onSnapshot,
   query,
   setDoc,
   updateDoc,
   where,
   type Firestore,
 } from 'firebase/firestore';
-import type { InvitationRepository } from '../../application/ports';
+import type {
+  InvitationRepository,
+  PendingInvitationsErrorListener,
+  PendingInvitationsListener,
+} from '../../application/ports';
 import { Invitation, type InvitationStatus } from '../../domain/invitation';
 import { InvitationId, WorkspaceId } from '../../domain/shared';
 import { createAppError, ERROR_CODES, isAppError, type AppError } from '../../shared/errors';
+import type { Unsubscribe } from '../../shared/types';
 import { mapFirebaseError } from './firebase-error-mapper';
 import { fromInvitationDocument, toInvitationDocument } from './firebase-invitation-mapper';
 
@@ -104,6 +110,36 @@ export function createFirebaseInvitationRepository(db: Firestore): InvitationRep
 
     listPendingByWorkspace,
     listPendingByEmail,
+
+    watchPendingByEmail(
+      email: string,
+      listener: PendingInvitationsListener,
+      onError?: PendingInvitationsErrorListener,
+    ): Unsubscribe {
+      const normalized = email.trim().toLowerCase();
+      if (normalized.length === 0) {
+        listener([]);
+        return () => undefined;
+      }
+
+      return onSnapshot(
+        query(
+          invitationsCollection,
+          where('email', '==', normalized),
+          where('status', '==', 'pending'),
+        ),
+        (snapshot) => {
+          try {
+            listener(snapshot.docs.map((document) => readInvitation(document.data())));
+          } catch (error) {
+            onError?.(toValidationError(error));
+          }
+        },
+        (error: unknown) => {
+          onError?.(mapFirebaseError(error));
+        },
+      );
+    },
 
     async updateStatus(id: InvitationId, status: InvitationStatus): Promise<Invitation> {
       const reference = invitationRef(id);

@@ -1,22 +1,16 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { AcceptInvitationById } from '../../../../../../application/commands';
-import type { ListPendingInvitationsForUser } from '../../../../../../application/queries';
 import { Invitation } from '../../../../../../domain/invitation';
 import { InvitationId, UserId, WorkspaceId } from '../../../../../../domain/shared';
-import { createAppError, ERROR_CODES } from '../../../../../../shared/errors';
 import { PendingInvitationsPanel } from '../../../../../../presentation/features/workspaces/components/pending-invitations-panel';
 
-const USER_ID = 'user-1';
-const USER_EMAIL = 'invitee@example.com';
-const USER_EMAIL_VERIFIED = true;
 const WORKSPACE = WorkspaceId.create('ws-1');
 
 function makeInvitation(): Invitation {
   return Invitation.create({
     id: InvitationId.create('inv-1'),
     workspaceId: WORKSPACE,
-    email: USER_EMAIL,
+    email: 'invitee@example.com',
     role: 'editor',
     tokenHash: 'hash-1',
     invitedBy: UserId.create('owner-1'),
@@ -26,115 +20,86 @@ function makeInvitation(): Invitation {
   });
 }
 
-function setup(
-  overrides: {
-    list?: ListPendingInvitationsForUser;
-    accept?: AcceptInvitationById;
-    onAccepted?: (workspaceId: string) => void;
-  } = {},
-) {
-  const listPendingInvitationsForUser: ListPendingInvitationsForUser =
-    overrides.list ??
-    jest.fn().mockResolvedValue({ status: 'ok', invitations: [makeInvitation()] });
-  const acceptInvitationById: AcceptInvitationById =
-    overrides.accept ??
-    jest.fn().mockResolvedValue({ status: 'ok', workspaceId: WORKSPACE, role: 'editor' });
-  const onAccepted = overrides.onAccepted ?? jest.fn();
-
-  render(
+function renderPanel(
+  overrides: Partial<Parameters<typeof PendingInvitationsPanel>[0]> = {},
+): ReturnType<typeof render> {
+  return render(
     <PendingInvitationsPanel
-      userId={USER_ID}
-      userEmail={USER_EMAIL}
-      userEmailVerified={USER_EMAIL_VERIFIED}
-      listPendingInvitationsForUser={listPendingInvitationsForUser}
-      acceptInvitationById={acceptInvitationById}
-      onAccepted={onAccepted}
+      status="ready"
+      invitations={[makeInvitation()]}
+      loadError={null}
+      actionError={null}
+      needsVerification={false}
+      verificationSent={false}
+      acceptingId={null}
+      onAccept={jest.fn()}
+      onRetry={jest.fn()}
+      onSendVerification={jest.fn()}
+      {...overrides}
     />,
   );
-
-  return { listPendingInvitationsForUser, acceptInvitationById, onAccepted };
 }
 
 describe('PendingInvitationsPanel', () => {
-  it('shows the invited workspace and role', async () => {
-    setup();
+  it('shows the invited workspace and role', () => {
+    renderPanel();
 
     expect(
-      await screen.findByRole('heading', { level: 2, name: 'Pending invitations' }),
+      screen.getByRole('heading', { level: 2, name: 'Pending invitations' }),
     ).toBeInTheDocument();
-    expect(await screen.findByText(/A workspace/)).toBeInTheDocument();
-    expect(await screen.findByText(/editor/i)).toBeInTheDocument();
+    expect(screen.getByText(/A workspace/)).toBeInTheDocument();
+    expect(screen.getByText(/editor/i)).toBeInTheDocument();
   });
 
-  it('accepts the invitation and reports the workspace id', async () => {
+  it('forwards the accept action for the selected invitation', async () => {
     const user = userEvent.setup();
-    const onAccepted = jest.fn();
-    const { acceptInvitationById } = setup({ onAccepted });
+    const onAccept = jest.fn();
+    renderPanel({ onAccept });
 
-    await user.click(await screen.findByRole('button', { name: 'Accept invitation' }));
+    await user.click(screen.getByRole('button', { name: 'Accept invitation' }));
 
-    await waitFor(() => {
-      expect(acceptInvitationById).toHaveBeenCalledWith({
-        invitationId: InvitationId.create('inv-1'),
-        userId: UserId.create(USER_ID),
-        userEmail: USER_EMAIL,
-        userEmailVerified: true,
-      });
-      expect(onAccepted).toHaveBeenCalledWith(WORKSPACE.value);
-    });
+    expect(onAccept).toHaveBeenCalledWith(expect.objectContaining({ role: 'editor' }));
   });
 
-  it('renders nothing when there are no pending invitations', async () => {
-    const { container } = render(
+  it('renders nothing while idle, loading or without invitations', () => {
+    const { container, rerender } = renderPanel({ status: 'loading' });
+    expect(container).toBeEmptyDOMElement();
+
+    rerender(
       <PendingInvitationsPanel
-        userId={USER_ID}
-        userEmail={USER_EMAIL}
-        userEmailVerified={USER_EMAIL_VERIFIED}
-        listPendingInvitationsForUser={jest.fn().mockResolvedValue({
-          status: 'ok',
-          invitations: [],
-        })}
-        acceptInvitationById={jest.fn()}
-        onAccepted={jest.fn()}
+        status="ready"
+        invitations={[]}
+        loadError={null}
+        actionError={null}
+        needsVerification={false}
+        verificationSent={false}
+        acceptingId={null}
+        onAccept={jest.fn()}
+        onRetry={jest.fn()}
+        onSendVerification={jest.fn()}
       />,
     );
-
-    await waitFor(() => {
-      expect(container).toBeEmptyDOMElement();
-    });
+    expect(container).toBeEmptyDOMElement();
   });
 
-  it('shows a retry action when loading invitations fails', async () => {
+  it('shows the load error and forwards retry', async () => {
     const user = userEvent.setup();
-    const listPendingInvitationsForUser = jest
-      .fn()
-      .mockResolvedValueOnce({
-        status: 'error',
-        error: createAppError(
-          'network',
-          ERROR_CODES.NETWORK_REQUEST_FAILED,
-          'The network connection was lost.',
-        ),
-      })
-      .mockResolvedValueOnce({ status: 'ok', invitations: [makeInvitation()] });
+    const onRetry = jest.fn();
+    renderPanel({ status: 'error', loadError: 'The network connection was lost.', onRetry });
 
-    render(
-      <PendingInvitationsPanel
-        userId={USER_ID}
-        userEmail={USER_EMAIL}
-        userEmailVerified={USER_EMAIL_VERIFIED}
-        listPendingInvitationsForUser={listPendingInvitationsForUser}
-        acceptInvitationById={jest.fn()}
-        onAccepted={jest.fn()}
-      />,
-    );
-
-    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('The network connection was lost.');
     await user.click(screen.getByRole('button', { name: 'Retry' }));
 
-    expect(
-      await screen.findByRole('heading', { level: 2, name: 'Pending invitations' }),
-    ).toBeInTheDocument();
-    expect(listPendingInvitationsForUser).toHaveBeenCalledTimes(2);
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the verification action when the email is not verified', async () => {
+    const user = userEvent.setup();
+    const onSendVerification = jest.fn();
+    renderPanel({ needsVerification: true, onSendVerification });
+
+    await user.click(screen.getByRole('button', { name: 'Resend verification email' }));
+
+    expect(onSendVerification).toHaveBeenCalledTimes(1);
   });
 });

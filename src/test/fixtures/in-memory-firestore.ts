@@ -71,8 +71,9 @@ export interface InMemoryFirestoreApi {
   where(field: string, op: '==', value: unknown): MockConstraint;
   onSnapshot(
     ref: MockRef | MockQuery,
-    options: { readonly includeMetadataChanges?: boolean },
-    onNext: (snapshot: MockRealtimeSnapshot) => void,
+    optionsOrNext:
+      { readonly includeMetadataChanges?: boolean } | ((snapshot: MockRealtimeSnapshot) => void),
+    onNextOrError?: ((snapshot: MockRealtimeSnapshot) => void) | ((error: unknown) => void),
     onError?: (error: unknown) => void,
   ): () => void;
   __reset(): void;
@@ -326,17 +327,26 @@ export function createInMemoryFirestoreModule(): InMemoryFirestoreApi {
 
     onSnapshot(
       ref: MockRef | MockQuery,
-      _options: { readonly includeMetadataChanges?: boolean },
-      onNext: (snapshot: MockRealtimeSnapshot) => void,
+      optionsOrNext:
+        { readonly includeMetadataChanges?: boolean } | ((snapshot: MockRealtimeSnapshot) => void),
+      onNextOrError?: ((snapshot: MockRealtimeSnapshot) => void) | ((error: unknown) => void),
       onError?: (error: unknown) => void,
     ): () => void {
+      const onNext =
+        typeof optionsOrNext === 'function'
+          ? optionsOrNext
+          : (onNextOrError as (snapshot: MockRealtimeSnapshot) => void);
+      const errorListener =
+        typeof optionsOrNext === 'function'
+          ? (onNextOrError as ((error: unknown) => void) | undefined)
+          : onError;
       const baseRef = ref.kind === 'query' ? ref.ref : ref;
       const constraints = ref.kind === 'query' ? ref.constraints : [];
       const listener: SnapshotListener = {
         ref: baseRef,
         constraints,
         onNext,
-        onError: onError ?? (() => undefined),
+        onError: errorListener ?? (() => undefined),
       };
       snapshotListeners.add(listener);
       onNext(buildInitialSnapshot(baseRef, constraints, initialSnapshotFromCache));

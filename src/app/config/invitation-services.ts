@@ -9,8 +9,10 @@ import {
 import {
   createListPendingInvitations,
   createListPendingInvitationsForUser,
+  createWatchPendingInvitationsForUser,
   type ListPendingInvitations,
   type ListPendingInvitationsForUser,
+  type WatchPendingInvitationsForUser,
 } from '../../application/queries';
 import type { InvitationRepository, MembershipRepository } from '../../application/ports';
 import { InvitationId } from '../../domain/shared';
@@ -26,6 +28,7 @@ export interface InvitationServices {
   readonly inviteMember: InviteMember;
   readonly listPendingInvitations: ListPendingInvitations;
   readonly listPendingInvitationsForUser: ListPendingInvitationsForUser;
+  readonly watchPendingInvitationsForUser: WatchPendingInvitationsForUser;
   readonly acceptInvitation: AcceptInvitation;
   readonly acceptInvitationById: AcceptInvitationById;
 }
@@ -43,6 +46,7 @@ export function createInvitationServices(): InvitationServices {
     }),
     listPendingInvitations: createListPendingInvitations(invitationRepository),
     listPendingInvitationsForUser: createListPendingInvitationsForUser(invitationRepository),
+    watchPendingInvitationsForUser: createWatchPendingInvitationsForUser(invitationRepository),
     acceptInvitation: createAcceptInvitation({
       invitationRepository,
       membershipRepository,

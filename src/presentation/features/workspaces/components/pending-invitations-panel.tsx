@@ -1,21 +1,9 @@
 import { Avatar, Button, Heading, Inline, Stack, Text } from '@raulrod/ui';
 import { Mail } from '@raulrod/icons';
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import styled from 'styled-components';
-import type {
-  AcceptInvitationById,
-  RefreshUser,
-  SendEmailVerification,
-} from '../../../../application/commands';
-import type { ListPendingInvitationsForUser } from '../../../../application/queries';
 import type { Invitation } from '../../../../domain/invitation';
-import { UserId } from '../../../../domain/shared';
-import { ERROR_CODES, toAppError } from '../../../../shared/errors';
-import { localizeMessage, useI18n } from '../../../i18n';
-import {
-  describeAcceptInvitationError,
-  describePendingInvitationsError,
-} from '../../invitations/invitation-error-messages';
+import { useI18n } from '../../../i18n';
 
 const Panel = styled.section`
   display: flex;
@@ -51,146 +39,33 @@ const InvitationIdentity = styled.div`
 `;
 
 export interface PendingInvitationsPanelProps {
-  readonly userId: string;
-  readonly userEmail: string | null;
-  readonly userEmailVerified: boolean;
-  readonly listPendingInvitationsForUser: ListPendingInvitationsForUser;
-  readonly acceptInvitationById: AcceptInvitationById;
-  readonly sendEmailVerification?: SendEmailVerification;
-  readonly refreshUser?: RefreshUser;
-  readonly onAccepted: (workspaceId: string) => void;
+  readonly status: 'idle' | 'loading' | 'ready' | 'error';
+  readonly invitations: readonly Invitation[];
+  readonly loadError: string | null;
+  readonly actionError: string | null;
+  readonly needsVerification: boolean;
+  readonly verificationSent: boolean;
+  readonly acceptingId: string | null;
+  readonly onAccept: (invitation: Invitation) => void;
+  readonly onRetry: () => void;
+  readonly onSendVerification: () => void;
 }
 
-type PanelStatus = 'idle' | 'loading' | 'ready' | 'error';
-
 export function PendingInvitationsPanel({
-  userId,
-  userEmail,
-  userEmailVerified,
-  listPendingInvitationsForUser,
-  acceptInvitationById,
-  sendEmailVerification,
-  refreshUser,
-  onAccepted,
+  status,
+  invitations,
+  loadError,
+  actionError,
+  needsVerification,
+  verificationSent,
+  acceptingId,
+  onAccept,
+  onRetry,
+  onSendVerification,
 }: PendingInvitationsPanelProps): ReactNode {
   const { t } = useI18n();
-  const [status, setStatus] = useState<PanelStatus>('idle');
-  const [invitations, setInvitations] = useState<readonly Invitation[]>([]);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
-  const [needsVerification, setNeedsVerification] = useState(!userEmailVerified);
-  const [verificationSent, setVerificationSent] = useState(false);
-  const [acceptingId, setAcceptingId] = useState<string | null>(null);
-  const [reloadToken, setReloadToken] = useState(0);
 
-  useEffect(() => {
-    if (userEmail === null) {
-      setInvitations([]);
-      setStatus('idle');
-      return;
-    }
-
-    let active = true;
-    setStatus('loading');
-    setLoadError(null);
-
-    void (async () => {
-      try {
-        const result = await listPendingInvitationsForUser(userEmail);
-        if (!active) {
-          return;
-        }
-        if (result.status !== 'ok') {
-          setLoadError(localizeMessage(t, describePendingInvitationsError(result.error)));
-          setStatus('error');
-          return;
-        }
-
-        setInvitations(result.invitations);
-        setStatus('ready');
-      } catch (error) {
-        if (!active) {
-          return;
-        }
-        setLoadError(localizeMessage(t, describePendingInvitationsError(toAppError(error))));
-        setStatus('error');
-      }
-    })();
-
-    return () => {
-      active = false;
-    };
-  }, [listPendingInvitationsForUser, reloadToken, userEmail]);
-
-  const handleAccept = useCallback(
-    async (invitation: Invitation): Promise<void> => {
-      if (userEmail === null || acceptingId !== null) {
-        return;
-      }
-
-      setAcceptingId(invitation.id.value);
-      setActionError(null);
-
-      try {
-        let verified = userEmailVerified;
-        if (refreshUser !== undefined) {
-          const refreshed = await refreshUser();
-          if (refreshed.status === 'ok') {
-            verified = refreshed.user.emailVerified;
-            setNeedsVerification(!verified);
-          }
-        }
-
-        const result = await acceptInvitationById({
-          invitationId: invitation.id,
-          userId: UserId.create(userId),
-          userEmail,
-          userEmailVerified: verified,
-        });
-
-        if (result.status === 'ok') {
-          onAccepted(result.workspaceId.value);
-          return;
-        }
-
-        if (result.status === 'error') {
-          setNeedsVerification(result.error.code === ERROR_CODES.INVITATION_EMAIL_NOT_VERIFIED);
-        }
-
-        setActionError(
-          result.status === 'invalid-input'
-            ? t('errors.invitationLinkInvalid')
-            : localizeMessage(t, describeAcceptInvitationError(result.error)),
-        );
-      } catch (error) {
-        setActionError(localizeMessage(t, describeAcceptInvitationError(toAppError(error))));
-      } finally {
-        setAcceptingId(null);
-      }
-    },
-    [
-      acceptInvitationById,
-      acceptingId,
-      onAccepted,
-      refreshUser,
-      userEmail,
-      userEmailVerified,
-      userId,
-    ],
-  );
-
-  const handleSendVerification = async (): Promise<void> => {
-    if (sendEmailVerification === undefined) {
-      return;
-    }
-    const result = await sendEmailVerification();
-    if (result.status === 'ok') {
-      setVerificationSent(true);
-      setActionError(null);
-    }
-  };
-
-  if (userEmail === null || status === 'idle' || status === 'loading') {
+  if (status === 'idle' || status === 'loading') {
     return null;
   }
 
@@ -201,11 +76,7 @@ export function PendingInvitationsPanel({
           {loadError ?? t('workspaces.pending.error')}
         </Text>
         <Inline>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => setReloadToken((token) => token + 1)}
-          >
+          <Button type="button" variant="secondary" onClick={onRetry}>
             {t('workspaces.pending.retry')}
           </Button>
         </Inline>
@@ -249,7 +120,7 @@ export function PendingInvitationsPanel({
               size="sm"
               loading={acceptingId === invitation.id.value}
               disabled={acceptingId !== null && acceptingId !== invitation.id.value}
-              onClick={() => void handleAccept(invitation)}
+              onClick={() => onAccept(invitation)}
             >
               {t('workspaces.pending.accept')}
             </Button>
@@ -261,14 +132,14 @@ export function PendingInvitationsPanel({
           {actionError}
         </Text>
       )}
-      {needsVerification && sendEmailVerification !== undefined ? (
+      {needsVerification ? (
         <Inline gap="space-2" align="center" wrap>
           {verificationSent ? (
             <Text role="status" color="color.text.success">
               {t('workspaces.pending.verificationSent')}
             </Text>
           ) : (
-            <Button type="button" variant="secondary" onClick={() => void handleSendVerification()}>
+            <Button type="button" variant="secondary" onClick={onSendVerification}>
               {t('workspaces.pending.resendVerification')}
             </Button>
           )}

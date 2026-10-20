@@ -32,6 +32,7 @@ import {
   createGetWorkspaceRole,
   createListPendingInvitations,
   createListPendingInvitationsForUser,
+  createWatchPendingInvitationsForUser,
   createListComments,
   createListWorkspaceComments,
   createListActiveGuestLinks,
@@ -194,6 +195,7 @@ export function createAppHarness(): AppHarness {
     }),
     listPendingInvitations: createListPendingInvitations(invitationRepository),
     listPendingInvitationsForUser: createListPendingInvitationsForUser(invitationRepository),
+    watchPendingInvitationsForUser: createWatchPendingInvitationsForUser(invitationRepository),
     acceptInvitation: createAcceptInvitation({
       invitationRepository,
       membershipRepository,

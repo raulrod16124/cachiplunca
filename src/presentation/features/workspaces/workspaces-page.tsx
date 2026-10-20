@@ -5,7 +5,6 @@ import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../providers/session-provider';
 import type {
-  AcceptInvitationById,
   CreateWorkspace,
   CreateWorkspaceInput,
   CreateWorkspaceResult,
@@ -14,14 +13,13 @@ import type {
   DuplicateWorkspace,
   LogoutUser,
   UpdateWorkspace,
-  RefreshUser,
-  SendEmailVerification,
 } from '../../../application/commands';
-import type { ListPendingInvitationsForUser, ListWorkspaces } from '../../../application/queries';
+import type { ListWorkspaces } from '../../../application/queries';
 import { UserId } from '../../../domain/shared';
 import { createAppError, ERROR_CODES } from '../../../shared/errors';
 import { useI18n } from '../../i18n';
 import { AppShell } from '../app-shell/app-shell';
+import { usePendingInvitations } from '../invitations';
 import { CreateWorkspaceDialog } from './components/create-workspace-dialog';
 import { PendingInvitationsPanel } from './components/pending-invitations-panel';
 import { WorkspacesCommandPalette } from './components/workspaces-command-palette';
@@ -60,10 +58,6 @@ export interface WorkspacesPageProps {
   readonly deleteWorkspace?: DeleteWorkspace;
   readonly duplicateWorkspace?: DuplicateWorkspace;
   readonly updateWorkspace?: UpdateWorkspace;
-  readonly listPendingInvitationsForUser?: ListPendingInvitationsForUser;
-  readonly acceptInvitationById?: AcceptInvitationById;
-  readonly sendEmailVerification?: SendEmailVerification;
-  readonly refreshUser?: RefreshUser;
 }
 
 export function WorkspacesPage({
@@ -73,14 +67,11 @@ export function WorkspacesPage({
   deleteWorkspace,
   duplicateWorkspace,
   updateWorkspace,
-  listPendingInvitationsForUser,
-  acceptInvitationById,
-  sendEmailVerification,
-  refreshUser,
 }: WorkspacesPageProps): ReactNode {
   const session = useSession();
   const navigate = useNavigate();
   const { t } = useI18n();
+  const pendingInvitations = usePendingInvitations();
   const [createOpen, setCreateOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [refreshToken, setRefreshToken] = useState(0);
@@ -118,6 +109,7 @@ export function WorkspacesPage({
       currentUser={currentUser}
       logoutUser={logoutUser}
       onCreateWorkspace={handleCreateWorkspace}
+      pendingInvitationCount={pendingInvitations.unreadCount}
     >
       <Main>
         <Header>
@@ -129,22 +121,20 @@ export function WorkspacesPage({
         </Header>
 
         <Stack gap="space-8">
-          {session.status === 'authenticated' &&
-            listPendingInvitationsForUser !== undefined &&
-            acceptInvitationById !== undefined && (
-              <Section id="pending-invitations">
-                <PendingInvitationsPanel
-                  userId={session.user.uid}
-                  userEmail={session.user.email}
-                  userEmailVerified={session.user.emailVerified}
-                  listPendingInvitationsForUser={listPendingInvitationsForUser}
-                  acceptInvitationById={acceptInvitationById}
-                  sendEmailVerification={sendEmailVerification}
-                  refreshUser={refreshUser}
-                  onAccepted={(workspaceId) => navigate(`/workspaces/${workspaceId}`)}
-                />
-              </Section>
-            )}
+          <Section id="pending-invitations">
+            <PendingInvitationsPanel
+              status={pendingInvitations.status}
+              invitations={pendingInvitations.invitations}
+              loadError={pendingInvitations.loadError}
+              actionError={pendingInvitations.actionError}
+              needsVerification={pendingInvitations.needsVerification}
+              verificationSent={pendingInvitations.verificationSent}
+              acceptingId={pendingInvitations.acceptingId}
+              onAccept={pendingInvitations.accept}
+              onRetry={pendingInvitations.retry}
+              onSendVerification={pendingInvitations.sendVerification}
+            />
+          </Section>
           <Section id="workspaces">
             {session.status === 'authenticated' && (
               <WorkspacesListContainer

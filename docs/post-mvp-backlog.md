@@ -103,7 +103,7 @@ Definition of Done:
 | PBL-015 | Imágenes                                     | R3      | P1        | L        | PBL-001        | No  | DONE   |
 | PBL-016 | Enlace guest de solo lectura                 | R3      | P1        | L        | PBL-001        | No  | DONE   |
 | PBL-017 | Vista presentación por frames                | R3      | P2        | M        | PBL-009        | No  | DONE   |
-| PBL-018 | Notificaciones in-app                        | R3      | P2        | S        | —              | Sí  | TODO   |
+| PBL-018 | Notificaciones in-app                        | R3      | P2        | S        | —              | Sí  | DONE   |
 
 Leyenda de releases:
 
@@ -780,7 +780,7 @@ Convertir el tablero en un entregable narrable sin exportarlo.
 
 ### PBL-018 — Notificaciones in-app
 
-**Priority:** P2 · **Effort:** S · **Depends:** — · **Status:** TODO · **Quick win**
+**Priority:** P2 · **Effort:** S · **Depends:** — · **Status:** DONE · **Quick win**
 
 #### Objetivo
 
@@ -795,11 +795,11 @@ Cerrar el bucle de invitaciones sin introducir email ni backend nuevo.
 
 #### Criterios de aceptación
 
-- [ ] El badge refleja las invitaciones pendientes del email autenticado.
-- [ ] Aceptar actualiza el badge y la lista.
-- [ ] No se muestran datos de invitaciones de otros usuarios.
-- [ ] Es accesible y tiene textos i18n.
-- [ ] Tests de integración del badge y del aviso.
+- [x] El badge refleja las invitaciones pendientes del email autenticado.
+- [x] Aceptar actualiza el badge y la lista.
+- [x] No se muestran datos de invitaciones de otros usuarios.
+- [x] Es accesible y tiene textos i18n.
+- [x] Tests de integración del badge y del aviso.
 
 #### Fuera de alcance
 
@@ -810,6 +810,7 @@ Cerrar el bucle de invitaciones sin introducir email ni backend nuevo.
 
 - Reutilizar `ListPendingInvitationsForUser` y la lista de pendientes existente.
 - No añadir persistencia nueva.
+- Implementado con `watchPendingByEmail` en `InvitationRepository` (`onSnapshot` filtrando por email y estado), query `watchPendingInvitationsForUser` y `PendingInvitationsProvider` dentro de `RequireAuth`. El badge del sidebar cuenta pendientes no descartadas en la sesión; `InvitationNotice` muestra la nueva invitación con aceptar/descartar y el panel sigue listando todos los pendientes. Aceptar reutiliza `AcceptInvitationById` y navega al workspace. Sin cambios en rules ni persistencia; i18n en/es, unit, contrato, integración y E2E.
 
 ---
 
@@ -839,6 +840,7 @@ Añadir una línea por sesión. El detalle técnico extenso sigue viviendo en `d
 | 2026-10-20 | PBL-015 | DONE | Imágenes: `ImageElement` con `src`/`alt`, puerto y caso de uso de subida con validación de tipo y 5 MB, adapter Firebase Storage, `storage.rules` por membership y validación en `firestore.rules`, renderer, selector en toolbar, editor de descripción, búsqueda/export, i18n en/es, unit, integración, rules y E2E. |
 | 2026-10-20 | PBL-016 | DONE | Enlace guest de solo lectura: `GuestLink` hasheado (SHA-256) con token de un solo uso, sesión anónima de Firebase, `guest_links` + `guest_sessions`, lectura guest de workspace/elementos/imágenes en rules, `/view/:token` read-only aislado, share dialog owner-only con crear/copiar/revocar, estados inválido/revocado, i18n en/es, unit, integración, rules y E2E. |
 | 2026-10-20 | PBL-017 | DONE | Presentación por frames: `selectPresentationFrames` puro, acción Present en la top bar, reencuadre con `CanvasViewportStore.fit`, modo local sin persistencia que oculta top bar/toolbar/selección/cursores y bloquea edición; controles accesibles, flechas/PageUp/PageDown, `Escape`, contador y retorno de foco; i18n en/es, unit, integración y E2E. |
+| 2026-10-20 | PBL-018 | DONE | Notificaciones in-app: suscripción realtime `watchPendingByEmail` (`onSnapshot` por email/estado), badge de no leídas en el sidebar, `InvitationNotice` global con aceptar/descartar, descarte local de sesión, aceptación reutilizando `AcceptInvitationById`, i18n en/es, unit, contrato, integración y E2E. |
 
 ---
 

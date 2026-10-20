@@ -1,10 +1,12 @@
-import type { InvitationRepository } from '../../application/ports';
+import type { InvitationRepository, PendingInvitationsListener } from '../../application/ports';
 import type { Invitation, InvitationStatus } from '../../domain/invitation';
 import type { InvitationId, WorkspaceId } from '../../domain/shared';
 import { createAppError, ERROR_CODES, isAppError, type AppError } from '../../shared/errors';
+import type { Unsubscribe } from '../../shared/types';
 
 export class FakeInvitationRepository implements InvitationRepository {
   #invitations = new Map<string, Invitation>();
+  #watchers = new Map<string, Set<PendingInvitationsListener>>();
 
   async create(invitation: Invitation): Promise<Invitation> {
     const id = invitation.id.value;
@@ -20,6 +22,9 @@ export class FakeInvitationRepository implements InvitationRepository {
     }
 
     this.#invitations.set(id, invitation);
+    if (invitation.isPending()) {
+      this.#notify(invitation.email);
+    }
     return invitation;
   }
 
@@ -54,6 +59,29 @@ export class FakeInvitationRepository implements InvitationRepository {
     );
   }
 
+  watchPendingByEmail(email: string, listener: PendingInvitationsListener): Unsubscribe {
+    const normalized = email.trim().toLowerCase();
+    if (normalized.length === 0) {
+      listener([]);
+      return () => undefined;
+    }
+
+    let listeners = this.#watchers.get(normalized);
+    if (listeners === undefined) {
+      listeners = new Set();
+      this.#watchers.set(normalized, listeners);
+    }
+    listeners.add(listener);
+    listener(this.#pendingFor(normalized));
+
+    return () => {
+      listeners.delete(listener);
+      if (listeners.size === 0) {
+        this.#watchers.delete(normalized);
+      }
+    };
+  }
+
   async updateStatus(id: InvitationId, status: InvitationStatus): Promise<Invitation> {
     const current = this.#invitations.get(id.value);
     if (current === undefined) {
@@ -71,7 +99,27 @@ export class FakeInvitationRepository implements InvitationRepository {
     });
 
     this.#invitations.set(id.value, updated);
+    this.#notify(current.email);
     return updated;
+  }
+
+  #pendingFor(email: string): Invitation[] {
+    return [...this.#invitations.values()].filter(
+      (invitation) => invitation.isPending() && invitation.isForEmail(email),
+    );
+  }
+
+  #notify(email: string): void {
+    const normalized = email.trim().toLowerCase();
+    const listeners = this.#watchers.get(normalized);
+    if (listeners === undefined) {
+      return;
+    }
+
+    const pending = this.#pendingFor(normalized);
+    for (const listener of listeners) {
+      listener(pending);
+    }
   }
 
   #hasPending(workspaceId: WorkspaceId, email: string): boolean {

@@ -9,3 +9,4 @@ export * from './list-pending-invitations-for-user';
 export * from './list-workspace-members';
 export * from './list-workspaces';
 export * from './load-workspace-elements';
+export * from './watch-pending-invitations-for-user';
