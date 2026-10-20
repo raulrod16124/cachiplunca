@@ -418,6 +418,49 @@ describe('WorkspaceShellContainer', () => {
     });
   });
 
+  it('persists alignment and restores the previous positions on undo', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const repository = new FakeElementRepository();
+    const second = createTextElement({
+      id: ElementId.create('el-2'),
+      workspaceId: WorkspaceId.create('ws-test'),
+      createdBy: UserId.create('user-1'),
+      position: Position.create(300, 200),
+      size: Size.create(120, 80),
+      content: 'Second',
+      createdAt: new Date('2024-01-01T00:00:00.000Z'),
+    });
+    await repository.save(TEXT_ELEMENT);
+    await repository.save(second);
+    const orchestrator = createElementPersistenceOrchestrator(createElementPersistence(repository));
+    const user = userEvent.setup();
+
+    renderContainer(getWorkspace, {
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [TEXT_ELEMENT, second],
+      }),
+      elementPersistenceOrchestrator: orchestrator,
+      selectionStore: createSelectionStore(['el-1', 'el-2']),
+    });
+
+    const canvas = await screen.findByRole('application', { name: 'Canvas' });
+    await user.click(await screen.findByRole('button', { name: 'Align and distribute' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Align left' }));
+
+    await waitFor(async () => {
+      const stored = await repository.listByWorkspace(WorkspaceId.create('ws-test'));
+      expect(stored.find((element) => element.id.value === 'el-2')?.position.x).toBe(30);
+    });
+
+    fireEvent.keyDown(canvas, { key: 'z', ctrlKey: true });
+
+    await waitFor(async () => {
+      const restored = await repository.listByWorkspace(WorkspaceId.create('ws-test'));
+      expect(restored.find((element) => element.id.value === 'el-2')?.position.x).toBe(300);
+    });
+  });
+
   it('surfaces a persistence error explicitly', async () => {
     const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
     const orchestrator: ElementPersistenceOrchestrator = {

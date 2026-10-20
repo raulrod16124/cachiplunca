@@ -69,6 +69,8 @@ function renderCanvas(
   onTransformEnd?: () => void,
   onReorderElements?: (next: readonly Element[]) => void,
   onUpdateElement?: (input: UpdateElementInput) => void,
+  onAlignElements?: (next: readonly Element[]) => void,
+  onDistributeElements?: (next: readonly Element[]) => void,
 ) {
   const store = createCanvasViewportStore(Size.create(800, 600));
   const selectionStore = createSelectionStore();
@@ -90,6 +92,38 @@ function renderCanvas(
       onTransformEnd={onTransformEnd}
       onReorderElements={onReorderElements}
       onUpdateElement={onUpdateElement}
+      onAlignElements={onAlignElements}
+      onDistributeElements={onDistributeElements}
+    />,
+  );
+
+  return { store, selectionStore };
+}
+
+interface ArrangeCanvasOptions {
+  readonly elements: readonly Element[];
+  readonly onAlignElements?: (next: readonly Element[]) => void;
+  readonly onDistributeElements?: (next: readonly Element[]) => void;
+  readonly readOnly?: boolean;
+}
+
+function renderArrangeCanvas({
+  elements,
+  onAlignElements,
+  onDistributeElements,
+  readOnly = false,
+}: ArrangeCanvasOptions) {
+  const store = createCanvasViewportStore(Size.create(800, 600));
+  const selectionStore = createSelectionStore();
+
+  render(
+    <Canvas
+      store={store}
+      selectionStore={selectionStore}
+      elements={elements}
+      onAlignElements={onAlignElements}
+      onDistributeElements={onDistributeElements}
+      readOnly={readOnly}
     />,
   );
 
@@ -134,6 +168,8 @@ function sequentialIds(): () => ElementId {
 const FIRST_ITEM = createElement('first', 100, 100, 120, 80);
 
 const SECOND_ITEM = createElement('second', 300, 200, 100, 100);
+
+const THIRD_ITEM = createElement('third', 700, 400, 80, 60);
 
 function createTask(
   id: string,
@@ -804,6 +840,97 @@ describe('Canvas', () => {
       expect(calls.at(-1)?.[0]?.position.equals(Position.create(130, 130))).toBe(true);
       expect(calls.at(-1)?.[1]?.position.equals(Position.create(330, 230))).toBe(true);
       expect(selectionStore.getSnapshot().selectedIds).toEqual(['first', 'second']);
+    });
+  });
+
+  describe('alignment and distribution', () => {
+    it('aligns the selected items from the toolbar', async () => {
+      const onAlignElements = jest.fn();
+      const user = userEvent.setup();
+      const { selectionStore } = renderArrangeCanvas({
+        elements: [FIRST_ITEM, SECOND_ITEM],
+        onAlignElements,
+      });
+
+      act(() => selectionStore.selectMany(['first', 'second']));
+      await user.click(screen.getByRole('button', { name: 'Align and distribute' }));
+      await user.click(screen.getByRole('menuitem', { name: 'Align left' }));
+
+      expect(onAlignElements).toHaveBeenCalledTimes(1);
+      const arranged: readonly Element[] = onAlignElements.mock.calls[0][0];
+      expect(arranged.map((element) => element.position.x)).toEqual([100, 100]);
+      expect(arranged.map((element) => element.position.y)).toEqual([100, 200]);
+      expect(arranged.map((element) => element.size.width)).toEqual([120, 100]);
+    });
+
+    it('distributes the selected items from the toolbar', async () => {
+      const onDistributeElements = jest.fn();
+      const user = userEvent.setup();
+      const { selectionStore } = renderArrangeCanvas({
+        elements: [FIRST_ITEM, SECOND_ITEM, THIRD_ITEM],
+        onAlignElements: jest.fn(),
+        onDistributeElements,
+      });
+
+      act(() => selectionStore.selectMany(['first', 'second', 'third']));
+      await user.click(screen.getByRole('button', { name: 'Align and distribute' }));
+      await user.click(screen.getByRole('menuitem', { name: 'Distribute horizontally' }));
+
+      expect(onDistributeElements).toHaveBeenCalledTimes(1);
+      const distributed: readonly Element[] = onDistributeElements.mock.calls[0][0];
+      expect(distributed.map((element) => element.position.x)).toEqual([100, 410, 700]);
+    });
+
+    it('only enables distribution with three selected items', async () => {
+      const user = userEvent.setup();
+      const { selectionStore } = renderArrangeCanvas({
+        elements: [FIRST_ITEM, SECOND_ITEM, THIRD_ITEM],
+        onAlignElements: jest.fn(),
+        onDistributeElements: jest.fn(),
+      });
+
+      act(() => selectionStore.selectMany(['first', 'second']));
+      await user.click(screen.getByRole('button', { name: 'Align and distribute' }));
+
+      expect(screen.getByRole('menuitem', { name: 'Distribute horizontally' })).toHaveAttribute(
+        'aria-disabled',
+        'true',
+      );
+    });
+
+    it('disables arrangement in read-only mode', () => {
+      const { selectionStore } = renderArrangeCanvas({
+        elements: [FIRST_ITEM, SECOND_ITEM],
+        onAlignElements: jest.fn(),
+        onDistributeElements: jest.fn(),
+        readOnly: true,
+      });
+
+      act(() => selectionStore.selectMany(['first', 'second']));
+
+      expect(screen.getByRole('button', { name: 'Align and distribute' })).toBeDisabled();
+    });
+
+    it('ignores connectors when deciding whether arrangement is available', async () => {
+      const user = userEvent.setup();
+      const connector = createConnectorElement({
+        id: ElementId.create('connector'),
+        workspaceId: WorkspaceId.create('ws-1'),
+        createdBy: UserId.create('user-1'),
+        position: Position.create(100, 100),
+        size: Size.create(100, 40),
+        sourcePoint: Position.create(0, 0),
+        targetPoint: Position.create(100, 40),
+      });
+      const { selectionStore } = renderArrangeCanvas({
+        elements: [FIRST_ITEM, connector],
+        onAlignElements: jest.fn(),
+      });
+
+      act(() => selectionStore.selectMany(['first', 'connector']));
+      await user.click(screen.getByRole('button', { name: 'Align and distribute' }));
+
+      expect(screen.getByRole('button', { name: 'Align and distribute' })).toBeDisabled();
     });
   });
 

@@ -97,7 +97,7 @@ Definition of Done:
 | PBL-009 | Vista Plan de tareas                         | R2      | P0        | M        | —              | No  | DONE   |
 | PBL-010 | Crear tarea desde nota o frame               | R2      | P1        | S        | PBL-009        | Sí  | DONE   |
 | PBL-011 | Kanban del plan                              | R2      | P2        | M        | PBL-009        | No  | DONE   |
-| PBL-012 | Alineación y distribución                    | R2      | P1        | M        | —              | No  | TODO   |
+| PBL-012 | Alineación y distribución                    | R2      | P1        | M        | —              | No  | DONE   |
 | PBL-013 | Comentarios MVP                              | R2      | P0        | L        | PBL-001        | No  | TODO   |
 | PBL-014 | Temporizador de sesión local                 | R3      | P2        | S        | —              | Sí  | TODO   |
 | PBL-015 | Imágenes                                     | R3      | P1        | L        | PBL-001        | No  | TODO   |
@@ -549,7 +549,7 @@ Ofrecer una lectura por estado del plan ya existente.
 
 ### PBL-012 — Alineación y distribución
 
-**Priority:** P1 · **Effort:** M · **Depends:** — · **Status:** TODO
+**Priority:** P1 · **Effort:** M · **Depends:** — · **Status:** DONE
 
 #### Objetivo
 
@@ -565,11 +565,11 @@ Acelerar la organización visual con operaciones geométricas predecibles.
 
 #### Criterios de aceptación
 
-- [ ] Las operaciones son puras y están cubiertas por tests con casos límite.
-- [ ] Solo cambian posiciones, nunca tamaños.
-- [ ] Undo/redo restauran el estado anterior.
-- [ ] Las acciones son accesibles con teclado.
-- [ ] No se introducen dependencias nuevas.
+- [x] Las operaciones son puras y están cubiertas por tests con casos límite.
+- [x] Solo cambian posiciones, nunca tamaños.
+- [x] Undo/redo restauran el estado anterior.
+- [x] Las acciones son accesibles con teclado.
+- [x] No se introducen dependencias nuevas.
 
 #### Fuera de alcance
 
@@ -580,6 +580,7 @@ Acelerar la organización visual con operaciones geométricas predecibles.
 
 - Función pura en Application que reciba `Element[]` y devuelva posiciones/elementos actualizados.
 - Reutilizar el comando de movimiento y el patrón de historial existente.
+- Implementado con `alignElements`/`distributeElements` en `src/application/services/element-alignment.ts`; los conectores se excluyen, la distribución usa huecos iguales entre bordes y el contenedor persiste con `commitElements` para un único paso de historial. UI en el desplegable “Alinear y distribuir” de la toolbar. Ver ADR-0038.
 
 ---
 
@@ -825,6 +826,7 @@ Añadir una línea por sesión. El detalle técnico extenso sigue viviendo en `d
 | 2026-10-20 | PBL-009 | DONE      | Vista Plan de tareas derivada de `elements`: selector puro `selectTaskPlan`, panel lateral con filtros por estado y “Mis tareas”, selección/centrado vía `focusElement`, cambio de estado con `UpdateElement`, solo lectura, empty states, i18n en/es, unit, integración y E2E.                                  |
 | 2026-10-20 | PBL-010 | DONE      | Crear tarea desde nota o frame: extracción pura de texto plano y posición desplazada en Application; acción accesible en el menú contextual, deshabilitada sin texto y oculta en solo lectura; título truncado con notas completas, selección de la tarea nueva, undo/redo, i18n en/es, unit, integración y E2E. |
 | 2026-10-20 | PBL-011 | DONE      | Kanban del plan: `selectTaskPlanBoard` con columna por estado y `selectTaskPlan` derivado; toggle Lista/Board con `Tabs`, contadores, empty states por columna, cambio de estado accesible reutilizando `UpdateElement`, solo lectura, i18n en/es, unit, integración y E2E.                                      |
+| 2026-10-20 | PBL-012 | DONE      | Alineación y distribución: `alignElements`/`distributeElements` puros con huecos iguales, conectores excluidos y no-op sin historial; desplegable accesible en la toolbar, persistencia con `commitElements`, undo/redo en un paso, solo lectura, i18n en/es, unit, integración y E2E.                           |
 
 ---
 

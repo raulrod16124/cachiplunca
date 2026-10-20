@@ -22,18 +22,22 @@ import {
 } from '../../../domain/element';
 import type { ElementId } from '../../../domain/shared';
 import type {
+  AlignmentMode,
   CanvasViewportStore,
   CommandHistory,
   ConnectorGeometry,
+  DistributionAxis,
   RemoteCursor,
   SelectionStore,
 } from '../../../application/services';
 import type { UpdateElementInput } from '../../../application/commands';
 import { createResizeElement } from '../../../application/commands';
 import {
+  alignElements,
   bringElementsToFront,
   connectorCandidateIds,
   deleteElements,
+  distributeElements,
   findSelectableAt,
   getVisibleElementIds,
   parseTaskDueDateInput,
@@ -188,6 +192,8 @@ export interface CanvasProps {
   readonly renderers?: ElementRendererRegistry;
   readonly onMoveElements?: (elements: readonly Element[]) => void;
   readonly onResizeElements?: (elements: readonly Element[]) => void;
+  readonly onAlignElements?: (elements: readonly Element[]) => void;
+  readonly onDistributeElements?: (elements: readonly Element[]) => void;
   readonly onTransformEnd?: () => void;
   readonly onDeleteElements?: (elements: readonly Element[]) => void;
   readonly onDuplicateElements?: (
@@ -229,6 +235,8 @@ export function Canvas({
   renderers,
   onMoveElements,
   onResizeElements,
+  onAlignElements,
+  onDistributeElements,
   onTransformEnd,
   onDeleteElements,
   onDuplicateElements,
@@ -719,6 +727,44 @@ export function Canvas({
     handleClear();
   }, [elements, selection.selectedIds, onDeleteElements, handleClear]);
 
+  const arrangeableSelectedIds = useMemo(() => {
+    const selected = new Set(selection.selectedIds);
+
+    return elements
+      .filter((element) => selected.has(element.id.value) && !isConnectorElement(element))
+      .map((element) => element.id.value);
+  }, [elements, selection.selectedIds]);
+
+  const handleAlignSelection = useCallback(
+    (mode: AlignmentMode): void => {
+      if (readOnly || onAlignElements === undefined) {
+        return;
+      }
+
+      const result = alignElements(elements, arrangeableSelectedIds, mode);
+
+      if (result.status === 'ok') {
+        onAlignElements(result.elements);
+      }
+    },
+    [readOnly, onAlignElements, elements, arrangeableSelectedIds],
+  );
+
+  const handleDistributeSelection = useCallback(
+    (axis: DistributionAxis): void => {
+      if (readOnly || onDistributeElements === undefined) {
+        return;
+      }
+
+      const result = distributeElements(elements, arrangeableSelectedIds, axis);
+
+      if (result.status === 'ok') {
+        onDistributeElements(result.elements);
+      }
+    },
+    [readOnly, onDistributeElements, elements, arrangeableSelectedIds],
+  );
+
   const handleFitView = useCallback((): void => {
     const bounds = items.reduce<Bounds | null>(
       (accumulator, item) => (accumulator === null ? item.bounds : accumulator.union(item.bounds)),
@@ -1097,6 +1143,9 @@ export function Canvas({
   const canRedo =
     !readOnly && history !== undefined && onRedoElements !== undefined && history.canRedo();
   const hasSelection = !readOnly && selection.selectedIds.length > 0;
+  const canAlign = !readOnly && onAlignElements !== undefined && arrangeableSelectedIds.length >= 2;
+  const canDistribute =
+    !readOnly && onDistributeElements !== undefined && arrangeableSelectedIds.length >= 3;
   const canCreateConnector =
     canCreateElement &&
     onCreateConnector !== undefined &&
@@ -1221,10 +1270,14 @@ export function Canvas({
         onCreateConnector={handleCreateConnector}
         onDeleteSelection={handleToolbarDelete}
         onFitView={handleFitView}
+        onAlign={onAlignElements === undefined ? undefined : handleAlignSelection}
+        onDistribute={onDistributeElements === undefined ? undefined : handleDistributeSelection}
         canCreate={canCreateElement}
         canCreateFreeConnector={canCreateElement && onCreateConnector !== undefined}
         hasSelection={hasSelection}
         canCreateConnector={canCreateConnector}
+        canAlign={canAlign}
+        canDistribute={canDistribute}
       />
       <TaskFormDialog
         open={taskForm !== null}

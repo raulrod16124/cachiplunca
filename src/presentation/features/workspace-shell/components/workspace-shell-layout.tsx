@@ -82,6 +82,8 @@ export interface WorkspaceShellLayoutProps {
   readonly commandHistory: CommandHistory<readonly Element[]>;
   readonly onMoveElements: (elements: readonly Element[]) => void;
   readonly onResizeElements: (elements: readonly Element[]) => void;
+  readonly onAlignElements?: (elements: readonly Element[]) => void;
+  readonly onDistributeElements?: (elements: readonly Element[]) => void;
   readonly onTransformEnd: () => void;
   readonly onDeleteElements: (elements: readonly Element[]) => void;
   readonly onDuplicateElements: (
@@ -132,6 +134,8 @@ export function WorkspaceShellLayout({
   commandHistory,
   onMoveElements,
   onResizeElements,
+  onAlignElements,
+  onDistributeElements,
   onTransformEnd,
   onDeleteElements,
   onDuplicateElements,
@@ -272,6 +276,8 @@ export function WorkspaceShellLayout({
             history={commandHistory}
             onMoveElements={onMoveElements}
             onResizeElements={onResizeElements}
+            onAlignElements={onAlignElements}
+            onDistributeElements={onDistributeElements}
             onTransformEnd={onTransformEnd}
             onDeleteElements={onDeleteElements}
             onDuplicateElements={onDuplicateElements}

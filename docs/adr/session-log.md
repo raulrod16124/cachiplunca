@@ -1,5 +1,15 @@
 # Session Log
 
+## 2026-10-20 — PBL-012 Alineación y distribución
+
+- Siguiente tarea del backlog: PBL-012 (R2, P1, M, sin dependencias). Sin IN PROGRESS ni BLOCKED; rama `development` limpia al iniciar.
+- Application: `alignElements` y `distributeElements` puros en `element-alignment.ts`; seis modos de alineación sobre el bounding box de la selección y distribución por huecos iguales con primero/último fijos. Excluyen conectores, exigen 2/3 elementos, usan `createMoveElement` con reloj inyectable y devuelven la misma referencia cuando no hay cambios.
+- Presentation: desplegable “Alinear y distribuir” en `CanvasToolbar` con `DropdownMenu`, 6 alineaciones, 2 distribuciones, estados deshabilitados por número de elementos, solo lectura y etiquetas i18n. `Canvas` calcula los ids elegibles y notifica `onAlignElements`/`onDistributeElements`.
+- Persistencia: el contenedor guarda con `commitElements(next, 'Align elements' | 'Distribute elements')`, heredando historial, undo/redo en un paso, persistencia optimista, flush y reconciliación remota.
+- Tests: unit del servicio puro (modos, huecos, solapamiento, conectores, umbrales, no-op, `updatedAt`, no mutación), toolbar (acciones, deshabilitados, ausencia sin handlers), `Canvas` (alinear, distribuir, umbral, solo lectura, conectores) e integración de persistencia + undo. E2E `14-alignment` con distribución, alineación, undo/redo y persistencia tras recarga.
+- Docs: PBL-012 → DONE (criterios [x]), ADR-0038 y este registro.
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` (245 suites / 2796 tests) y `npm run build` en verde. E2E `14-alignment` ejecutado con emuladores (JAVA_HOME a JDK 23) en verde.
+
 ## 2026-10-20 — PBL-011 Kanban del plan
 
 - Siguiente tarea del backlog: PBL-011 (R2, P2, M, depende de PBL-009 DONE). Sin IN PROGRESS ni BLOCKED; rama `development` limpia al iniciar.
