@@ -11,7 +11,7 @@ import {
   useSyncExternalStore,
 } from 'react';
 import styled from 'styled-components';
-import { Bounds, Grid, Position, Size } from '../../../domain/shared';
+import { Bounds, Grid, Position, Size, UserId } from '../../../domain/shared';
 import type { Element, ElementType } from '../../../domain/element';
 import {
   isConnectorElement,
@@ -35,8 +35,10 @@ import {
   deleteElements,
   findSelectableAt,
   getVisibleElementIds,
+  parseTaskDueDateInput,
   resolveConnectorGeometry,
   sendElementsToBack,
+  taskDueDateInputValue,
   toSelectableItems,
 } from '../../../application/services';
 import { describeBoard, describeElement } from '../accessibility';
@@ -72,7 +74,7 @@ import { ElementContextMenu } from './element-context-menu';
 import { ElementEditorOverlay } from './element-editor-overlay';
 import { RemoteCursorsOverlay } from './remote-cursors-overlay';
 import { SelectionOverlay } from './selection-overlay';
-import { TaskFormDialog, type TaskFormValues } from './task-form-dialog';
+import { TaskFormDialog, type TaskAssigneeOption, type TaskFormValues } from './task-form-dialog';
 import { ViewportControls } from './viewport-controls';
 import {
   getEditableRichTextTarget,
@@ -199,6 +201,7 @@ export interface CanvasProps {
   readonly onCreateElement?: (type: ElementType) => ElementId | void;
   readonly onCreateConnector?: (mode: 'free' | 'bound') => ElementId | void;
   readonly onCreateTask?: (values: TaskFormValues) => ElementId | void;
+  readonly assignees?: readonly TaskAssigneeOption[];
   readonly onUpdateConnectorEndpoint?: (input: ConnectorEndpointDragInput) => void;
   readonly onUpdateElement?: (input: UpdateElementInput) => void;
   readonly remoteCursors?: readonly RemoteCursor[];
@@ -235,6 +238,7 @@ export function Canvas({
   onCreateElement,
   onCreateConnector,
   onCreateTask,
+  assignees = [],
   onUpdateElement,
   onUpdateConnectorEndpoint,
   remoteCursors = [],
@@ -275,6 +279,10 @@ export function Canvas({
   const elementsById = useMemo(
     () => new Map(elements.map((element) => [element.id.value, element])),
     [elements],
+  );
+  const assigneeLabels = useMemo(
+    () => new Map(assignees.map((assignee) => [assignee.userId, assignee.label])),
+    [assignees],
   );
   const connectorGeometries = useMemo(() => {
     const geometries = new Map<string, ConnectorGeometry>();
@@ -524,6 +532,8 @@ export function Canvas({
       status: editingTaskElement.status,
       notes:
         editingTaskElement.notes === undefined ? '' : richTextToPlain(editingTaskElement.notes),
+      assigneeId: editingTaskElement.assigneeId?.value ?? '',
+      dueDate: taskDueDateInputValue(editingTaskElement.dueDate),
     };
   }, [taskForm, editingTaskElement]);
 
@@ -894,12 +904,26 @@ export function Canvas({
 
       const currentTitle = richTextToPlain(element.title);
       const currentNotes = element.notes === undefined ? '' : richTextToPlain(element.notes);
+      const currentAssigneeId = element.assigneeId?.value ?? '';
+      const currentDueDate = taskDueDateInputValue(element.dueDate);
       const titleChanged = currentTitle !== values.title;
       const statusChanged = element.status !== values.status;
       const notesChanged = currentNotes !== values.notes;
+      const assigneeChanged = currentAssigneeId !== values.assigneeId;
+      const dueDateChanged = currentDueDate !== values.dueDate;
 
-      if (!titleChanged && !statusChanged && !notesChanged) {
+      if (!titleChanged && !statusChanged && !notesChanged && !assigneeChanged && !dueDateChanged) {
         return;
+      }
+
+      let dueDate: Date | null = null;
+
+      if (dueDateChanged && values.dueDate !== '') {
+        try {
+          dueDate = parseTaskDueDateInput(values.dueDate) ?? null;
+        } catch {
+          return;
+        }
       }
 
       onUpdateElement({
@@ -908,6 +932,10 @@ export function Canvas({
         ...(titleChanged ? { title: values.title } : {}),
         ...(statusChanged ? { status: values.status } : {}),
         ...(notesChanged ? { notes: values.notes === '' ? null : values.notes } : {}),
+        ...(assigneeChanged
+          ? { assigneeId: values.assigneeId === '' ? null : UserId.create(values.assigneeId) }
+          : {}),
+        ...(dueDateChanged ? { dueDate } : {}),
       });
     },
     [taskForm, elements, onCreateTask, onUpdateElement],
@@ -1107,6 +1135,11 @@ export function Canvas({
               ariaLabel={ariaLabels.get(element.id.value)}
               connectorStart={geometry?.start}
               connectorEnd={geometry?.end}
+              assigneeLabel={
+                element.type === 'task' && element.assigneeId !== undefined
+                  ? assigneeLabels.get(element.assigneeId.value)
+                  : undefined
+              }
               onUpdateElement={readOnly ? undefined : onUpdateElement}
               onResizeElement={readOnly ? undefined : handleResizeElement}
             />
@@ -1173,6 +1206,7 @@ export function Canvas({
         open={taskForm !== null}
         mode={taskForm?.mode ?? 'create'}
         initialValues={taskFormInitialValues}
+        assignees={assignees}
         onOpenChange={(open) => {
           if (!open) {
             setTaskForm(null);

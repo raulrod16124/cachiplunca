@@ -1,4 +1,4 @@
-import { formatRelativeDate } from '../../../../presentation/i18n/format';
+import { formatCalendarDate, formatRelativeDate } from '../../../../presentation/i18n/format';
 import {
   localizeMessage,
   resolveLocale,
@@ -37,5 +37,10 @@ describe('i18n', () => {
     const now = new Date('2026-10-19T12:00:00Z');
     expect(formatRelativeDate(new Date('2026-10-19T11:58:00Z'), 'en', now)).toBe('2 minutes ago');
     expect(formatRelativeDate(new Date('2026-10-14T12:00:00Z'), 'es', now)).toBe('hace 5 días');
+  });
+
+  it('formats calendar dates without shifting the UTC day', () => {
+    expect(formatCalendarDate(new Date('2026-03-15T00:00:00.000Z'), 'en')).toBe('Mar 15, 2026');
+    expect(formatCalendarDate(new Date('2026-03-15T00:00:00.000Z'), 'es')).toContain('2026');
   });
 });

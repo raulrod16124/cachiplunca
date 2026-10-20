@@ -5,18 +5,15 @@ import styled from 'styled-components';
 import type { Element, TaskElement, TaskStatus } from '../../../../domain/element';
 import { TASK_STATUSES, isTaskElement, richTextToPlain } from '../../../../domain/element';
 import type { TaskPlanStatusFilter } from '../../../../application/services';
-import { selectTaskPlan } from '../../../../application/services';
-import { TASK_STATUS_META } from '../../../canvas/renderers/task-status-meta';
+import { isTaskOverdue, selectTaskPlan } from '../../../../application/services';
+import type { TaskAssigneeOption } from '../../../canvas/components/task-form-dialog';
+import {
+  TASK_STATUS_LABEL_KEYS,
+  TASK_STATUS_META,
+} from '../../../canvas/renderers/task-status-meta';
 import { EmptyState } from '../../../components/empty-state';
 import { shortUserId } from '../../../collaboration';
-import { formatShortDate, useI18n, type TranslationKey } from '../../../i18n';
-
-const STATUS_LABEL_KEYS: Record<TaskStatus, TranslationKey> = {
-  todo: 'plan.status.todo',
-  in_progress: 'plan.status.in_progress',
-  completed: 'plan.status.completed',
-  blocked: 'plan.status.blocked',
-};
+import { formatCalendarDate, useI18n } from '../../../i18n';
 
 const Panel = styled.aside`
   flex: 0 0 clamp(280px, 24vw, 360px);
@@ -138,6 +135,7 @@ export interface TaskPlanPanelProps {
   readonly open: boolean;
   readonly elements: readonly Element[];
   readonly currentUserId: string | undefined;
+  readonly assignees?: readonly TaskAssigneeOption[];
   readonly canEdit: boolean;
   readonly canCreateTask: boolean;
   readonly onClose: () => void;
@@ -150,6 +148,7 @@ export function TaskPlanPanel({
   open,
   elements,
   currentUserId,
+  assignees = [],
   canEdit,
   canCreateTask,
   onClose,
@@ -166,6 +165,10 @@ export function TaskPlanPanel({
     [currentUserId, elements, onlyMine, statusFilter],
   );
   const hasAnyTask = useMemo(() => elements.some(isTaskElement), [elements]);
+  const assigneeLabels = useMemo(
+    () => new Map(assignees.map((assignee) => [assignee.userId, assignee.label])),
+    [assignees],
+  );
 
   if (!open) {
     return null;
@@ -205,7 +208,7 @@ export function TaskPlanPanel({
             <Select.Item value="all">{t('plan.filter.all')}</Select.Item>
             {TASK_STATUSES.map((status) => (
               <Select.Item key={status} value={status}>
-                {t(STATUS_LABEL_KEYS[status])}
+                {t(TASK_STATUS_LABEL_KEYS[status])}
               </Select.Item>
             ))}
           </Select.Content>
@@ -237,7 +240,7 @@ export function TaskPlanPanel({
               <section key={group.status} aria-labelledby={`task-plan-group-${group.status}`}>
                 <GroupHeader>
                   <Heading as="h3" id={`task-plan-group-${group.status}`}>
-                    {t(STATUS_LABEL_KEYS[group.status])}
+                    {t(TASK_STATUS_LABEL_KEYS[group.status])}
                   </Heading>
                   <Badge variant="neutral">{group.tasks.length}</Badge>
                 </GroupHeader>
@@ -247,11 +250,21 @@ export function TaskPlanPanel({
                     const assignee =
                       task.assigneeId === undefined
                         ? t('plan.unassigned')
-                        : t('plan.assignee', { name: shortUserId(task.assigneeId.value) });
+                        : t('plan.assignee', {
+                            name:
+                              assigneeLabels.get(task.assigneeId.value) ??
+                              shortUserId(task.assigneeId.value),
+                          });
+                    const overdue =
+                      task.status !== 'completed' &&
+                      task.dueDate !== undefined &&
+                      isTaskOverdue(task.dueDate);
                     const dueDate =
                       task.dueDate === undefined
                         ? t('plan.noDueDate')
-                        : t('plan.due', { date: formatShortDate(task.dueDate, locale) });
+                        : overdue
+                          ? `${t('task.overdue')} · ${formatCalendarDate(task.dueDate, locale)}`
+                          : t('plan.due', { date: formatCalendarDate(task.dueDate, locale) });
 
                     return (
                       <li key={task.id.value}>
@@ -266,7 +279,11 @@ export function TaskPlanPanel({
                               <Text color="color.text.muted" size="font.size.xs">
                                 {assignee}
                               </Text>
-                              <Text color="color.text.muted" size="font.size.xs">
+                              <Text
+                                color={overdue ? 'color.text.danger' : 'color.text.muted'}
+                                size="font.size.xs"
+                                data-task-overdue={overdue ? 'true' : undefined}
+                              >
                                 {dueDate}
                               </Text>
                             </MetaRow>
@@ -290,14 +307,14 @@ export function TaskPlanPanel({
                                 <Select.Content>
                                   {TASK_STATUSES.map((status) => (
                                     <Select.Item key={status} value={status}>
-                                      {t(STATUS_LABEL_KEYS[status])}
+                                      {t(TASK_STATUS_LABEL_KEYS[status])}
                                     </Select.Item>
                                   ))}
                                 </Select.Content>
                               </Select>
                             ) : (
                               <Badge variant={TASK_STATUS_META[task.status].variant}>
-                                {t(STATUS_LABEL_KEYS[task.status])}
+                                {t(TASK_STATUS_LABEL_KEYS[task.status])}
                               </Badge>
                             )}
                           </StatusControl>

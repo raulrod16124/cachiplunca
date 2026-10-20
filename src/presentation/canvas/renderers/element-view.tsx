@@ -24,6 +24,7 @@ export interface ElementViewProps {
   readonly zIndex?: number;
   readonly connectorStart?: Position;
   readonly connectorEnd?: Position;
+  readonly assigneeLabel?: string;
   readonly onUpdateElement?: (input: UpdateElementInput) => void;
   readonly onResizeElement?: (element: Element, size: Size) => void;
 }
@@ -36,6 +37,7 @@ function ElementViewComponent({
   zIndex,
   connectorStart,
   connectorEnd,
+  assigneeLabel,
   onUpdateElement,
   onResizeElement,
 }: ElementViewProps): ReactElement {
@@ -109,6 +111,7 @@ function ElementViewComponent({
         element={element}
         selected={selected}
         connectorGeometry={connectorGeometry}
+        assigneeLabel={assigneeLabel}
         onUpdateElement={onUpdateElement}
         onResizeElement={onResizeElement}
       />

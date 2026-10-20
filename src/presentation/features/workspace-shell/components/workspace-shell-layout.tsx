@@ -6,6 +6,7 @@ import type { Workspace } from '../../../../domain/workspace';
 import type { Element, ElementType } from '../../../../domain/element';
 import type { ElementId, Position } from '../../../../domain/shared';
 import type { MembershipRole } from '../../../../domain/membership';
+import type { Membership } from '../../../../domain/membership';
 import type { Presence } from '../../../../domain/collaboration';
 import type {
   LogoutUser,
@@ -22,9 +23,17 @@ import type {
   SelectionStore,
 } from '../../../../application/services';
 import type { AuthUser, RealtimeConnectionStatus } from '../../../../application/ports';
-import { createPresenceColorAssigner } from '../../../collaboration';
+import {
+  createPresenceColorAssigner,
+  presenceLabel,
+  shortUserId,
+  userLabel,
+} from '../../../collaboration';
 import { Canvas, type CanvasCommandHandle, type ConnectorEndpointDragInput } from '../../../canvas';
-import type { TaskFormValues } from '../../../canvas/components/task-form-dialog';
+import type {
+  TaskAssigneeOption,
+  TaskFormValues,
+} from '../../../canvas/components/task-form-dialog';
 import { KeyboardShortcutsDialog } from './keyboard-shortcuts-dialog';
 import { TaskPlanPanel } from './task-plan-panel';
 import { WorkspaceCommandPalette } from './workspace-command-palette';
@@ -64,6 +73,7 @@ export interface WorkspaceShellLayoutProps {
   readonly workspace: Workspace;
   readonly elements: readonly Element[];
   readonly role: MembershipRole | undefined;
+  readonly members?: readonly Membership[];
   readonly currentUser: AuthUser | null;
   readonly logoutUser: LogoutUser;
   readonly onBack: () => void;
@@ -112,6 +122,7 @@ export function WorkspaceShellLayout({
   workspace,
   elements,
   role,
+  members = [],
   currentUser,
   logoutUser,
   onBack,
@@ -180,6 +191,33 @@ export function WorkspaceShellLayout({
     return colors;
   }, [userIds]);
 
+  const assignees = useMemo<readonly TaskAssigneeOption[]>(() => {
+    const options = new Map<string, TaskAssigneeOption>();
+    const connectedLabels = new Map(
+      connectedUsers.map((presence) => [presence.userId.value, presenceLabel(presence)]),
+    );
+
+    for (const member of members) {
+      const userId = member.userId.value;
+      options.set(userId, {
+        userId,
+        label:
+          currentUser?.uid === userId
+            ? userLabel(currentUser.displayName, userId)
+            : (connectedLabels.get(userId) ?? shortUserId(userId)),
+      });
+    }
+
+    if (currentUser !== null && !options.has(currentUser.uid)) {
+      options.set(currentUser.uid, {
+        userId: currentUser.uid,
+        label: userLabel(currentUser.displayName, currentUser.uid),
+      });
+    }
+
+    return [...options.values()].sort((left, right) => left.label.localeCompare(right.label));
+  }, [connectedUsers, currentUser, members]);
+
   const canCreate = !readOnly && onCreateElement !== undefined;
   const canCreateTask = !readOnly && (onCreateTask !== undefined || onCreateElement !== undefined);
   const canCreateFreeConnector = !readOnly && onCreateConnector !== undefined;
@@ -242,6 +280,7 @@ export function WorkspaceShellLayout({
             onCreateElement={onCreateElement}
             onCreateConnector={onCreateConnector}
             onCreateTask={onCreateTask}
+            assignees={assignees}
             onUpdateElement={onUpdateElement}
             onUpdateConnectorEndpoint={onUpdateConnectorEndpoint}
             generateId={generateElementId}
@@ -256,6 +295,7 @@ export function WorkspaceShellLayout({
           open={planOpen}
           elements={elements}
           currentUserId={currentUser?.uid}
+          assignees={assignees}
           canEdit={!readOnly && onUpdateElement !== undefined}
           canCreateTask={canCreateTask}
           onClose={() => setPlanOpen(false)}

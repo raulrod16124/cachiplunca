@@ -48,6 +48,7 @@ import {
   elementContentBounds,
   EMPTY_CONNECTED_USERS_STORE,
   EMPTY_REMOTE_CURSORS_STORE,
+  parseTaskDueDateInput,
   resolveElementCreatePosition,
   rollbackFailedMutation,
   serializeBoardExport,
@@ -74,7 +75,7 @@ import type {
 } from '../../../../application/ports';
 import { isConnectorElement } from '../../../../domain/element';
 import type { ConnectorElement, Element, ElementType } from '../../../../domain/element';
-import type { MembershipRole } from '../../../../domain/membership';
+import type { Membership, MembershipRole } from '../../../../domain/membership';
 import { Presence, resolveUserDisplayName } from '../../../../domain/collaboration';
 import { Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
 import { useWorkspacePermissions } from '../../../hooks';
@@ -165,6 +166,7 @@ export function WorkspaceShellContainer({
   const [status, setStatus] = useState<'loading' | 'notFound' | 'error' | 'success'>('loading');
   const [shareOpen, setShareOpen] = useState(false);
   const [role, setRole] = useState<MembershipRole | undefined>(undefined);
+  const [workspaceMembers, setWorkspaceMembers] = useState<readonly Membership[]>([]);
   const [roleStatus, setRoleStatus] = useState<'idle' | 'loading' | 'settled' | 'failed'>(
     getWorkspaceRole === undefined ? 'idle' : 'loading',
   );
@@ -563,6 +565,15 @@ export function WorkspaceShellContainer({
         size,
       );
       const notes = values.notes.trim();
+      let dueDate: Date | undefined;
+
+      try {
+        dueDate = parseTaskDueDateInput(values.dueDate);
+      } catch (error) {
+        setCreationError(toAppError(error));
+        return;
+      }
+
       const input: CreateElementInput = {
         type: 'task',
         workspaceId: WorkspaceId.create(workspaceId),
@@ -572,6 +583,8 @@ export function WorkspaceShellContainer({
         title: values.title,
         status: values.status,
         ...(notes === '' ? {} : { notes }),
+        ...(values.assigneeId === '' ? {} : { assigneeId: UserId.create(values.assigneeId) }),
+        ...(dueDate === undefined ? {} : { dueDate }),
       };
 
       const result = createElement(input);
@@ -845,6 +858,32 @@ export function WorkspaceShellContainer({
   }, []);
 
   useEffect(() => {
+    if (status !== 'success' || listWorkspaceMembers === undefined) {
+      setWorkspaceMembers([]);
+      return;
+    }
+
+    let active = true;
+
+    void (async () => {
+      try {
+        const response = await listWorkspaceMembers(workspaceId);
+        if (active && response.status === 'ok') {
+          setWorkspaceMembers(response.members);
+        }
+      } catch {
+        if (active) {
+          setWorkspaceMembers([]);
+        }
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [listWorkspaceMembers, status, workspaceId]);
+
+  useEffect(() => {
     if (status === 'success') {
       void fetchElements();
     }
@@ -994,6 +1033,7 @@ export function WorkspaceShellContainer({
           workspace={result.workspace}
           elements={elements}
           role={role}
+          members={workspaceMembers}
           currentUser={currentUser}
           connectedUsers={connectedUsers}
           logoutUser={logoutUser}

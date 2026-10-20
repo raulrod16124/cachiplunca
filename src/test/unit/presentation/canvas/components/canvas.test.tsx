@@ -141,6 +141,8 @@ function createTask(
     readonly title?: string;
     readonly status?: 'todo' | 'in_progress';
     readonly notes?: string;
+    readonly assigneeId?: string;
+    readonly dueDate?: Date;
   } = {},
 ): TaskElement {
   return createTaskElement({
@@ -152,6 +154,8 @@ function createTask(
     title: options.title ?? 'Draft spec',
     status: options.status ?? 'todo',
     notes: options.notes,
+    assigneeId: options.assigneeId === undefined ? undefined : UserId.create(options.assigneeId),
+    dueDate: options.dueDate,
   });
 }
 
@@ -1883,7 +1887,13 @@ describe('Canvas', () => {
         title: string;
         status: 'todo' | 'in_progress' | 'completed' | 'blocked';
         notes: string;
+        assigneeId: string;
+        dueDate: string;
       }) => ElementId | void;
+      readonly assignees?: readonly {
+        readonly userId: string;
+        readonly label: string;
+      }[];
       readonly onUpdateElement?: (input: UpdateElementInput) => void;
       readonly readOnly?: boolean;
     }
@@ -1895,6 +1905,7 @@ describe('Canvas', () => {
           selectionStore={createSelectionStore()}
           elements={options.elements}
           onCreateTask={options.onCreateTask}
+          assignees={options.assignees}
           onUpdateElement={options.onUpdateElement}
           readOnly={options.readOnly}
         />,
@@ -1911,6 +1922,11 @@ describe('Canvas', () => {
 
     function selectStatus(label: string): void {
       fireEvent.click(screen.getByRole('combobox', { name: 'Status' }));
+      fireEvent.click(screen.getByRole('option', { name: label }));
+    }
+
+    function selectAssignee(label: string): void {
+      fireEvent.click(screen.getByRole('combobox', { name: 'Assignee' }));
       fireEvent.click(screen.getByRole('option', { name: label }));
     }
 
@@ -1941,8 +1957,62 @@ describe('Canvas', () => {
         title: 'Ship the MVP',
         status: 'in_progress',
         notes: 'Wait for review',
+        assigneeId: '',
+        dueDate: '',
       });
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    it('creates the task with an assignee and due date', () => {
+      const onCreateTask = jest.fn();
+      renderTaskFormCanvas({
+        onCreateTask,
+        assignees: [
+          { userId: 'user-1', label: 'Ada Lovelace' },
+          { userId: 'user-2', label: 'Grace Hopper' },
+        ],
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: 'Add task' }));
+      fillTitle('Ship the MVP');
+      selectAssignee('Grace Hopper');
+      fireEvent.change(screen.getByLabelText('Due date'), {
+        target: { value: '2026-03-15' },
+      });
+      submitCreate();
+
+      expect(onCreateTask).toHaveBeenCalledWith({
+        title: 'Ship the MVP',
+        status: 'todo',
+        notes: '',
+        assigneeId: 'user-2',
+        dueDate: '2026-03-15',
+      });
+    });
+
+    it('clears the assignee and due date from the edit dialog', () => {
+      const task = createTask('task-1', {
+        assigneeId: 'user-2',
+        dueDate: new Date('2026-03-15T00:00:00.000Z'),
+      });
+      const onUpdateElement = jest.fn();
+      renderTaskFormCanvas({
+        elements: [task],
+        onUpdateElement,
+        assignees: [{ userId: 'user-2', label: 'Grace Hopper' }],
+      });
+
+      fireEvent.doubleClick(screen.getByTestId('canvas-item-task-1'));
+      selectAssignee('Unassigned');
+      fireEvent.change(screen.getByLabelText('Due date'), { target: { value: '' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+
+      expect(onUpdateElement).toHaveBeenCalledWith({
+        type: 'task',
+        element: task,
+        assigneeId: null,
+        dueDate: null,
+      });
     });
 
     it('does not create the task when the title is empty', () => {

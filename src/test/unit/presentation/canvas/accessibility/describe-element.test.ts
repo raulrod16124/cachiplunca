@@ -60,7 +60,12 @@ describe('describeElement', () => {
       dueDate: new Date('2026-03-01T00:00:00.000Z'),
     });
 
-    expect(describeElement(taskWithDue)).toBe('Task: Deliver, to do, due 2026-03-01');
+    expect(describeElement(taskWithDue, [], new Date('2026-10-20T12:00:00.000Z'))).toBe(
+      'Task: Deliver, to do, overdue (due 2026-03-01)',
+    );
+    expect(describeElement(taskWithDue, [], new Date('2026-01-20T12:00:00.000Z'))).toBe(
+      'Task: Deliver, to do, due 2026-03-01',
+    );
   });
 
   it('falls back to a label with no content instead of an empty name', () => {

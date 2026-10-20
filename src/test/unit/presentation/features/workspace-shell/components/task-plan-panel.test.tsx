@@ -7,7 +7,7 @@ import {
   type TaskElement,
 } from '../../../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../../../domain/shared';
-import { formatShortDate } from '../../../../../../presentation/i18n';
+import { formatCalendarDate } from '../../../../../../presentation/i18n';
 import {
   TaskPlanPanel,
   type TaskPlanPanelProps,
@@ -39,6 +39,7 @@ function renderPanel(overrides: Partial<TaskPlanPanelProps> = {}): TaskPlanPanel
     open: true,
     elements: [],
     currentUserId: USER_ID.value,
+    assignees: [],
     canEdit: true,
     canCreateTask: true,
     onClose: jest.fn(),
@@ -55,7 +56,7 @@ function renderPanel(overrides: Partial<TaskPlanPanelProps> = {}): TaskPlanPanel
 
 describe('TaskPlanPanel', () => {
   it('groups tasks by status and shows title, assignee and due date', () => {
-    const dueDate = new Date('2024-02-15T12:00:00.000Z');
+    const dueDate = new Date('2099-02-15T12:00:00.000Z');
 
     renderPanel({
       elements: [
@@ -74,9 +75,26 @@ describe('TaskPlanPanel', () => {
     expect(screen.getByText('Plan launch')).toBeInTheDocument();
     expect(screen.getByText('Write docs')).toBeInTheDocument();
     expect(screen.getByText('Assigned to user-1')).toBeInTheDocument();
-    expect(screen.getByText(`Due ${formatShortDate(dueDate, 'en')}`)).toBeInTheDocument();
+    expect(screen.getByText(`Due ${formatCalendarDate(dueDate, 'en')}`)).toBeInTheDocument();
     expect(screen.getByText('Unassigned')).toBeInTheDocument();
     expect(screen.getByText('No due date')).toBeInTheDocument();
+  });
+
+  it('shows member labels and marks overdue due dates', () => {
+    renderPanel({
+      assignees: [{ userId: USER_ID.value, label: 'Ada Lovelace' }],
+      elements: [
+        task('Late task', {
+          assigneeId: USER_ID,
+          dueDate: new Date('2020-03-15T00:00:00.000Z'),
+        }),
+      ],
+    });
+
+    expect(screen.getByText('Assigned to Ada Lovelace')).toBeInTheDocument();
+    const dueDate = document.querySelector('[data-task-overdue="true"]');
+    expect(dueDate).not.toBeNull();
+    expect(dueDate).toHaveTextContent('Overdue');
   });
 
   it('filters by status', async () => {

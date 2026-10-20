@@ -7,6 +7,7 @@ import {
 import type { RichTextDocument, TaskElement, TaskStatus } from '../../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../../domain/shared';
 import { ElementView, TaskRenderer } from '../../../../../presentation/canvas/renderers';
+import { formatCalendarDate } from '../../../../../presentation/i18n/format';
 
 interface TaskOverrides {
   readonly status: TaskStatus;
@@ -34,7 +35,123 @@ function createElement(
   });
 }
 
+function mockTaskLayout(heights: {
+  readonly header: number;
+  readonly notesToggle: number;
+}): () => void {
+  const getBoundingClientRect = jest
+    .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+    .mockImplementation(function (this: HTMLElement) {
+      let height = 0;
+
+      if (this.hasAttribute('data-task-header')) {
+        height = heights.header;
+      } else if (this.hasAttribute('data-task-notes-toggle')) {
+        height = heights.notesToggle;
+      }
+
+      return {
+        x: 0,
+        y: 0,
+        top: 0,
+        left: 0,
+        right: 100,
+        bottom: height,
+        width: 100,
+        height,
+        toJSON: () => ({}),
+      } as DOMRect;
+    });
+  const originalGetComputedStyle = window.getComputedStyle.bind(window);
+  const getComputedStyle = jest
+    .spyOn(window, 'getComputedStyle')
+    .mockImplementation((element, pseudoElement) => {
+      const style = originalGetComputedStyle(element, pseudoElement);
+
+      return Object.assign(Object.create(style), {
+        paddingTop: '12px',
+        paddingBottom: '12px',
+        borderTopWidth: '1px',
+        borderBottomWidth: '1px',
+        rowGap: '6px',
+      });
+    });
+
+  return () => {
+    getBoundingClientRect.mockRestore();
+    getComputedStyle.mockRestore();
+  };
+}
+
 describe('TaskRenderer', () => {
+  it('fits a newly created default-size task to its content', () => {
+    const restoreLayout = mockTaskLayout({ header: 50, notesToggle: 20 });
+
+    try {
+      const element = createTaskElement({
+        id: ElementId.create('elem-1'),
+        workspaceId: WorkspaceId.create('ws-1'),
+        createdBy: UserId.create('user-1'),
+        position: Position.create(30, 40),
+        size: Size.create(220, 120),
+        title: 'Ship the MVP',
+        status: 'todo',
+        notes: 'Wait for review',
+      });
+      const onResizeElement = jest.fn();
+
+      render(<TaskRenderer element={element} selected={false} onResizeElement={onResizeElement} />);
+
+      expect(onResizeElement).toHaveBeenCalledWith(element, Size.create(220, 102));
+    } finally {
+      restoreLayout();
+    }
+  });
+
+  it('leaves a task with a custom size untouched', () => {
+    const restoreLayout = mockTaskLayout({ header: 50, notesToggle: 20 });
+
+    try {
+      const element = createTaskElement({
+        id: ElementId.create('elem-1'),
+        workspaceId: WorkspaceId.create('ws-1'),
+        createdBy: UserId.create('user-1'),
+        position: Position.create(30, 40),
+        size: Size.create(300, 200),
+        title: 'Ship the MVP',
+        status: 'todo',
+        notes: 'Wait for review',
+      });
+      const onResizeElement = jest.fn();
+
+      render(<TaskRenderer element={element} selected={false} onResizeElement={onResizeElement} />);
+
+      expect(onResizeElement).not.toHaveBeenCalled();
+    } finally {
+      restoreLayout();
+    }
+  });
+
+  it('grows to the full notes height when expanding', () => {
+    const restoreLayout = mockTaskLayout({ header: 50, notesToggle: 20 });
+    const scrollHeight = jest
+      .spyOn(HTMLElement.prototype, 'scrollHeight', 'get')
+      .mockReturnValue(70);
+    const element = createElement('Ship the MVP', { notes: 'Wait for review' });
+    const onResizeElement = jest.fn();
+
+    try {
+      render(<TaskRenderer element={element} selected={false} onResizeElement={onResizeElement} />);
+
+      fireEvent.click(screen.getByTestId('task-notes-toggle-elem-1'));
+
+      expect(onResizeElement).toHaveBeenCalledWith(element, Size.create(120, 178));
+    } finally {
+      scrollHeight.mockRestore();
+      restoreLayout();
+    }
+  });
+
   it('renders the element title', () => {
     render(<TaskRenderer element={createElement('Ship the MVP')} selected={false} />);
 
@@ -92,17 +209,77 @@ describe('TaskRenderer', () => {
     expect(document.querySelector('[data-task-assignee]')).toBeNull();
   });
 
-  it('renders the due date in ISO format when present', () => {
+  it('renders the due date as a localized calendar date', () => {
+    const dueDate = new Date('2099-03-15T00:00:00.000Z');
+
+    render(<TaskRenderer element={createElement('Ship the MVP', { dueDate })} selected={false} />);
+
+    const dueDateNode = document.querySelector('[data-task-due-date]');
+    expect(dueDateNode).not.toBeNull();
+    expect(dueDateNode).toHaveTextContent(formatCalendarDate(dueDate, 'en'));
+  });
+
+  it('marks an overdue task with a red container accent and label', () => {
     render(
       <TaskRenderer
-        element={createElement('Ship the MVP', { dueDate: new Date('2026-03-15T10:30:00.000Z') })}
+        element={createElement('Ship the MVP', {
+          dueDate: new Date('2020-03-15T00:00:00.000Z'),
+        })}
         selected={false}
       />,
     );
 
+    const content = document.querySelector('[data-element-content]');
     const dueDate = document.querySelector('[data-task-due-date]');
-    expect(dueDate).not.toBeNull();
-    expect(dueDate).toHaveTextContent('2026-03-15');
+    expect(content).toHaveAttribute('data-task-overdue', 'true');
+    expect(dueDate).toHaveAttribute('data-task-overdue', 'true');
+    expect(dueDate).toHaveTextContent('Overdue');
+  });
+
+  it('does not mark a completed task as overdue', () => {
+    render(
+      <TaskRenderer
+        element={createElement('Ship the MVP', {
+          status: 'completed',
+          dueDate: new Date('2020-03-15T00:00:00.000Z'),
+        })}
+        selected={false}
+      />,
+    );
+
+    expect(document.querySelector('[data-element-content]')).not.toHaveAttribute(
+      'data-task-overdue',
+    );
+  });
+
+  it('uses the provided assignee label when available', () => {
+    render(
+      <TaskRenderer
+        element={createElement('Ship the MVP', { assigneeId: 'user-2' })}
+        selected={false}
+        assigneeLabel="Grace Hopper"
+      />,
+    );
+
+    expect(document.querySelector('[data-task-assignee]')).toHaveTextContent('Grace Hopper');
+  });
+
+  it('groups the assignee and due date in a metadata column', () => {
+    render(
+      <TaskRenderer
+        element={createElement('Ship the MVP', {
+          assigneeId: 'user-2',
+          dueDate: new Date('2099-03-15T00:00:00.000Z'),
+        })}
+        selected={false}
+      />,
+    );
+
+    const meta = document.querySelector('[data-task-meta]');
+
+    expect(meta).not.toBeNull();
+    expect(meta?.querySelector('[data-task-assignee]')).not.toBeNull();
+    expect(meta?.querySelector('[data-task-due-date]')).not.toBeNull();
   });
 
   it('does not render the due date when absent', () => {

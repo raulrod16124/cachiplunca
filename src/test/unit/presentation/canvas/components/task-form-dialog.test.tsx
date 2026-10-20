@@ -1,10 +1,14 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { TaskFormDialog } from '../../../../../presentation/canvas/components/task-form-dialog';
-import type { TaskFormValues } from '../../../../../presentation/canvas/components/task-form-dialog';
+import type {
+  TaskAssigneeOption,
+  TaskFormValues,
+} from '../../../../../presentation/canvas/components/task-form-dialog';
 
 function renderDialog(options: {
   readonly mode?: 'create' | 'edit';
   readonly initialValues?: TaskFormValues;
+  readonly assignees?: readonly TaskAssigneeOption[];
   readonly onSubmit?: jest.Mock;
   readonly onOpenChange?: jest.Mock;
 }) {
@@ -16,6 +20,7 @@ function renderDialog(options: {
       open
       mode={options.mode ?? 'create'}
       initialValues={options.initialValues}
+      assignees={options.assignees}
       onOpenChange={onOpenChange}
       onSubmit={onSubmit}
     />,
@@ -37,6 +42,15 @@ function selectStatus(label: string): void {
   fireEvent.click(screen.getByRole('option', { name: label }));
 }
 
+function selectAssignee(label: string): void {
+  fireEvent.click(screen.getByRole('combobox', { name: 'Assignee' }));
+  fireEvent.click(screen.getByRole('option', { name: label }));
+}
+
+function fillDueDate(value: string): void {
+  fireEvent.change(screen.getByLabelText('Due date'), { target: { value } });
+}
+
 function submit(): void {
   fireEvent.click(screen.getByRole('button', { name: 'Create task' }));
 }
@@ -49,6 +63,8 @@ describe('TaskFormDialog', () => {
     expect(screen.getByRole('heading', { level: 2, name: 'New task' })).toBeInTheDocument();
     expect(screen.getByLabelText('Title')).toHaveValue('');
     expect(screen.getByRole('combobox', { name: 'Status' })).toHaveTextContent('Todo');
+    expect(screen.getByRole('combobox', { name: 'Assignee' })).toHaveTextContent('Unassigned');
+    expect(screen.getByLabelText('Due date')).toHaveValue('');
     expect(screen.getByLabelText('Notes')).toHaveValue('');
     expect(screen.getByRole('button', { name: 'Create task' })).toBeInTheDocument();
   });
@@ -65,6 +81,8 @@ describe('TaskFormDialog', () => {
       title: 'Ship the MVP',
       status: 'in_progress',
       notes: 'Wait for review',
+      assigneeId: '',
+      dueDate: '',
     });
   });
 
@@ -78,7 +96,47 @@ describe('TaskFormDialog', () => {
       title: 'No notes task',
       status: 'todo',
       notes: '',
+      assigneeId: '',
+      dueDate: '',
     });
+  });
+
+  it('submits the selected assignee and due date', () => {
+    const { onSubmit } = renderDialog({
+      assignees: [
+        { userId: 'user-1', label: 'Ada Lovelace' },
+        { userId: 'user-2', label: 'Grace Hopper' },
+      ],
+    });
+
+    fillTitle('Ship the MVP');
+    selectAssignee('Grace Hopper');
+    fillDueDate('2026-03-15');
+    submit();
+
+    expect(onSubmit).toHaveBeenCalledWith({
+      title: 'Ship the MVP',
+      status: 'todo',
+      notes: '',
+      assigneeId: 'user-2',
+      dueDate: '2026-03-15',
+    });
+  });
+
+  it('keeps an assignee that is no longer in the member list visible', () => {
+    renderDialog({
+      mode: 'edit',
+      initialValues: {
+        title: 'Draft spec',
+        status: 'todo',
+        notes: '',
+        assigneeId: 'departed-user',
+        dueDate: '',
+      },
+      assignees: [{ userId: 'user-1', label: 'Ada Lovelace' }],
+    });
+
+    expect(screen.getByRole('combobox', { name: 'Assignee' })).toHaveTextContent('ted-user');
   });
 
   it('renders the status options above the dialog overlay', () => {
@@ -106,6 +164,8 @@ describe('TaskFormDialog', () => {
         title: 'Draft spec',
         status: 'blocked',
         notes: 'Waiting on API',
+        assigneeId: 'user-2',
+        dueDate: '2026-03-15',
       },
     });
 
@@ -113,13 +173,21 @@ describe('TaskFormDialog', () => {
     expect(screen.getByLabelText('Title')).toHaveValue('Draft spec');
     expect(screen.getByRole('combobox', { name: 'Status' })).toHaveTextContent('Blocked');
     expect(screen.getByLabelText('Notes')).toHaveValue('Waiting on API');
+    expect(screen.getByRole('combobox', { name: 'Assignee' })).toHaveTextContent('user-2');
+    expect(screen.getByLabelText('Due date')).toHaveValue('2026-03-15');
     expect(screen.getByRole('button', { name: 'Save changes' })).toBeInTheDocument();
   });
 
   it('submits the edited values through the save button', () => {
     const { onSubmit } = renderDialog({
       mode: 'edit',
-      initialValues: { title: 'Draft spec', status: 'todo', notes: '' },
+      initialValues: {
+        title: 'Draft spec',
+        status: 'todo',
+        notes: '',
+        assigneeId: '',
+        dueDate: '',
+      },
     });
 
     fillTitle('Final spec');
@@ -130,6 +198,8 @@ describe('TaskFormDialog', () => {
       title: 'Final spec',
       status: 'completed',
       notes: '',
+      assigneeId: '',
+      dueDate: '',
     });
   });
 

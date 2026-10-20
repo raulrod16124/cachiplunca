@@ -34,3 +34,4 @@ export * from './board-export';
 export * from './workspace-duplication';
 export * from './workspace-templates';
 export * from './task-plan';
+export * from './task-due-date';

@@ -49,8 +49,8 @@ export type UpdateElementInput =
       readonly title?: RichTextDocument | string;
       readonly status?: TaskStatus;
       readonly notes?: RichTextDocument | string | null;
-      readonly assigneeId?: UserId;
-      readonly dueDate?: Date;
+      readonly assigneeId?: UserId | null;
+      readonly dueDate?: Date | null;
     })
   | (UpdateElementBaseInput & {
       readonly type: 'frame';

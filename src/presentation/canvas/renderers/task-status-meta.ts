@@ -1,19 +1,25 @@
 import type { BadgeVariant } from '@raulrod/ui';
 import type { TaskStatus } from '../../../domain/element';
+import type { TranslationKey } from '../../i18n';
 
 export interface TaskStatusMeta {
-  readonly label: string;
   readonly variant: BadgeVariant;
 }
 
 /**
- * Presentation-only mapping of a task status to its visible label and the
- * `@raulrod/ui` badge tint. Colors are a UI concern, so the domain keeps only
- * the status value (TODO gray, IN PROGRESS orange, COMPLETED green, BLOCKED red).
+ * Presentation-only mapping of a task status to its `@raulrod/ui` badge tint.
+ * The visible label lives in i18n (`task.status.*`) so the UI stays localized.
  */
 export const TASK_STATUS_META: Record<TaskStatus, TaskStatusMeta> = {
-  todo: { label: 'Todo', variant: 'neutral' },
-  in_progress: { label: 'In progress', variant: 'warning' },
-  completed: { label: 'Completed', variant: 'success' },
-  blocked: { label: 'Blocked', variant: 'destructive' },
+  todo: { variant: 'neutral' },
+  in_progress: { variant: 'warning' },
+  completed: { variant: 'success' },
+  blocked: { variant: 'destructive' },
+};
+
+export const TASK_STATUS_LABEL_KEYS: Record<TaskStatus, TranslationKey> = {
+  todo: 'task.status.todo',
+  in_progress: 'task.status.in_progress',
+  completed: 'task.status.completed',
+  blocked: 'task.status.blocked',
 };

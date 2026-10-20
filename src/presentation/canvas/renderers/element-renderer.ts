@@ -13,6 +13,7 @@ export interface ElementRendererProps {
   readonly element: Element;
   readonly selected: boolean;
   readonly connectorGeometry?: ConnectorRenderGeometry;
+  readonly assigneeLabel?: string;
   readonly onUpdateElement?: (input: UpdateElementInput) => void;
   readonly onResizeElement?: (element: Element, size: Size) => void;
 }
