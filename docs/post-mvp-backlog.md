@@ -102,7 +102,7 @@ Definition of Done:
 | PBL-014 | Temporizador de sesión local                 | R3      | P2        | S        | —              | Sí  | DONE   |
 | PBL-015 | Imágenes                                     | R3      | P1        | L        | PBL-001        | No  | DONE   |
 | PBL-016 | Enlace guest de solo lectura                 | R3      | P1        | L        | PBL-001        | No  | DONE   |
-| PBL-017 | Vista presentación por frames                | R3      | P2        | M        | PBL-009        | No  | TODO   |
+| PBL-017 | Vista presentación por frames                | R3      | P2        | M        | PBL-009        | No  | DONE   |
 | PBL-018 | Notificaciones in-app                        | R3      | P2        | S        | —              | Sí  | TODO   |
 
 Leyenda de releases:
@@ -742,7 +742,7 @@ Reducir la fricción para compartir un plan con personas externas sin darles edi
 
 ### PBL-017 — Vista presentación por frames
 
-**Priority:** P2 · **Effort:** M · **Depends:** PBL-009 · **Status:** TODO
+**Priority:** P2 · **Effort:** M · **Depends:** PBL-009 · **Status:** DONE
 
 #### Objetivo
 
@@ -759,11 +759,11 @@ Convertir el tablero en un entregable narrable sin exportarlo.
 
 #### Criterios de aceptación
 
-- [ ] La presentación encuadra cada frame correctamente.
-- [ ] No se puede editar mientras se presenta.
-- [ ] La navegación es accesible y predecible.
-- [ ] No se persiste estado de presentación.
-- [ ] Tests de integración de controles y navegación.
+- [x] La presentación encuadra cada frame correctamente.
+- [x] No se puede editar mientras se presenta.
+- [x] La navegación es accesible y predecible.
+- [x] No se persiste estado de presentación.
+- [x] Tests de integración de controles y navegación.
 
 #### Fuera de alcance
 
@@ -774,6 +774,7 @@ Convertir el tablero en un entregable narrable sin exportarlo.
 
 - Reutilizar `CanvasViewportStore` y el encuadre de fit existente.
 - El orden de frames se deriva de posiciones; no añadir campo de orden.
+- Implementado con `selectPresentationFrames` en `src/application/services/presentation.ts` (filtro puro y orden superior→inferior/izquierda→derecha con desempate por `id`) y `BoardPresentation` en la top bar. El modo presentación es estado local del layout: cierra paneles, oculta top bar, toolbar, selección y cursores remotos, bloquea la edición con `readOnly` y reencuadra cada frame con `CanvasViewportStore.fit` (también al redimensionar). Navegación con botones y flechas/PageUp/PageDown, salida con `Escape`, contador accesible y retorno de foco al canvas. Sin persistencia ni entidades nuevas. Los enlaces guest no incluyen la acción al no tener top bar. Ver ADR-0042.
 
 ---
 
@@ -837,6 +838,7 @@ Añadir una línea por sesión. El detalle técnico extenso sigue viviendo en `d
 
 | 2026-10-20 | PBL-015 | DONE | Imágenes: `ImageElement` con `src`/`alt`, puerto y caso de uso de subida con validación de tipo y 5 MB, adapter Firebase Storage, `storage.rules` por membership y validación en `firestore.rules`, renderer, selector en toolbar, editor de descripción, búsqueda/export, i18n en/es, unit, integración, rules y E2E. |
 | 2026-10-20 | PBL-016 | DONE | Enlace guest de solo lectura: `GuestLink` hasheado (SHA-256) con token de un solo uso, sesión anónima de Firebase, `guest_links` + `guest_sessions`, lectura guest de workspace/elementos/imágenes en rules, `/view/:token` read-only aislado, share dialog owner-only con crear/copiar/revocar, estados inválido/revocado, i18n en/es, unit, integración, rules y E2E. |
+| 2026-10-20 | PBL-017 | DONE | Presentación por frames: `selectPresentationFrames` puro, acción Present en la top bar, reencuadre con `CanvasViewportStore.fit`, modo local sin persistencia que oculta top bar/toolbar/selección/cursores y bloquea edición; controles accesibles, flechas/PageUp/PageDown, `Escape`, contador y retorno de foco; i18n en/es, unit, integración y E2E. |
 
 ---
 

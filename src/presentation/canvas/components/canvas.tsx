@@ -222,6 +222,7 @@ export interface CanvasProps {
   readonly onOpenComments?: (elementId: string) => void;
   readonly onCursorMove?: (position: Position) => void;
   readonly readOnly?: boolean;
+  readonly presentation?: boolean;
 }
 
 export interface CanvasCommandHandle {
@@ -265,6 +266,7 @@ export function Canvas({
   onOpenComments,
   onCursorMove,
   readOnly = false,
+  presentation = false,
   commandRef,
 }: CanvasProps & { readonly commandRef?: Ref<CanvasCommandHandle> }): ReactElement {
   const { t } = useI18n();
@@ -1254,7 +1256,9 @@ export function Canvas({
             />
           );
         })}
-        {editingElementId === null ? <SelectionOverlay items={selectedItems} /> : null}
+        {editingElementId === null && !presentation ? (
+          <SelectionOverlay items={selectedItems} />
+        ) : null}
         {editingElement === null ? null : (
           <ElementEditorOverlay
             key={editingElement.id.value}
@@ -1285,38 +1289,44 @@ export function Canvas({
           />
         </Hint>
       ) : null}
-      <RemoteCursorsOverlay cursors={remoteCursors} viewport={viewport} userColors={userColors} />
+      {presentation ? null : (
+        <RemoteCursorsOverlay cursors={remoteCursors} viewport={viewport} userColors={userColors} />
+      )}
       <FloatingTextToolbar
         scopeRef={containerRef}
         formatTarget={formatTarget}
-        enabled={!readOnly}
+        enabled={!readOnly && !presentation}
         onOpenChange={(open) => {
           floatingToolbarOpenRef.current = open;
         }}
       />
-      <ElementContextMenu
-        position={contextMenu}
-        onBringToFront={handleBringToFront}
-        onSendToBack={handleSendToBack}
-        noteColor={noteColorMenu}
-        createTask={createTaskMenu}
-        onClose={closeContextMenu}
-      />
-      <CanvasToolbar
-        onCreateElement={handleCreateElement}
-        onCreateConnector={handleCreateConnector}
-        onDeleteSelection={handleToolbarDelete}
-        onFitView={handleFitView}
-        onAlign={onAlignElements === undefined ? undefined : handleAlignSelection}
-        onDistribute={onDistributeElements === undefined ? undefined : handleDistributeSelection}
-        canCreate={canCreateElement}
-        canCreateImage={canCreateImage}
-        canCreateFreeConnector={canCreateElement && onCreateConnector !== undefined}
-        hasSelection={hasSelection}
-        canCreateConnector={canCreateConnector}
-        canAlign={canAlign}
-        canDistribute={canDistribute}
-      />
+      {presentation ? null : (
+        <ElementContextMenu
+          position={contextMenu}
+          onBringToFront={handleBringToFront}
+          onSendToBack={handleSendToBack}
+          noteColor={noteColorMenu}
+          createTask={createTaskMenu}
+          onClose={closeContextMenu}
+        />
+      )}
+      {presentation ? null : (
+        <CanvasToolbar
+          onCreateElement={handleCreateElement}
+          onCreateConnector={handleCreateConnector}
+          onDeleteSelection={handleToolbarDelete}
+          onFitView={handleFitView}
+          onAlign={onAlignElements === undefined ? undefined : handleAlignSelection}
+          onDistribute={onDistributeElements === undefined ? undefined : handleDistributeSelection}
+          canCreate={canCreateElement}
+          canCreateImage={canCreateImage}
+          canCreateFreeConnector={canCreateElement && onCreateConnector !== undefined}
+          hasSelection={hasSelection}
+          canCreateConnector={canCreateConnector}
+          canAlign={canAlign}
+          canDistribute={canDistribute}
+        />
+      )}
       <input
         ref={imageInputRef}
         type="file"
