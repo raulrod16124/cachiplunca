@@ -33,7 +33,15 @@ describe('resolveElementRenderer', () => {
 
 describe('defaultRendererRegistry', () => {
   it('registers a renderer for every element type', () => {
-    const types: readonly ElementType[] = ['text', 'note', 'task', 'frame', 'connector', 'link'];
+    const types: readonly ElementType[] = [
+      'text',
+      'note',
+      'task',
+      'frame',
+      'connector',
+      'link',
+      'image',
+    ];
 
     for (const type of types) {
       expect(defaultRendererRegistry[type]).toBeDefined();

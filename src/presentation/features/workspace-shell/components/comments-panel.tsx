@@ -19,6 +19,7 @@ const ELEMENT_TYPE_KEYS: Readonly<Record<ElementType, TranslationKey>> = {
   task: 'commandPalette.element.task',
   frame: 'commandPalette.element.frame',
   link: 'commandPalette.element.link',
+  image: 'commandPalette.element.image',
   connector: 'comments.element.connector',
 };
 
@@ -483,6 +484,8 @@ function elementTitle(element: Element): string {
       return richTextToPlain(element.title);
     case 'link':
       return element.title === undefined ? element.url : richTextToPlain(element.title);
+    case 'image':
+      return element.alt === undefined || element.alt.length === 0 ? element.src : element.alt;
     case 'connector':
       return '';
     default: {

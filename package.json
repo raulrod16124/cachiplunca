@@ -13,12 +13,12 @@
     "format:check": "prettier --check .",
     "lint:fix": "oxlint --fix",
     "test": "jest --runInBand",
-    "test:rules": "firebase emulators:exec --only firestore --project demo-cachiplunca \"jest --config jest.rules.config.cjs\"",
+    "test:rules": "firebase emulators:exec --only firestore,storage --project demo-cachiplunca \"jest --config jest.rules.config.cjs --runInBand\"",
     "perf": "node --expose-gc ./node_modules/jest/bin/jest.js --config jest.perf.config.cjs --runInBand",
     "perf:dev": "vite --open /perf.html",
-    "test:e2e": "firebase emulators:exec --only auth,firestore --project demo-cachiplunca \"playwright test\"",
-    "test:e2e:ui": "firebase emulators:exec --only auth,firestore --project demo-cachiplunca \"playwright test --ui\"",
-    "test:e2e:headed": "firebase emulators:exec --only auth,firestore --project demo-cachiplunca \"playwright test --headed\""
+    "test:e2e": "firebase emulators:exec --only auth,firestore,storage --project demo-cachiplunca \"playwright test\"",
+    "test:e2e:ui": "firebase emulators:exec --only auth,firestore,storage --project demo-cachiplunca \"playwright test --ui\"",
+    "test:e2e:headed": "firebase emulators:exec --only auth,firestore,storage --project demo-cachiplunca \"playwright test --headed\""
   },
   "engines": {
     "node": "22",

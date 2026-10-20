@@ -4,6 +4,7 @@ import {
   duplicateElement,
   isConnectorElement,
   isFrameElement,
+  isImageElement,
   isLinkElement,
   isNoteElement,
   isTaskElement,
@@ -27,6 +28,7 @@ import type {
   ConnectorElement,
   Element,
   FrameElement,
+  ImageElement,
   LinkElement,
   NoteElement,
   TaskElement,
@@ -92,6 +94,14 @@ const createLinkElement = (overrides: Partial<LinkElement> = {}): LinkElement =>
   ...overrides,
 });
 
+const createImageElement = (overrides: Partial<ImageElement> = {}): ImageElement => ({
+  ...createBaseElement(),
+  type: 'image',
+  src: 'https://example.com/image.png',
+  alt: 'Example',
+  ...overrides,
+});
+
 const allElements = (): Element[] => [
   createTextElement(),
   createNoteElement(),
@@ -99,11 +109,12 @@ const allElements = (): Element[] => [
   createFrameElement(),
   createConnectorElement(),
   createLinkElement(),
+  createImageElement(),
 ];
 
 describe('Element types', () => {
-  it('declares the six MVP element types and task statuses', () => {
-    expect(ELEMENT_TYPES).toEqual(['text', 'note', 'task', 'frame', 'connector', 'link']);
+  it('declares the supported element types and task statuses', () => {
+    expect(ELEMENT_TYPES).toEqual(['text', 'note', 'task', 'frame', 'connector', 'link', 'image']);
     expect(TASK_STATUSES).toEqual(['todo', 'in_progress', 'completed', 'blocked']);
   });
 
@@ -115,10 +126,11 @@ describe('Element types', () => {
       if (isFrameElement(element)) return 'frame';
       if (isConnectorElement(element)) return 'connector';
       if (isLinkElement(element)) return 'link';
+      if (isImageElement(element)) return 'image';
       return 'unknown';
     });
 
-    expect(types).toEqual(['text', 'note', 'task', 'frame', 'connector', 'link']);
+    expect(types).toEqual(['text', 'note', 'task', 'frame', 'connector', 'link', 'image']);
   });
 
   it('narrows on the discriminant to access type-specific fields', () => {
@@ -145,6 +157,8 @@ describe('Element types', () => {
           return richTextToPlain(element.content);
         case 'connector':
           return `${element.sourceElementId?.value}->${element.targetElementId?.value}`;
+        case 'image':
+          return element.src;
       }
     });
 

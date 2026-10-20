@@ -4,6 +4,7 @@ import { createAuthServices, type AuthServices } from './app/config/auth-service
 import { createCommentServices } from './app/config/comment-services';
 import { createElementServices, type ElementServices } from './app/config/element-services';
 import { createExportServices, type ExportServices } from './app/config/export-services';
+import { createImageServices } from './app/config/image-services';
 import {
   createInvitationServices,
   type InvitationServices,
@@ -15,6 +16,7 @@ import {
 } from './app/config/user-settings-services';
 import { createWorkspaceServices, type WorkspaceServices } from './app/config/workspace-services';
 import type { CommentServices } from './application/comment-services';
+import type { ImageServices } from './application/image-services';
 import { AppRoutes } from './app/routes/app-routes';
 import { UserId } from './domain/shared/value-objects/user-id';
 import { getFirebaseFirestore } from './infrastructure/firebase/firebase-app';
@@ -33,6 +35,7 @@ interface AppContentProps {
   readonly userSettingsServices: UserSettingsServices;
   readonly exportServices: ExportServices;
   readonly commentServices: CommentServices;
+  readonly imageServices: ImageServices;
 }
 
 function AppContent({
@@ -44,6 +47,7 @@ function AppContent({
   userSettingsServices,
   exportServices,
   commentServices,
+  imageServices,
 }: AppContentProps) {
   const session = useSession();
   const userId = session.status === 'authenticated' ? UserId.create(session.user.uid) : null;
@@ -87,6 +91,7 @@ function AppContent({
             updateWorkspace={workspaceServices.updateWorkspace}
             fileDownload={exportServices.fileDownload}
             comments={commentServices}
+            imageServices={imageServices}
           />
         </ProfileServicesProvider>
       </I18nProvider>
@@ -105,6 +110,7 @@ function App() {
   const [userSettingsServices] = useState(() => createUserSettingsServices(getFirebaseFirestore()));
   const [exportServices] = useState(createExportServices);
   const [commentServices] = useState(createCommentServices);
+  const [imageServices] = useState(createImageServices);
 
   const routerBasename = import.meta.env.BASE_URL.replace(/\/$/, '') || undefined;
 
@@ -121,6 +127,7 @@ function App() {
             userSettingsServices={userSettingsServices}
             exportServices={exportServices}
             commentServices={commentServices}
+            imageServices={imageServices}
           />
         </SessionProvider>
       </BrowserRouter>

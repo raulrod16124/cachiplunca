@@ -100,7 +100,7 @@ Definition of Done:
 | PBL-012 | Alineación y distribución                    | R2      | P1        | M        | —              | No  | DONE   |
 | PBL-013 | Comentarios MVP                              | R2      | P0        | L        | PBL-001        | No  | DONE   |
 | PBL-014 | Temporizador de sesión local                 | R3      | P2        | S        | —              | Sí  | DONE   |
-| PBL-015 | Imágenes                                     | R3      | P1        | L        | PBL-001        | No  | TODO   |
+| PBL-015 | Imágenes                                     | R3      | P1        | L        | PBL-001        | No  | DONE   |
 | PBL-016 | Enlace guest de solo lectura                 | R3      | P1        | L        | PBL-001        | No  | TODO   |
 | PBL-017 | Vista presentación por frames                | R3      | P2        | M        | PBL-009        | No  | TODO   |
 | PBL-018 | Notificaciones in-app                        | R3      | P2        | S        | —              | Sí  | TODO   |
@@ -664,7 +664,7 @@ Apoyar sesiones de trabajo sin añadir estado compartido ni backend.
 
 ### PBL-015 — Imágenes
 
-**Priority:** P1 · **Effort:** L · **Depends:** PBL-001 · **Status:** TODO
+**Priority:** P1 · **Effort:** L · **Depends:** PBL-001 · **Status:** DONE
 
 #### Objetivo
 
@@ -672,20 +672,20 @@ Cerrar el gap de contenido visual del tablero.
 
 #### Fases
 
-- [ ] **a. Domain:** `ImageElement` con URL, texto alternativo y tamaño; validadores y tests.
-- [ ] **b. Application:** puerto de storage y caso de uso de subida; fake y tests.
-- [ ] **c. Infrastructure:** adapter de Firebase Storage, mapper de persistencia y tests.
-- [ ] **d. Rules:** `storage.rules` y `firestore.rules` para el nuevo tipo; tests.
-- [ ] **e. Presentation:** renderer, inserción desde toolbar, redimensionado y eliminación.
-- [ ] **f. Integración/E2E:** subir, ver, recargar y eliminar.
+- [x] **a. Domain:** `ImageElement` con URL, texto alternativo y tamaño; validadores y tests.
+- [x] **b. Application:** puerto de storage y caso de uso de subida; fake y tests.
+- [x] **c. Infrastructure:** adapter de Firebase Storage, mapper de persistencia y tests.
+- [x] **d. Rules:** `storage.rules` y `firestore.rules` para el nuevo tipo; tests.
+- [x] **e. Presentation:** renderer, inserción desde toolbar, redimensionado y eliminación.
+- [x] **f. Integración/E2E:** subir, ver, recargar y eliminar.
 
 #### Criterios de aceptación
 
-- [ ] La imagen se sube, se renderiza y persiste tras recargar.
-- [ ] Se validan tipo y tamaño máximo con errores claros.
-- [ ] El texto alternativo es editable y accesible.
-- [ ] Los permisos respetan roles del workspace.
-- [ ] Rules tests y quality gates en verde.
+- [x] La imagen se sube, se renderiza y persiste tras recargar.
+- [x] Se validan tipo y tamaño máximo con errores claros.
+- [x] El texto alternativo es editable y accesible.
+- [x] Los permisos respetan roles del workspace.
+- [x] Rules tests y quality gates en verde.
 
 #### Fuera de alcance
 
@@ -697,6 +697,7 @@ Cerrar el gap de contenido visual del tablero.
 - GAP-02 es el punto de partida.
 - No importar Firebase en Presentation; subir mediante puerto.
 - Añadir límites de tamaño para controlar costes.
+- Implementado con `ImageElement` (`src`, `alt?`) y `createImageElement`/`withImageSrc`/`withImageAlt`; `ImageStoragePort` + `createUploadImage` validan PNG/JPEG/WebP/GIF hasta 5 MB y construyen `workspaces/{workspaceId}/images/{imageId}-{name}`. Adapter `firebase-image-storage` con `uploadBytes`/`getDownloadURL`, `storage.rules` por membership y validación de forma en `firestore.rules`. UI: selector desde toolbar, `ImageRenderer`, editor inline de descripción, acción en command palette, búsqueda/export y E2E. Ver ADR-0040.
 
 ---
 
@@ -831,6 +832,8 @@ Añadir una línea por sesión. El detalle técnico extenso sigue viviendo en `d
 | 2026-10-20 | PBL-012 | DONE      | Alineación y distribución: `alignElements`/`distributeElements` puros con huecos iguales, conectores excluidos y no-op sin historial; desplegable accesible en la toolbar, persistencia con `commitElements`, undo/redo en un paso, solo lectura, i18n en/es, unit, integración y E2E.                           |
 | 2026-10-20 | PBL-013 | DONE      | Comentarios por elemento: `Comment`/`CommentId` con resolución única, puerto y casos de uso, subcolección Firestore con mapper, rules por membership, panel desde la top bar ligado a la selección, viewers pueden comentar, i18n en/es, unit, integración, rules y E2E.                                         |
 | 2026-10-20 | PBL-014 | DONE      | Temporizador local en la top bar: presets 1/3/5/10 min, reducer puro con `endsAt`, controles iniciar/pausar/reanudar/reiniciar, tiempo accesible sin interrupciones y diálogo central al finalizar con opción de reiniciar; estado aislado sin Firestore, i18n en/es, unit con fake timers, integración y E2E.   |
+
+| 2026-10-20 | PBL-015 | DONE | Imágenes: `ImageElement` con `src`/`alt`, puerto y caso de uso de subida con validación de tipo y 5 MB, adapter Firebase Storage, `storage.rules` por membership y validación en `firestore.rules`, renderer, selector en toolbar, editor de descripción, búsqueda/export, i18n en/es, unit, integración, rules y E2E. |
 
 ---
 

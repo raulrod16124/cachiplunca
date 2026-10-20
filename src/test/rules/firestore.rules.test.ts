@@ -87,6 +87,28 @@ function elementData(workspaceId: string, createdBy: string, id: string) {
   };
 }
 
+function imageElementData(
+  workspaceId: string,
+  createdBy: string,
+  id: string,
+  overrides: Record<string, unknown> = {},
+) {
+  return {
+    type: 'image',
+    id,
+    workspaceId,
+    position: { x: 0, y: 0 },
+    size: { width: 320, height: 200 },
+    rotation: 0,
+    src: 'https://firebasestorage.googleapis.com/image.png',
+    alt: 'Diagram',
+    createdBy,
+    createdAt: now,
+    updatedAt: now,
+    ...overrides,
+  };
+}
+
 function presenceData(workspaceId: string, userId: string) {
   return {
     workspaceId,
@@ -375,6 +397,72 @@ describe('firestore.rules — elements', () => {
     await assertFails(getDoc(doc(dbOf(OUTSIDER_UID), 'elements', 'e1')));
     await assertFails(getDoc(doc(dbOf(ROLE_UIDS.owner), 'elements', 'e2')));
     await assertFails(getDoc(doc(unauthed().firestore(), 'elements', 'e1')));
+  });
+});
+
+describe('firestore.rules — image elements', () => {
+  test('owner and editor can create a valid image element', async () => {
+    for (const role of ['owner', 'editor'] as const) {
+      const uid = ROLE_UIDS[role];
+      await assertSucceeds(
+        setDoc(
+          doc(dbOf(uid), 'elements', `image-${role}`),
+          imageElementData(WS1, uid, `image-${role}`),
+        ),
+      );
+    }
+  });
+
+  test('viewers, outsiders and anonymous users cannot create images', async () => {
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.viewer), 'elements', 'image-viewer'),
+        imageElementData(WS1, ROLE_UIDS.viewer, 'image-viewer'),
+      ),
+    );
+    await assertFails(
+      setDoc(
+        doc(dbOf(OUTSIDER_UID), 'elements', 'image-outsider'),
+        imageElementData(WS1, OUTSIDER_UID, 'image-outsider'),
+      ),
+    );
+    await assertFails(
+      setDoc(
+        doc(unauthed().firestore(), 'elements', 'image-anon'),
+        imageElementData(WS1, ROLE_UIDS.owner, 'image-anon'),
+      ),
+    );
+  });
+
+  test('rejects images without a non-empty src or with a non-string alt', async () => {
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.editor), 'elements', 'image-empty-src'),
+        imageElementData(WS1, ROLE_UIDS.editor, 'image-empty-src', { src: '' }),
+      ),
+    );
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.editor), 'elements', 'image-bad-alt'),
+        imageElementData(WS1, ROLE_UIDS.editor, 'image-bad-alt', { alt: 42 }),
+      ),
+    );
+  });
+
+  test('an editor can update the alt text of an existing image', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), 'elements', 'image-existing'),
+        imageElementData(WS1, ROLE_UIDS.owner, 'image-existing'),
+      );
+    });
+
+    await assertSucceeds(
+      updateDoc(doc(dbOf(ROLE_UIDS.editor), 'elements', 'image-existing'), {
+        alt: 'Updated diagram',
+        updatedAt: now,
+      }),
+    );
   });
 });
 

@@ -11,6 +11,7 @@ import type { UpdateElementInput } from '../../../application/commands';
 import type {
   Element,
   FrameElement,
+  ImageElement,
   LinkElement,
   NoteElement,
   RichTextDocument,
@@ -18,12 +19,14 @@ import type {
 } from '../../../domain/element';
 import {
   isFrameElement,
+  isImageElement,
   isLinkElement,
   isNoteElement,
   isTextElement,
   richTextFromPlain,
   richTextToPlain,
 } from '../../../domain/element';
+import { useI18n } from '../../i18n';
 
 const LazyRichTextEditor = lazy(() =>
   import('./rich-text-editor').then((module) => ({ default: module.RichTextEditor })),
@@ -94,6 +97,37 @@ const LinkBox = styled(EditorBox)`
 const LinkTitle = styled.div`
   font-weight: ${({ theme }) => theme.font.weight.semibold};
   word-break: break-word;
+`;
+
+const ImageBox = styled(EditorBox)`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+`;
+
+const ImagePreview = styled.img`
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  object-fit: contain;
+  background-color: ${({ theme }) => theme.canvas.surfaceMuted};
+`;
+
+const AltField = styled.input`
+  box-sizing: border-box;
+  width: 100%;
+  padding: 4px 6px;
+  border: 1px solid ${({ theme }) => theme.color.border.default};
+  border-radius: ${({ theme }) => theme.radius.sm};
+  background-color: ${({ theme }) => theme.canvas.surface};
+  color: ${({ theme }) => theme.color.text.primary};
+  font-family: inherit;
+  font-size: ${({ theme }) => theme.font.size.sm};
+
+  &::placeholder {
+    color: ${({ theme }) => theme.color.text.muted};
+  }
 `;
 
 export interface ElementEditorOverlayProps {
@@ -400,6 +434,84 @@ function LinkFieldsEditor({
   );
 }
 
+function ImageAltEditor({
+  element,
+  onCommit,
+  onCancel,
+}: FieldEditorProps<ImageElement>): ReactElement {
+  const { t } = useI18n();
+  const [altDraft, setAltDraft] = useState(element.alt ?? '');
+  const cancelledRef = useRef(false);
+  const boxRef = useRef<HTMLDivElement | null>(null);
+
+  const cancel = (): void => {
+    cancelledRef.current = true;
+    onCancel();
+  };
+
+  const commit = (): void => {
+    if (cancelledRef.current) {
+      return;
+    }
+
+    const nextAlt = altDraft.trim();
+
+    if (nextAlt === (element.alt ?? '')) {
+      cancel();
+      return;
+    }
+
+    onCommit({ type: 'image', element, alt: nextAlt.length === 0 ? null : nextAlt });
+  };
+
+  const handleBlur = (event: FocusEvent<HTMLDivElement>): void => {
+    if (isContainedFocus(event, boxRef.current)) {
+      return;
+    }
+
+    commit();
+  };
+
+  return (
+    <ImageBox
+      ref={boxRef}
+      style={boxStyle(element)}
+      data-testid="element-editor-box"
+      onBlur={handleBlur}
+    >
+      <ImagePreview src={element.src} alt={element.alt ?? ''} />
+      <AltField
+        data-editor-field="alt"
+        aria-label={t('canvas.imageEditor.altLabel')}
+        placeholder={t('canvas.imageEditor.altPlaceholder')}
+        autoFocus
+        value={altDraft}
+        onChange={(event) => setAltDraft(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') {
+            event.preventDefault();
+            event.stopPropagation();
+            cancel();
+            return;
+          }
+
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            commit();
+          }
+        }}
+        onBlur={(event) => {
+          if (isContainedFocus(event, boxRef.current)) {
+            return;
+          }
+
+          commit();
+        }}
+      />
+    </ImageBox>
+  );
+}
+
 export function ElementEditorOverlay({
   element,
   onCommit,
@@ -453,6 +565,10 @@ export function ElementEditorOverlay({
         commitGuardRef={textCommitGuardRef}
       />
     );
+  }
+
+  if (isImageElement(element)) {
+    return <ImageAltEditor element={element} onCommit={onCommit} onCancel={onCancel} />;
   }
 
   return null;

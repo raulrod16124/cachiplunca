@@ -58,6 +58,7 @@ describe('CanvasToolbar', () => {
     await user.click(screen.getByRole('button', { name: 'Add task' }));
     await user.click(screen.getByRole('button', { name: 'Add frame' }));
     await user.click(screen.getByRole('button', { name: 'Add link' }));
+    await user.click(screen.getByRole('button', { name: 'Add image' }));
 
     expect(onCreateElement.mock.calls.map(([type]) => type)).toEqual([
       'text',
@@ -65,6 +66,7 @@ describe('CanvasToolbar', () => {
       'task',
       'frame',
       'link',
+      'image',
     ]);
   });
 
@@ -73,6 +75,7 @@ describe('CanvasToolbar', () => {
 
     expect(screen.getByRole('button', { name: 'Add text' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Add note' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Add image' })).toBeDisabled();
   });
 
   it('adds a free connector through its own button', async () => {

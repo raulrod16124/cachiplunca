@@ -21,6 +21,9 @@ export function elementSearchText(element: Element): string {
 
       return [title, element.url].filter((value) => value.length > 0).join(' ');
     }
+    case 'image': {
+      return [element.alt ?? '', element.src].filter((value) => value.length > 0).join(' ');
+    }
     case 'connector':
       return '';
     default: {

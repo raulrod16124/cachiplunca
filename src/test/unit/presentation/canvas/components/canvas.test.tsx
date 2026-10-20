@@ -1788,6 +1788,7 @@ describe('Canvas', () => {
       readonly elements?: readonly Element[];
       readonly onCreateElement?: (type: ElementType) => void;
       readonly onCreateConnector?: (mode: 'free' | 'bound') => void;
+      readonly onUploadImage?: (file: File) => Promise<ElementId | void> | ElementId | void;
       readonly history?: CommandHistory<readonly Element[]>;
       readonly onUndoElements?: (elements: readonly Element[]) => void;
       readonly onRedoElements?: (elements: readonly Element[]) => void;
@@ -1804,6 +1805,7 @@ describe('Canvas', () => {
           selectionStore={selectionStore}
           elements={options.elements}
           onCreateElement={options.onCreateElement}
+          onUploadImage={options.onUploadImage}
           onCreateConnector={options.onCreateConnector}
           history={options.history}
           onUndoElements={options.onUndoElements}
@@ -1823,6 +1825,24 @@ describe('Canvas', () => {
       await user.click(screen.getByRole('button', { name: 'Add note' }));
 
       expect(onCreateElement).toHaveBeenCalledWith('note');
+    });
+
+    it('opens the image picker and forwards the selected file', async () => {
+      const onUploadImage = jest.fn();
+      renderToolbarCanvas({ onUploadImage });
+      const user = userEvent.setup();
+      const file = new File(['image'], 'diagram.png', { type: 'image/png' });
+
+      await user.upload(screen.getByTestId('image-file-input'), file);
+
+      expect(onUploadImage).toHaveBeenCalledWith(file);
+      expect(screen.getByRole('button', { name: 'Add image' })).toBeEnabled();
+    });
+
+    it('hides image creation when no upload handler is available', () => {
+      renderToolbarCanvas();
+
+      expect(screen.getByRole('button', { name: 'Add image' })).toBeDisabled();
     });
 
     it('enables the connect-selected button only with two selected elements', async () => {

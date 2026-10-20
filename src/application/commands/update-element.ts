@@ -5,6 +5,8 @@ import {
   withConnectorTargetPoint,
   withFrameParent,
   withFrameTitle,
+  withImageAlt,
+  withImageSrc,
   withLinkTitle,
   withLinkUrl,
   withNoteColor,
@@ -19,6 +21,7 @@ import {
   type ConnectorElement,
   type Element,
   type FrameElement,
+  type ImageElement,
   type LinkElement,
   type NoteElement,
   type RichTextDocument,
@@ -68,6 +71,11 @@ export type UpdateElementInput =
       readonly type: 'link';
       readonly url?: string;
       readonly title?: RichTextDocument | string | null;
+    })
+  | (UpdateElementBaseInput & {
+      readonly type: 'image';
+      readonly src?: string;
+      readonly alt?: string | null;
     });
 
 export interface UpdateElementDeps {
@@ -96,6 +104,7 @@ type TaskPatch = Extract<UpdateElementInput, { readonly type: 'task' }>;
 type FramePatch = Extract<UpdateElementInput, { readonly type: 'frame' }>;
 type ConnectorPatch = Extract<UpdateElementInput, { readonly type: 'connector' }>;
 type LinkPatch = Extract<UpdateElementInput, { readonly type: 'link' }>;
+type ImagePatch = Extract<UpdateElementInput, { readonly type: 'image' }>;
 
 function applyUpdate(input: UpdateElementInput, updatedAt: Date): Element {
   switch (input.type) {
@@ -111,6 +120,8 @@ function applyUpdate(input: UpdateElementInput, updatedAt: Date): Element {
       return applyConnector(input, updatedAt);
     case 'link':
       return applyLink(input, updatedAt);
+    case 'image':
+      return applyImage(input, updatedAt);
     default: {
       const unknownType: never = input;
       throw new Error(`Unknown element type: ${JSON.stringify(unknownType)}`);
@@ -249,6 +260,24 @@ function applyLink(input: LinkPatch, updatedAt: Date): Element {
   }
   if (input.title !== undefined) {
     updated = withLinkTitle(updated, input.title ?? undefined, updatedAt);
+  }
+  return applyRotation(input, updated, updatedAt);
+}
+
+function applyImage(input: ImagePatch, updatedAt: Date): Element {
+  const { element } = input;
+  assertElementType(element, 'image');
+
+  if (input.src === undefined && input.alt === undefined && input.rotation === undefined) {
+    throw noChangesError();
+  }
+
+  let updated: ImageElement = element;
+  if (input.src !== undefined) {
+    updated = withImageSrc(updated, input.src, updatedAt);
+  }
+  if (input.alt !== undefined) {
+    updated = withImageAlt(updated, input.alt ?? undefined, updatedAt);
   }
   return applyRotation(input, updated, updatedAt);
 }

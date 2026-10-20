@@ -1,5 +1,17 @@
 # Session Log
 
+## 2026-10-20 — PBL-015 Imágenes
+
+- Siguiente tarea del backlog: PBL-015 (R3, P1, L, depende de PBL-001 DONE). Sin IN PROGRESS ni BLOCKED; rama `development` limpia al iniciar.
+- Domain: `ImageElement` con `src` y `alt?`, factory `createImageElement`, actualizaciones puras `withImageSrc`/`withImageAlt` y validación en el union discriminado; tests de creación, limpieza de alt y duplicado.
+- Application: `ImageStoragePort`, validación pura de tipo/tamaño (PNG/JPEG/WebP/GIF, 5 MB), derivación de alt desde el nombre, path saneado y caso de uso `createUploadImage`; create/update de elementos, export y búsqueda ampliados; fake y tests.
+- Infrastructure: `getFirebaseStorage` con emulador, adapter `firebase-image-storage` con `uploadBytes`/`getDownloadURL`, errores de Storage mapeados y mapper Firestore de `image`; tests del adapter y del mapper.
+- Rules: `storage.rules` con lectura por membership y escritura owner/editor, límite de tamaño y tipos; `firestore.rules` valida `src`/`alt` de imágenes. Tests de roles, outsiders, anónimos, tipos, tamaño y borrado.
+- Presentation: renderer de imagen accesible, selector desde la toolbar, `onUploadImage` en Canvas, creación con alt derivado del nombre, editor inline de descripción, acción en command palette, búsqueda/export, descripciones y comentarios; i18n en/es y mensajes de error claros.
+- Integración/E2E: harness con `FakeImageStoragePort`; test de subida/persistencia y tipo inválido; E2E `17-images` con subida, recarga, edición de alt y borrado. El emulador de Storage se añadió a los scripts de rules/E2E y a `firebase.json`.
+- Docs: PBL-015 → DONE (fases y criterios [x]), ADR-0040, GAP-02 cerrado y este registro.
+- Quality gates: `npm run lint`, `npm run format:check`, `npx tsc -b --noEmit`, `npm test` (265 suites / 2910 tests), `npm run test:rules` (firestore + storage), `npm run build` y E2E `17-images` en verde.
+
 ## 2026-10-20 — PBL-013 Comentarios MVP
 
 - Siguiente tarea del backlog: PBL-013 (R2, P0, L, depende de PBL-001 DONE). Sin IN PROGRESS ni BLOCKED; rama `development` limpia al iniciar.

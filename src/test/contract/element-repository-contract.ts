@@ -2,6 +2,7 @@ import type { ElementRepository } from '../../application/ports';
 import {
   createConnectorElement,
   createFrameElement,
+  createImageElement,
   createLinkElement,
   createNoteElement,
   createTaskElement,
@@ -55,6 +56,12 @@ function buildElement(type: ElementType, overrides: BuildElementOverrides = {}):
       });
     case 'link':
       return createLinkElement({ ...base, url: 'https://example.com', title: 'Example' });
+    case 'image':
+      return createImageElement({
+        ...base,
+        src: 'https://example.com/image.png',
+        alt: 'Example image',
+      });
   }
 }
 

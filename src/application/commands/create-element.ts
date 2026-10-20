@@ -1,6 +1,7 @@
 import {
   createConnectorElement,
   createFrameElement,
+  createImageElement,
   createLinkElement,
   createNoteElement,
   createTaskElement,
@@ -55,6 +56,11 @@ export type CreateElementInput =
       readonly type: 'link';
       readonly url: string;
       readonly title?: RichTextDocument | string;
+    })
+  | (CreateElementBaseInput & {
+      readonly type: 'image';
+      readonly src: string;
+      readonly alt?: string;
     });
 
 export interface CreateElementDeps {
@@ -119,6 +125,8 @@ function buildElement(input: CreateElementInput, deps: CreateElementDeps): Eleme
       });
     case 'link':
       return createLinkElement({ ...base, url: input.url, title: input.title });
+    case 'image':
+      return createImageElement({ ...base, src: input.src, alt: input.alt });
     default: {
       const unknownType: never = input;
       throw new Error(`Unknown element type: ${JSON.stringify(unknownType)}`);

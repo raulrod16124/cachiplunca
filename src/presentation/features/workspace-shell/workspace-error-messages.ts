@@ -63,6 +63,10 @@ export function describePersistElementsError(error: AppError): string {
 
 export function describeCreateElementError(error: AppError): string {
   switch (error.code) {
+    case ERROR_CODES.IMAGE_INVALID_TYPE:
+      return 'Choose a PNG, JPEG, WebP or GIF image.';
+    case ERROR_CODES.IMAGE_TOO_LARGE:
+      return 'Images must be 5 MB or smaller.';
     case ERROR_CODES.VALIDATION_INVALID_INPUT:
       return 'We could not add that element. Check the details and try again.';
     case ERROR_CODES.AUTH_UNAUTHENTICATED:

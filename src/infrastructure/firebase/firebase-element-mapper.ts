@@ -1,6 +1,7 @@
 import {
   createConnectorElement,
   createFrameElement,
+  createImageElement,
   createLinkElement,
   createNoteElement,
   createTaskElement,
@@ -67,13 +68,20 @@ export interface LinkElementDocument extends BaseElementDocument {
   readonly title?: RichTextDocument;
 }
 
+export interface ImageElementDocument extends BaseElementDocument {
+  readonly type: 'image';
+  readonly src: string;
+  readonly alt?: string;
+}
+
 export type ElementDocument =
   | TextElementDocument
   | NoteElementDocument
   | TaskElementDocument
   | FrameElementDocument
   | ConnectorElementDocument
-  | LinkElementDocument;
+  | LinkElementDocument
+  | ImageElementDocument;
 
 export function toElementDocument(element: Element): ElementDocument {
   const base: BaseElementDocument = {
@@ -137,6 +145,13 @@ export function toElementDocument(element: Element): ElementDocument {
         url: element.url,
         ...(element.title === undefined ? {} : { title: element.title }),
       } as LinkElementDocument;
+    case 'image':
+      return {
+        ...base,
+        type: 'image' as const,
+        src: element.src,
+        ...(element.alt === undefined ? {} : { alt: element.alt }),
+      } as ImageElementDocument;
   }
 }
 
@@ -199,6 +214,12 @@ export function fromElementDocument(id: string, data: unknown): Element {
         ...base,
         url: readString(data.url, 'url'),
         ...(data.title === undefined ? {} : { title: readRichText(data.title) }),
+      });
+    case 'image':
+      return createImageElement({
+        ...base,
+        src: readString(data.src, 'src'),
+        ...(data.alt === undefined ? {} : { alt: readString(data.alt, 'alt') }),
       });
   }
 }

@@ -21,7 +21,7 @@ El comando `UpdateElement` existía testeado pero no estaba cableado en Presenta
 
 ## GAP-02 — No existe el tipo de elemento `image` ni storage de imágenes
 
-**Estado:** documentado · **Impacto:** medio (funcionalidad esperada por usuarios, fuera del alcance actual)
+**Estado:** cerrado (2026-10-20, PBL-015) · **Impacto:** medio (funcionalidad esperada por usuarios, fuera del alcance del MVP)
 
 - `ELEMENT_TYPES` (`src/domain/element/element-types.ts`) define `text | note | task | frame | connector | link`; no hay `image`.
 - `src/infrastructure/storage/` está vacío: no hay adapter de Firebase Storage ni puerto de subida de ficheros.
@@ -58,7 +58,7 @@ El comando `UpdateElement` existía testeado pero no estaba cableado en Presenta
 Lo siguiente no lo cubre la suite Playwright actual y debe verificarse manualmente antes de declare de MVP:
 
 - [x] **Edición de contenido (GAP-01):** crear elemento → doble clic → escribir → persiste tras reload (cubierto también por E2E automatizado).
-- [ ] **Imágenes (GAP-02):** confirmar con producto si el MVP las requiere.
+- [x] **Imágenes (GAP-02):** incluido en post-MVP como PBL-015; cerrado con tipo `image`, Firebase Storage, rules y UI.
 - [ ] **Borrado de workspace (GAP-03).**
 - [ ] **Multi-usuario en tiempo real:** dos navegadores en el mismo tablero → cursores remotos, elementos que aparecen en ambos, estado de conexión.
 - [ ] **Reconexión:** cortar red 10s en el board → badge de reconexión → recuperación sin perder cambios.

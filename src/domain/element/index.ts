@@ -1,6 +1,7 @@
 export * from './connector-element';
 export * from './element-types';
 export * from './frame-element';
+export * from './image-element';
 export * from './link-element';
 export * from './note-element';
 export * from './rich-text';

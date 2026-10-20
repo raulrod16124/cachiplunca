@@ -10,6 +10,7 @@ import {
   AlignVerticalSpaceBetween,
   ArrowUpRight,
   Frame,
+  Image as ImageIcon,
   Link2,
   Scan,
   SquareCheck,
@@ -94,6 +95,11 @@ const ELEMENT_TOOLS: readonly ElementTool[] = [
     type: 'link',
     label: 'canvas.toolbar.addLink',
     icon: <Link2 aria-hidden="true" size={ICON_SIZE} />,
+  },
+  {
+    type: 'image',
+    label: 'canvas.toolbar.addImage',
+    icon: <ImageIcon aria-hidden="true" size={ICON_SIZE} />,
   },
 ];
 
@@ -185,6 +191,7 @@ export interface CanvasToolbarProps {
   readonly onAlign?: (mode: AlignmentMode) => void;
   readonly onDistribute?: (axis: DistributionAxis) => void;
   readonly canCreate?: boolean;
+  readonly canCreateImage?: boolean;
   readonly canCreateFreeConnector?: boolean;
   readonly hasSelection?: boolean;
   readonly canCreateConnector?: boolean;
@@ -200,6 +207,7 @@ export function CanvasToolbar({
   onAlign,
   onDistribute,
   canCreate = false,
+  canCreateImage = canCreate,
   canCreateFreeConnector = false,
   hasSelection = false,
   canCreateConnector = false,
@@ -220,7 +228,7 @@ export function CanvasToolbar({
     >
       <Group>
         {ELEMENT_TOOLS.map((tool) => {
-          const disabled = !canCreate;
+          const disabled = tool.type === 'image' ? !canCreateImage : !canCreate;
 
           return (
             <ToolbarAction

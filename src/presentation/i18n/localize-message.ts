@@ -33,6 +33,8 @@ const MESSAGE_KEYS: Readonly<Record<string, TranslationKey>> = {
   'We could not save your latest changes.': 'errors.saveGeneric',
   'We could not add that element. Check the details and try again.': 'errors.addElementInvalid',
   'We could not add that element. Please try again.': 'errors.addElementGeneric',
+  'Choose a PNG, JPEG, WebP or GIF image.': 'errors.imageInvalidType',
+  'Images must be 5 MB or smaller.': 'errors.imageTooLarge',
   'You do not have permission to view the members of this workspace.':
     'errors.listMembersForbidden',
   'This workspace does not exist or you no longer have access to it.': 'errors.workspaceGone',

@@ -33,6 +33,7 @@ export default defineConfig({
       VITE_FIREBASE_AUTH_DOMAIN: 'demo-cachiplunca.firebaseapp.com',
       VITE_FIREBASE_PROJECT_ID: 'demo-cachiplunca',
       VITE_FIREBASE_APP_ID: 'demo-app-id',
+      VITE_FIREBASE_STORAGE_BUCKET: 'demo-cachiplunca.appspot.com',
       VITE_USE_EMULATORS: 'true',
     },
   },

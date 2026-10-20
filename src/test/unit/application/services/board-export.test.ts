@@ -1,6 +1,7 @@
 import {
   createConnectorElement,
   createFrameElement,
+  createImageElement,
   createLinkElement,
   createNoteElement,
   createTaskElement,
@@ -61,6 +62,11 @@ const ELEMENTS: readonly Element[] = [
     url: 'https://example.com/docs',
     title: 'Docs',
   }),
+  createImageElement({
+    ...base('image-1'),
+    src: 'https://example.com/image.png',
+    alt: 'Diagram',
+  }),
 ];
 
 describe('board export', () => {
@@ -82,6 +88,7 @@ describe('board export', () => {
       'frame',
       'connector',
       'link',
+      'image',
     ]);
   });
 
@@ -121,6 +128,9 @@ describe('board export', () => {
     );
     expect(exported.elements[5]).toEqual(
       expect.objectContaining({ url: 'https://example.com/docs' }),
+    );
+    expect(exported.elements[6]).toEqual(
+      expect.objectContaining({ src: 'https://example.com/image.png', alt: 'Diagram' }),
     );
   });
 

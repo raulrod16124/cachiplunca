@@ -40,6 +40,7 @@ import {
   distributeElements,
   findSelectableAt,
   getVisibleElementIds,
+  IMAGE_ALLOWED_CONTENT_TYPES,
   parseTaskDueDateInput,
   resolveConnectorGeometry,
   sendElementsToBack,
@@ -180,6 +181,7 @@ const EDITABLE_ELEMENT_TYPES: ReadonlySet<ElementType> = new Set<ElementType>([
   'note',
   'frame',
   'link',
+  'image',
 ]);
 
 type TaskFormState =
@@ -207,6 +209,7 @@ export interface CanvasProps {
   readonly onUndoElements?: (elements: readonly Element[]) => void;
   readonly onRedoElements?: (elements: readonly Element[]) => void;
   readonly onCreateElement?: (type: ElementType) => ElementId | void;
+  readonly onUploadImage?: (file: File) => Promise<ElementId | void> | ElementId | void;
   readonly onCreateConnector?: (mode: 'free' | 'bound') => ElementId | void;
   readonly onCreateTask?: (values: TaskFormValues) => ElementId | void;
   readonly onCreateTaskFromElement?: (element: Element) => ElementId | void;
@@ -249,6 +252,7 @@ export function Canvas({
   onUndoElements,
   onRedoElements,
   onCreateElement,
+  onUploadImage,
   onCreateConnector,
   onCreateTask,
   onCreateTaskFromElement,
@@ -533,6 +537,7 @@ export function Canvas({
   const { ref: elementRedoRef } = useElementRedo({ history, onRedoElements, disabled: readOnly });
 
   const [editingElementId, setEditingElementId] = useState<string | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
   const [taskForm, setTaskForm] = useState<TaskFormState | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -933,6 +938,13 @@ export function Canvas({
         return;
       }
 
+      if (type === 'image') {
+        if (onUploadImage !== undefined) {
+          imageInputRef.current?.click();
+        }
+        return;
+      }
+
       const created = onCreateElement?.(type);
 
       if (created === undefined) {
@@ -941,7 +953,7 @@ export function Canvas({
 
       setEditingElementId(created.value);
     },
-    [onCreateElement, onCreateTask],
+    [onCreateElement, onCreateTask, onUploadImage],
   );
 
   const handleCreateConnector = useCallback(
@@ -1157,7 +1169,8 @@ export function Canvas({
     !readOnly &&
     (onCreateElement !== undefined ||
       onCreateTask !== undefined ||
-      onCreateConnector !== undefined);
+      onCreateConnector !== undefined ||
+      onUploadImage !== undefined);
   const canUndo =
     !readOnly && history !== undefined && onUndoElements !== undefined && history.canUndo();
   const canRedo =
@@ -1170,6 +1183,7 @@ export function Canvas({
     canCreateElement &&
     onCreateConnector !== undefined &&
     connectorCandidateIds(elements, selection.selectedIds) !== null;
+  const canCreateImage = canCreateElement && onUploadImage !== undefined;
 
   return (
     <CanvasContainer
@@ -1296,11 +1310,28 @@ export function Canvas({
         onAlign={onAlignElements === undefined ? undefined : handleAlignSelection}
         onDistribute={onDistributeElements === undefined ? undefined : handleDistributeSelection}
         canCreate={canCreateElement}
+        canCreateImage={canCreateImage}
         canCreateFreeConnector={canCreateElement && onCreateConnector !== undefined}
         hasSelection={hasSelection}
         canCreateConnector={canCreateConnector}
         canAlign={canAlign}
         canDistribute={canDistribute}
+      />
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept={IMAGE_ALLOWED_CONTENT_TYPES.join(',')}
+        data-testid="image-file-input"
+        aria-label={t('canvas.toolbar.addImage')}
+        hidden
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          event.target.value = '';
+
+          if (file !== undefined) {
+            void onUploadImage?.(file);
+          }
+        }}
       />
       <TaskFormDialog
         open={taskForm !== null}

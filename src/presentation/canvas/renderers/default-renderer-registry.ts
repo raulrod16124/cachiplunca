@@ -1,6 +1,7 @@
 import { ConnectorRenderer } from './connector-renderer';
 import type { ElementRendererRegistry } from './element-renderer';
 import { FrameRenderer } from './frame-renderer';
+import { ImageRenderer } from './image-renderer';
 import { LinkRenderer } from './link-renderer';
 import { NoteRenderer } from './note-renderer';
 import { TaskRenderer } from './task-renderer';
@@ -13,4 +14,5 @@ export const defaultRendererRegistry: ElementRendererRegistry = {
   frame: FrameRenderer,
   connector: ConnectorRenderer,
   link: LinkRenderer,
+  image: ImageRenderer,
 };

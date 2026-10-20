@@ -22,6 +22,7 @@ const ELEMENT_TYPE_LABELS: Record<ElementType, string> = {
   frame: 'frame',
   connector: 'connector',
   link: 'link',
+  image: 'image',
 };
 
 const CONTENT_MAX_LENGTH = 80;
@@ -61,6 +62,8 @@ function referenceLabel(element: Element): string {
         'link',
         element.title === undefined ? element.url : richTextToPlain(element.title),
       );
+    case 'image':
+      return contentLabel('image', element.alt ?? element.src);
     case 'connector':
       return 'connector';
     default: {
@@ -138,6 +141,8 @@ export function describeElement(
         'Link',
         element.title === undefined ? element.url : richTextToPlain(element.title),
       );
+    case 'image':
+      return contentLabel('Image', element.alt ?? element.src);
     default: {
       const unknown: never = element;
       return `Element ${JSON.stringify(unknown)}`;

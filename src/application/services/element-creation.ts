@@ -17,6 +17,8 @@ export const DEFAULT_NOTE_CONTENT = '';
 export const DEFAULT_TASK_TITLE = 'New task';
 export const DEFAULT_FRAME_TITLE = 'New frame';
 export const DEFAULT_LINK_URL = 'https://example.com';
+export const DEFAULT_IMAGE_SRC =
+  'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200"/>';
 export const DEFAULT_FREE_CONNECTOR_SIZE = Size.create(160, 40);
 
 export const ELEMENT_DEFAULT_SIZES: Record<ElementType, Size> = {
@@ -26,6 +28,7 @@ export const ELEMENT_DEFAULT_SIZES: Record<ElementType, Size> = {
   frame: Size.create(320, 240),
   connector: Size.create(0, 0),
   link: Size.create(220, 64),
+  image: Size.create(320, 200),
 };
 
 export function defaultElementSize(type: ElementType): Size {
@@ -104,6 +107,8 @@ export function buildElementCreateInput(
       return { ...base, type, title: DEFAULT_FRAME_TITLE };
     case 'link':
       return { ...base, type, url: DEFAULT_LINK_URL };
+    case 'image':
+      return { ...base, type, src: DEFAULT_IMAGE_SRC };
     default: {
       const unreachable: never = type;
       throw new Error(`Unsupported element type: ${JSON.stringify(unreachable)}`);

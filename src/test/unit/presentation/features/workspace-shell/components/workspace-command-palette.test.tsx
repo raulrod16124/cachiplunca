@@ -75,6 +75,7 @@ describe('WorkspaceCommandPalette', () => {
     expect(screen.getByTestId('command-palette-item-create-task')).toBeInTheDocument();
     expect(screen.getByTestId('command-palette-item-create-frame')).toBeInTheDocument();
     expect(screen.getByTestId('command-palette-item-create-link')).toBeInTheDocument();
+    expect(screen.getByTestId('command-palette-item-create-image')).toBeInTheDocument();
     expect(screen.getByTestId('command-palette-item-create-connector-free')).toBeInTheDocument();
     expect(screen.getByTestId('command-palette-item-create-connector-bound')).toBeInTheDocument();
     expect(screen.getByTestId('command-palette-item-undo')).not.toHaveAttribute('aria-disabled');

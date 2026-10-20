@@ -3,6 +3,7 @@ import type { ElementRealtimeChange, ElementRealtimeEvent } from '../../../../ap
 import {
   createConnectorElement,
   createFrameElement,
+  createImageElement,
   createLinkElement,
   createNoteElement,
   createTaskElement,
@@ -194,6 +195,12 @@ describe('createFirebaseRealtimeAdapter', () => {
         id: ElementId.create('link-1'),
         url: 'https://example.com',
       }),
+      createImageElement({
+        ...baseProps(),
+        id: ElementId.create('image-1'),
+        src: 'https://example.com/image.png',
+        alt: 'Example',
+      }),
     ];
 
     firestoreMock.__emitSnapshot(
@@ -208,7 +215,7 @@ describe('createFirebaseRealtimeAdapter', () => {
     const event = firstEvent(listener);
     expect(
       event.changes.map((change) => (change.kind === 'removed' ? 'removed' : change.element.type)),
-    ).toEqual(['text', 'note', 'task', 'frame', 'connector', 'link']);
+    ).toEqual(['text', 'note', 'task', 'frame', 'connector', 'link', 'image']);
   });
 
   it('reports a corrupt document through onError without notifying the listener', () => {

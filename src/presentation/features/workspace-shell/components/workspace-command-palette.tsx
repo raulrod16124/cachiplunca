@@ -16,6 +16,7 @@ const ELEMENT_TYPE_KEYS: Record<Exclude<ElementType, 'connector'>, TranslationKe
   task: 'commandPalette.element.task',
   frame: 'commandPalette.element.frame',
   link: 'commandPalette.element.link',
+  image: 'commandPalette.element.image',
 };
 
 const RESULT_TITLE_MAX_LENGTH = 80;
@@ -81,6 +82,7 @@ export function WorkspaceCommandPalette({
             ['task', t('canvas.toolbar.addTask')],
             ['frame', t('canvas.toolbar.addFrame')],
             ['link', t('canvas.toolbar.addLink')],
+            ['image', t('canvas.toolbar.addImage')],
           ] as const
         ).map(([type, label]) => ({
           id: `create-${type}`,

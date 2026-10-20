@@ -63,13 +63,20 @@ export interface LinkBoardExportElement extends BaseBoardExportElement {
   readonly title?: RichTextDocument;
 }
 
+export interface ImageBoardExportElement extends BaseBoardExportElement {
+  readonly type: 'image';
+  readonly src: string;
+  readonly alt?: string;
+}
+
 export type BoardExportElement =
   | TextBoardExportElement
   | NoteBoardExportElement
   | TaskBoardExportElement
   | FrameBoardExportElement
   | ConnectorBoardExportElement
-  | LinkBoardExportElement;
+  | LinkBoardExportElement
+  | ImageBoardExportElement;
 
 export interface BoardExport {
   readonly version: number;
@@ -182,6 +189,13 @@ function toBoardExportElement(element: Element): BoardExportElement {
         type: 'link',
         url: element.url,
         ...(element.title === undefined ? {} : { title: element.title }),
+      };
+    case 'image':
+      return {
+        ...base,
+        type: 'image',
+        src: element.src,
+        ...(element.alt === undefined ? {} : { alt: element.alt }),
       };
     default: {
       const unreachable: never = element;

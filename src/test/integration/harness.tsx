@@ -22,6 +22,7 @@ import {
   createRegisterUser,
   createRemoveMember,
   createUpdateWorkspace,
+  createUploadImage,
 } from '../../application/commands';
 import {
   createGetWorkspace,
@@ -52,6 +53,10 @@ import { FakePresencePort } from '../fixtures/fake-presence-port';
 import { FakeRealtimePort } from '../fixtures/fake-realtime-port';
 import { FakeWorkspaceRepository } from '../fixtures/fake-workspace-repository';
 import { FakeInvitationRepository } from '../fixtures/fake-invitation-repository';
+import {
+  createFakeImageStoragePort,
+  type FakeImageStoragePort,
+} from '../fixtures/fake-image-storage-port';
 import { hashInvitationToken } from '../../infrastructure/crypto/invitation-token';
 import { InvitationId } from '../../domain/shared';
 
@@ -102,6 +107,7 @@ export interface AppHarness {
   readonly realtimePort: FakeRealtimePort;
   readonly presencePort: FakePresencePort;
   readonly invitationRepository: FakeInvitationRepository;
+  readonly imageStoragePort: FakeImageStoragePort;
   readonly services: AppRoutesProps;
   readonly currentUser: AuthUser | null;
   register(credentials?: AuthCredentials): Promise<AuthUser>;
@@ -123,6 +129,7 @@ export function createAppHarness(): AppHarness {
   const realtimePort = new FakeRealtimePort();
   const presencePort = new FakePresencePort();
   const invitationRepository = new FakeInvitationRepository();
+  const imageStoragePort = createFakeImageStoragePort();
 
   let elementSequence = 0;
   let currentUser: AuthUser | null = null;
@@ -204,6 +211,12 @@ export function createAppHarness(): AppHarness {
       }),
       resolveComment: createResolveComment({ repository: commentRepository }),
     },
+    imageServices: {
+      uploadImage: createUploadImage({
+        storage: imageStoragePort,
+        generateImageId: () => `image-${++elementSequence}`,
+      }),
+    },
   };
 
   return {
@@ -215,6 +228,7 @@ export function createAppHarness(): AppHarness {
     realtimePort,
     presencePort,
     invitationRepository,
+    imageStoragePort,
     services,
     get currentUser(): AuthUser | null {
       return currentUser;

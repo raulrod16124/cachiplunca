@@ -2,6 +2,7 @@ export * from './auth-port';
 export * from './comment-repository';
 export * from './element-repository';
 export * from './file-download-port';
+export * from './image-storage-port';
 export * from './invitation-repository';
 export * from './membership-repository';
 export * from './presence-port';
