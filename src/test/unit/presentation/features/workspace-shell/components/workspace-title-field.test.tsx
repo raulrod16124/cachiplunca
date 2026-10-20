@@ -101,7 +101,10 @@ describe('WorkspaceTitleField', () => {
     await user.type(input, '   {Enter}');
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Enter a workspace name.');
-    expect(screen.getByRole('textbox', { name: 'Workspace name' })).toBeInTheDocument();
+    const alert = screen.getByRole('alert');
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+    expect(input).toHaveAttribute('aria-describedby', alert.id);
+    expect(input).toBeInTheDocument();
   });
 
   it('surfaces a generic error when the rename fails', async () => {

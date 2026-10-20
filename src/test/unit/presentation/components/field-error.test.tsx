@@ -8,9 +8,9 @@ describe('FieldError', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('renders error message with alert role', () => {
-    render(<FieldError message="Invalid email" />);
-    expect(screen.getByRole('alert')).toBeInTheDocument();
+  it('renders error message with alert role and optional id', () => {
+    render(<FieldError id="workspace-name-error" message="Invalid email" />);
+    expect(screen.getByRole('alert')).toHaveAttribute('id', 'workspace-name-error');
     expect(screen.getByText('Invalid email')).toBeInTheDocument();
   });
 });

@@ -9,14 +9,15 @@ const ErrorText = styled(Text)`
 
 export interface FieldErrorProps {
   message?: string;
+  id?: string;
 }
 
-export function FieldError({ message }: FieldErrorProps): ReactNode {
+export function FieldError({ message, id }: FieldErrorProps): ReactNode {
   if (!message) {
     return null;
   }
   return (
-    <ErrorText role="alert" aria-live="polite">
+    <ErrorText id={id} role="alert" aria-live="polite">
       {message}
     </ErrorText>
   );

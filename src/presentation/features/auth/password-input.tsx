@@ -35,6 +35,8 @@ export function PasswordInput(props: PasswordInputProps): ReactElement {
         variant="ghost"
         size="sm"
         label={visible ? t('auth.hidePassword') : t('auth.showPassword')}
+        aria-pressed={visible}
+        aria-controls={props.id}
         onClick={() => setVisible((value) => !value)}
       >
         {visible ? <EyeOff aria-hidden="true" size={16} /> : <Eye aria-hidden="true" size={16} />}

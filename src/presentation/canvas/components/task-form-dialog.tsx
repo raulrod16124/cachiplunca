@@ -136,7 +136,6 @@ export function TaskFormDialog({
                     name="title"
                     autoComplete="off"
                     value={title}
-                    aria-invalid={titleError === null ? undefined : true}
                     onChange={(event) => {
                       setTitle(event.target.value);
                       if (titleError !== null) {

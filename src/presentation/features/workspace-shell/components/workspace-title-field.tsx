@@ -1,6 +1,6 @@
 import { Heading, IconButton, Input, Tooltip } from '@raulrod/ui';
 import { Pencil } from '@raulrod/icons';
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useId, useLayoutEffect, useRef, useState } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
 import styled from 'styled-components';
 import type { UpdateWorkspaceResult } from '../../../../application/commands';
@@ -68,6 +68,7 @@ export function WorkspaceTitleField({ name, onRename }: WorkspaceTitleFieldProps
   const [pending, setPending] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const cancelledRef = useRef(false);
+  const errorId = useId();
 
   const editing = draft !== null;
 
@@ -151,6 +152,8 @@ export function WorkspaceTitleField({ name, onRename }: WorkspaceTitleFieldProps
           <TitleInput
             ref={inputRef}
             aria-label="Workspace name"
+            aria-invalid={error === null ? undefined : true}
+            aria-describedby={error === null ? undefined : errorId}
             value={draft}
             maxLength={100}
             disabled={pending}
@@ -175,7 +178,7 @@ export function WorkspaceTitleField({ name, onRename }: WorkspaceTitleFieldProps
           </>
         )}
       </TitleGroup>
-      <FieldError message={error ?? undefined} />
+      <FieldError id={errorId} message={error ?? undefined} />
     </TitleColumn>
   );
 }
