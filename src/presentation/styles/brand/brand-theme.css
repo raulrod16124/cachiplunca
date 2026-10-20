@@ -47,6 +47,38 @@
     0 12px 24px color-mix(in srgb, var(--cach-graphite-900) 10%, transparent);
 }
 
+/*
+ * Reusable paper grain for large branded surfaces only (auth panel, canvas
+ * background, empty states). Kept as a scoped class so importing the brand
+ * layer never paints anything by itself. No images, external requests or
+ * animations: the grain is built from token-driven gradients.
+ */
+.cach-paper-texture {
+  background-image:
+    radial-gradient(
+      circle at 18% 28%,
+      color-mix(in srgb, var(--cach-sand-500) 18%, transparent) 0 1px,
+      transparent 1.5px
+    ),
+    radial-gradient(
+      circle at 72% 64%,
+      color-mix(in srgb, var(--cach-brown-700) 10%, transparent) 0 1px,
+      transparent 1.5px
+    ),
+    linear-gradient(
+      115deg,
+      transparent 0 46%,
+      color-mix(in srgb, var(--cach-sand-200) 22%, transparent) 47% 49%,
+      transparent 50%
+    );
+  background-repeat: repeat;
+  background-size:
+    13px 13px,
+    19px 19px,
+    86px 86px;
+  pointer-events: none;
+}
+
 :root[data-theme='light'] {
   --rr-color-background-default: var(--cach-cream-50);
   --rr-color-background-surface: var(--cach-cream-0);

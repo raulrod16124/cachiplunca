@@ -13,3 +13,17 @@ export { FieldError } from './field-error';
 export type { FieldErrorProps } from './field-error';
 export { BrandLogo } from './brand-logo';
 export type { BrandLogoProps, BrandLogoSize, BrandLogoVariant } from './brand-logo';
+export {
+  DECORATIVE_COLORS,
+  DecorativeArrow,
+  DecorativeBlob,
+  DecorativeSpark,
+  DecorativeUnderline,
+  PaperTexture,
+} from './decorative';
+export type {
+  DecorativeColor,
+  DecorativeProps,
+  DecorativeSize,
+  PaperTextureProps,
+} from './decorative';
