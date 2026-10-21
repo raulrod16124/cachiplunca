@@ -23,7 +23,55 @@ describe('LoginForm', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Sign in' })).toBeInTheDocument();
     expect(screen.getByLabelText('Email')).toBeInTheDocument();
     expect(screen.getByLabelText('Password')).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Remember me' })).toBeChecked();
     expect(screen.getByRole('button', { name: 'Sign in' })).toBeInTheDocument();
+  });
+
+  it('submits remember as true by default', async () => {
+    const user: AuthUser = {
+      uid: 'uid-1',
+      email: CREDENTIALS.email,
+      emailVerified: false,
+      displayName: null,
+    };
+    const loginUser = jest.fn(async (): Promise<LoginUserResult> => ({ status: 'ok', user }));
+    render(<LoginForm loginUser={loginUser} />);
+
+    fillForm(CREDENTIALS.email, CREDENTIALS.password);
+    submit();
+
+    await waitFor(() =>
+      expect(loginUser).toHaveBeenCalledWith({
+        email: CREDENTIALS.email,
+        password: CREDENTIALS.password,
+        remember: true,
+      }),
+    );
+  });
+
+  it('submits remember as false when the checkbox is unchecked', async () => {
+    const user: AuthUser = {
+      uid: 'uid-1',
+      email: CREDENTIALS.email,
+      emailVerified: false,
+      displayName: null,
+    };
+    const loginUser = jest.fn(async (): Promise<LoginUserResult> => ({ status: 'ok', user }));
+    render(<LoginForm loginUser={loginUser} />);
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Remember me' }));
+    expect(screen.getByRole('checkbox', { name: 'Remember me' })).not.toBeChecked();
+
+    fillForm(CREDENTIALS.email, CREDENTIALS.password);
+    submit();
+
+    await waitFor(() =>
+      expect(loginUser).toHaveBeenCalledWith({
+        email: CREDENTIALS.email,
+        password: CREDENTIALS.password,
+        remember: false,
+      }),
+    );
   });
 
   it('shows accessible field errors for invalid input without calling the port', async () => {

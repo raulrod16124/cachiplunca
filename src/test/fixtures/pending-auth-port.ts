@@ -32,6 +32,10 @@ export class PendingAuthPort implements AuthPort {
     throw new Error('unexpected signOut call');
   }
 
+  async setSessionPersistence(): Promise<void> {
+    throw new Error('unexpected setSessionPersistence call');
+  }
+
   async updateDisplayName(_displayName: string): Promise<AuthUser> {
     throw new Error('unexpected updateDisplayName call');
   }

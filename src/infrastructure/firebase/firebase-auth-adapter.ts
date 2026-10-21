@@ -1,10 +1,13 @@
 import {
+  browserLocalPersistence,
+  browserSessionPersistence,
   createUserWithEmailAndPassword,
   EmailAuthProvider,
   onAuthStateChanged,
   reauthenticateWithCredential,
   reload,
   sendEmailVerification as firebaseSendEmailVerification,
+  setPersistence,
   signInAnonymously as firebaseSignInAnonymously,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
@@ -22,6 +25,7 @@ import type {
   ChangePasswordInput,
   SessionErrorListener,
   SessionListener,
+  SessionPersistence,
 } from '../../application/ports';
 import { createAppError, ERROR_CODES } from '../../shared/errors';
 import type { Unsubscribe } from '../../shared/types';
@@ -93,6 +97,17 @@ export function createFirebaseAuthAdapter(auth: Auth): AuthPort {
     async signOut(): Promise<void> {
       try {
         await firebaseSignOut(auth);
+      } catch (error) {
+        throw mapFirebaseError(error);
+      }
+    },
+
+    async setSessionPersistence(mode: SessionPersistence): Promise<void> {
+      try {
+        await setPersistence(
+          auth,
+          mode === 'local' ? browserLocalPersistence : browserSessionPersistence,
+        );
       } catch (error) {
         throw mapFirebaseError(error);
       }

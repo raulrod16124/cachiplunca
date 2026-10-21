@@ -92,8 +92,8 @@ const PanelContent = styled.div`
   padding: ${({ theme }) => theme.space[10]};
 
   @media (max-width: 860px) {
-    padding: ${({ theme }) => theme.space[6]};
-    gap: ${({ theme }) => theme.space[4]};
+    padding: ${({ theme }) => theme.space[4]};
+    gap: ${({ theme }) => theme.space[3]};
   }
 `;
 
@@ -153,7 +153,7 @@ const FormPanel = styled.section`
   padding: ${({ theme }) => theme.space[10]};
 
   @media (max-width: 860px) {
-    padding: ${({ theme }) => theme.space[6]};
+    padding: ${({ theme }) => theme.space[4]};
   }
 `;
 

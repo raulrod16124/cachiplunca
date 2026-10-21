@@ -23,6 +23,8 @@ export interface ChangePasswordInput {
   readonly newPassword: string;
 }
 
+export type SessionPersistence = 'local' | 'session';
+
 export type SessionListener = (user: AuthUser | null) => void;
 
 export type SessionErrorListener = (error: AppError) => void;
@@ -32,6 +34,7 @@ export interface AuthPort {
   signIn(credentials: AuthCredentials): Promise<AuthUser>;
   signInAnonymously(): Promise<AuthUser>;
   signOut(): Promise<void>;
+  setSessionPersistence(mode: SessionPersistence): Promise<void>;
   updateDisplayName(displayName: string): Promise<AuthUser>;
   changeEmail(input: ChangeEmailInput): Promise<AuthUser>;
   changePassword(input: ChangePasswordInput): Promise<void>;

@@ -6,6 +6,7 @@ import type {
   ChangePasswordInput,
   SessionErrorListener,
   SessionListener,
+  SessionPersistence,
 } from '../../application/ports';
 import { createAppError, ERROR_CODES, type AppError } from '../../shared/errors';
 import type { Unsubscribe } from '../../shared/types';
@@ -20,6 +21,7 @@ export class FakeAuthPort implements AuthPort {
   #session: AuthUser | null = null;
   #listeners = new Set<SessionListener>();
   #errorListeners = new Set<SessionErrorListener>();
+  #persistence: SessionPersistence = 'local';
   #sequence = 0;
 
   async signUp(credentials: AuthCredentials): Promise<AuthUser> {
@@ -74,6 +76,14 @@ export class FakeAuthPort implements AuthPort {
 
   async signOut(): Promise<void> {
     this.#setSession(null);
+  }
+
+  async setSessionPersistence(mode: SessionPersistence): Promise<void> {
+    this.#persistence = mode;
+  }
+
+  get sessionPersistence(): SessionPersistence {
+    return this.#persistence;
   }
 
   async updateDisplayName(displayName: string): Promise<AuthUser> {

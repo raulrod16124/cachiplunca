@@ -39,6 +39,46 @@ test.describe('Authentication', () => {
     await expect(page.getByRole('button', { name: 'Sign in' })).toBeEnabled();
   });
 
+  test('remember me controls whether a new tab restores the session', async ({ page, context }) => {
+    const email = await registerUser(page);
+    await logout(page);
+
+    await page.goto('/login');
+    await page.getByLabel('Email').fill(email);
+    await page.getByLabel('Password', { exact: true }).fill('Secret123');
+    const remember = page.getByRole('checkbox', { name: 'Remember me' });
+    await expect(remember).toBeChecked();
+    await remember.uncheck();
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page.getByRole('heading', { level: 1, name: 'Your workspaces' })).toBeVisible({
+      timeout: 30000,
+    });
+
+    const sessionTab = await context.newPage();
+    await sessionTab.goto('/workspaces');
+    await expect(sessionTab.getByRole('heading', { level: 1, name: 'Sign in' })).toBeVisible({
+      timeout: 20000,
+    });
+    await sessionTab.close();
+
+    await logout(page);
+    await page.goto('/login');
+    await page.getByLabel('Email').fill(email);
+    await page.getByLabel('Password', { exact: true }).fill('Secret123');
+    await expect(page.getByRole('checkbox', { name: 'Remember me' })).toBeChecked();
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page.getByRole('heading', { level: 1, name: 'Your workspaces' })).toBeVisible({
+      timeout: 30000,
+    });
+
+    const localTab = await context.newPage();
+    await localTab.goto('/workspaces');
+    await expect(localTab.getByRole('heading', { level: 1, name: 'Your workspaces' })).toBeVisible({
+      timeout: 30000,
+    });
+    await localTab.close();
+  });
+
   test('visiting the workspaces list while signed out redirects to login', async ({ page }) => {
     await page.goto('/workspaces');
     await expect(page.getByRole('heading', { level: 1, name: 'Sign in' })).toBeVisible({

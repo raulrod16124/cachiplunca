@@ -120,6 +120,21 @@ describe('auth routes', () => {
     expect(screen.getByTestId('location')).toHaveTextContent('/workspaces');
   });
 
+  it('applies the remember me choice through the login command', async () => {
+    const authPort = new FakeAuthPort();
+    await registeredUser(authPort);
+    renderApp(authPort, '/login');
+
+    fillForm();
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Remember me' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Your workspaces' }),
+    ).toBeInTheDocument();
+    expect(authPort.sessionPersistence).toBe('session');
+  });
+
   it('opens /workspaces after registering', async () => {
     renderApp(new FakeAuthPort(), '/register');
 

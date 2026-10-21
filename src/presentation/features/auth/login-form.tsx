@@ -1,8 +1,8 @@
 import {
   Button,
+  Checkbox,
   FormField,
   FormFieldControl,
-  FormFieldDescription,
   FormFieldError,
   FormFieldLabel,
   Heading,
@@ -11,6 +11,7 @@ import {
   Text,
 } from '@raulrod/ui';
 import { useState, type FormEvent, type ReactNode } from 'react';
+import styled from 'styled-components';
 import type { LoginFieldErrors, LoginUser } from '../../../application/commands';
 import { toAppError } from '../../../shared/errors';
 import { localizeFieldError, localizeMessage, useI18n } from '../../i18n';
@@ -21,10 +22,24 @@ export interface LoginFormProps {
   readonly loginUser: LoginUser;
 }
 
+const RememberMe = styled.label`
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.space[2]};
+  cursor: pointer;
+`;
+
+const FormLayout = styled(Stack)`
+  @media (max-width: 860px) {
+    gap: ${({ theme }) => theme.space[3]};
+  }
+`;
+
 export function LoginForm({ loginUser }: LoginFormProps): ReactNode {
   const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
   const [fieldErrors, setFieldErrors] = useState<LoginFieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -40,7 +55,7 @@ export function LoginForm({ loginUser }: LoginFormProps): ReactNode {
     setFormError(null);
 
     try {
-      const result = await loginUser({ email, password });
+      const result = await loginUser({ email, password, remember: rememberMe });
       switch (result.status) {
         case 'ok':
           break;
@@ -59,13 +74,13 @@ export function LoginForm({ loginUser }: LoginFormProps): ReactNode {
   }
 
   return (
-    <Stack gap="space-5">
+    <FormLayout gap="space-5">
       <Stack gap="space-2">
         <Heading as="h1">{t('auth.signIn.title')}</Heading>
         <Text color="color.text.muted">{t('auth.signIn.subtitle')}</Text>
       </Stack>
       <form onSubmit={handleSubmit} noValidate>
-        <Stack gap="space-4">
+        <FormLayout gap="space-4">
           <FormField>
             <FormFieldLabel>{t('auth.email')}</FormFieldLabel>
             <FormFieldControl>
@@ -87,7 +102,6 @@ export function LoginForm({ loginUser }: LoginFormProps): ReactNode {
           </FormField>
           <FormField>
             <FormFieldLabel>{t('auth.password')}</FormFieldLabel>
-            <FormFieldDescription>{t('auth.passwordHint')}</FormFieldDescription>
             <FormFieldControl>
               {(field) => (
                 <PasswordInput
@@ -103,6 +117,14 @@ export function LoginForm({ loginUser }: LoginFormProps): ReactNode {
               <FormFieldError>{localizeFieldError(t, fieldErrors.password)}</FormFieldError>
             )}
           </FormField>
+          <RememberMe>
+            <Checkbox
+              name="rememberMe"
+              checked={rememberMe}
+              onChange={(event) => setRememberMe(event.target.checked)}
+            />
+            <Text size="font.size.sm">{t('auth.rememberMe')}</Text>
+          </RememberMe>
           {formError !== null && (
             <Text role="alert" color="color.text.danger">
               {formError}
@@ -111,8 +133,8 @@ export function LoginForm({ loginUser }: LoginFormProps): ReactNode {
           <Button type="submit" loading={submitting}>
             {t('auth.signIn.submit')}
           </Button>
-        </Stack>
+        </FormLayout>
       </form>
-    </Stack>
+    </FormLayout>
   );
 }
