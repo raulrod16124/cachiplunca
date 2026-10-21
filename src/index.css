@@ -64,6 +64,23 @@ body {
   -webkit-backdrop-filter: blur(4px);
 }
 
+/*
+ * Narrow AppShell navigation uses the same Dialog-as-sheet approach, anchored
+ * to the inline start. Kept separate from `.app-drawer-content` because that
+ * right-anchored sheet belongs to the workspace board and comments.
+ */
+.rr-dialog:has(.app-nav-drawer) {
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
+}
+
+.rr-dialog:has(.app-nav-drawer) .rr-dialog-backdrop {
+  background: color-mix(in srgb, var(--rr-color-text-primary) 16%, transparent);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
 /* Profile tabs share the dialog width and read as one segmented control. */
 .profile-tabs-list {
   display: flex;

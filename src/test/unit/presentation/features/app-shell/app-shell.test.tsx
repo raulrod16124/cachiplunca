@@ -28,6 +28,7 @@ describe('AppShell', () => {
       'page',
     );
     expect(screen.getByRole('link', { name: 'Invitations' })).not.toHaveAttribute('aria-current');
+    expect(screen.queryByRole('button', { name: 'Open navigation menu' })).not.toBeInTheDocument();
     expect(screen.getByText('Ada Lovelace')).toBeInTheDocument();
     expect(screen.queryByText('ada@example.com')).not.toBeInTheDocument();
     expect(screen.getByText('Content')).toBeInTheDocument();

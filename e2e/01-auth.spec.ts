@@ -12,6 +12,7 @@ test.describe('Authentication', () => {
       'page',
     );
     await expect(page.locator('#main-content')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Open navigation menu' })).toHaveCount(0);
   });
 
   test('logout ends the session and login restores it', async ({ page }) => {

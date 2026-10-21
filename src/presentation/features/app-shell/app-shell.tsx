@@ -1,5 +1,5 @@
-import { Badge, Button, Text } from '@raulrod/ui';
-import { LayoutGrid, Mail, Plus } from '@raulrod/icons';
+import { Button, Text } from '@raulrod/ui';
+import { Plus } from '@raulrod/icons';
 import type { ReactNode } from 'react';
 import styled from 'styled-components';
 import type { LogoutUser } from '../../../application/commands';
@@ -7,7 +7,8 @@ import type { AuthUser } from '../../../application/ports';
 import { useI18n } from '../../i18n';
 import { BrandLogo } from '../../components';
 import { AccountMenu } from '../auth/account-menu';
-import { NavItem } from './nav-item';
+import { NavLinks } from './nav-links';
+import { NarrowNavMenu } from './narrow-nav-menu';
 
 const Layout = styled.div`
   display: flex;
@@ -132,6 +133,12 @@ export function AppShell({
           <Brand>
             <BrandLogo variant="wordmark" responsive size="md" />
           </Brand>
+          <NarrowNavMenu
+            currentUser={currentUser}
+            logoutUser={logoutUser}
+            onCreateWorkspace={onCreateWorkspace}
+            pendingInvitationCount={pendingInvitationCount}
+          />
         </BrandRow>
 
         <CreateButton type="button" variant="primary" onClick={onCreateWorkspace}>
@@ -140,27 +147,7 @@ export function AppShell({
         </CreateButton>
 
         <Nav id="app-nav" aria-label={t('shell.nav.label')}>
-          <NavItem href="#workspaces" active icon={<LayoutGrid aria-hidden="true" size={16} />}>
-            {t('shell.nav.workspaces')}
-          </NavItem>
-          <NavItem
-            href="#pending-invitations"
-            icon={<Mail aria-hidden="true" size={16} />}
-            aria-label={
-              pendingInvitationCount > 0
-                ? t('shell.nav.pendingInvitations', { count: pendingInvitationCount })
-                : undefined
-            }
-            badge={
-              pendingInvitationCount > 0 ? (
-                <Badge variant="info" aria-hidden="true">
-                  {pendingInvitationCount}
-                </Badge>
-              ) : undefined
-            }
-          >
-            {t('shell.nav.invitations')}
-          </NavItem>
+          <NavLinks pendingInvitationCount={pendingInvitationCount} />
         </Nav>
 
         <SidebarFooter>

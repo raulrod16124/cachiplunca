@@ -49,6 +49,21 @@ test.describe('visual baseline — workspaces', () => {
     await page.setViewportSize({ width: 900, height: 800 });
     await setTheme(page, 'light');
     await waitForStable(page);
+    await expect(page.getByRole('button', { name: 'Open navigation menu' })).toBeVisible();
     await expect(page).toHaveScreenshot('workspaces-narrow-light.png');
   });
+
+  for (const theme of ['light', 'dark'] as const) {
+    test(`narrow navigation menu theme:${theme}`, async ({ page }) => {
+      await registerUser(page);
+      await page.goto('/workspaces');
+      await expect(page.getByRole('heading', { level: 1, name: 'Your workspaces' })).toBeVisible();
+      await page.setViewportSize({ width: 900, height: 800 });
+      await setTheme(page, theme);
+      await waitForStable(page);
+      await page.getByRole('button', { name: 'Open navigation menu' }).click();
+      await expect(page.getByRole('dialog', { name: 'Navigation' })).toBeVisible();
+      await expect(page).toHaveScreenshot(`workspaces-narrow-menu-${theme}.png`);
+    });
+  }
 });
