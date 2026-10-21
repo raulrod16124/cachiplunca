@@ -216,6 +216,38 @@ test.describe('visual baseline — canvas', () => {
       });
     });
 
+    test(`presentation theme:${theme}`, async ({ page }) => {
+      await registerUser(page);
+      await createWorkspace(page, 'Presentation canvas');
+
+      const frame = await addElement(page, 'frame');
+      const frameEditor = page.getByTestId('element-editor').getByRole('textbox');
+      await expect(frameEditor).toBeVisible();
+      await frameEditor.fill('Presentation frame 1');
+      await frameEditor.blur();
+      await expect(frame).toBeVisible();
+
+      const secondFrame = await addElement(page, 'frame');
+      const secondFrameEditor = page.getByTestId('element-editor').getByRole('textbox');
+      await expect(secondFrameEditor).toBeVisible();
+      await secondFrameEditor.fill('Presentation frame 2');
+      await secondFrameEditor.blur();
+      await expect(secondFrame).toBeVisible();
+
+      await page.getByRole('button', { name: 'Present' }).click();
+      await expect(page.getByTestId('board-presentation')).toBeVisible();
+      await setTheme(page, theme);
+      await waitForStable(page);
+      await expect(page).toHaveScreenshot(`canvas-presentation-${theme}.png`, {
+        mask: [
+          page.locator('[data-testid="session-timer-display"]'),
+          page.locator('[data-testid="connected-users"]'),
+          page.locator('[data-testid^="presence-avatar-"]'),
+          page.locator('[data-testid^="comment-indicator-"]'),
+        ],
+      });
+    });
+
     test(`task plan drawer theme:${theme}`, async ({ page }) => {
       await registerUser(page);
       await createWorkspace(page, 'Plan canvas');

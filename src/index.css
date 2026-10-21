@@ -84,6 +84,94 @@ body {
     margin: 12mm;
   }
 
+  /*
+   * Print always uses the light brand palette, even when the app is in dark
+   * mode. `index.css` loads after `brand-theme.css`, so these selectors match
+   * the specificity of the dark overrides and win the cascade.
+   */
+  :root[data-theme],
+  :root:not([data-theme]) {
+    color-scheme: light;
+    --rr-color-background-default: var(--cach-cream-50);
+    --rr-color-background-surface: var(--cach-cream-0);
+    --rr-color-background-sunken: var(--cach-sand-200);
+    --rr-color-text-primary: var(--cach-graphite-900);
+    --rr-color-text-muted: var(--cach-muted-600);
+    --rr-color-text-inverse: var(--cach-cream-0);
+    --rr-color-text-danger: var(--cach-error-700);
+    --rr-color-text-destructive: var(--cach-error-700);
+    --rr-color-text-success: var(--cach-green-900);
+    --rr-color-text-warning: var(--cach-brown-700);
+    --rr-color-text-info: var(--cach-info-700);
+    --rr-color-border-default: var(--cach-sand-500);
+    --rr-color-border-strong: var(--cach-brown-700);
+    --rr-color-border-danger: var(--cach-error-700);
+    --rr-color-border-primary: var(--cach-green-900);
+    --rr-color-border-primary-hover: var(--cach-green-950);
+    --rr-color-action-primary-background: var(--cach-green-900);
+    --rr-color-action-primary-background-hover: var(--cach-green-950);
+    --rr-color-action-primary-background-active: var(--cach-green-980);
+    --rr-color-action-primary-text: var(--cach-cream-0);
+    --rr-color-action-secondary-background: var(--cach-orange-500);
+    --rr-color-action-secondary-background-hover: var(--cach-orange-600);
+    --rr-color-action-secondary-text: var(--cach-graphite-900);
+    --rr-color-action-destructive-background: var(--cach-error-700);
+    --rr-color-action-destructive-background-hover: color-mix(
+      in srgb,
+      var(--cach-error-700) 86%,
+      var(--cach-graphite-900)
+    );
+    --rr-color-action-destructive-text: var(--cach-cream-0);
+    --rr-color-action-disabled-background: var(--cach-sand-200);
+    --rr-color-action-disabled-text: var(--cach-muted-600);
+    --rr-color-action-success-background: var(--cach-success-700);
+    --rr-color-action-success-background-hover: color-mix(
+      in srgb,
+      var(--cach-success-700) 86%,
+      var(--cach-graphite-900)
+    );
+    --rr-color-action-success-text: var(--cach-cream-0);
+    --rr-color-action-info-background: var(--cach-info-700);
+    --rr-color-action-info-background-hover: color-mix(
+      in srgb,
+      var(--cach-info-700) 86%,
+      var(--cach-graphite-900)
+    );
+    --rr-color-action-info-text: var(--cach-cream-0);
+    --rr-color-background-success: color-mix(
+      in srgb,
+      var(--cach-success-700) 10%,
+      var(--cach-cream-0)
+    );
+    --rr-color-background-warning: color-mix(
+      in srgb,
+      var(--cach-mustard-500) 18%,
+      var(--cach-cream-0)
+    );
+    --rr-color-background-info: color-mix(in srgb, var(--cach-info-700) 10%, var(--cach-cream-0));
+    --rr-color-background-destructive: color-mix(
+      in srgb,
+      var(--cach-error-700) 10%,
+      var(--cach-cream-0)
+    );
+    --rr-color-focus-ring: var(--cach-green-900);
+    --cach-note-default: #fffdf9;
+    --cach-note-green: #dce8cf;
+    --cach-note-amber: #f7e3b0;
+    --cach-note-blue: #d8e4e8;
+    --cach-note-red: #f6d5c8;
+    --cach-note-gray: #efe6d8;
+    --cach-note-border: color-mix(in srgb, var(--cach-brown-700) 30%, transparent);
+    --cach-note-shadow: none;
+  }
+
+  html,
+  body {
+    background: var(--cach-cream-0);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
   #root {
     display: none !important;
   }

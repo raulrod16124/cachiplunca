@@ -35,16 +35,20 @@ const Bar = styled.div`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.space[2]};
+  max-width: 100%;
   padding: ${({ theme }) => `${theme.space[2]} ${theme.space[3]}`};
-  border: 1px solid ${({ theme }) => theme.canvas.elementBorder};
-  border-radius: ${({ theme }) => theme.radius.md};
-  background: ${({ theme }) => theme.canvas.surface};
-  box-shadow: ${({ theme }) => theme.shadow.sm};
+  border: 1px solid ${({ theme }) => theme.color.border.default};
+  border-top: 2px solid ${({ theme }) => theme.color.action.primary.background};
+  border-radius: ${({ theme }) => theme.radius.lg};
+  background: ${({ theme }) => theme.color.background.surface};
+  box-shadow: ${({ theme }) => theme.shadow.md};
   pointer-events: auto;
 `;
 
 const Counter = styled(Text)`
   min-width: 8ch;
+  color: ${({ theme }) => theme.color.text.primary};
+  font-family: ${({ theme }) => theme.font.family.sans};
   text-align: center;
   font-variant-numeric: tabular-nums;
 `;
