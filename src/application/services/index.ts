@@ -21,6 +21,7 @@ export * from './element-copy-paste';
 export * from './element-persistence';
 export * from './element-persistence-orchestrator';
 export * from './element-persistence-batcher';
+export * from './image-cleanup';
 export * from './realtime-subscription-manager';
 export * from './realtime-connection-store';
 export * from './connected-users-store';

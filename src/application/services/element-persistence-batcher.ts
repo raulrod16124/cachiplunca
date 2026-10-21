@@ -24,11 +24,17 @@ export interface ElementPersistenceBatcherOptions {
   readonly onResult?: (result: PersistElementMutationResult) => void;
   readonly onStatusChange?: (status: PersistenceSyncStatus) => void;
   readonly onMutationFailed?: (mutation: FailedElementMutation, error: AppError) => void;
+  readonly onPersistedMutation?: (mutation: PersistedElementMutation) => void;
   readonly delayMs?: number;
   readonly scheduler?: Scheduler;
 }
 
 export interface FailedElementMutation {
+  readonly previous: readonly Element[];
+  readonly next: readonly Element[];
+}
+
+export interface PersistedElementMutation {
   readonly previous: readonly Element[];
   readonly next: readonly Element[];
 }
@@ -50,7 +56,7 @@ interface PendingMutation {
 export function createElementPersistenceBatcher(
   options: ElementPersistenceBatcherOptions,
 ): ElementPersistenceBatcher {
-  const { orchestrator, onResult, onStatusChange, onMutationFailed } = options;
+  const { orchestrator, onResult, onStatusChange, onMutationFailed, onPersistedMutation } = options;
   const delayMs = normalizeDelayMs(options.delayMs);
   const scheduler = options.scheduler ?? createTimeoutScheduler();
 
@@ -80,8 +86,12 @@ export function createElementPersistenceBatcher(
         dropPending();
         onMutationFailed?.({ previous: target.previous, next: target.next }, result.error);
         emitStatus('error');
-      } else if (inFlight === 0 && pending === null) {
-        emitStatus('saved');
+      } else {
+        onPersistedMutation?.({ previous: target.previous, next: target.next });
+
+        if (inFlight === 0 && pending === null) {
+          emitStatus('saved');
+        }
       }
     });
     return chain;

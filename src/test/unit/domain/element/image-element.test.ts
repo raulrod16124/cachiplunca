@@ -81,4 +81,39 @@ describe('ImageElement', () => {
     expect(copy.src).toBe(element.src);
     expect(copy.alt).toBe(element.alt);
   });
+
+  it('keeps the optional storage path and rejects an empty one', () => {
+    const element = createImageElement(
+      props({ storagePath: 'workspaces/ws-1/images/image-1-diagram.png' }),
+    );
+
+    expect(element.storagePath).toBe('workspaces/ws-1/images/image-1-diagram.png');
+    expect(() => validateElement(element)).not.toThrow();
+    expect(() => createImageElement(props({ storagePath: '   ' }))).toThrow(
+      'ImageElement storagePath cannot be empty',
+    );
+  });
+
+  it('duplicates an image keeping its storage path', () => {
+    const element = createImageElement(
+      props({ storagePath: 'workspaces/ws-1/images/image-1-diagram.png' }),
+    );
+
+    const copy = duplicateElement(element, {
+      id: ElementId.create('image-2'),
+      createdAt: new Date('2026-10-20T10:00:00.000Z'),
+    });
+
+    expect(isImageElement(copy)).toBe(true);
+    if (isImageElement(copy)) {
+      expect(copy.storagePath).toBe(element.storagePath);
+    }
+  });
+
+  it('accepts legacy images without a storage path', () => {
+    const element = createImageElement(props());
+
+    expect(element.storagePath).toBeUndefined();
+    expect(() => validateElement(element)).not.toThrow();
+  });
 });

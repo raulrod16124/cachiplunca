@@ -44,9 +44,11 @@ import type {
 } from '../../../../../../application/ports';
 import {
   createFrameElement,
+  createImageElement,
   createTextElement,
   richTextFromPlain,
 } from '../../../../../../domain/element';
+import type { ImageServices } from '../../../../../../application/image-services';
 import { Presence } from '../../../../../../domain/collaboration';
 import {
   ElementId,
@@ -85,6 +87,20 @@ const TEXT_ELEMENT = createTextElement({
   position: Position.create(30, 40),
   size: Size.create(120, 80),
   content: 'Hello',
+  createdAt: new Date('2024-01-01T00:00:00.000Z'),
+});
+
+const IMAGE_STORAGE_PATH = 'workspaces/ws-test/images/image-1-diagram.png';
+
+const IMAGE_ELEMENT = createImageElement({
+  id: ElementId.create('image-1'),
+  workspaceId: WorkspaceId.create('ws-test'),
+  createdBy: UserId.create('user-1'),
+  position: Position.create(30, 40),
+  size: Size.create(240, 160),
+  src: `https://storage.test/${IMAGE_STORAGE_PATH}`,
+  alt: 'Diagram',
+  storagePath: IMAGE_STORAGE_PATH,
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
 });
 
@@ -181,6 +197,9 @@ interface RenderOptions {
   readonly elementPersistenceOrchestrator?: ElementPersistenceOrchestrator;
   readonly persistenceScheduler?: ManualScheduler;
   readonly persistenceDebounceMs?: number;
+  readonly imageCleanupScheduler?: ManualScheduler;
+  readonly imageCleanupDelayMs?: number;
+  readonly imageServices?: ImageServices;
   readonly realtimePort?: FakeRealtimePort;
   readonly realtimeSubscriptionManager?: RealtimeSubscriptionManager;
   readonly presencePort?: FakePresencePort;
@@ -220,6 +239,9 @@ function renderContainer(getWorkspace: GetWorkspace, options: RenderOptions = {}
         onBack={ON_BACK}
         persistenceScheduler={options.persistenceScheduler}
         persistenceDebounceMs={options.persistenceDebounceMs}
+        imageCleanupScheduler={options.imageCleanupScheduler}
+        imageCleanupDelayMs={options.imageCleanupDelayMs}
+        imageServices={options.imageServices}
         presencePort={options.presencePort}
         localUserId={options.localUserId}
         currentUser={options.currentUser}
@@ -515,6 +537,131 @@ describe('WorkspaceShellContainer', () => {
       const restored = await repository.listByWorkspace(WorkspaceId.create('ws-test'));
       expect(restored).toHaveLength(1);
     });
+  });
+
+  it('deletes the storage object after Firestore confirms an image removal', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const repository = new FakeElementRepository();
+    await repository.save(IMAGE_ELEMENT);
+    const orchestrator = createElementPersistenceOrchestrator(createElementPersistence(repository));
+    const imageCleanupScheduler = new ManualScheduler();
+    const deleteImage = jest.fn(async () => ({ status: 'ok' as const }));
+
+    renderContainer(getWorkspace, {
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [IMAGE_ELEMENT],
+      }),
+      elementPersistenceOrchestrator: orchestrator,
+      imageCleanupScheduler,
+      imageServices: {
+        uploadImage: jest.fn(),
+        deleteImage,
+      },
+    });
+
+    const canvas = await screen.findByRole('application', { name: 'Canvas' });
+    await screen.findByTestId('canvas-item-image-1');
+    fireEvent.keyDown(canvas, { key: 'a', ctrlKey: true });
+    fireEvent.keyDown(canvas, { key: 'Delete' });
+
+    await waitFor(async () => {
+      await expect(repository.listByWorkspace(WorkspaceId.create('ws-test'))).resolves.toEqual([]);
+    });
+    await waitFor(() => expect(imageCleanupScheduler.pending).toBe(1));
+
+    act(() => imageCleanupScheduler.run());
+    await flushMicrotasks();
+
+    expect(deleteImage).toHaveBeenCalledWith({ storagePath: IMAGE_STORAGE_PATH });
+  });
+
+  it('cancels the storage cleanup when the image deletion is undone', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const repository = new FakeElementRepository();
+    await repository.save(IMAGE_ELEMENT);
+    const orchestrator = createElementPersistenceOrchestrator(createElementPersistence(repository));
+    const imageCleanupScheduler = new ManualScheduler();
+    const deleteImage = jest.fn(async () => ({ status: 'ok' as const }));
+
+    renderContainer(getWorkspace, {
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [IMAGE_ELEMENT],
+      }),
+      elementPersistenceOrchestrator: orchestrator,
+      imageCleanupScheduler,
+      imageServices: {
+        uploadImage: jest.fn(),
+        deleteImage,
+      },
+    });
+
+    const canvas = await screen.findByRole('application', { name: 'Canvas' });
+    await screen.findByTestId('canvas-item-image-1');
+    fireEvent.keyDown(canvas, { key: 'a', ctrlKey: true });
+    fireEvent.keyDown(canvas, { key: 'Delete' });
+
+    await waitFor(() => expect(imageCleanupScheduler.pending).toBe(1));
+
+    fireEvent.keyDown(canvas, { key: 'z', ctrlKey: true });
+
+    await waitFor(async () => {
+      const restored = await repository.listByWorkspace(WorkspaceId.create('ws-test'));
+      expect(restored).toHaveLength(1);
+    });
+
+    act(() => imageCleanupScheduler.run());
+    await flushMicrotasks();
+
+    expect(deleteImage).not.toHaveBeenCalled();
+  });
+
+  it('does not delete a storage object still referenced by another image', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const repository = new FakeElementRepository();
+    const copy = createImageElement({
+      id: ElementId.create('image-2'),
+      workspaceId: WorkspaceId.create('ws-test'),
+      createdBy: UserId.create('user-1'),
+      position: Position.create(60, 80),
+      size: Size.create(240, 160),
+      src: IMAGE_ELEMENT.src,
+      storagePath: IMAGE_STORAGE_PATH,
+      createdAt: new Date('2024-01-01T00:00:00.000Z'),
+    });
+    await repository.saveMany([IMAGE_ELEMENT, copy]);
+    const orchestrator = createElementPersistenceOrchestrator(createElementPersistence(repository));
+    const imageCleanupScheduler = new ManualScheduler();
+    const deleteImage = jest.fn(async () => ({ status: 'ok' as const }));
+
+    renderContainer(getWorkspace, {
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [IMAGE_ELEMENT, copy],
+      }),
+      elementPersistenceOrchestrator: orchestrator,
+      imageCleanupScheduler,
+      selectionStore: createSelectionStore(['image-1']),
+      imageServices: {
+        uploadImage: jest.fn(),
+        deleteImage,
+      },
+    });
+
+    const canvas = await screen.findByRole('application', { name: 'Canvas' });
+    await screen.findByTestId('canvas-item-image-1');
+    fireEvent.keyDown(canvas, { key: 'Delete' });
+
+    await waitFor(async () => {
+      const remaining = await repository.listByWorkspace(WorkspaceId.create('ws-test'));
+      expect(remaining.map((element) => element.id.value)).toEqual(['image-2']);
+    });
+
+    act(() => imageCleanupScheduler.run());
+    await flushMicrotasks();
+
+    expect(deleteImage).not.toHaveBeenCalled();
   });
 
   it('persists alignment and restores the previous positions on undo', async () => {

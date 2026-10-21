@@ -72,6 +72,7 @@ export interface ImageElementDocument extends BaseElementDocument {
   readonly type: 'image';
   readonly src: string;
   readonly alt?: string;
+  readonly storagePath?: string;
 }
 
 export type ElementDocument =
@@ -151,6 +152,7 @@ export function toElementDocument(element: Element): ElementDocument {
         type: 'image' as const,
         src: element.src,
         ...(element.alt === undefined ? {} : { alt: element.alt }),
+        ...(element.storagePath === undefined ? {} : { storagePath: element.storagePath }),
       } as ImageElementDocument;
   }
 }
@@ -220,6 +222,9 @@ export function fromElementDocument(id: string, data: unknown): Element {
         ...base,
         src: readString(data.src, 'src'),
         ...(data.alt === undefined ? {} : { alt: readString(data.alt, 'alt') }),
+        ...(data.storagePath === undefined
+          ? {}
+          : { storagePath: readString(data.storagePath, 'storagePath') }),
       });
   }
 }

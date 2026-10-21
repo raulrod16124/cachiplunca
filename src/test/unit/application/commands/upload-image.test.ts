@@ -24,6 +24,9 @@ function fakeStorage(): ImageStoragePort & { readonly calls: unknown[] } {
       calls.push(request);
       return { url: `https://storage.example/${request.storagePath}` };
     },
+    async deleteImage() {
+      // No-op for upload tests.
+    },
   };
 }
 
@@ -68,6 +71,9 @@ describe('createUploadImage', () => {
       storage: {
         async uploadImage() {
           throw new Error('storage down');
+        },
+        async deleteImage() {
+          // No-op for upload tests.
         },
       },
       generateImageId: () => 'image-1',

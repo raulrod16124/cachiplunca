@@ -40,13 +40,17 @@ import {
   createConnectedUsersStore,
   createCursorBroadcaster,
   createElementPersistenceBatcher,
+  createImageCleanupQueue,
   createRealtimeConnectionStore,
   createRemoteCursorsStore,
   createSelectionStore,
   createSharedPresencePort,
+  collectImageStoragePaths,
+  collectOrphanedImages,
   DEFAULT_FREE_CONNECTOR_SIZE,
   defaultElementSize,
   elementContentBounds,
+  isStoragePathInWorkspace,
   imageAltFromFileName,
   EMPTY_CONNECTED_USERS_STORE,
   EMPTY_REMOTE_CURSORS_STORE,
@@ -64,6 +68,7 @@ import type {
   CursorBroadcaster,
   ElementPersistenceBatcher,
   ElementPersistenceOrchestrator,
+  ImageCleanupQueue,
   PersistenceSyncStatus,
   RealtimeConnectionStore,
   RealtimeSubscriptionManager,
@@ -80,7 +85,7 @@ import type {
 import type { CommentServices } from '../../../../application/comment-services';
 import type { GuestLinkServices } from '../../../../application/guest-link-services';
 import type { ImageServices } from '../../../../application/image-services';
-import { isConnectorElement } from '../../../../domain/element';
+import { isConnectorElement, isImageElement } from '../../../../domain/element';
 import type { ConnectorElement, Element, ElementType } from '../../../../domain/element';
 import type { Comment } from '../../../../domain/comment';
 import type { Membership, MembershipRole } from '../../../../domain/membership';
@@ -152,6 +157,8 @@ export interface WorkspaceShellContainerProps {
   readonly selectionStore?: SelectionStore;
   readonly persistenceDebounceMs?: number;
   readonly persistenceScheduler?: Scheduler;
+  readonly imageCleanupDelayMs?: number;
+  readonly imageCleanupScheduler?: Scheduler;
   readonly inviteMember?: InviteMember;
   readonly listPendingInvitations?: ListPendingInvitations;
   readonly getWorkspaceRole?: GetWorkspaceRole;
@@ -188,6 +195,8 @@ export function WorkspaceShellContainer({
   selectionStore,
   persistenceDebounceMs,
   persistenceScheduler,
+  imageCleanupDelayMs,
+  imageCleanupScheduler,
   inviteMember,
   listPendingInvitations,
   getWorkspaceRole,
@@ -239,6 +248,9 @@ export function WorkspaceShellContainer({
     createCommandHistory<readonly Element[]>({ initial: [] }),
   );
   const persistenceBatcherRef = useRef<ElementPersistenceBatcher | null>(null);
+  const workspaceIdRef = useRef(workspaceId);
+  workspaceIdRef.current = workspaceId;
+  const imageCleanupQueueRef = useRef<ImageCleanupQueue | null>(null);
 
   const sharedPresencePort = useMemo(
     () => (presencePort === undefined ? undefined : createSharedPresencePort(presencePort)),
@@ -350,6 +362,19 @@ export function WorkspaceShellContainer({
           setElements(rolledBack);
         }
       },
+      onPersistedMutation: (mutation) => {
+        const cleanupQueue = imageCleanupQueueRef.current;
+
+        if (cleanupQueue === null) {
+          return;
+        }
+
+        const orphaned = collectOrphanedImages(mutation.previous, mutation.next).filter((image) =>
+          isStoragePathInWorkspace(image.storagePath, workspaceIdRef.current),
+        );
+
+        cleanupQueue.schedule(orphaned);
+      },
       delayMs: persistenceDebounceMs,
       scheduler: persistenceScheduler,
     });
@@ -357,6 +382,27 @@ export function WorkspaceShellContainer({
 
   const persistenceBatcher = persistenceBatcherRef.current;
   const transformGestureRef = useRef<TransformGesture | null>(null);
+
+  useEffect(() => {
+    if (imageServices !== undefined) {
+      imageCleanupQueueRef.current = createImageCleanupQueue({
+        deleteImage: imageServices.deleteImage,
+        delayMs: imageCleanupDelayMs,
+        scheduler: imageCleanupScheduler,
+        isStillReferenced: (image) =>
+          elementsRef.current.some(
+            (element) =>
+              isImageElement(element) &&
+              (element.storagePath === image.storagePath || element.src === image.src),
+          ),
+      });
+    }
+
+    return () => {
+      imageCleanupQueueRef.current?.dispose();
+      imageCleanupQueueRef.current = null;
+    };
+  }, [imageServices, imageCleanupDelayMs, imageCleanupScheduler]);
 
   useEffect(() => {
     function flush(): void {
@@ -530,6 +576,7 @@ export function WorkspaceShellContainer({
         size,
         src: result.image.url,
         alt: imageAltFromFileName(file.name),
+        storagePath: result.image.storagePath,
       });
 
       if (created.status === 'error') {
@@ -834,6 +881,7 @@ export function WorkspaceShellContainer({
   const handleUndoElements = useCallback(
     (restored: readonly Element[]) => {
       const previous = elementsRef.current;
+      imageCleanupQueueRef.current?.cancel(collectImageStoragePaths(restored));
       applyElements(restored);
       persistenceBatcher.schedule(previous, restored);
       void persistenceBatcher.flush();

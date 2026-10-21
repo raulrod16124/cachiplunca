@@ -16,6 +16,7 @@ import {
   createCreateGuestLink,
   createOpenGuestWorkspace,
   createRevokeGuestLink,
+  createDeleteImage,
   createDeleteWorkspace,
   createDuplicateWorkspace,
   createInviteMember,
@@ -226,6 +227,7 @@ export function createAppHarness(): AppHarness {
         storage: imageStoragePort,
         generateImageId: () => `image-${++elementSequence}`,
       }),
+      deleteImage: createDeleteImage({ storage: imageStoragePort }),
     },
     guestLinks: {
       createGuestLink: createCreateGuestLink({

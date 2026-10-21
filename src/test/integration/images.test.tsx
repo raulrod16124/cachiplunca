@@ -52,9 +52,8 @@ describe('image elements', () => {
     });
 
     expect(image.alt).toBe('diagram');
-    expect(image.src).toBe(
-      `https://storage.test/workspaces/${workspace.id.value}/images/image-1-diagram.png`,
-    );
+    expect(image.storagePath).toBe(`workspaces/${workspace.id.value}/images/image-1-diagram.png`);
+    expect(image.src).toBe(`https://storage.test/${image.storagePath}`);
     expect(harness.imageStoragePort.uploads).toHaveLength(1);
 
     const item = screen.getByTestId(`canvas-item-${image.id.value}`);

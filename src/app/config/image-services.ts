@@ -1,13 +1,16 @@
 import type { ImageServices } from '../../application/image-services';
-import { createUploadImage } from '../../application/commands';
+import { createDeleteImage, createUploadImage } from '../../application/commands';
 import { getFirebaseStorage } from '../../infrastructure/firebase/firebase-app';
 import { createFirebaseImageStorage } from '../../infrastructure/firebase/firebase-image-storage';
 
 export function createImageServices(): ImageServices {
+  const storage = createFirebaseImageStorage(getFirebaseStorage());
+
   return {
     uploadImage: createUploadImage({
-      storage: createFirebaseImageStorage(getFirebaseStorage()),
+      storage,
       generateImageId: () => crypto.randomUUID(),
     }),
+    deleteImage: createDeleteImage({ storage }),
   };
 }

@@ -1,5 +1,16 @@
-import { getDownloadURL, ref, uploadBytes, type FirebaseStorage } from 'firebase/storage';
-import type { ImageStoragePort, ImageUploadRequest, UploadedImage } from '../../application/ports';
+import {
+  deleteObject,
+  getDownloadURL,
+  ref,
+  uploadBytes,
+  type FirebaseStorage,
+} from 'firebase/storage';
+import type {
+  DeleteImageRequest,
+  ImageStoragePort,
+  ImageUploadRequest,
+  UploadedImage,
+} from '../../application/ports';
 import { mapFirebaseError } from './firebase-error-mapper';
 
 export function createFirebaseImageStorage(storage: FirebaseStorage): ImageStoragePort {
@@ -18,5 +29,26 @@ export function createFirebaseImageStorage(storage: FirebaseStorage): ImageStora
         throw mapFirebaseError(error);
       }
     },
+
+    async deleteImage({ storagePath }: DeleteImageRequest): Promise<void> {
+      try {
+        await deleteObject(ref(storage, storagePath));
+      } catch (error) {
+        if (isObjectNotFound(error)) {
+          return;
+        }
+
+        throw mapFirebaseError(error);
+      }
+    },
   };
+}
+
+function isObjectNotFound(value: unknown): boolean {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'code' in value &&
+    value.code === 'storage/object-not-found'
+  );
 }

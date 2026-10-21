@@ -14,6 +14,11 @@ export interface UploadedImage {
   readonly url: string;
 }
 
+export interface DeleteImageRequest {
+  readonly storagePath: string;
+}
+
 export interface ImageStoragePort {
   uploadImage(request: ImageUploadRequest): Promise<UploadedImage>;
+  deleteImage(request: DeleteImageRequest): Promise<void>;
 }

@@ -107,6 +107,7 @@ export interface ImageElement extends BaseElement {
   readonly type: 'image';
   readonly src: string;
   readonly alt?: string;
+  readonly storagePath?: string;
 }
 
 export type Element =
@@ -279,6 +280,12 @@ export function validateImageElement(element: ImageElement): void {
   }
   if (element.alt !== undefined && typeof element.alt !== 'string') {
     throw new Error('ImageElement alt must be a string');
+  }
+  if (
+    element.storagePath !== undefined &&
+    (typeof element.storagePath !== 'string' || element.storagePath.trim().length === 0)
+  ) {
+    throw new Error('ImageElement storagePath cannot be empty');
   }
 }
 

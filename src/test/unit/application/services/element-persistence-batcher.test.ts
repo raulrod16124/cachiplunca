@@ -132,6 +132,50 @@ describe('createElementPersistenceBatcher', () => {
     expect(onResult).toHaveBeenCalledWith(error);
   });
 
+  it('notifies persisted mutations only after a successful write', async () => {
+    const scheduler = new ManualScheduler();
+    const orchestrator: ElementPersistenceOrchestrator = {
+      persistDelta: jest.fn().mockResolvedValue(OK),
+    };
+    const onPersistedMutation = jest.fn();
+    const batcher = createElementPersistenceBatcher({
+      orchestrator,
+      onPersistedMutation,
+      scheduler,
+    });
+    const previous = [buildTextElement('el-1', 0)];
+    const next = [buildTextElement('el-1', 10)];
+
+    batcher.schedule(previous, next);
+    scheduler.run();
+    await flushMicrotasks();
+
+    expect(onPersistedMutation).toHaveBeenCalledWith({ previous, next });
+  });
+
+  it('does not notify persisted mutations when persistence fails', async () => {
+    const scheduler = new ManualScheduler();
+    const error: PersistElementMutationResult = {
+      status: 'error',
+      error: createAppError('persistence', ERROR_CODES.PERSISTENCE_WRITE_FAILED, 'Write failed'),
+    };
+    const orchestrator: ElementPersistenceOrchestrator = {
+      persistDelta: jest.fn().mockResolvedValue(error),
+    };
+    const onPersistedMutation = jest.fn();
+    const batcher = createElementPersistenceBatcher({
+      orchestrator,
+      onPersistedMutation,
+      scheduler,
+    });
+
+    batcher.schedule([buildTextElement('el-1', 0)], [buildTextElement('el-1', 10)]);
+    scheduler.run();
+    await flushMicrotasks();
+
+    expect(onPersistedMutation).not.toHaveBeenCalled();
+  });
+
   it('serializes overlapping flushes so writes never run concurrently', async () => {
     const scheduler = new ManualScheduler();
     const deferreds = [createDeferred(), createDeferred()];
