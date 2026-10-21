@@ -135,7 +135,7 @@ export function InviteMemberForm({
             {formError}
           </Text>
         )}
-        <Button type="submit" loading={submitting}>
+        <Button type="submit" variant="primary" loading={submitting}>
           {t('share.invite.submit')}
         </Button>
       </Stack>

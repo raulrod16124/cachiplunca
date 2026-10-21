@@ -2,6 +2,8 @@ import { Badge, Inline, Skeleton, Stack, Text } from '@raulrod/ui';
 import type { ReactNode } from 'react';
 import styled from 'styled-components';
 import type { Invitation } from '../../../../domain/invitation';
+import { ActionRow } from '../../../components/action-row';
+import { Card } from '../../../components/card';
 import { EmptyState } from '../../../components/empty-state';
 import { ErrorState } from '../../../components/error-state';
 import { LoadingState } from '../../../components/loading-state';
@@ -68,17 +70,23 @@ export function PendingInvitationsList({
   return (
     <List>
       {invitations.map((invitation) => (
-        <li key={invitation.id.value}>
-          <Inline justify="between" align="center" gap="space-3" wrap>
+        <Card key={invitation.id.value} as="li" padding="sm" data-testid="pending-invitation-row">
+          <ActionRow
+            wrap
+            trailing={
+              <Inline gap="space-2" align="center" wrap>
+                <Badge variant="neutral">{invitation.role}</Badge>
+                <Text color="color.text.muted">
+                  {t('share.invite.expires', {
+                    date: DATE_FORMATTER.format(invitation.expiresAt),
+                  })}
+                </Text>
+              </Inline>
+            }
+          >
             <Text>{invitation.email}</Text>
-            <Inline gap="space-2" align="center">
-              <Badge variant="neutral">{invitation.role}</Badge>
-              <Text color="color.text.muted">
-                {t('share.invite.expires', { date: DATE_FORMATTER.format(invitation.expiresAt) })}
-              </Text>
-            </Inline>
-          </Inline>
-        </li>
+          </ActionRow>
+        </Card>
       ))}
     </List>
   );
