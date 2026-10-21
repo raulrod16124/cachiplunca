@@ -33,17 +33,19 @@ const ArrangeTrigger = styled(DropdownMenu.Trigger)`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: ${({ theme }) => theme.space[8]};
-  min-height: calc(${({ theme }) => theme.font.size.base} + ${({ theme }) => theme.space[4]} + 2px);
-  padding: 0 ${({ theme }) => theme.space[1]};
+  flex: none;
+  width: calc(${({ theme }) => theme.font.size.base} + ${({ theme }) => theme.space[4]} + 2px);
+  height: calc(${({ theme }) => theme.font.size.base} + ${({ theme }) => theme.space[4]} + 2px);
+  padding: 0;
   border: 1px solid transparent;
   border-radius: ${({ theme }) => theme.radius.md};
   background: transparent;
   color: ${({ theme }) => theme.color.text.primary};
   font-family: ${({ theme }) => theme.font.family.sans};
-  font-size: ${({ theme }) => theme.font.size.sm};
+  font-size: ${({ theme }) => theme.font.size.base};
   font-weight: ${({ theme }) => theme.font.weight.medium};
   line-height: ${({ theme }) => theme.font.leading.none};
+  letter-spacing: ${({ theme }) => theme.font.tracking.normal};
   cursor: pointer;
   transition:
     background-color ${({ theme }) => theme.motion.duration.fast}
@@ -52,11 +54,15 @@ const ArrangeTrigger = styled(DropdownMenu.Trigger)`
       ${({ theme }) => theme.motion.easing.standard};
 
   &:hover:not(:disabled) {
-    background: ${({ theme }) => theme.color.action.secondary.background};
+    background: ${({ theme }) => theme.color.background.sunken};
   }
 
   &:active:not(:disabled) {
-    background: ${({ theme }) => theme.color.action.secondary.backgroundHover};
+    background: color-mix(
+      in srgb,
+      ${({ theme }) => theme.color.background.sunken} 82%,
+      ${({ theme }) => theme.color.text.primary}
+    );
   }
 
   &:focus-visible {
@@ -73,18 +79,18 @@ const ArrangeTrigger = styled(DropdownMenu.Trigger)`
 
 const Bar = styled.div`
   position: absolute;
-  top: 16px;
+  top: ${({ theme }) => theme.space[4]};
   left: 50%;
   transform: translateX(-50%);
   z-index: 1;
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.space[2]};
-  padding: 4px 8px;
+  padding: ${({ theme }) => `${theme.space[1]} ${theme.space[2]}`};
   border-radius: ${({ theme }) => theme.radius.md};
-  background: ${({ theme }) => theme.canvas.surface};
-  border: 1px solid ${({ theme }) => theme.canvas.elementBorder};
-  box-shadow: ${({ theme }) => theme.shadow.sm};
+  background: ${({ theme }) => theme.color.background.surface};
+  border: 1px solid ${({ theme }) => theme.color.border.default};
+  box-shadow: ${({ theme }) => theme.shadow.md};
 `;
 
 const Group = styled.div`
@@ -94,9 +100,10 @@ const Group = styled.div`
 `;
 
 const Separator = styled.span`
+  flex: none;
   width: 1px;
-  height: 20px;
-  background: ${({ theme }) => theme.canvas.elementBorder};
+  height: ${({ theme }) => theme.space[5]};
+  background: ${({ theme }) => theme.color.border.default};
 `;
 
 interface ElementTool {
@@ -211,7 +218,7 @@ function ToolbarAction({
 }: ToolbarActionProps): ReactElement {
   return (
     <Tooltip content={label} placement="bottom">
-      <ToolbarButton aria-label={label} onClick={onClick} disabled={disabled}>
+      <ToolbarButton label={label} onClick={onClick} disabled={disabled}>
         {icon}
       </ToolbarButton>
     </Tooltip>
