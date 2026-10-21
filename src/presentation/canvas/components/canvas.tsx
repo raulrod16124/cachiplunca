@@ -74,6 +74,7 @@ import { useSpacePressed } from '../hooks/use-space-pressed';
 import { useZoom } from '../hooks/use-zoom';
 import { ElementView } from '../renderers';
 import type { ElementRendererRegistry } from '../renderers';
+import { DecorativeSpark, PaperTexture } from '../../components/decorative';
 import { EmptyState } from '../../components/empty-state';
 import { useI18n } from '../../i18n';
 import { CanvasToolbar } from './canvas-toolbar';
@@ -101,6 +102,7 @@ const CanvasContainer = styled.div`
   cursor: default;
   user-select: none;
   outline: none;
+  background: ${({ theme }) => theme.canvas.surface};
 
   &:focus-visible {
     outline: 2px solid ${({ theme }) => theme.color.focusRing};
@@ -142,14 +144,26 @@ const World = styled.div`
   will-change: transform;
 `;
 
+const CanvasTexture = styled(PaperTexture)`
+  opacity: 0.12;
+`;
+
 const GridLayer = styled.div`
   position: absolute;
   inset: 0;
   pointer-events: none;
   background-image:
-    linear-gradient(to right, ${({ theme }) => theme.canvas.grid} 1px, transparent 1px),
-    linear-gradient(to bottom, ${({ theme }) => theme.canvas.grid} 1px, transparent 1px);
-  opacity: 0.5;
+    linear-gradient(
+      to right,
+      ${({ theme }) => `color-mix(in srgb, ${theme.canvas.grid} 60%, transparent)`} 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      ${({ theme }) => `color-mix(in srgb, ${theme.canvas.grid} 60%, transparent)`} 1px,
+      transparent 1px
+    );
+  opacity: 0.4;
 `;
 
 const Hint = styled.div`
@@ -1210,6 +1224,7 @@ export function Canvas({
       <VisuallyHidden id={BOARD_SUMMARY_ID} data-testid="canvas-board-summary">
         {boardSummary}
       </VisuallyHidden>
+      <CanvasTexture />
       <GridLayer
         data-testid="canvas-grid"
         style={{
@@ -1275,7 +1290,10 @@ export function Canvas({
           <EmptyState
             title={t('canvas.empty.title')}
             titleAs="h2"
+            titleVariant="display"
+            tone="brand"
             description={CANVAS_SHORTCUTS}
+            illustration={<DecorativeSpark color="orange-500" size="lg" />}
             actionLabel={
               readOnly || onCreateElement === undefined ? undefined : t('canvas.empty.action')
             }

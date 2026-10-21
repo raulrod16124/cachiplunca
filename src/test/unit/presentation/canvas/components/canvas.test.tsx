@@ -75,7 +75,7 @@ function renderCanvas(
   const store = createCanvasViewportStore(Size.create(800, 600));
   const selectionStore = createSelectionStore();
 
-  render(
+  const { container } = render(
     <Canvas
       store={store}
       selectionStore={selectionStore}
@@ -97,7 +97,7 @@ function renderCanvas(
     />,
   );
 
-  return { store, selectionStore };
+  return { store, selectionStore, container };
 }
 
 interface ArrangeCanvasOptions {
@@ -234,6 +234,21 @@ describe('Canvas', () => {
     renderCanvas([FIRST_ITEM]);
 
     expect(screen.queryByRole('heading', { name: 'This board is empty' })).not.toBeInTheDocument();
+  });
+
+  it('renders an inert paper texture behind the canvas content', () => {
+    const { container } = renderCanvas([]);
+    const texture = container.querySelector('.cach-paper-texture');
+
+    expect(texture).not.toBeNull();
+    expect(texture).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it('illustrates the empty board state with inert brand decoration', () => {
+    renderCanvas([]);
+
+    const illustration = screen.getByTestId('state-illustration');
+    expect(illustration).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('offers a CTA to add the first note when the board is empty', () => {

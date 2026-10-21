@@ -24,6 +24,7 @@ export async function disableAnimations(page: Page): Promise<void> {
  * Forces a predictable theme on `<html>` regardless of system preferences.
  */
 export async function setTheme(page: Page, theme: 'light' | 'dark'): Promise<void> {
+  await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
   await page.evaluate((mode) => {
     document.documentElement.setAttribute('data-theme', mode);
   }, theme);
