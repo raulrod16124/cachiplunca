@@ -1,5 +1,5 @@
 import { Button, Inline, Stack, Text } from '@raulrod/ui';
-import type { HeadingLevel } from '@raulrod/ui';
+import type { ButtonVariant, HeadingLevel } from '@raulrod/ui';
 import type { ReactNode } from 'react';
 import { StateIllustration, StateTitle } from './state-shared';
 import type { StateTitleVariant, StateTone } from './state-shared';
@@ -9,6 +9,7 @@ export interface EmptyStateProps {
   description?: string;
   actionLabel?: string;
   onAction?: () => void;
+  actionVariant?: ButtonVariant;
   icon?: ReactNode;
   illustration?: ReactNode;
   tone?: StateTone;
@@ -21,6 +22,7 @@ export function EmptyState({
   description,
   actionLabel,
   onAction,
+  actionVariant = 'primary',
   icon,
   illustration,
   tone = 'neutral',
@@ -42,7 +44,7 @@ export function EmptyState({
         {description ? <Text color="color.text.muted">{description}</Text> : null}
       </Stack>
       {actionLabel && onAction ? (
-        <Button type="button" variant="primary" onClick={onAction}>
+        <Button type="button" variant={actionVariant} onClick={onAction}>
           {actionLabel}
         </Button>
       ) : null}

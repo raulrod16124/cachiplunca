@@ -5,34 +5,22 @@ import styled from 'styled-components';
 import { can } from '../../../../domain/membership';
 import type { MembershipRole } from '../../../../domain/membership';
 import type { Workspace } from '../../../../domain/workspace';
+import { Card } from '../../../components/card';
 import { EmptyState } from '../../../components/empty-state';
 import { ErrorState } from '../../../components/error-state';
 import { LoadingState } from '../../../components/loading-state';
-import { DecorativeSpark } from '../../../components/decorative';
+import { DecorativeArrow, DecorativeSpark } from '../../../components/decorative';
 import { formatRelativeDate, useI18n } from '../../../i18n';
+
+const RESULTS_COUNT_ID = 'workspaces-results-count';
 
 const ListGrid = styled.div`
   display: grid;
   gap: ${({ theme }) => theme.space[4]};
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-`;
 
-const CardShell = styled.div`
-  background: ${({ theme }) => theme.color.background.surface};
-  border: 1px solid ${({ theme }) => theme.color.border.default};
-  border-radius: ${({ theme }) => theme.radius.lg};
-  padding: ${({ theme }) => theme.space[4]};
-  display: flex;
-  flex-direction: column;
-  transition:
-    border-color ${({ theme }) => theme.motion.duration.fast} ease,
-    box-shadow ${({ theme }) => theme.motion.duration.fast} ease,
-    transform ${({ theme }) => theme.motion.duration.fast} ease;
-
-  &:hover {
-    border-color: ${({ theme }) => theme.color.border.strong};
-    box-shadow: ${({ theme }) => theme.shadow.sm};
-    transform: translateY(-1px);
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr;
   }
 `;
 
@@ -58,6 +46,12 @@ const CardHeading = styled.div`
   align-items: flex-start;
   gap: ${({ theme }) => theme.space[2]};
   min-width: 0;
+`;
+
+const CardTitle = styled(Heading)`
+  font-size: ${({ theme }) => theme.font.size.lg};
+  line-height: ${({ theme }) => theme.font.leading.tight};
+  overflow-wrap: anywhere;
 `;
 
 const Description = styled(Text)`
@@ -155,14 +149,14 @@ export function WorkspacesList({
       <LoadingState label="Loading workspaces">
         <ListGrid>
           {Array.from({ length: 6 }).map((_, index) => (
-            <CardShell key={`workspace-skeleton-${index}`}>
+            <Card key={`workspace-skeleton-${index}`}>
               <Stack gap="space-3">
                 <Skeleton data-testid="skeleton" style={{ height: '32px', width: '32px' }} />
                 <Skeleton data-testid="skeleton" style={{ height: '20px', width: '70%' }} />
                 <Skeleton data-testid="skeleton" style={{ height: '16px', width: '50%' }} />
                 <Skeleton data-testid="skeleton" style={{ height: '16px', width: '40%' }} />
               </Stack>
-            </CardShell>
+            </Card>
           ))}
         </ListGrid>
       </LoadingState>
@@ -171,20 +165,20 @@ export function WorkspacesList({
 
   if (status === 'error') {
     return (
-      <CardShell>
+      <Card>
         <ErrorState
           title={t('workspaces.error.title')}
           description={errorMessage ?? t('workspaces.error.description')}
           actionLabel={t('common.retry')}
           onAction={onRetry}
         />
-      </CardShell>
+      </Card>
     );
   }
 
   if (workspaces.length === 0) {
     return (
-      <CardShell>
+      <Card padding="lg">
         <EmptyState
           title={t('workspaces.empty.title')}
           description={t('workspaces.empty.description')}
@@ -194,7 +188,7 @@ export function WorkspacesList({
           tone="brand"
           titleVariant="display"
         />
-      </CardShell>
+      </Card>
     );
   }
 
@@ -211,25 +205,34 @@ export function WorkspacesList({
           <Input
             type="search"
             aria-label={t('workspaces.searchLabel')}
+            aria-describedby={RESULTS_COUNT_ID}
             placeholder={t('workspaces.searchPlaceholder')}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
         </SearchWrapper>
-        <Text color="color.text.muted" size="font.size.sm" role="status" aria-live="polite">
+        <Text
+          id={RESULTS_COUNT_ID}
+          color="color.text.muted"
+          size="font.size.sm"
+          role="status"
+          aria-live="polite"
+        >
           {countLabel}
         </Text>
       </SearchRow>
 
       {filtered.length === 0 ? (
-        <CardShell>
+        <Card padding="lg">
           <EmptyState
             title={t('workspaces.noResults.title')}
             description={t('workspaces.noResults.description')}
             actionLabel={t('workspaces.noResults.action')}
             onAction={() => setQuery('')}
+            actionVariant="outline"
+            illustration={<DecorativeArrow color="olive-500" size="lg" />}
           />
-        </CardShell>
+        </Card>
       ) : (
         <ListGrid>
           {filtered.map((workspace) => {
@@ -243,7 +246,7 @@ export function WorkspacesList({
             const hasActions = onSelect !== undefined || canEdit || canDelete || canDuplicate;
 
             return (
-              <CardShell key={workspace.id.value} as="article">
+              <Card key={workspace.id.value} as="article" interactive>
                 <CardContent gap="space-4">
                   <Stack gap="space-3">
                     <CardHeading>
@@ -251,7 +254,7 @@ export function WorkspacesList({
                         <LayoutGrid size={16} />
                       </CardIcon>
                       <Stack gap="space-1">
-                        <Heading as="h3">{workspace.name}</Heading>
+                        <CardTitle as="h3">{workspace.name}</CardTitle>
                         <Text color="color.text.muted" size="font.size.sm">
                           {t('workspaces.card.updated', {
                             when: formatRelativeDate(workspace.updatedAt, locale),
@@ -321,7 +324,7 @@ export function WorkspacesList({
                     </CardFooter>
                   )}
                 </CardContent>
-              </CardShell>
+              </Card>
             );
           })}
         </ListGrid>

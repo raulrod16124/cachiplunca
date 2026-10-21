@@ -31,6 +31,26 @@ describe('EmptyState', () => {
     expect(onAction).toHaveBeenCalledTimes(1);
   });
 
+  it('renders a primary action by default and supports an outline action', () => {
+    const onAction = jest.fn();
+    const { rerender } = render(
+      <EmptyState title="No results" actionLabel="Clear" onAction={onAction} />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Clear' })).toHaveClass('rr-button--primary');
+
+    rerender(
+      <EmptyState
+        title="No results"
+        actionLabel="Clear"
+        actionVariant="outline"
+        onAction={onAction}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Clear' })).toHaveClass('rr-button--outline');
+  });
+
   it('renders with icon', () => {
     render(<EmptyState icon={<span>📋</span>} />);
     expect(screen.getByText('📋')).toBeInTheDocument();
