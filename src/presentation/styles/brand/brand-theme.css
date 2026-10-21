@@ -54,6 +54,23 @@
   /* Theme-agnostic overrides */
   --rr-font-family-sans: 'Inter', 'Helvetica Neue', Arial, sans-serif;
   --cach-font-display: 'Bangers', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  /*
+   * Account-level text size. `@raulrod/tokens` declares its font sizes in px,
+   * so scaling the root font-size alone would not affect the UI and would
+   * resize unrelated `rem` layout lengths. Scaling the font tokens keeps the
+   * preference purely typographic: spacing, dialogs and canvas stays put.
+   */
+  --cach-font-scale: 1;
+  --rr-font-size-2xs: calc(12px * var(--cach-font-scale));
+  --rr-font-size-xs: calc(13px * var(--cach-font-scale));
+  --rr-font-size-sm: calc(14px * var(--cach-font-scale));
+  --rr-font-size-base: calc(16px * var(--cach-font-scale));
+  --rr-font-size-lg: calc(20px * var(--cach-font-scale));
+  --rr-font-size-xl: calc(25px * var(--cach-font-scale));
+  --rr-font-size-2xl: calc(31px * var(--cach-font-scale));
+  --rr-font-size-3xl: calc(39px * var(--cach-font-scale));
+  --rr-font-size-4xl: calc(49px * var(--cach-font-scale));
+  --rr-font-size-5xl: calc(61px * var(--cach-font-scale));
   --rr-radius-md: 10px;
   --rr-radius-lg: 14px;
   --rr-shadow-sm:
@@ -62,6 +79,45 @@
   --rr-shadow-md:
     0 4px 10px color-mix(in srgb, var(--cach-graphite-900) 8%, transparent),
     0 12px 24px color-mix(in srgb, var(--cach-graphite-900) 10%, transparent);
+}
+
+/*
+ * Account text-size preference. `base` is the default and leaves every token
+ * at its original size, so existing visual baselines stay valid.
+ */
+:root[data-font-size='sm'] {
+  --cach-font-scale: 0.9375;
+}
+
+:root[data-font-size='lg'] {
+  --cach-font-scale: 1.125;
+}
+
+:root[data-font-size='xl'] {
+  --cach-font-scale: 1.25;
+}
+
+/*
+ * Account motion preference. The OS-level `prefers-reduced-motion` override
+ * already comes from `@raulrod/tokens` and the components' own media queries;
+ * this mirrors it when the user asks for reduced motion in settings.
+ * Transitions follow the duration tokens (now zero); the global guard shortens
+ * animations that still use hardcoded durations, such as spinners.
+ */
+:root[data-reduced-motion='true'] {
+  --rr-motion-behavior-default: none;
+  --rr-motion-duration-fast: 0ms;
+  --rr-motion-duration-base: 0ms;
+  --rr-motion-duration-slow: 0ms;
+}
+
+:root[data-reduced-motion='true'] *,
+:root[data-reduced-motion='true'] *::before,
+:root[data-reduced-motion='true'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-delay: 0ms !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
 }
 
 /*

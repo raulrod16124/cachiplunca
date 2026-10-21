@@ -8,11 +8,12 @@ export interface ThemeModeResult {
 }
 
 /**
- * Reads the current user theme/locale preferences and keeps the document in
- * sync: `data-theme` on `<html>` drives the `@raulrod/tokens` light/dark
- * custom properties (including live OS changes when the mode is `system`),
- * and `lang` reflects the resolved locale. Must be rendered inside a
- * `UserSettingsProvider`.
+ * Reads the current user theme/locale/accessibility preferences and keeps the
+ * document in sync: `data-theme` on `<html>` drives the `@raulrod/tokens`
+ * light/dark custom properties (including live OS changes when the mode is
+ * `system`), `lang` reflects the resolved locale, and `data-font-size` /
+ * `data-reduced-motion` drive the brand typography scale and motion overrides
+ * in `brand-theme.css`. Must be rendered inside a `UserSettingsProvider`.
  */
 export function useThemeMode(): ThemeModeResult {
   const { settings } = useUserSettings();
@@ -38,6 +39,18 @@ export function useThemeMode(): ThemeModeResult {
 
     root.setAttribute('data-theme', settings.theme);
     return undefined;
+  }, [settings]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (settings === null) {
+      root.removeAttribute('data-font-size');
+      root.removeAttribute('data-reduced-motion');
+      return;
+    }
+
+    root.setAttribute('data-font-size', settings.fontSize);
+    root.setAttribute('data-reduced-motion', settings.reducedMotion ? 'true' : 'false');
   }, [settings]);
 
   useEffect(() => {
