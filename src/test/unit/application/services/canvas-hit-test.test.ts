@@ -11,13 +11,21 @@ import type { SelectableItem } from '../../../../application/services/canvas-hit
 const FIRST: SelectableItem = { id: 'first', bounds: Bounds.fromXYWH(0, 0, 100, 100) };
 const SECOND: SelectableItem = { id: 'second', bounds: Bounds.fromXYWH(50, 50, 100, 100) };
 
-function createElement(id: string, x: number, y: number, width: number, height: number) {
+function createElement(
+  id: string,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  rotation = 0,
+) {
   return createTextElement({
     id: ElementId.create(id),
     workspaceId: WorkspaceId.create('ws-1'),
     createdBy: UserId.create('user-1'),
     position: Position.create(x, y),
     size: Size.create(width, height),
+    rotation,
     content: 'hello',
   });
 }
@@ -43,6 +51,14 @@ describe('findSelectableAt', () => {
   it('returns the topmost item when bounds overlap', () => {
     expect(findSelectableAt([FIRST, SECOND], Position.create(75, 75))).toBe('second');
     expect(findSelectableAt([SECOND, FIRST], Position.create(75, 75))).toBe('first');
+  });
+
+  it('hits a rotated item using its local bounds', () => {
+    const rotated = toSelectableItem(createElement('rotated', 0, 0, 100, 100, 45));
+
+    expect(findSelectableAt([rotated], Position.create(50, 50))).toBe('rotated');
+    expect(findSelectableAt([rotated], Position.create(50, 95))).toBe('rotated');
+    expect(findSelectableAt([rotated], Position.create(95, 95))).toBeNull();
   });
 });
 
@@ -79,6 +95,15 @@ describe('findSelectablesInBounds', () => {
       'first',
     ]);
   });
+
+  it('uses the rotated axis aligned bounds for marquee selection', () => {
+    const rotated = toSelectableItem(createElement('rotated', 0, 0, 100, 100, 45));
+
+    expect(findSelectablesInBounds([rotated], Bounds.fromXYWH(-25, -25, 10, 10))).toEqual([
+      'rotated',
+    ]);
+    expect(findSelectablesInBounds([rotated], Bounds.fromXYWH(-35, -35, 10, 10))).toEqual([]);
+  });
 });
 
 describe('toSelectableItem', () => {
@@ -87,6 +112,13 @@ describe('toSelectableItem', () => {
 
     expect(item.id).toBe('elem-1');
     expect(item.bounds.equals(Bounds.fromXYWH(10, 20, 120, 80))).toBe(true);
+    expect(item.rotation).toBe(0);
+  });
+
+  it('keeps the element rotation on the selectable item', () => {
+    const item = toSelectableItem(createElement('elem-1', 10, 20, 120, 80, 30));
+
+    expect(item.rotation).toBe(30);
   });
 
   it('maps a list preserving the input order', () => {

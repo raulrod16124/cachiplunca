@@ -43,6 +43,11 @@ export const SHORTCUT_GROUPS: readonly ShortcutGroup[] = [
         keysKey: 'shortcuts.keys.shiftArrowKeys',
       },
       {
+        id: 'selection.rotate',
+        labelKey: 'shortcuts.selection.rotate',
+        keysKey: 'shortcuts.keys.rotate',
+      },
+      {
         id: 'selection.marquee',
         labelKey: 'shortcuts.selection.marquee',
         keysKey: 'shortcuts.keys.marquee',

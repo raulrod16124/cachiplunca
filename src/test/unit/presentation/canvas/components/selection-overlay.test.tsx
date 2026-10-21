@@ -1,10 +1,17 @@
 import { render, screen } from '@testing-library/react';
-import { Bounds } from '../../../../../domain/shared';
+import { Bounds, Position } from '../../../../../domain/shared';
 import type { SelectableItem } from '../../../../../application/services';
 import { SelectionOverlay } from '../../../../../presentation/canvas/components/selection-overlay';
 
-function item(id: string, x: number, y: number, width: number, height: number): SelectableItem {
-  return { id, bounds: Bounds.fromXYWH(x, y, width, height) };
+function item(
+  id: string,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  rotation?: number,
+): SelectableItem {
+  return { id, bounds: Bounds.fromXYWH(x, y, width, height), rotation };
 }
 
 function styleText(): string {
@@ -68,5 +75,49 @@ describe('SelectionOverlay', () => {
 
     expect(overlay).toHaveAttribute('data-selection-count', '2');
     expect(overlay.querySelectorAll('[data-resize-handle]')).toHaveLength(0);
+  });
+
+  it('rotates the overlay with the element', () => {
+    render(<SelectionOverlay items={[item('a', 10, 20, 100, 40, 45)]} canRotate />);
+
+    const overlay = screen.getByTestId('selection-overlay');
+
+    expect(overlay).toHaveAttribute('data-rotation', '45');
+    expect(overlay.style.transform).toBe('rotate(45deg)');
+  });
+
+  it('renders an accessible rotation handle for a single rotatable item', () => {
+    render(<SelectionOverlay items={[item('a', 10, 20, 100, 40)]} canRotate />);
+
+    const handle = screen.getByRole('button', { name: 'Rotate element' });
+
+    expect(handle).toHaveAttribute('data-rotate-handle', 'true');
+    expect(handle).toHaveAttribute('data-testid', 'rotate-handle');
+  });
+
+  it('does not render the rotation handle when rotation is unavailable', () => {
+    render(<SelectionOverlay items={[item('a', 10, 20, 100, 40)]} />);
+
+    expect(screen.queryByTestId('rotate-handle')).not.toBeInTheDocument();
+  });
+
+  it('does not render the rotation handle for a connector', () => {
+    render(
+      <SelectionOverlay
+        items={[
+          {
+            id: 'connector',
+            bounds: Bounds.fromXYWH(0, 0, 100, 100),
+            segment: {
+              start: Position.create(0, 0),
+              end: Position.create(100, 100),
+            },
+          },
+        ]}
+        canRotate
+      />,
+    );
+
+    expect(screen.queryByTestId('rotate-handle')).not.toBeInTheDocument();
   });
 });

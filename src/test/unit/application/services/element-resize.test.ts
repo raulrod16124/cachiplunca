@@ -1,6 +1,7 @@
 import {
   MIN_ELEMENT_SIZE,
   resizeElementByHandle,
+  rotateVector,
   type ResizeHandleAnchor,
 } from '../../../../application/services';
 import { createTextElement, type Element, type TextElement } from '../../../../domain/element';
@@ -135,6 +136,34 @@ describe('resizeElementByHandle', () => {
 
     expect(resized.id.equals(element.id)).toBe(true);
     expect(resized.type).toBe('text');
+  });
+
+  it('resizes a rotated element in its local axes and keeps the opposite corner fixed', () => {
+    const element = createElement({ rotation: 90 });
+    const delta = rotateVector(Position.create(20, 10), 90);
+
+    const resized = expectOk(element, 'bottom-right', delta);
+
+    expect(resized.size.equals(Size.create(120, 50))).toBe(true);
+    expect(resized.position.x).toBeCloseTo(-5);
+    expect(resized.position.y).toBeCloseTo(25);
+  });
+
+  it('keeps the opposite edge fixed for a rotated edge handle', () => {
+    const element = createElement({ rotation: 45 });
+    const delta = rotateVector(Position.create(20, 0), 45);
+
+    const resized = expectOk(element, 'right', delta);
+    const anchor = Position.create(60, 40).add(rotateVector(Position.create(-50, 0), 45));
+    const nextAnchor = Position.create(
+      resized.position.x + resized.size.width / 2,
+      resized.position.y + resized.size.height / 2,
+    ).add(rotateVector(Position.create(-resized.size.width / 2, 0), 45));
+
+    expect(resized.size.width).toBeCloseTo(120);
+    expect(resized.size.height).toBeCloseTo(40);
+    expect(nextAnchor.x).toBeCloseTo(anchor.x);
+    expect(nextAnchor.y).toBeCloseTo(anchor.y);
   });
 
   it('does not mutate the input element', () => {

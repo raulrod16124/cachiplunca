@@ -897,6 +897,53 @@ describe('WorkspaceShellContainer', () => {
     expect(stored?.position.equals(Position.create(30, 40))).toBe(true);
   });
 
+  it('collapses a rotation into a single history entry and persists it', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const repository = new FakeElementRepository();
+    await repository.save(TEXT_ELEMENT);
+    const orchestrator = createElementPersistenceOrchestrator(createElementPersistence(repository));
+
+    renderContainer(getWorkspace, {
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [TEXT_ELEMENT],
+      }),
+      elementPersistenceOrchestrator: orchestrator,
+    });
+
+    const canvas = await screen.findByRole('application', { name: 'Canvas' });
+    const item = await screen.findByTestId('canvas-item-el-1');
+    const user = userEvent.setup();
+
+    await user.click(item);
+
+    const handle = await screen.findByTestId('rotate-handle');
+
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: handle, coords: { x: 90, y: 40 } },
+      { coords: { x: 130, y: 80 } },
+      { keys: '[/MouseLeft]' },
+    ]);
+
+    await waitFor(async () => {
+      const stored = await repository.findById(ElementId.create('el-1'));
+      expect(stored?.rotation).toBeCloseTo(90);
+    });
+
+    fireEvent.keyDown(canvas, { key: 'z', ctrlKey: true });
+
+    await waitFor(async () => {
+      const stored = await repository.findById(ElementId.create('el-1'));
+      expect(stored?.rotation).toBe(0);
+    });
+
+    fireEvent.keyDown(canvas, { key: 'z', ctrlKey: true });
+    await flushMicrotasks();
+
+    const stored = await repository.findById(ElementId.create('el-1'));
+    expect(stored?.rotation).toBe(0);
+  });
+
   it('debounces drag persistence until the injected scheduler fires', async () => {
     const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
     const scheduler = new ManualScheduler();

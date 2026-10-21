@@ -817,6 +817,20 @@ export function WorkspaceShellContainer({
     [persistElements],
   );
 
+  const handleRotateElements = useCallback(
+    (next: readonly Element[]) => {
+      const previous = elementsRef.current;
+
+      if (previous === next) {
+        return;
+      }
+
+      transformGestureRef.current ??= { base: previous, label: 'Rotate elements' };
+      persistElements(previous, next);
+    },
+    [persistElements],
+  );
+
   const handleAlignElements = useCallback(
     (next: readonly Element[]) => {
       commitElements(next, 'Align elements');
@@ -1285,6 +1299,7 @@ export function WorkspaceShellContainer({
           commandHistory={commandHistoryRef.current}
           onMoveElements={handleMoveElements}
           onResizeElements={handleResizeElements}
+          onRotateElements={handleRotateElements}
           onAlignElements={handleAlignElements}
           onDistributeElements={handleDistributeElements}
           onTransformEnd={handleTransformEnd}

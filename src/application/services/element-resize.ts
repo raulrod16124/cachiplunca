@@ -3,6 +3,7 @@ import { Position, Size } from '../../domain/shared';
 import type { AppError } from '../../shared/errors';
 import { createResizeElement } from '../commands';
 import { toValidationAppError } from '../commands/to-validation-app-error';
+import { normalizeRotation, rotateVector } from './element-rotate';
 
 export const MIN_ELEMENT_SIZE = 1;
 
@@ -36,15 +37,30 @@ function computeGeometry(
   delta: Position,
   minSize: number,
 ): { readonly position: Position; readonly size: Size } {
+  const rotation = normalizeRotation(element.rotation);
+  const horizontal = axisFactor(anchor, 'left', 'right');
+  const vertical = axisFactor(anchor, 'top', 'bottom');
+
+  if (rotation === 0) {
+    return computeUnrotatedGeometry(element, horizontal, vertical, delta, minSize);
+  }
+
+  return computeRotatedGeometry(element, rotation, horizontal, vertical, delta, minSize);
+}
+
+function computeUnrotatedGeometry(
+  element: Element,
+  horizontal: 0 | 1 | -1,
+  vertical: 0 | 1 | -1,
+  delta: Position,
+  minSize: number,
+): { readonly position: Position; readonly size: Size } {
   const startLeft = element.position.x;
   const startTop = element.position.y;
   const startWidth = element.size.width;
   const startHeight = element.size.height;
   const right = startLeft + startWidth;
   const bottom = startTop + startHeight;
-
-  const horizontal = axisFactor(anchor, 'left', 'right');
-  const vertical = axisFactor(anchor, 'top', 'bottom');
 
   const nextWidth =
     horizontal === 0 ? startWidth : Math.max(minSize, startWidth + horizontal * delta.x);
@@ -56,6 +72,46 @@ function computeGeometry(
 
   return {
     position: Position.create(nextLeft, nextTop),
+    size: Size.create(nextWidth, nextHeight),
+  };
+}
+
+function computeRotatedGeometry(
+  element: Element,
+  rotation: number,
+  horizontal: 0 | 1 | -1,
+  vertical: 0 | 1 | -1,
+  delta: Position,
+  minSize: number,
+): { readonly position: Position; readonly size: Size } {
+  const startWidth = element.size.width;
+  const startHeight = element.size.height;
+  const localDelta = rotateVector(delta, -rotation);
+
+  const nextWidth =
+    horizontal === 0 ? startWidth : Math.max(minSize, startWidth + horizontal * localDelta.x);
+  const nextHeight =
+    vertical === 0 ? startHeight : Math.max(minSize, startHeight + vertical * localDelta.y);
+
+  const center = Position.create(
+    element.position.x + startWidth / 2,
+    element.position.y + startHeight / 2,
+  );
+  const anchorWorld = center.add(
+    rotateVector(
+      Position.create((-horizontal * startWidth) / 2, (-vertical * startHeight) / 2),
+      rotation,
+    ),
+  );
+  const nextCenter = anchorWorld.add(
+    rotateVector(
+      Position.create((horizontal * nextWidth) / 2, (vertical * nextHeight) / 2),
+      rotation,
+    ),
+  );
+
+  return {
+    position: Position.create(nextCenter.x - nextWidth / 2, nextCenter.y - nextHeight / 2),
     size: Size.create(nextWidth, nextHeight),
   };
 }

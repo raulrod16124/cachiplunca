@@ -171,6 +171,33 @@ test.describe('visual baseline — canvas', () => {
       });
     });
 
+    test(`rotation theme:${theme}`, async ({ page }) => {
+      await registerUser(page);
+      await createWorkspace(page, 'Rotation canvas');
+      const note = await addElement(page, 'note');
+      await page.keyboard.press('Escape');
+      await expect(page.getByTestId('element-editor-box')).toBeHidden();
+      await note.click();
+
+      const handle = page.getByTestId('rotate-handle');
+      await expect(handle).toBeVisible();
+      await handle.focus();
+      await page.keyboard.press('Shift+ArrowRight');
+      await page.keyboard.press('Shift+ArrowRight');
+      await expect(note).toHaveAttribute('style', /rotate\(30deg\)/);
+      await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+      await setTheme(page, theme);
+      await waitForStable(page);
+      await expect(page).toHaveScreenshot(`canvas-rotation-${theme}.png`, {
+        mask: [
+          page.locator('[data-testid="session-timer-display"]'),
+          page.locator('[data-testid="connected-users"]'),
+          page.locator('[data-testid^="presence-avatar-"]'),
+          page.locator('[data-testid^="comment-indicator-"]'),
+        ],
+      });
+    });
+
     test(`context menu theme:${theme}`, async ({ page }) => {
       await registerUser(page);
       await createWorkspace(page, 'Context menu canvas');

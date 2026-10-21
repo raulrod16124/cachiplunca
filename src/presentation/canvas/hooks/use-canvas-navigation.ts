@@ -3,6 +3,7 @@ import { findNextSelectable, resolveNavigationKey } from '../../../application/s
 import type { SelectableItem } from '../../../application/services';
 
 const EDITABLE_SELECTOR = 'input, textarea, select, [contenteditable="true"]';
+const ROTATE_HANDLE_SELECTOR = '[data-rotate-handle]';
 
 export interface UseCanvasNavigationOptions {
   readonly items: readonly SelectableItem[];
@@ -22,6 +23,14 @@ function isEditableTarget(target: EventTarget | null): boolean {
   }
 
   return target.closest(EDITABLE_SELECTOR) !== null;
+}
+
+function isRotateHandleTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) {
+    return false;
+  }
+
+  return target.closest(ROTATE_HANDLE_SELECTOR) !== null;
 }
 
 function lastSelected(selectedIds: readonly string[]): string | null {
@@ -51,7 +60,7 @@ export function useCanvasNavigation({
     }
 
     function handleKeyDown(event: KeyboardEvent): void {
-      if (event.repeat || isEditableTarget(event.target)) {
+      if (event.repeat || isEditableTarget(event.target) || isRotateHandleTarget(event.target)) {
         return;
       }
 

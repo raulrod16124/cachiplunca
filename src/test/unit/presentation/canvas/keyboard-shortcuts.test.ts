@@ -36,6 +36,7 @@ describe('keyboard shortcut catalogue', () => {
       'canvas.zoom',
       'selection.navigate',
       'selection.extend',
+      'selection.rotate',
       'selection.marquee',
       'selection.clear',
       'selection.select-all',

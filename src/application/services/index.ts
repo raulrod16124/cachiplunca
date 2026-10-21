@@ -8,6 +8,7 @@ export * from './canvas-visibility';
 export * from './element-move';
 export * from './element-alignment';
 export * from './element-resize';
+export * from './element-rotate';
 export * from './element-creation';
 export * from './element-search';
 export * from './text-search';

@@ -16,6 +16,8 @@ export { useElementMove } from './use-element-move';
 export type { UseElementMoveOptions, UseElementMoveResult } from './use-element-move';
 export { useElementResize } from './use-element-resize';
 export type { UseElementResizeOptions, UseElementResizeResult } from './use-element-resize';
+export { useElementRotate } from './use-element-rotate';
+export type { UseElementRotateOptions, UseElementRotateResult } from './use-element-rotate';
 export { useConnectorEndpointDrag } from './use-connector-endpoint-drag';
 export type {
   ConnectorEndpointDragInput,

@@ -71,6 +71,7 @@ function renderCanvas(
   onUpdateElement?: (input: UpdateElementInput) => void,
   onAlignElements?: (next: readonly Element[]) => void,
   onDistributeElements?: (next: readonly Element[]) => void,
+  onRotateElements?: (next: readonly Element[]) => void,
 ) {
   const store = createCanvasViewportStore(Size.create(800, 600));
   const selectionStore = createSelectionStore();
@@ -82,6 +83,7 @@ function renderCanvas(
       elements={elements}
       onMoveElements={onMoveElements}
       onResizeElements={onResizeElements}
+      onRotateElements={onRotateElements}
       onDeleteElements={onDeleteElements}
       onDuplicateElements={onDuplicateElements}
       generateId={generateId}
@@ -98,6 +100,36 @@ function renderCanvas(
   );
 
   return { store, selectionStore, container };
+}
+
+interface RotationCanvasOptions {
+  readonly elements: readonly Element[];
+  readonly onRotateElements?: (next: readonly Element[]) => void;
+  readonly onTransformEnd?: () => void;
+  readonly readOnly?: boolean;
+}
+
+function renderRotationCanvas({
+  elements,
+  onRotateElements,
+  onTransformEnd,
+  readOnly = false,
+}: RotationCanvasOptions) {
+  const store = createCanvasViewportStore(Size.create(800, 600));
+  const selectionStore = createSelectionStore();
+
+  render(
+    <Canvas
+      store={store}
+      selectionStore={selectionStore}
+      elements={elements}
+      onRotateElements={onRotateElements}
+      onTransformEnd={onTransformEnd}
+      readOnly={readOnly}
+    />,
+  );
+
+  return { store, selectionStore };
 }
 
 interface ArrangeCanvasOptions {
@@ -1075,6 +1107,101 @@ describe('Canvas', () => {
       const overlay = screen.getByTestId('selection-overlay');
 
       expect(overlay.querySelectorAll('[data-resize-handle]')).toHaveLength(0);
+    });
+  });
+
+  describe('rotating', () => {
+    it('rotates the single selected item when dragging the rotation handle', async () => {
+      const calls: (readonly Element[])[] = [];
+      const onRotateElements = jest.fn((next: readonly Element[]) => {
+        calls.push(next);
+      });
+      const onTransformEnd = jest.fn();
+      const { selectionStore } = renderRotationCanvas({
+        elements: [FIRST_ITEM],
+        onRotateElements,
+        onTransformEnd,
+      });
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      act(() => {
+        selectionStore.select('first');
+      });
+
+      const handle = screen.getByTestId('rotate-handle');
+      const user = userEvent.setup();
+
+      await user.pointer([
+        { keys: '[MouseLeft>]', target: handle, coords: { x: 160, y: 100 } },
+        { coords: { x: 200, y: 140 } },
+      ]);
+
+      expect(canvas).toHaveAttribute('data-rotating', 'true');
+      expect(calls.at(-1)?.[0]?.rotation).toBeCloseTo(90);
+
+      await user.pointer({ keys: '[/MouseLeft]' });
+
+      expect(canvas).toHaveAttribute('data-rotating', 'false');
+      expect(onTransformEnd).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not offer the rotation handle when rotation is not wired', () => {
+      const { selectionStore } = renderRotationCanvas({ elements: [FIRST_ITEM] });
+
+      act(() => {
+        selectionStore.select('first');
+      });
+
+      expect(screen.queryByTestId('rotate-handle')).not.toBeInTheDocument();
+    });
+
+    it('does not offer the rotation handle in read-only mode', () => {
+      const { selectionStore } = renderRotationCanvas({
+        elements: [FIRST_ITEM],
+        onRotateElements: jest.fn(),
+        readOnly: true,
+      });
+
+      act(() => {
+        selectionStore.select('first');
+      });
+
+      expect(screen.queryByTestId('rotate-handle')).not.toBeInTheDocument();
+    });
+
+    it('does not offer the rotation handle for a connector', () => {
+      const connector = createConnectorElement({
+        id: ElementId.create('connector'),
+        workspaceId: WorkspaceId.create('ws-1'),
+        createdBy: UserId.create('user-1'),
+        position: Position.create(100, 100),
+        size: Size.create(100, 40),
+        sourcePoint: Position.create(0, 0),
+        targetPoint: Position.create(100, 40),
+      });
+      const { selectionStore } = renderRotationCanvas({
+        elements: [connector],
+        onRotateElements: jest.fn(),
+      });
+
+      act(() => {
+        selectionStore.select('connector');
+      });
+
+      expect(screen.queryByTestId('rotate-handle')).not.toBeInTheDocument();
+    });
+
+    it('does not offer the rotation handle for a multi selection', () => {
+      const { selectionStore } = renderRotationCanvas({
+        elements: [FIRST_ITEM, SECOND_ITEM],
+        onRotateElements: jest.fn(),
+      });
+
+      act(() => {
+        selectionStore.selectMany(['first', 'second']);
+      });
+
+      expect(screen.queryByTestId('rotate-handle')).not.toBeInTheDocument();
     });
   });
 

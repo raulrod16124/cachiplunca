@@ -60,6 +60,7 @@ import { useElementEdit } from '../hooks/use-element-edit';
 import { useElementMove } from '../hooks/use-element-move';
 import { useElementRedo } from '../hooks/use-element-redo';
 import { useElementResize } from '../hooks/use-element-resize';
+import { useElementRotate } from '../hooks/use-element-rotate';
 import { useElementSize } from '../hooks/use-element-size';
 import { useElementUndo } from '../hooks/use-element-undo';
 import { useElementZOrder } from '../hooks/use-element-z-order';
@@ -127,6 +128,10 @@ const CanvasContainer = styled.div`
 
   &[data-resizing='true'] {
     cursor: nwse-resize;
+  }
+
+  &[data-rotating='true'] {
+    cursor: grabbing;
   }
 `;
 
@@ -208,6 +213,7 @@ export interface CanvasProps {
   readonly renderers?: ElementRendererRegistry;
   readonly onMoveElements?: (elements: readonly Element[]) => void;
   readonly onResizeElements?: (elements: readonly Element[]) => void;
+  readonly onRotateElements?: (elements: readonly Element[]) => void;
   readonly onAlignElements?: (elements: readonly Element[]) => void;
   readonly onDistributeElements?: (elements: readonly Element[]) => void;
   readonly onTransformEnd?: () => void;
@@ -255,6 +261,7 @@ export function Canvas({
   renderers,
   onMoveElements,
   onResizeElements,
+  onRotateElements,
   onAlignElements,
   onDistributeElements,
   onTransformEnd,
@@ -459,6 +466,16 @@ export function Canvas({
     onTransformEnd,
     spacePressed,
     disabled: readOnly,
+  });
+
+  const { isRotating, ref: elementRotateRef } = useElementRotate({
+    elements,
+    viewport,
+    selectedIds: selection.selectedIds,
+    onRotateElements,
+    onTransformEnd,
+    spacePressed,
+    disabled: readOnly || onRotateElements === undefined,
   });
 
   const handleUpdateConnectorEndpoint = useCallback(
@@ -1106,6 +1123,7 @@ export function Canvas({
       canvasNavigationRef.current = node;
       elementMoveRef.current = node;
       elementResizeRef.current = node;
+      elementRotateRef.current = node;
       connectorEndpointRef.current = node;
       elementDeleteRef.current = node;
       elementDuplicateRef.current = node;
@@ -1127,6 +1145,7 @@ export function Canvas({
       canvasNavigationRef,
       elementMoveRef,
       elementResizeRef,
+      elementRotateRef,
       connectorEndpointRef,
       elementDeleteRef,
       elementDuplicateRef,
@@ -1224,6 +1243,7 @@ export function Canvas({
       data-selecting={marqueeRect !== null}
       data-moving={isMoving}
       data-resizing={isResizing}
+      data-rotating={isRotating}
       data-scale={transform.scale}
     >
       <VisuallyHidden id={BOARD_SUMMARY_ID} data-testid="canvas-board-summary">
@@ -1278,7 +1298,10 @@ export function Canvas({
           );
         })}
         {editingElementId === null && !presentation ? (
-          <SelectionOverlay items={selectedItems} />
+          <SelectionOverlay
+            items={selectedItems}
+            canRotate={!readOnly && onRotateElements !== undefined}
+          />
         ) : null}
         {editingElement === null ? null : (
           <ElementEditorOverlay
