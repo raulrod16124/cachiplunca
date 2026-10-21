@@ -47,11 +47,9 @@ const ArrangeTrigger = styled(DropdownMenu.Trigger)`
   line-height: ${({ theme }) => theme.font.leading.none};
   letter-spacing: ${({ theme }) => theme.font.tracking.normal};
   cursor: pointer;
-  transition:
-    background-color ${({ theme }) => theme.motion.duration.fast}
-      ${({ theme }) => theme.motion.easing.standard},
-    color ${({ theme }) => theme.motion.duration.fast}
-      ${({ theme }) => theme.motion.easing.standard};
+  transition-property: background-color, color;
+  transition-duration: ${({ theme }) => theme.motion.duration.fast};
+  transition-timing-function: ${({ theme }) => theme.motion.easing.standard};
 
   &:hover:not(:disabled) {
     background: ${({ theme }) => theme.color.background.sunken};
@@ -86,11 +84,22 @@ const Bar = styled.div`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.space[2]};
+  max-width: calc(100% - var(--rr-space-4) * 2);
   padding: ${({ theme }) => `${theme.space[1]} ${theme.space[2]}`};
   border-radius: ${({ theme }) => theme.radius.md};
   background: ${({ theme }) => theme.color.background.surface};
   border: 1px solid ${({ theme }) => theme.color.border.default};
   box-shadow: ${({ theme }) => theme.shadow.md};
+
+  @media (max-width: 900px) {
+    top: auto;
+    bottom: calc(var(--rr-space-4) + var(--rr-space-16) + var(--rr-space-2));
+    max-width: calc(100% - var(--rr-space-3) * 2);
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+  }
 `;
 
 const Group = styled.div`

@@ -14,6 +14,7 @@ import {
   ArrowLeft,
   CircleQuestionMark,
   Download,
+  Ellipsis,
   FileJson,
   FileText,
   ListChecks,
@@ -39,6 +40,7 @@ import {
 } from '../../../collaboration';
 import { AvatarGroup } from '../../../components';
 import { AccountMenu } from '../../auth/account-menu';
+import { useMediaQuery } from '../../../hooks/use-media-query';
 import { localizeMessage, useI18n, type TranslationKey } from '../../../i18n';
 import { describeConnectionStatus, describeSyncStatus } from '../workspace-sync-status';
 import { SessionTimer } from './session-timer';
@@ -62,6 +64,10 @@ const Overlay = styled.header`
   gap: ${({ theme }) => theme.space[2]};
   padding: ${({ theme }) => `${theme.space[3]} ${theme.space[4]}`};
   pointer-events: none;
+
+  @media (max-width: 900px) {
+    padding: ${({ theme }) => `${theme.space[2]} ${theme.space[3]}`};
+  }
 `;
 
 const Row = styled.div`
@@ -71,6 +77,10 @@ const Row = styled.div`
   gap: ${({ theme }) => theme.space[2]};
   flex-wrap: wrap;
   min-width: 0;
+
+  @media (max-width: 900px) {
+    gap: ${({ theme }) => theme.space[1]};
+  }
 `;
 
 const Cluster = styled.div`
@@ -88,7 +98,10 @@ const Cluster = styled.div`
 
   @media (max-width: 900px) {
     max-width: 100%;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
   }
 `;
 
@@ -194,7 +207,7 @@ const TopbarButton = styled(IconButton)`
   flex: none;
 `;
 
-const ExportTrigger = styled(DropdownMenu.Trigger)`
+const MenuTrigger = styled(DropdownMenu.Trigger)`
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -298,6 +311,7 @@ export function WorkspaceTopBar({
   exportErrorMessage = null,
 }: WorkspaceTopBarProps): ReactNode {
   const { t } = useI18n();
+  const isNarrow = useMediaQuery('(max-width: 900px)');
   const syncBadge = describeSyncStatus(syncStatus);
   const connectionBadge = describeConnectionStatus(connectionStatus);
   const localizedSyncBadge =
@@ -326,6 +340,8 @@ export function WorkspaceTopBar({
     exportErrorMessage,
   ].filter((message): message is string => message !== null);
   const canExport = onExportJson !== undefined && onExportPdf !== undefined;
+  const hasMoreActions =
+    isNarrow && (onPresent !== undefined || canExport || onShowShortcuts !== undefined);
 
   return (
     <Overlay data-testid="workspace-topbar">
@@ -437,7 +453,7 @@ export function WorkspaceTopBar({
               </TopbarButton>
             </Tooltip>
           )}
-          {onPresent === undefined ? null : (
+          {isNarrow ? null : onPresent === undefined ? null : (
             <Tooltip
               content={canPresent ? t('presentation.start') : t('presentation.unavailable')}
               placement="bottom"
@@ -468,12 +484,12 @@ export function WorkspaceTopBar({
               </TopbarButton>
             </Tooltip>
           )}
-          {canExport ? (
+          {canExport && !isNarrow ? (
             <DropdownMenu>
               <Tooltip content={t('canvas.export.label')} placement="bottom">
-                <ExportTrigger aria-label={t('canvas.export.label')}>
+                <MenuTrigger aria-label={t('canvas.export.label')}>
                   <Download aria-hidden="true" size={16} />
-                </ExportTrigger>
+                </MenuTrigger>
               </Tooltip>
               <DropdownMenu.Content placement="bottom-end">
                 <DropdownMenu.Item
@@ -493,7 +509,7 @@ export function WorkspaceTopBar({
               </DropdownMenu.Content>
             </DropdownMenu>
           ) : null}
-          {onShowShortcuts === undefined ? null : (
+          {onShowShortcuts === undefined || isNarrow ? null : (
             <Tooltip content={t('shortcuts.open')} placement="bottom">
               <TopbarButton
                 type="button"
@@ -507,6 +523,57 @@ export function WorkspaceTopBar({
               </TopbarButton>
             </Tooltip>
           )}
+          {hasMoreActions ? (
+            <DropdownMenu>
+              <Tooltip content={t('canvas.topbar.moreActions')} placement="bottom">
+                <MenuTrigger
+                  aria-label={t('canvas.topbar.moreActions')}
+                  data-testid="topbar-more-actions"
+                >
+                  <Ellipsis aria-hidden="true" size={16} />
+                </MenuTrigger>
+              </Tooltip>
+              <DropdownMenu.Content placement="bottom-end">
+                {onPresent === undefined ? null : (
+                  <DropdownMenu.Item
+                    data-testid="topbar-present"
+                    disabled={!canPresent}
+                    onSelect={onPresent}
+                    startIcon={<Presentation aria-hidden="true" size={16} />}
+                  >
+                    {t('presentation.start')}
+                  </DropdownMenu.Item>
+                )}
+                {!canExport ? null : (
+                  <>
+                    <DropdownMenu.Item
+                      data-testid="export-json"
+                      onSelect={onExportJson}
+                      startIcon={<FileJson aria-hidden="true" size={16} />}
+                    >
+                      {t('canvas.export.json')}
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Item
+                      data-testid="export-pdf"
+                      onSelect={onExportPdf}
+                      startIcon={<FileText aria-hidden="true" size={16} />}
+                    >
+                      {t('canvas.export.pdf')}
+                    </DropdownMenu.Item>
+                  </>
+                )}
+                {onShowShortcuts === undefined ? null : (
+                  <DropdownMenu.Item
+                    data-testid="topbar-shortcuts"
+                    onSelect={onShowShortcuts}
+                    startIcon={<CircleQuestionMark aria-hidden="true" size={16} />}
+                  >
+                    {t('shortcuts.open')}
+                  </DropdownMenu.Item>
+                )}
+              </DropdownMenu.Content>
+            </DropdownMenu>
+          ) : null}
           <AccountMenu currentUser={currentUser} logoutUser={logoutUser} />
         </Cluster>
       </Row>

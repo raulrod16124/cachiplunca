@@ -35,6 +35,11 @@ const Controls = styled.div`
   background: ${({ theme }) => theme.canvas.surface};
   border: 1px solid ${({ theme }) => theme.canvas.elementBorder};
   box-shadow: ${({ theme }) => theme.shadow.sm};
+
+  @media (max-width: 900px) {
+    width: max-content;
+    max-width: calc(100% - ${({ theme }) => theme.space[4]} * 2);
+  }
 `;
 
 const Group = styled.div`
