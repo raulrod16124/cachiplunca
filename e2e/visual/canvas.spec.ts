@@ -78,6 +78,48 @@ test.describe('visual baseline — canvas', () => {
       });
     });
 
+    test(`selection theme:${theme}`, async ({ page }) => {
+      await registerUser(page);
+      await createWorkspace(page, 'Selection canvas');
+      const note = await addElement(page, 'note');
+      await page.keyboard.press('Escape');
+      await expect(page.getByTestId('element-editor-box')).toBeHidden();
+      await note.click();
+      await expect(page.getByTestId('selection-overlay')).toBeVisible();
+      await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+      await setTheme(page, theme);
+      await waitForStable(page);
+      await expect(page).toHaveScreenshot(`canvas-selection-${theme}.png`, {
+        mask: [
+          page.locator('[data-testid="session-timer-display"]'),
+          page.locator('[data-testid="connected-users"]'),
+          page.locator('[data-testid^="presence-avatar-"]'),
+          page.locator('[data-testid^="comment-indicator-"]'),
+        ],
+      });
+    });
+
+    test(`context menu theme:${theme}`, async ({ page }) => {
+      await registerUser(page);
+      await createWorkspace(page, 'Context menu canvas');
+      const note = await addElement(page, 'note');
+      await page.keyboard.press('Escape');
+      await expect(page.getByTestId('element-editor-box')).toBeHidden();
+      await note.click({ button: 'right' });
+      await expect(page.getByRole('menuitem', { name: 'Note color' })).toBeVisible();
+      await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+      await setTheme(page, theme);
+      await waitForStable(page);
+      await expect(page).toHaveScreenshot(`canvas-context-menu-${theme}.png`, {
+        mask: [
+          page.locator('[data-testid="session-timer-display"]'),
+          page.locator('[data-testid="connected-users"]'),
+          page.locator('[data-testid^="presence-avatar-"]'),
+          page.locator('[data-testid^="comment-indicator-"]'),
+        ],
+      });
+    });
+
     test(`note palette theme:${theme}`, async ({ page }) => {
       await registerUser(page);
       await createWorkspace(page, 'Note palette');

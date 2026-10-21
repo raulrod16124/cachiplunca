@@ -20,7 +20,7 @@ const Swatch = styled.span<{ $color: string }>`
   display: inline-block;
   width: 14px;
   height: 14px;
-  border: 1px solid ${({ theme }) => theme.color.border.default};
+  border: 1px solid ${({ theme }) => theme.color.border.strong};
   border-radius: ${({ theme }) => theme.radius.sm};
   background-color: ${({ $color }) => $color};
 `;
@@ -29,7 +29,7 @@ const DefaultSwatch = styled.span`
   display: inline-block;
   width: 14px;
   height: 14px;
-  border: 1px solid ${({ theme }) => theme.color.border.default};
+  border: 1px solid ${({ theme }) => theme.color.border.strong};
   border-radius: ${({ theme }) => theme.radius.sm};
   background-color: ${NOTE_DEFAULT_COLOR};
 `;

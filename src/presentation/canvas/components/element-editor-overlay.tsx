@@ -68,6 +68,11 @@ const UrlField = styled.input`
   &::placeholder {
     color: ${({ theme }) => theme.color.text.muted};
   }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.focusRing};
+    outline-offset: 2px;
+  }
 `;
 
 const FrameBox = styled(EditorBox)`
@@ -127,6 +132,11 @@ const AltField = styled.input`
 
   &::placeholder {
     color: ${({ theme }) => theme.color.text.muted};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.focusRing};
+    outline-offset: 2px;
   }
 `;
 

@@ -7,6 +7,12 @@ function item(id: string, x: number, y: number, width: number, height: number): 
   return { id, bounds: Bounds.fromXYWH(x, y, width, height) };
 }
 
+function styleText(): string {
+  return [...document.head.querySelectorAll('style')]
+    .map((style) => style.textContent ?? '')
+    .join('');
+}
+
 describe('SelectionOverlay', () => {
   it('renders nothing without items', () => {
     render(<SelectionOverlay items={[]} />);
@@ -42,6 +48,17 @@ describe('SelectionOverlay', () => {
       'bottom-left',
       'left',
     ]);
+  });
+
+  it('paints the selection with brand tokens', () => {
+    render(<SelectionOverlay items={[item('a', 10, 20, 100, 40)]} />);
+
+    const css = styleText();
+    expect(css).toContain('var(--rr-color-border-primary)');
+    expect(css).toContain('var(--rr-color-action-primary-background)');
+    expect(css).toContain('var(--rr-radius-sm)');
+    expect(css).toContain('var(--rr-shadow-sm)');
+    expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
   });
 
   it('does not render resize handles for multiple items', () => {

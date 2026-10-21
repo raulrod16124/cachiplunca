@@ -23,14 +23,14 @@ export function sliderValueToScale(value: number): number {
 
 const Controls = styled.div`
   position: absolute;
-  bottom: 16px;
+  bottom: ${({ theme }) => theme.space[4]};
   left: 50%;
   transform: translateX(-50%);
   z-index: 1;
   display: flex;
   gap: ${({ theme }) => theme.space[2]};
   align-items: center;
-  padding: 4px 8px;
+  padding: ${({ theme }) => `${theme.space[1]} ${theme.space[2]}`};
   border-radius: ${({ theme }) => theme.radius.md};
   background: ${({ theme }) => theme.canvas.surface};
   border: 1px solid ${({ theme }) => theme.canvas.elementBorder};
@@ -55,12 +55,18 @@ const ZoomTrigger = styled(Popover.Trigger)`
   justify-content: center;
   min-width: 5ch;
   padding: ${({ theme }) => theme.space[1]} ${({ theme }) => theme.space[2]};
+  border-radius: ${({ theme }) => theme.radius.sm};
   font-size: ${({ theme }) => theme.font.size.sm};
   font-variant-numeric: tabular-nums;
   color: ${({ theme }) => theme.color.text.primary};
 
   &:hover {
     background: ${({ theme }) => theme.color.background.sunken};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.focusRing};
+    outline-offset: 2px;
   }
 `;
 
@@ -81,6 +87,11 @@ const ZoomSlider = styled.input`
   margin: 0;
   accent-color: ${({ theme }) => theme.color.action.primary.background};
   cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.focusRing};
+    outline-offset: 2px;
+  }
 `;
 
 export interface ViewportControlsProps {
