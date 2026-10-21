@@ -6,6 +6,12 @@ import type {
   CommandPaletteItem,
 } from '../../../../../presentation/components/command-palette';
 
+function styleText(): string {
+  return [...document.head.querySelectorAll('style')]
+    .map((style) => style.textContent ?? '')
+    .join('');
+}
+
 function createItem(
   id: string,
   label: string,
@@ -201,6 +207,57 @@ describe('CommandPalette', () => {
 
     expect(screen.getByText('No matching actions, workspaces or elements.')).toBeInTheDocument();
     expect(screen.getByText('Loading workspaces…')).toBeInTheDocument();
+  });
+
+  it('uses brand tokens for the panel, active option and shortcut keys', async () => {
+    renderPalette({
+      groups: [
+        {
+          id: 'actions',
+          label: 'Actions',
+          items: [
+            createItem('add-note', 'Add note'),
+            createItem('undo', 'Undo', jest.fn(), { shortcut: 'Ctrl+Z', disabled: true }),
+          ],
+        },
+      ],
+    });
+
+    await waitFor(() =>
+      expect(screen.getByRole('combobox', { name: 'Search commands' })).toHaveFocus(),
+    );
+
+    const css = styleText();
+    expect(css).toContain('var(--rr-color-border-primary)');
+    expect(css).toContain('var(--rr-color-action-primary-background)');
+    expect(css).toContain('var(--rr-color-background-sunken)');
+    expect(css).toContain('var(--rr-color-focus-ring)');
+    expect(css).toContain('var(--rr-radius-sm)');
+    expect(css).toContain('@media (max-width: 700px)');
+    expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+  });
+
+  it('keeps the listbox active descendant in sync with the active option', async () => {
+    const user = userEvent.setup();
+    renderPalette();
+
+    const input = screen.getByRole('combobox', { name: 'Search commands' });
+    const listbox = screen.getByRole('listbox');
+    const firstOption = screen.getByTestId('command-palette-item-add-note');
+    const secondOption = screen.getByTestId('command-palette-item-add-task');
+
+    await waitFor(() => expect(input).toHaveFocus());
+
+    expect(listbox).toContainElement(firstOption);
+    expect(input).toHaveAttribute('aria-activedescendant', firstOption.id);
+    expect(firstOption).toHaveAttribute('role', 'option');
+    expect(firstOption).toHaveAttribute('aria-selected', 'true');
+
+    await user.keyboard('{ArrowDown}');
+
+    expect(input).toHaveAttribute('aria-activedescendant', secondOption.id);
+    expect(secondOption).toHaveAttribute('aria-selected', 'true');
+    expect(firstOption).toHaveAttribute('aria-selected', 'false');
   });
 
   it('closes on Escape and from the close button', async () => {

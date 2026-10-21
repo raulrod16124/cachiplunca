@@ -4,6 +4,7 @@ import {
   disableAnimations,
   dynamicMaskLocators,
   openCommentsPanel,
+  openCommandPalette,
   openPlanPanel,
   openShareDialog,
   setLanguage,
@@ -262,6 +263,29 @@ test.describe('visual baseline — canvas', () => {
           ...dynamicMaskLocators(page),
           page.locator('[aria-label="Read-only link"]'),
           page.locator('[aria-label="Invitation link"]'),
+        ],
+      });
+    });
+
+    test(`command palette theme:${theme}`, async ({ page }) => {
+      await registerUser(page);
+      await createWorkspace(page, 'Palette canvas');
+      await addElement(page, 'note');
+      await page.keyboard.press('Escape');
+      await expect(page.getByTestId('element-editor-box')).toBeHidden();
+      await setTheme(page, theme);
+      await openCommandPalette(page);
+      await page.getByRole('combobox', { name: 'Search commands' }).fill('undo');
+      await expect(page.getByTestId('command-palette-item-undo')).toBeVisible();
+      await expect(page.getByText('Loading workspaces…')).toHaveCount(0);
+      await page.mouse.move(0, 0);
+      await waitForStable(page);
+      await expect(page).toHaveScreenshot(`canvas-command-palette-${theme}.png`, {
+        mask: [
+          page.locator('[data-testid="session-timer-display"]'),
+          page.locator('[data-testid="connected-users"]'),
+          page.locator('[data-testid^="presence-avatar-"]'),
+          page.locator('[data-testid^="comment-indicator-"]'),
         ],
       });
     });

@@ -57,6 +57,14 @@ export async function openShareDialog(page: Page): Promise<void> {
 }
 
 /**
+ * Opens the command palette and waits for its search field to be focused.
+ */
+export async function openCommandPalette(page: Page): Promise<void> {
+  await page.keyboard.press('Control+k');
+  await expect(page.getByRole('combobox', { name: 'Search commands' })).toBeFocused();
+}
+
+/**
  * Opens the task plan drawer from the workspace topbar.
  */
 export async function openPlanPanel(page: Page): Promise<void> {
