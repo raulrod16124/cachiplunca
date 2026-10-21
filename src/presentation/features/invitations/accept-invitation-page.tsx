@@ -11,6 +11,7 @@ import type {
 import type { AuthUser } from '../../../application/ports';
 import { UserId } from '../../../domain/shared';
 import { createAppError, ERROR_CODES, toAppError } from '../../../shared/errors';
+import { DecorativeSpark } from '../../components/decorative';
 import { ErrorState } from '../../components/error-state';
 import { LoadingState } from '../../components/loading-state';
 import { SessionLoading } from '../../components/session-loading';
@@ -190,7 +191,7 @@ export function AcceptInvitationPage({
   if (result === null) {
     return (
       <AuthLayout>
-        <LoadingState message={t('auth.accept.accepting')} />
+        <LoadingState message={t('auth.accept.accepting')} tone="brand" />
       </AuthLayout>
     );
   }
@@ -231,6 +232,7 @@ export function AcceptInvitationPage({
       <ErrorState
         title={t('auth.accept.errorTitle')}
         titleAs="h1"
+        illustration={<DecorativeSpark color="orange-500" size="lg" />}
         description={localizeMessage(t, describeAcceptInvitationError(error))}
         actionLabel={t('auth.accept.tryAgain')}
         onAction={handleRetry}
