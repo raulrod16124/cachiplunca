@@ -1,5 +1,5 @@
 import { Button, IconButton, Inline, Popover, Text, Tooltip } from '@raulrod/ui';
-import { Maximize, Redo2, Undo2 } from '@raulrod/icons';
+import { Maximize, Minus, Plus, Redo2, Undo2 } from '@raulrod/icons';
 import type { ChangeEvent, ReactElement } from 'react';
 import { useSyncExternalStore } from 'react';
 import styled from 'styled-components';
@@ -10,6 +10,7 @@ import { useI18n } from '../../i18n';
 const ICON_SIZE = 16;
 const SLIDER_STEPS = 1000;
 const ZOOM_RATIO = MAX_CANVAS_SCALE / MIN_CANVAS_SCALE;
+const ZOOM_STEP = 1.2;
 
 export function scaleToSliderValue(scale: number): number {
   const clamped = Math.min(Math.max(scale, MIN_CANVAS_SCALE), MAX_CANVAS_SCALE);
@@ -118,9 +119,19 @@ export function ViewportControls({
   const { t } = useI18n();
   const viewport = useSyncExternalStore(store.subscribe, store.getSnapshot);
   const zoomPercentage = Math.round(viewport.scale * 100);
+  const canZoomOut = viewport.scale > MIN_CANVAS_SCALE;
+  const canZoomIn = viewport.scale < MAX_CANVAS_SCALE;
 
   const handleZoomChange = (event: ChangeEvent<HTMLInputElement>): void => {
     store.setScale(sliderValueToScale(Number(event.target.value)));
+  };
+
+  const handleZoomOut = (): void => {
+    store.setScale(viewport.scale / ZOOM_STEP);
+  };
+
+  const handleZoomIn = (): void => {
+    store.setScale(viewport.scale * ZOOM_STEP);
   };
 
   return (
@@ -152,33 +163,61 @@ export function ViewportControls({
         </Tooltip>
       </Group>
       <Separator aria-hidden="true" />
-      <Popover>
-        <ZoomTrigger
-          data-testid="zoom-level"
-          aria-label={t('canvas.zoomLevelAdjust', { percent: zoomPercentage })}
-          aria-live="polite"
-        >
-          {zoomPercentage}%
-        </ZoomTrigger>
-        <Popover.Content placement="top">
-          <ZoomPanel>
-            <Inline justify="between" align="center">
-              <Popover.Title>{t('canvas.zoom')}</Popover.Title>
-              <ZoomValue>{zoomPercentage}%</ZoomValue>
-            </Inline>
-            <ZoomSlider
-              type="range"
-              min={0}
-              max={SLIDER_STEPS}
-              step={1}
-              value={scaleToSliderValue(viewport.scale)}
-              onChange={handleZoomChange}
-              aria-label={t('canvas.zoomLevel')}
-              aria-valuetext={`${zoomPercentage}%`}
-            />
-          </ZoomPanel>
-        </Popover.Content>
-      </Popover>
+      <Group>
+        <Tooltip content={t('canvas.zoomOut')} placement="top">
+          <IconButton
+            type="button"
+            variant="ghost"
+            size="sm"
+            label={t('canvas.zoomOut')}
+            disabled={!canZoomOut}
+            onClick={handleZoomOut}
+            data-testid="zoom-out"
+          >
+            <Minus aria-hidden="true" size={ICON_SIZE} />
+          </IconButton>
+        </Tooltip>
+        <Popover>
+          <ZoomTrigger
+            data-testid="zoom-level"
+            aria-label={t('canvas.zoomLevelAdjust', { percent: zoomPercentage })}
+            aria-live="polite"
+          >
+            {zoomPercentage}%
+          </ZoomTrigger>
+          <Popover.Content placement="top">
+            <ZoomPanel>
+              <Inline justify="between" align="center">
+                <Popover.Title>{t('canvas.zoom')}</Popover.Title>
+                <ZoomValue>{zoomPercentage}%</ZoomValue>
+              </Inline>
+              <ZoomSlider
+                type="range"
+                min={0}
+                max={SLIDER_STEPS}
+                step={1}
+                value={scaleToSliderValue(viewport.scale)}
+                onChange={handleZoomChange}
+                aria-label={t('canvas.zoomLevel')}
+                aria-valuetext={`${zoomPercentage}%`}
+              />
+            </ZoomPanel>
+          </Popover.Content>
+        </Popover>
+        <Tooltip content={t('canvas.zoomIn')} placement="top">
+          <IconButton
+            type="button"
+            variant="ghost"
+            size="sm"
+            label={t('canvas.zoomIn')}
+            disabled={!canZoomIn}
+            onClick={handleZoomIn}
+            data-testid="zoom-in"
+          >
+            <Plus aria-hidden="true" size={ICON_SIZE} />
+          </IconButton>
+        </Tooltip>
+      </Group>
       <Separator aria-hidden="true" />
       <Button
         type="button"
