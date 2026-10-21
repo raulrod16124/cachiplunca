@@ -20,6 +20,7 @@ import {
   MessageSquare,
   Presentation,
   Share2,
+  TriangleAlert,
 } from '@raulrod/icons';
 import type { ReactNode } from 'react';
 import styled from 'styled-components';
@@ -31,19 +32,18 @@ import type { MembershipRole } from '../../../../domain/membership';
 import type { Workspace } from '../../../../domain/workspace';
 import {
   presenceColorFor,
+  PRESENCE_TEXT_COLOR,
   presenceLabel,
   shortUserId,
   userDetailedLabel,
 } from '../../../collaboration';
+import { AvatarGroup } from '../../../components';
 import { AccountMenu } from '../../auth/account-menu';
 import { localizeMessage, useI18n, type TranslationKey } from '../../../i18n';
 import { describeConnectionStatus, describeSyncStatus } from '../workspace-sync-status';
 import { SessionTimer } from './session-timer';
 import { SyncStatusIndicator } from './sync-status-indicator';
 import { WorkspaceTitleField } from './workspace-title-field';
-
-const MAX_PRESENCE_AVATARS = 4;
-const AVATAR_TEXT_COLOR = '#ffffff';
 
 const ROLE_KEYS: Record<MembershipRole, TranslationKey> = {
   owner: 'share.role.owner',
@@ -68,7 +68,7 @@ const Row = styled.div`
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: ${({ theme }) => theme.space[3]};
+  gap: ${({ theme }) => theme.space[2]};
   flex-wrap: wrap;
   min-width: 0;
 `;
@@ -85,54 +85,47 @@ const Cluster = styled.div`
   border: 1px solid ${({ theme }) => theme.canvas.elementBorder};
   box-shadow: ${({ theme }) => theme.shadow.sm};
   pointer-events: auto;
+
+  @media (max-width: 900px) {
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
 `;
 
-const ErrorList = styled.div`
+const ErrorBanner = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.space[1]};
+  align-items: flex-start;
+  gap: ${({ theme }) => theme.space[2]};
   align-self: flex-start;
+  max-width: min(560px, 100%);
   padding: ${({ theme }) => `${theme.space[2]} ${theme.space[3]}`};
   border-radius: ${({ theme }) => theme.radius.md};
-  background: ${({ theme }) => theme.color.background.default};
+  background: ${({ theme }) => theme.color.background.destructive};
   border: 1px solid ${({ theme }) => theme.color.border.danger};
+  color: ${({ theme }) => theme.color.text.danger};
   box-shadow: ${({ theme }) => theme.shadow.sm};
   pointer-events: auto;
 `;
 
-const PresenceRow = styled.span`
+const ErrorIcon = styled.span`
   display: inline-flex;
-  align-items: center;
-`;
+  flex: none;
+  color: ${({ theme }) => theme.color.text.danger};
 
-const PresenceItem = styled(Tooltip)`
-  display: inline-flex;
-  border-radius: ${({ theme }) => theme.radius.full};
-  box-shadow: 0 0 0 2px ${({ theme }) => theme.canvas.surface};
-
-  &:not(:first-child) {
-    margin-left: calc(-1 * ${({ theme }) => theme.space[2]});
-  }
-
-  &:focus-within {
-    box-shadow: 0 0 0 2px ${({ theme }) => theme.color.focusRing};
+  svg {
+    width: 16px;
+    height: 16px;
   }
 `;
 
-const PresenceOverflow = styled.span`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: ${({ theme }) => theme.space[8]};
-  height: ${({ theme }) => theme.space[8]};
-  padding: 0 ${({ theme }) => theme.space[1]};
-  border-radius: ${({ theme }) => theme.radius.full};
-  background: ${({ theme }) => theme.color.background.sunken};
-  color: ${({ theme }) => theme.color.text.muted};
-  font-size: ${({ theme }) => theme.font.size.xs};
-  font-weight: ${({ theme }) => theme.font.weight.semibold};
-  box-shadow: 0 0 0 2px ${({ theme }) => theme.canvas.surface};
-  margin-left: calc(-1 * ${({ theme }) => theme.space[2]});
+const ErrorList = styled.ul`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.space[1]};
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-width: 0;
 `;
 
 const PresenceTrigger = styled(Popover.Trigger)`
@@ -197,19 +190,7 @@ const BackButton = styled(Button)`
   flex: none;
 `;
 
-const ShareButton = styled(IconButton)`
-  flex: none;
-`;
-
-const PlanButton = styled(IconButton)`
-  flex: none;
-`;
-
-const PresentButton = styled(IconButton)`
-  flex: none;
-`;
-
-const HelpButton = styled(IconButton)`
+const TopbarButton = styled(IconButton)`
   flex: none;
 `;
 
@@ -218,9 +199,9 @@ const ExportTrigger = styled(DropdownMenu.Trigger)`
   align-items: center;
   justify-content: center;
   flex: none;
-  width: calc(${({ theme }) => theme.font.size.sm} + ${({ theme }) => theme.space[2]} + 2px);
-  height: calc(${({ theme }) => theme.font.size.sm} + ${({ theme }) => theme.space[2]} + 2px);
-  padding: ${({ theme }) => theme.space[1]};
+  width: ${({ theme }) => theme.space[8]};
+  height: ${({ theme }) => theme.space[8]};
+  padding: 0;
   border: 1px solid transparent;
   border-radius: ${({ theme }) => theme.radius.md};
   background: transparent;
@@ -238,11 +219,15 @@ const ExportTrigger = styled(DropdownMenu.Trigger)`
       ${({ theme }) => theme.motion.easing.standard};
 
   &:hover:not(:disabled) {
-    background: ${({ theme }) => theme.color.action.secondary.background};
+    background: ${({ theme }) => theme.color.background.sunken};
   }
 
   &:active:not(:disabled) {
-    background: ${({ theme }) => theme.color.action.secondary.backgroundHover};
+    background: color-mix(
+      in srgb,
+      ${({ theme }) => theme.color.background.sunken} 82%,
+      ${({ theme }) => theme.color.text.primary}
+    );
   }
 
   &:focus-visible {
@@ -321,19 +306,29 @@ export function WorkspaceTopBar({
     connectionBadge === null
       ? null
       : { ...connectionBadge, label: localizeMessage(t, connectionBadge.label) };
-  const visibleUsers = connectedUsers.slice(0, MAX_PRESENCE_AVATARS);
-  const overflowUsers = connectedUsers.slice(MAX_PRESENCE_AVATARS);
-  const connectedLabel = t('canvas.topbar.connected', { count: connectedUsers.length });
   const colorFor = (userId: string): string => userColors?.get(userId) ?? presenceColorFor(userId);
-  const hasErrors =
-    persistenceErrorMessage !== null ||
-    collaborationErrorMessage !== null ||
-    creationErrorMessage !== null ||
-    exportErrorMessage !== null;
+  const visibleUsers = connectedUsers.map((presence) => {
+    const userId = presence.userId.value;
+
+    return {
+      id: userId,
+      name: presenceLabel(presence),
+      description: userDetailedLabel(presence.displayName, userId),
+      color: colorFor(userId),
+      testId: `presence-avatar-${userId}`,
+    };
+  });
+  const connectedLabel = t('canvas.topbar.connected', { count: connectedUsers.length });
+  const errorMessages = [
+    persistenceErrorMessage,
+    collaborationErrorMessage,
+    creationErrorMessage,
+    exportErrorMessage,
+  ].filter((message): message is string => message !== null);
   const canExport = onExportJson !== undefined && onExportPdf !== undefined;
 
   return (
-    <Overlay>
+    <Overlay data-testid="workspace-topbar">
       <Row>
         <Cluster>
           <BackButton
@@ -370,42 +365,7 @@ export function WorkspaceTopBar({
                   data-testid="connected-users"
                   aria-label={t('canvas.topbar.showParticipants', { count: connectedUsers.length })}
                 >
-                  <PresenceRow aria-hidden="true">
-                    {visibleUsers.map((presence) => {
-                      const userId = presence.userId.value;
-                      const color = colorFor(userId);
-
-                      return (
-                        <PresenceItem
-                          key={userId}
-                          content={userDetailedLabel(presence.displayName, userId)}
-                          placement="bottom"
-                        >
-                          <Avatar
-                            name={presenceLabel(presence)}
-                            size="sm"
-                            data-testid={`presence-avatar-${userId}`}
-                            data-user-color={color}
-                            styles={{ backgroundColor: color, color: AVATAR_TEXT_COLOR }}
-                          />
-                        </PresenceItem>
-                      );
-                    })}
-                    {overflowUsers.length === 0 ? null : (
-                      <Tooltip
-                        content={overflowUsers
-                          .map((presence) =>
-                            userDetailedLabel(presence.displayName, presence.userId.value),
-                          )
-                          .join(', ')}
-                        placement="bottom"
-                      >
-                        <PresenceOverflow aria-hidden="true">
-                          +{overflowUsers.length}
-                        </PresenceOverflow>
-                      </Tooltip>
-                    )}
-                  </PresenceRow>
+                  <AvatarGroup items={visibleUsers} decorative />
                   <Text color="color.text.primary" size="font.size.sm" weight="font.weight.medium">
                     {connectedLabel}
                   </Text>
@@ -425,7 +385,7 @@ export function WorkspaceTopBar({
                             <Avatar
                               name={label}
                               size="sm"
-                              styles={{ backgroundColor: color, color: AVATAR_TEXT_COLOR }}
+                              styles={{ backgroundColor: color, color: PRESENCE_TEXT_COLOR }}
                             />
                             <PresenceIdentity>
                               <Text weight="font.weight.medium">{label}</Text>
@@ -449,7 +409,7 @@ export function WorkspaceTopBar({
           )}
           {onTogglePlan === undefined ? null : (
             <Tooltip content={t('plan.title')} placement="bottom">
-              <PlanButton
+              <TopbarButton
                 type="button"
                 variant={planOpen ? 'primary' : 'ghost'}
                 size="sm"
@@ -459,12 +419,12 @@ export function WorkspaceTopBar({
                 onClick={onTogglePlan}
               >
                 <ListChecks aria-hidden="true" size={16} />
-              </PlanButton>
+              </TopbarButton>
             </Tooltip>
           )}
           {onToggleComments === undefined ? null : (
             <Tooltip content={t('comments.open')} placement="bottom">
-              <PlanButton
+              <TopbarButton
                 type="button"
                 variant={commentsOpen ? 'primary' : 'ghost'}
                 size="sm"
@@ -474,7 +434,7 @@ export function WorkspaceTopBar({
                 onClick={onToggleComments}
               >
                 <MessageSquare aria-hidden="true" size={16} />
-              </PlanButton>
+              </TopbarButton>
             </Tooltip>
           )}
           {onPresent === undefined ? null : (
@@ -482,7 +442,7 @@ export function WorkspaceTopBar({
               content={canPresent ? t('presentation.start') : t('presentation.unavailable')}
               placement="bottom"
             >
-              <PresentButton
+              <TopbarButton
                 type="button"
                 variant="ghost"
                 size="sm"
@@ -491,13 +451,13 @@ export function WorkspaceTopBar({
                 onClick={onPresent}
               >
                 <Presentation aria-hidden="true" size={16} />
-              </PresentButton>
+              </TopbarButton>
             </Tooltip>
           )}
           <SessionTimer />
           {onShare === undefined ? null : (
             <Tooltip content={t('canvas.topbar.share')} placement="bottom">
-              <ShareButton
+              <TopbarButton
                 type="button"
                 variant="secondary"
                 size="sm"
@@ -505,7 +465,7 @@ export function WorkspaceTopBar({
                 onClick={onShare}
               >
                 <Share2 aria-hidden="true" size={16} />
-              </ShareButton>
+              </TopbarButton>
             </Tooltip>
           )}
           {canExport ? (
@@ -535,7 +495,7 @@ export function WorkspaceTopBar({
           ) : null}
           {onShowShortcuts === undefined ? null : (
             <Tooltip content={t('shortcuts.open')} placement="bottom">
-              <HelpButton
+              <TopbarButton
                 type="button"
                 variant="ghost"
                 size="sm"
@@ -544,36 +504,26 @@ export function WorkspaceTopBar({
                 onClick={onShowShortcuts}
               >
                 <CircleQuestionMark aria-hidden="true" size={16} />
-              </HelpButton>
+              </TopbarButton>
             </Tooltip>
           )}
           <AccountMenu currentUser={currentUser} logoutUser={logoutUser} />
         </Cluster>
       </Row>
-      {hasErrors ? (
-        <ErrorList>
-          {persistenceErrorMessage === null ? null : (
-            <Text role="alert" color="color.text.danger">
-              {persistenceErrorMessage}
-            </Text>
-          )}
-          {collaborationErrorMessage === null ? null : (
-            <Text role="alert" color="color.text.danger">
-              {collaborationErrorMessage}
-            </Text>
-          )}
-          {creationErrorMessage === null ? null : (
-            <Text role="alert" color="color.text.danger">
-              {creationErrorMessage}
-            </Text>
-          )}
-          {exportErrorMessage === null ? null : (
-            <Text role="alert" color="color.text.danger">
-              {exportErrorMessage}
-            </Text>
-          )}
-        </ErrorList>
-      ) : null}
+      {errorMessages.length === 0 ? null : (
+        <ErrorBanner role="alert" aria-live="assertive" data-testid="workspace-errors">
+          <ErrorIcon aria-hidden="true">
+            <TriangleAlert aria-hidden="true" size={16} />
+          </ErrorIcon>
+          <ErrorList>
+            {errorMessages.map((message, index) => (
+              <li key={`${index}:${message}`}>
+                <Text color="color.text.danger">{message}</Text>
+              </li>
+            ))}
+          </ErrorList>
+        </ErrorBanner>
+      )}
     </Overlay>
   );
 }

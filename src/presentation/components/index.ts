@@ -8,6 +8,8 @@ export type { EmptyStateProps } from './empty-state';
 export type { StateTitleVariant, StateTone } from './state-shared';
 export { Card } from './card';
 export type { CardProps, SurfacePadding, SurfaceVariant } from './card';
+export { AvatarGroup } from './avatar-group';
+export type { AvatarGroupItem, AvatarGroupProps } from './avatar-group';
 export { Panel } from './panel';
 export type { PanelProps } from './panel';
 export { PanelHeader } from './panel-header';

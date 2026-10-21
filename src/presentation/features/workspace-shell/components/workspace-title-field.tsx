@@ -125,7 +125,11 @@ export function WorkspaceTitleField({ name, onRename }: WorkspaceTitleFieldProps
       return;
     }
     if (result.status === 'invalid-input') {
-      setError(localizeFieldError(t, result.fieldErrors.name ?? 'Enter a workspace name.'));
+      setError(
+        result.fieldErrors.name === undefined
+          ? t('workspaces.errors.nameRequired')
+          : localizeFieldError(t, result.fieldErrors.name),
+      );
       inputRef.current?.focus();
       return;
     }
@@ -151,7 +155,7 @@ export function WorkspaceTitleField({ name, onRename }: WorkspaceTitleFieldProps
         {editing ? (
           <TitleInput
             ref={inputRef}
-            aria-label="Workspace name"
+            aria-label={t('canvas.topbar.workspaceName')}
             aria-invalid={error === null ? undefined : true}
             aria-describedby={error === null ? undefined : errorId}
             value={draft}

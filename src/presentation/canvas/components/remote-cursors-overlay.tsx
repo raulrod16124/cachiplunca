@@ -2,7 +2,7 @@ import type { ReactElement } from 'react';
 import styled from 'styled-components';
 import type { RemoteCursor } from '../../../application/services';
 import type { Viewport } from '../../../domain/shared';
-import { presenceColorFor, userLabel } from '../../collaboration';
+import { presenceColorFor, PRESENCE_TEXT_COLOR, userLabel } from '../../collaboration';
 
 const Layer = styled.div`
   position: absolute;
@@ -22,7 +22,9 @@ const Pointer = styled.svg`
   display: block;
   width: 16px;
   height: 16px;
-  filter: drop-shadow(0 1px 1px rgba(15, 23, 42, 0.35));
+  filter: drop-shadow(
+    0 1px 1px color-mix(in srgb, ${({ theme }) => theme.color.text.primary} 35%, transparent)
+  );
 `;
 
 const Label = styled.span`
@@ -33,7 +35,7 @@ const Label = styled.span`
   font-size: 11px;
   line-height: 16px;
   white-space: nowrap;
-  color: ${({ theme }) => theme.color.text.inverse};
+  color: ${PRESENCE_TEXT_COLOR};
 `;
 
 function colorFromUserId(userId: string): string {
