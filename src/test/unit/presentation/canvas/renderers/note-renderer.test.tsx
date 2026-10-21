@@ -62,6 +62,17 @@ describe('NoteRenderer', () => {
     expect(content).toHaveStyle({ backgroundColor: '#fef08a' });
   });
 
+  it('preserves legacy stored color references', () => {
+    const legacyColor = 'var(--rr-color-background-success)';
+
+    render(
+      <NoteRenderer element={createElement('hello', { color: legacyColor })} selected={false} />,
+    );
+
+    const content = document.querySelector('[data-element-content]');
+    expect(content).toHaveStyle({ backgroundColor: legacyColor });
+  });
+
   it('does not set an inline background when color is absent', () => {
     render(<NoteRenderer element={createElement('hello')} selected={false} />);
 

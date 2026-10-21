@@ -34,6 +34,23 @@
   --cach-info-700: #1d4ed8;
   --cach-warning-500: #f9c80e;
 
+  /*
+   * Sticky-note palette. Five pastel surfaces keep the canvas coherent while
+   * staying distinguishable; `default` preserves the pre-redesign cream note.
+   * Dark overrides live in the theme blocks below.
+   */
+  --cach-note-default: #fffdf9;
+  --cach-note-green: #dce8cf;
+  --cach-note-amber: #f7e3b0;
+  --cach-note-blue: #d8e4e8;
+  --cach-note-red: #f6d5c8;
+  --cach-note-gray: #efe6d8;
+  --cach-note-border: color-mix(in srgb, var(--cach-brown-700) 30%, transparent);
+  --cach-note-shadow:
+    0 1px 2px color-mix(in srgb, var(--cach-graphite-900) 8%, transparent),
+    0 5px 12px color-mix(in srgb, var(--cach-graphite-900) 12%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--cach-cream-0) 55%, transparent);
+
   /* Theme-agnostic overrides */
   --rr-font-family-sans: 'Inter', 'Helvetica Neue', Arial, sans-serif;
   --cach-font-display: 'Bangers', 'Inter', 'Helvetica Neue', Arial, sans-serif;
@@ -285,6 +302,17 @@
   --rr-color-focus-ring: var(--cach-mustard-500);
   --rr-color-link-text: #ff9a5c;
   --rr-color-link-text-hover: var(--cach-mustard-500);
+  --cach-note-default: #1b2a23;
+  --cach-note-green: #2c4034;
+  --cach-note-amber: #4a3d1f;
+  --cach-note-blue: #24383c;
+  --cach-note-red: #4a2c25;
+  --cach-note-gray: #3a3428;
+  --cach-note-border: color-mix(in srgb, var(--cach-olive-500) 38%, transparent);
+  --cach-note-shadow:
+    0 1px 2px color-mix(in srgb, var(--cach-green-980) 45%, transparent),
+    0 6px 16px color-mix(in srgb, var(--cach-green-980) 35%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--cach-cream-50) 8%, transparent);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -350,5 +378,16 @@
     --rr-color-focus-ring: var(--cach-mustard-500);
     --rr-color-link-text: #ff9a5c;
     --rr-color-link-text-hover: var(--cach-mustard-500);
+    --cach-note-default: #1b2a23;
+    --cach-note-green: #2c4034;
+    --cach-note-amber: #4a3d1f;
+    --cach-note-blue: #24383c;
+    --cach-note-red: #4a2c25;
+    --cach-note-gray: #3a3428;
+    --cach-note-border: color-mix(in srgb, var(--cach-olive-500) 38%, transparent);
+    --cach-note-shadow:
+      0 1px 2px color-mix(in srgb, var(--cach-green-980) 45%, transparent),
+      0 6px 16px color-mix(in srgb, var(--cach-green-980) 35%, transparent),
+      inset 0 1px 0 color-mix(in srgb, var(--cach-cream-50) 8%, transparent);
   }
 }

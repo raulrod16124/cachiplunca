@@ -69,6 +69,23 @@ const dark = {
   linkText: '#ff9a5c',
 } as const;
 
+const noteColors = {
+  light: {
+    green: '#dce8cf',
+    amber: '#f7e3b0',
+    blue: '#d8e4e8',
+    red: '#f6d5c8',
+    gray: '#efe6d8',
+  },
+  dark: {
+    green: '#2c4034',
+    amber: '#4a3d1f',
+    blue: '#24383c',
+    red: '#4a2c25',
+    gray: '#3a3428',
+  },
+} as const;
+
 function textPair(
   id: string,
   theme: BrandTheme,
@@ -348,5 +365,75 @@ export const BRAND_CONTRAST_PAIRS: readonly BrandContrastPair[] = [
     brandPrimitives['olive-500'],
     dark.backgroundDefault,
     'strong element boundary',
+  ),
+  textPair(
+    'light.note-text-on-green',
+    'light',
+    brandPrimitives['graphite-900'],
+    noteColors.light.green,
+    'note copy on a green sticky note',
+  ),
+  textPair(
+    'light.note-text-on-amber',
+    'light',
+    brandPrimitives['graphite-900'],
+    noteColors.light.amber,
+    'note copy on an amber sticky note',
+  ),
+  textPair(
+    'light.note-text-on-blue',
+    'light',
+    brandPrimitives['graphite-900'],
+    noteColors.light.blue,
+    'note copy on a blue sticky note',
+  ),
+  textPair(
+    'light.note-text-on-red',
+    'light',
+    brandPrimitives['graphite-900'],
+    noteColors.light.red,
+    'note copy on a red sticky note',
+  ),
+  textPair(
+    'light.note-text-on-gray',
+    'light',
+    brandPrimitives['graphite-900'],
+    noteColors.light.gray,
+    'note copy on a gray sticky note',
+  ),
+  textPair(
+    'dark.note-text-on-green',
+    'dark',
+    brandPrimitives['cream-50'],
+    noteColors.dark.green,
+    'note copy on a green sticky note',
+  ),
+  textPair(
+    'dark.note-text-on-amber',
+    'dark',
+    brandPrimitives['cream-50'],
+    noteColors.dark.amber,
+    'note copy on an amber sticky note',
+  ),
+  textPair(
+    'dark.note-text-on-blue',
+    'dark',
+    brandPrimitives['cream-50'],
+    noteColors.dark.blue,
+    'note copy on a blue sticky note',
+  ),
+  textPair(
+    'dark.note-text-on-red',
+    'dark',
+    brandPrimitives['cream-50'],
+    noteColors.dark.red,
+    'note copy on a red sticky note',
+  ),
+  textPair(
+    'dark.note-text-on-gray',
+    'dark',
+    brandPrimitives['cream-50'],
+    noteColors.dark.gray,
+    'note copy on a gray sticky note',
   ),
 ];

@@ -1,5 +1,5 @@
-import { expect, test } from '@playwright/test';
-import { addElement, createWorkspace } from '../helpers/workspace';
+import { expect, test, type Locator, type Page } from '@playwright/test';
+import { addElement, createWorkspace, waitForBoardSaved } from '../helpers/workspace';
 import {
   disableAnimations,
   dynamicMaskLocators,
@@ -11,6 +11,38 @@ import {
   waitForStable,
 } from './helpers/visual';
 import { registerUser } from '../helpers/auth';
+
+const NOTE_PALETTE = [
+  { label: 'Green', offsetX: -430, offsetY: -190 },
+  { label: 'Amber', offsetX: -215, offsetY: -190 },
+  { label: 'Blue', offsetX: 0, offsetY: -190 },
+  { label: 'Red', offsetX: 215, offsetY: -190 },
+  { label: 'Gray', offsetX: 430, offsetY: -190 },
+] as const;
+
+async function applyNoteColor(page: Page, note: Locator, label: string): Promise<void> {
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('element-editor-box')).toBeHidden();
+  await note.click({ button: 'right' });
+  await page.getByRole('menuitem', { name: 'Note color' }).hover();
+  await page.getByRole('menuitem', { name: label }).click();
+  await expect(page.getByRole('menuitem', { name: label })).toBeHidden();
+}
+
+async function dragNote(page: Page, note: Locator, offsetX: number, offsetY: number) {
+  const box = await note.boundingBox();
+  if (box === null) {
+    throw new Error('Note has no bounding box');
+  }
+
+  const startX = box.x + box.width / 2;
+  const startY = box.y + box.height / 2;
+
+  await page.mouse.move(startX, startY);
+  await page.mouse.down();
+  await page.mouse.move(startX + offsetX, startY + offsetY, { steps: 12 });
+  await page.mouse.up();
+}
 
 test.describe('visual baseline — canvas', () => {
   test.use({ viewport: { width: 1280, height: 900 } });
@@ -43,6 +75,30 @@ test.describe('visual baseline — canvas', () => {
       await waitForStable(page);
       await expect(page).toHaveScreenshot(`canvas-populated-${theme}.png`, {
         mask: dynamicMaskLocators(page),
+      });
+    });
+
+    test(`note palette theme:${theme}`, async ({ page }) => {
+      await registerUser(page);
+      await createWorkspace(page, 'Note palette');
+
+      for (const { label, offsetX, offsetY } of NOTE_PALETTE) {
+        const note = await addElement(page, 'note');
+        await applyNoteColor(page, note, label);
+        await dragNote(page, note, offsetX, offsetY);
+      }
+
+      await page.getByRole('application', { name: 'Canvas' }).click();
+      await waitForBoardSaved(page);
+      await setTheme(page, theme);
+      await waitForStable(page);
+      await expect(page).toHaveScreenshot(`canvas-notes-${theme}.png`, {
+        mask: [
+          page.locator('[data-testid="session-timer-display"]'),
+          page.locator('[data-testid="connected-users"]'),
+          page.locator('[data-testid^="presence-avatar-"]'),
+          page.locator('[data-testid^="comment-indicator-"]'),
+        ],
       });
     });
 

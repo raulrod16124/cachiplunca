@@ -16,10 +16,10 @@ const Wrapper = styled.div`
   will-change: transform;
 `;
 
-const ContentLayer = styled.div`
+const ContentLayer = styled.div<{ $allowOverflow: boolean }>`
   position: absolute;
   inset: 0;
-  contain: layout paint;
+  contain: ${({ $allowOverflow }) => ($allowOverflow ? 'layout' : 'layout paint')};
 `;
 
 const CommentIndicator = styled.button`
@@ -152,7 +152,7 @@ function ElementViewComponent({
       data-testid={`canvas-item-${element.id.value}`}
       style={style}
     >
-      <ContentLayer>
+      <ContentLayer $allowOverflow={element.type === 'note'}>
         <Renderer
           element={element}
           selected={selected}

@@ -99,7 +99,7 @@ test.describe('Board (MVP happy path)', () => {
     await expect(page.getByTestId('element-editor-box')).toBeHidden();
     const note = item.locator('[data-element-content="true"]');
     const canvas = page.getByRole('application', { name: 'Canvas' });
-    const colorStyle = /background-color:\s*var\(--rr-color-background-success\)/;
+    const colorStyle = /background-color:\s*var\(--cach-note-green\)/;
 
     await item.click({ button: 'right' });
     await page.getByRole('menuitem', { name: 'Note color' }).hover();
