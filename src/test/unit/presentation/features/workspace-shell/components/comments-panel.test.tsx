@@ -76,6 +76,7 @@ describe('CommentsPanel', () => {
     renderPanel({ element: undefined });
 
     expect(screen.getByTestId('comments-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('comments-panel').tagName).toBe('ASIDE');
     expect(screen.getByText('Select an element')).toBeInTheDocument();
     expect(screen.queryByRole('textbox', { name: 'Comment' })).not.toBeInTheDocument();
   });
@@ -91,6 +92,8 @@ describe('CommentsPanel', () => {
     expect(await screen.findByText('Looks good to me')).toBeInTheDocument();
     expect(screen.getByText('Ada')).toBeInTheDocument();
     expect(screen.getByText('Note: Planning note')).toBeInTheDocument();
+    expect(screen.getByTestId('comment-card-comment-1')).toHaveAttribute('data-resolved', 'false');
+    expect(screen.getByTestId('comment-card-comment-1').tagName).toBe('LI');
   });
 
   it('creates a comment and appends it to the list', async () => {
@@ -141,6 +144,7 @@ describe('CommentsPanel', () => {
       commentId: 'comment-1',
     });
     expect(await screen.findByText('Resolved')).toBeInTheDocument();
+    expect(screen.getByTestId('comment-card-comment-1')).toHaveAttribute('data-resolved', 'true');
     expect(onCommentSaved).toHaveBeenCalledWith(expect.objectContaining({ resolvedAt }));
     expect(screen.getByText('Looks good to me')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Resolve' })).not.toBeInTheDocument();
