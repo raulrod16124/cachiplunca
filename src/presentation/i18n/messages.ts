@@ -140,6 +140,7 @@ const en = {
 
   'shell.nav.label': 'Primary navigation',
   'shell.nav.workspaces': 'Workspaces',
+  'shell.nav.profile': 'Profile',
   'shell.nav.invitations': 'Invitations',
   'shell.nav.pendingInvitations': 'Invitations, {count} pending',
   'shell.nav.title': 'Navigation',
@@ -753,6 +754,7 @@ const es: Record<TranslationKey, string> = {
 
   'shell.nav.label': 'Navegación principal',
   'shell.nav.workspaces': 'Workspaces',
+  'shell.nav.profile': 'Perfil',
   'shell.nav.invitations': 'Invitaciones',
   'shell.nav.pendingInvitations': 'Invitaciones, {count} pendientes',
   'shell.nav.title': 'Navegación',

@@ -8,15 +8,19 @@ test.describe('Accessibility preferences', () => {
     await page.getByRole('button', { name: 'Open account menu' }).click();
     await page.getByRole('menuitem', { name: 'Preferences' }).click();
 
-    const dialog = page.getByRole('dialog');
-    await expect(dialog).toBeVisible();
+    await expect(page).toHaveURL(/\/profile\?tab=preferences$/);
+    await expect(page.getByRole('heading', { level: 1, name: 'Profile' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Preferences' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
 
-    const title = dialog.getByRole('heading', { name: 'Profile' });
+    const title = page.getByRole('heading', { level: 1, name: 'Profile' });
     const initialTitleSize = await title.evaluate((element) =>
       Number.parseFloat(getComputedStyle(element).fontSize),
     );
 
-    await dialog.getByRole('combobox', { name: 'Font size' }).click();
+    await page.getByRole('combobox', { name: 'Font size' }).click();
     await page.getByRole('option', { name: 'Extra large' }).click();
 
     await expect(page.locator('html')).toHaveAttribute('data-font-size', 'xl');
@@ -26,15 +30,22 @@ test.describe('Accessibility preferences', () => {
       )
       .toBeGreaterThan(initialTitleSize);
 
-    const reduceMotion = dialog.getByRole('switch', { name: 'Reduce motion' });
+    const reduceMotionWrite = page.waitForEvent('requestfinished', {
+      predicate: (request) => request.url().includes('Firestore/Write/channel'),
+    });
+    const reduceMotion = page.getByRole('switch', { name: 'Reduce motion' });
     await reduceMotion.click();
     await expect(page.locator('html')).toHaveAttribute('data-reduced-motion', 'true');
+    await reduceMotionWrite;
 
-    await page.keyboard.press('Escape');
-    await expect(dialog).toBeHidden();
     await page.reload();
 
-    await expect(page.getByRole('heading', { level: 1, name: 'Your workspaces' })).toBeVisible();
+    await expect(page).toHaveURL(/\/profile\?tab=preferences$/);
+    await expect(page.getByRole('heading', { level: 1, name: 'Profile' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Preferences' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
     await expect(page.locator('html')).toHaveAttribute('data-font-size', 'xl');
     await expect(page.locator('html')).toHaveAttribute('data-reduced-motion', 'true');
   });

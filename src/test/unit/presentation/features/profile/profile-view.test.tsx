@@ -1,10 +1,9 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { render } from '../../../../setup/render-with-theme';
 import type {
   ChangeUserEmail,
   ChangeUserPassword,
-  LogoutUser,
   UpdateUserProfile,
 } from '../../../../../application/commands';
 import type { SystemEnvironment, AuthUser } from '../../../../../application/ports';
@@ -14,8 +13,10 @@ import {
 } from '../../../../../application/services/user-settings-store';
 import { UserSettings } from '../../../../../domain/user-settings';
 import { UserId } from '../../../../../domain/shared';
-import { AccountMenu } from '../../../../../presentation/features/auth/account-menu';
-import { ProfileModal } from '../../../../../presentation/features/profile/profile-modal';
+import {
+  ProfileView,
+  type ProfileTab,
+} from '../../../../../presentation/features/profile/profile-view';
 import { ProfileServicesProvider } from '../../../../../presentation/features/profile/profile-services-provider';
 import { UserSettingsProvider } from '../../../../../presentation/providers/user-settings-provider';
 
@@ -64,6 +65,16 @@ interface Services {
   readonly changeUserPassword: ChangeUserPassword;
 }
 
+function ProfileHarness({
+  initialTab = 'profile',
+}: {
+  readonly initialTab?: ProfileTab;
+}): ReactNode {
+  const [tab, setTab] = useState<ProfileTab>(initialTab);
+
+  return <ProfileView currentUser={CURRENT_USER} tab={tab} onTabChange={setTab} />;
+}
+
 function renderWithProviders(children: ReactNode, overrides: Partial<Services> = {}): Services {
   const services: Services = {
     updateUserProfile: jest.fn(async () => ({ status: 'ok' as const, user: CURRENT_USER })),
@@ -81,13 +92,10 @@ function renderWithProviders(children: ReactNode, overrides: Partial<Services> =
   return services;
 }
 
-describe('ProfileModal', () => {
+describe('ProfileView', () => {
   it('updates the display name from the profile tab', async () => {
-    const services = renderWithProviders(
-      <ProfileModal open onOpenChange={() => undefined} currentUser={CURRENT_USER} />,
-    );
+    const services = renderWithProviders(<ProfileHarness />);
 
-    expect(screen.getByRole('heading', { name: 'Profile' })).toBeInTheDocument();
     expect(screen.getByLabelText('Display name')).toHaveAccessibleDescription(
       'This is how collaborators see you.',
     );
@@ -103,17 +111,13 @@ describe('ProfileModal', () => {
   });
 
   it('renders field errors returned when the passwords do not match', async () => {
-    const services = renderWithProviders(
-      <ProfileModal open onOpenChange={() => undefined} currentUser={CURRENT_USER} />,
-      {
-        changeUserPassword: jest.fn(async () => ({
-          status: 'invalid-input' as const,
-          fieldErrors: { confirmPassword: 'Passwords do not match.' },
-        })),
-      },
-    );
+    const services = renderWithProviders(<ProfileHarness initialTab="security" />, {
+      changeUserPassword: jest.fn(async () => ({
+        status: 'invalid-input' as const,
+        fieldErrors: { confirmPassword: 'Passwords do not match.' },
+      })),
+    });
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Security' }));
     const panel = screen.getByRole('tabpanel');
     fireEvent.change(within(panel).getByLabelText('Current password'), {
       target: { value: 'secret123' },
@@ -130,14 +134,15 @@ describe('ProfileModal', () => {
     expect(services.changeUserPassword).toHaveBeenCalledTimes(1);
   });
 
-  it('opens from the avatar bubble account menu', async () => {
-    const logoutUser: LogoutUser = jest.fn(async () => ({ status: 'ok' as const }));
-    renderWithProviders(<AccountMenu currentUser={CURRENT_USER} logoutUser={logoutUser} />);
+  it('switches to the preferences tab', () => {
+    renderWithProviders(<ProfileHarness />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open account menu' }));
-    fireEvent.click(await screen.findByRole('menuitem', { name: 'Profile' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Preferences' }));
 
-    expect(await screen.findByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Security' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Preferences' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    expect(screen.getByRole('combobox', { name: 'Font size' })).toBeInTheDocument();
   });
 });

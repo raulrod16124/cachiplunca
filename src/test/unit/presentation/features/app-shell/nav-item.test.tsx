@@ -1,4 +1,5 @@
 import { screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { render } from '../../../../setup/render-with-theme';
 import { NavItem } from '../../../../../presentation/features/app-shell/nav-item';
 
@@ -20,6 +21,19 @@ describe('NavItem', () => {
     render(<NavItem href="#pending-invitations">Invitations</NavItem>);
 
     expect(screen.getByRole('link', { name: 'Invitations' })).not.toHaveAttribute('aria-current');
+  });
+
+  it('renders router links for internal destinations', () => {
+    render(
+      <MemoryRouter initialEntries={['/profile']}>
+        <NavItem to="/profile" active>
+          Profile
+        </NavItem>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('link', { name: 'Profile' })).toHaveAttribute('href', '/profile');
+    expect(screen.getByRole('link', { name: 'Profile' })).toHaveAttribute('aria-current', 'page');
   });
 
   it('renders an optional badge without changing the accessible name', () => {

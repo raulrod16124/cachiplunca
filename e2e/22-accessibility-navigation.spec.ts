@@ -53,3 +53,25 @@ test.describe('Accessibility navigation', () => {
     await expect(page.locator('#main-content')).toBeFocused();
   });
 });
+
+test.describe('Profile page accessibility navigation', () => {
+  test('keeps the skip link and marks the profile navigation item as current', async ({ page }) => {
+    await registerUser(page);
+    await page.goto('/profile');
+
+    await expect(page.getByRole('heading', { level: 1, name: 'Profile' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Profile' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    await expect(page.getByRole('link', { name: 'Workspaces' })).not.toHaveAttribute(
+      'aria-current',
+    );
+
+    const skipLink = page.getByRole('link', { name: SKIP_LINK });
+    await page.keyboard.press('Tab');
+    await expect(skipLink).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#main-content')).toBeFocused();
+  });
+});

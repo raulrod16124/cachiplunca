@@ -1,7 +1,8 @@
 import type { AnchorHTMLAttributes, ReactNode } from 'react';
-import styled from 'styled-components';
+import { Link } from 'react-router-dom';
+import styled, { css } from 'styled-components';
 
-const Root = styled.a<{ $active: boolean }>`
+const itemStyles = css<{ $active: boolean }>`
   position: relative;
   display: flex;
   align-items: center;
@@ -42,6 +43,14 @@ const Root = styled.a<{ $active: boolean }>`
   }
 `;
 
+const AnchorRoot = styled.a<{ $active: boolean }>`
+  ${itemStyles}
+`;
+
+const RouterRoot = styled(Link)<{ $active: boolean }>`
+  ${itemStyles}
+`;
+
 const BadgeSlot = styled.span`
   display: inline-flex;
   margin-left: auto;
@@ -52,6 +61,7 @@ export interface NavItemProps extends Omit<AnchorHTMLAttributes<HTMLAnchorElemen
   readonly children: ReactNode;
   readonly active?: boolean;
   readonly badge?: ReactNode;
+  readonly to?: string;
 }
 
 export function NavItem({
@@ -59,13 +69,29 @@ export function NavItem({
   children,
   active = false,
   badge,
+  to,
   ...rest
 }: NavItemProps): ReactNode {
-  return (
-    <Root {...rest} $active={active} aria-current={active ? 'page' : undefined}>
+  const content = (
+    <>
       {icon}
       {children}
       {badge === undefined ? null : <BadgeSlot>{badge}</BadgeSlot>}
-    </Root>
+    </>
+  );
+  const ariaCurrent = active ? 'page' : undefined;
+
+  if (to !== undefined) {
+    return (
+      <RouterRoot {...rest} to={to} $active={active} aria-current={ariaCurrent}>
+        {content}
+      </RouterRoot>
+    );
+  }
+
+  return (
+    <AnchorRoot {...rest} $active={active} aria-current={ariaCurrent}>
+      {content}
+    </AnchorRoot>
   );
 }

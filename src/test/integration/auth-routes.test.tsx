@@ -176,6 +176,66 @@ describe('auth routes', () => {
     await waitFor(() => expect(sessions.at(-1)).toBeNull());
   });
 
+  it('redirects an anonymous visitor from /profile to /login', async () => {
+    renderApp(new FakeAuthPort(), '/profile');
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeInTheDocument();
+    expect(screen.getByTestId('location')).toHaveTextContent('/login');
+  });
+
+  it('renders the profile page with its security tab from the query string', async () => {
+    const authPort = new FakeAuthPort();
+    await authPort.signUp(CREDENTIALS);
+    renderApp(authPort, '/profile?tab=security');
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Profile' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Security' })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('falls back to the profile tab for an unknown tab parameter', async () => {
+    const authPort = new FakeAuthPort();
+    await authPort.signUp(CREDENTIALS);
+    renderApp(authPort, '/profile?tab=unknown');
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Profile' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Profile' })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('opens the preferences tab from the account menu', async () => {
+    const authPort = new FakeAuthPort();
+    await authPort.signUp(CREDENTIALS);
+    renderApp(authPort, '/workspaces');
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Your workspaces' }),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Open account menu' }));
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Preferences' }));
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Profile' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Preferences' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    expect(screen.getByTestId('location')).toHaveTextContent('/profile?tab=preferences');
+  });
+
+  it('keeps the selected profile tab in the query string', async () => {
+    const authPort = new FakeAuthPort();
+    await authPort.signUp(CREDENTIALS);
+    renderApp(authPort, '/profile');
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Profile' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Security' }));
+    await waitFor(() =>
+      expect(screen.getByTestId('location')).toHaveTextContent('/profile?tab=security'),
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Profile' }));
+    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/profile'));
+  });
+
   it('toggles between the sign in and sign up pages', async () => {
     renderApp(new FakeAuthPort(), '/login');
 

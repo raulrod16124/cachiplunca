@@ -1,9 +1,15 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { render } from '../../../../setup/render-with-theme';
+import type { ReactElement } from 'react';
+import { MemoryRouter } from 'react-router-dom';
+import { render as renderWithTheme } from '../../../../setup/render-with-theme';
 import type { LogoutUser } from '../../../../../application/commands';
 import type { AuthUser } from '../../../../../application/ports';
 import { createAppError, ERROR_CODES } from '../../../../../shared/errors';
 import { NarrowNavMenu } from '../../../../../presentation/features/app-shell/narrow-nav-menu';
+
+function render(ui: ReactElement): ReturnType<typeof renderWithTheme> {
+  return renderWithTheme(<MemoryRouter initialEntries={['/workspaces']}>{ui}</MemoryRouter>);
+}
 
 const CURRENT_USER: AuthUser = {
   uid: 'user-1',
@@ -98,6 +104,9 @@ describe('NarrowNavMenu', () => {
     expect(within(dialog).getByRole('link', { name: 'Invitations' })).not.toHaveAttribute(
       'aria-current',
     );
+    expect(within(dialog).getByRole('link', { name: 'Profile' })).not.toHaveAttribute(
+      'aria-current',
+    );
     expect(within(dialog).getByText('Ada Lovelace')).toBeInTheDocument();
     expect(within(dialog).getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
   });
@@ -147,7 +156,7 @@ describe('NarrowNavMenu', () => {
     );
 
     openMenu();
-    fireEvent.click(screen.getByRole('link', { name: 'Invitations' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Profile' }));
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });

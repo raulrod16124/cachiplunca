@@ -1,6 +1,7 @@
 import { Badge } from '@raulrod/ui';
-import { LayoutGrid, Mail } from '@raulrod/icons';
+import { LayoutGrid, Mail, UserRound } from '@raulrod/icons';
 import type { ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useI18n } from '../../i18n';
 import { NavItem } from './nav-item';
 
@@ -11,13 +12,16 @@ export interface NavLinksProps {
 
 export function NavLinks({ pendingInvitationCount = 0, onNavigate }: NavLinksProps): ReactNode {
   const { t } = useI18n();
+  const { pathname } = useLocation();
   const hasPendingInvitations = pendingInvitationCount > 0;
+  const workspacesActive = pathname === '/workspaces' || pathname.startsWith('/workspaces/');
+  const profileActive = pathname === '/profile';
 
   return (
     <>
       <NavItem
-        href="#workspaces"
-        active
+        to="/workspaces"
+        active={workspacesActive}
         icon={<LayoutGrid aria-hidden="true" size={16} />}
         onClick={() => onNavigate?.()}
       >
@@ -41,6 +45,14 @@ export function NavLinks({ pendingInvitationCount = 0, onNavigate }: NavLinksPro
         }
       >
         {t('shell.nav.invitations')}
+      </NavItem>
+      <NavItem
+        to="/profile"
+        active={profileActive}
+        icon={<UserRound aria-hidden="true" size={16} />}
+        onClick={() => onNavigate?.()}
+      >
+        {t('shell.nav.profile')}
       </NavItem>
     </>
   );

@@ -1,8 +1,17 @@
 import { fireEvent, screen } from '@testing-library/react';
-import { render } from '../../../../setup/render-with-theme';
+import type { ReactElement } from 'react';
+import { MemoryRouter } from 'react-router-dom';
+import { render as renderWithTheme } from '../../../../setup/render-with-theme';
 import type { LogoutUser } from '../../../../../application/commands';
 import type { AuthUser } from '../../../../../application/ports';
 import { AppShell } from '../../../../../presentation/features/app-shell/app-shell';
+
+function render(
+  ui: ReactElement,
+  initialEntries: string[] = ['/workspaces'],
+): ReturnType<typeof renderWithTheme> {
+  return renderWithTheme(<MemoryRouter initialEntries={initialEntries}>{ui}</MemoryRouter>);
+}
 
 const CURRENT_USER: AuthUser = {
   uid: 'user-1',
@@ -28,6 +37,7 @@ describe('AppShell', () => {
       'page',
     );
     expect(screen.getByRole('link', { name: 'Invitations' })).not.toHaveAttribute('aria-current');
+    expect(screen.getByRole('link', { name: 'Profile' })).not.toHaveAttribute('aria-current');
     expect(screen.queryByRole('button', { name: 'Open navigation menu' })).not.toBeInTheDocument();
     expect(screen.getByText('Ada Lovelace')).toBeInTheDocument();
     expect(screen.queryByText('ada@example.com')).not.toBeInTheDocument();
@@ -64,6 +74,18 @@ describe('AppShell', () => {
 
     expect(screen.getByRole('link', { name: 'Invitations' })).toBeInTheDocument();
     expect(screen.queryByText(/pending invitations/i)).not.toBeInTheDocument();
+  });
+
+  it('marks the profile link as current on the profile route', () => {
+    render(
+      <AppShell currentUser={CURRENT_USER} logoutUser={logoutUser} onCreateWorkspace={jest.fn()}>
+        <p>Content</p>
+      </AppShell>,
+      ['/profile'],
+    );
+
+    expect(screen.getByRole('link', { name: 'Profile' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Workspaces' })).not.toHaveAttribute('aria-current');
   });
 
   it('forwards the new workspace action', () => {

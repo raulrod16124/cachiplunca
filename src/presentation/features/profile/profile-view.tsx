@@ -2,11 +2,6 @@ import {
   Avatar,
   Badge,
   Button,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
   FormField,
   FormFieldControl,
   FormFieldDescription,
@@ -35,11 +30,15 @@ import { PasswordInput } from '../auth/password-input';
 import { Card } from '../../components/card';
 import { useProfileServices } from './profile-services-provider';
 
-const PROFILE_TAB = 'profile';
-const SECURITY_TAB = 'security';
-const PREFERENCES_TAB = 'preferences';
+export const PROFILE_TAB = 'profile';
+export const SECURITY_TAB = 'security';
+export const PREFERENCES_TAB = 'preferences';
 
-type ProfileTab = typeof PROFILE_TAB | typeof SECURITY_TAB | typeof PREFERENCES_TAB;
+export type ProfileTab = typeof PROFILE_TAB | typeof SECURITY_TAB | typeof PREFERENCES_TAB;
+
+export function isProfileTab(value: string | null): value is ProfileTab {
+  return value === PROFILE_TAB || value === SECURITY_TAB || value === PREFERENCES_TAB;
+}
 
 const IdentityCard = styled(Card)`
   flex-direction: row;
@@ -106,30 +105,112 @@ const FormActions = styled.div`
 
 const DISPLAY_NAME_MAX_LENGTH = 80;
 
-export interface ProfileModalProps {
-  readonly open: boolean;
-  readonly onOpenChange: (open: boolean) => void;
-  readonly currentUser: AuthUser | null;
-  readonly initialTab?: ProfileTab;
+export interface ProfileViewProps {
+  readonly currentUser: AuthUser;
+  readonly tab: ProfileTab;
+  readonly onTabChange: (tab: ProfileTab) => void;
 }
 
-export function ProfileModal({
-  open,
-  onOpenChange,
-  currentUser,
-  initialTab = PROFILE_TAB,
-}: ProfileModalProps): ReactNode {
+export function ProfileView({ currentUser, tab, onTabChange }: ProfileViewProps): ReactNode {
+  const { t } = useI18n();
   const services = useProfileServices();
-  if (!open || currentUser === null) {
-    return null;
-  }
+
+  const displayName = currentUser.displayName;
+  const identityName = displayName ?? t('profile.noName');
+  const avatarName = displayName ?? currentUser.email ?? '?';
+
   return (
-    <ProfileDialog
-      currentUser={currentUser}
-      onOpenChange={onOpenChange}
-      initialTab={initialTab}
-      servicesAvailable={services !== null}
-    />
+    <Stack gap="space-5">
+      <IdentityCard variant="sunken" padding="md" data-testid="profile-identity">
+        <Avatar name={avatarName} size="lg" />
+        <IdentityText>
+          <Text weight="font.weight.semibold" size="font.size.lg">
+            {identityName}
+          </Text>
+          {currentUser.email === null ? null : (
+            <Text color="color.text.muted" size="font.size.sm">
+              {currentUser.email}
+            </Text>
+          )}
+        </IdentityText>
+      </IdentityCard>
+
+      <Tabs
+        value={tab}
+        onValueChange={(value) => {
+          if (isProfileTab(value)) {
+            onTabChange(value);
+          }
+        }}
+        classNames={{
+          list: 'profile-tabs-list',
+          trigger: 'profile-tabs-trigger',
+        }}
+      >
+        <Tabs.List>
+          <Tabs.Trigger value={PROFILE_TAB}>{t('profile.tabs.profile')}</Tabs.Trigger>
+          <Tabs.Trigger value={SECURITY_TAB}>{t('profile.tabs.security')}</Tabs.Trigger>
+          <Tabs.Trigger value={PREFERENCES_TAB}>{t('profile.tabs.preferences')}</Tabs.Trigger>
+        </Tabs.List>
+
+        <Tabs.Panel value={PROFILE_TAB}>
+          <Stack gap="space-4">
+            <Section>
+              <SectionHeading>
+                <Sparkles aria-hidden="true" size={16} />
+                <SectionTitle as="h2">{t('profile.displayName.label')}</SectionTitle>
+              </SectionHeading>
+              <DisplayNameForm currentUser={currentUser} available={services !== null} />
+            </Section>
+            <Section data-testid="profile-email-section">
+              <SectionHeading>
+                <ShieldCheck aria-hidden="true" size={16} />
+                <Stack gap="space-1">
+                  <SectionTitle as="h2">{t('profile.email.label')}</SectionTitle>
+                  <Text color="color.text.muted" size="font.size.sm">
+                    {t('profile.email.hint')}
+                  </Text>
+                </Stack>
+              </SectionHeading>
+              <Inline gap="space-2" align="center" wrap>
+                <Text>{currentUser.email ?? '—'}</Text>
+                <Badge variant={currentUser.emailVerified ? 'success' : 'warning'}>
+                  {currentUser.emailVerified
+                    ? t('profile.email.verified')
+                    : t('profile.email.notVerified')}
+                </Badge>
+              </Inline>
+              {services === null ? null : <ChangeEmailForm currentEmail={currentUser.email} />}
+            </Section>
+          </Stack>
+        </Tabs.Panel>
+
+        <Tabs.Panel value={SECURITY_TAB}>
+          <Stack gap="space-4">
+            <Section>
+              <SectionHeading>
+                <ShieldCheck aria-hidden="true" size={16} />
+                <Stack gap="space-1">
+                  <SectionTitle as="h2">{t('profile.password.title')}</SectionTitle>
+                  <Text color="color.text.muted" size="font.size.sm">
+                    {t('profile.password.description')}
+                  </Text>
+                </Stack>
+              </SectionHeading>
+              {services === null ? (
+                <Text color="color.text.muted">{t('profile.error.generic')}</Text>
+              ) : (
+                <ChangePasswordForm />
+              )}
+            </Section>
+          </Stack>
+        </Tabs.Panel>
+
+        <Tabs.Panel value={PREFERENCES_TAB}>
+          <SettingsControls />
+        </Tabs.Panel>
+      </Tabs>
+    </Stack>
   );
 }
 
@@ -146,126 +227,6 @@ function describeProfileError(error: AppError, t: I18nContextValue['t']): string
     default:
       return t('profile.error.generic');
   }
-}
-
-function ProfileDialog({
-  currentUser,
-  onOpenChange,
-  initialTab,
-  servicesAvailable,
-}: {
-  readonly currentUser: AuthUser;
-  readonly onOpenChange: (open: boolean) => void;
-  readonly initialTab: ProfileTab;
-  readonly servicesAvailable: boolean;
-}): ReactNode {
-  const { t } = useI18n();
-  const services = useProfileServices();
-  const [tab, setTab] = useState<ProfileTab>(initialTab);
-
-  const displayName = currentUser.displayName;
-  const identityName = displayName ?? t('profile.noName');
-  const avatarName = displayName ?? currentUser.email ?? '?';
-
-  return (
-    <Dialog open onOpenChange={onOpenChange} classNames={{ content: 'profile-dialog-content' }}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t('profile.title')}</DialogTitle>
-          <DialogDescription>{t('profile.description')}</DialogDescription>
-        </DialogHeader>
-
-        <IdentityCard variant="sunken" padding="md">
-          <Avatar name={avatarName} size="lg" />
-          <IdentityText>
-            <Text weight="font.weight.semibold" size="font.size.lg">
-              {identityName}
-            </Text>
-            {currentUser.email === null ? null : (
-              <Text color="color.text.muted" size="font.size.sm">
-                {currentUser.email}
-              </Text>
-            )}
-          </IdentityText>
-        </IdentityCard>
-
-        <Tabs
-          value={tab}
-          onValueChange={(value) => setTab(value as ProfileTab)}
-          classNames={{
-            list: 'profile-tabs-list',
-            trigger: 'profile-tabs-trigger',
-          }}
-        >
-          <Tabs.List>
-            <Tabs.Trigger value={PROFILE_TAB}>{t('profile.tabs.profile')}</Tabs.Trigger>
-            <Tabs.Trigger value={SECURITY_TAB}>{t('profile.tabs.security')}</Tabs.Trigger>
-            <Tabs.Trigger value={PREFERENCES_TAB}>{t('profile.tabs.preferences')}</Tabs.Trigger>
-          </Tabs.List>
-
-          <Tabs.Panel value={PROFILE_TAB}>
-            <Stack gap="space-4">
-              <Section>
-                <SectionHeading>
-                  <Sparkles aria-hidden="true" size={16} />
-                  <SectionTitle as="h3">{t('profile.displayName.label')}</SectionTitle>
-                </SectionHeading>
-                <DisplayNameForm
-                  currentUser={currentUser}
-                  available={servicesAvailable && services !== null}
-                />
-              </Section>
-              <Section>
-                <SectionHeading>
-                  <ShieldCheck aria-hidden="true" size={16} />
-                  <Stack gap="space-1">
-                    <SectionTitle as="h3">{t('profile.email.label')}</SectionTitle>
-                    <Text color="color.text.muted" size="font.size.sm">
-                      {t('profile.email.hint')}
-                    </Text>
-                  </Stack>
-                </SectionHeading>
-                <Inline gap="space-2" align="center" wrap>
-                  <Text>{currentUser.email ?? '—'}</Text>
-                  <Badge variant={currentUser.emailVerified ? 'success' : 'warning'}>
-                    {currentUser.emailVerified
-                      ? t('profile.email.verified')
-                      : t('profile.email.notVerified')}
-                  </Badge>
-                </Inline>
-                {services === null ? null : <ChangeEmailForm currentEmail={currentUser.email} />}
-              </Section>
-            </Stack>
-          </Tabs.Panel>
-
-          <Tabs.Panel value={SECURITY_TAB}>
-            <Stack gap="space-4">
-              <Section>
-                <SectionHeading>
-                  <ShieldCheck aria-hidden="true" size={16} />
-                  <Stack gap="space-1">
-                    <SectionTitle as="h3">{t('profile.password.title')}</SectionTitle>
-                    <Text color="color.text.muted" size="font.size.sm">
-                      {t('profile.password.description')}
-                    </Text>
-                  </Stack>
-                </SectionHeading>
-                {services === null ? (
-                  <Text color="color.text.muted">{t('profile.error.generic')}</Text>
-                ) : (
-                  <ChangePasswordForm />
-                )}
-              </Section>
-            </Stack>
-          </Tabs.Panel>
-
-          <Tabs.Panel value={PREFERENCES_TAB}>
-            <SettingsControls />
-          </Tabs.Panel>
-        </Tabs>
-      </DialogContent>
-    </Dialog>
-  );
 }
 
 function DisplayNameForm({
@@ -403,7 +364,7 @@ function ChangeEmailForm({ currentEmail }: { readonly currentEmail: string | nul
     <form onSubmit={handleSubmit} noValidate>
       <Stack gap="space-3">
         <Stack gap="space-1">
-          <Heading as="h4">{t('profile.email.changeTitle')}</Heading>
+          <Heading as="h3">{t('profile.email.changeTitle')}</Heading>
           <Text color="color.text.muted" size="font.size.sm">
             {t('profile.email.changeDescription')}
           </Text>
