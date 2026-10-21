@@ -1,6 +1,7 @@
 import {
   FormField,
   FormFieldControl,
+  FormFieldDescription,
   FormFieldLabel,
   Select,
   Stack,
@@ -47,6 +48,7 @@ export function SettingsControls(): ReactNode {
     <Stack gap="space-4">
       <FormField>
         <FormFieldLabel>{t('settings.theme')}</FormFieldLabel>
+        <FormFieldDescription>{t('settings.theme.hint')}</FormFieldDescription>
         <FormFieldControl>
           {(field) => (
             <Select
@@ -73,6 +75,7 @@ export function SettingsControls(): ReactNode {
 
       <FormField>
         <FormFieldLabel>{t('settings.fontSize')}</FormFieldLabel>
+        <FormFieldDescription>{t('settings.fontSize.hint')}</FormFieldDescription>
         <FormFieldControl>
           {(field) => (
             <Select
@@ -99,6 +102,7 @@ export function SettingsControls(): ReactNode {
 
       <FormField>
         <FormFieldLabel>{t('settings.language')}</FormFieldLabel>
+        <FormFieldDescription>{t('settings.language.hint')}</FormFieldDescription>
         <FormFieldControl>
           {(field) => (
             <Select
@@ -125,6 +129,7 @@ export function SettingsControls(): ReactNode {
 
       <FormField>
         <FormFieldLabel>{t('settings.reduceMotion')}</FormFieldLabel>
+        <FormFieldDescription>{t('settings.reduceMotion.hint')}</FormFieldDescription>
         <FormFieldControl>
           {(field) => (
             <Switch

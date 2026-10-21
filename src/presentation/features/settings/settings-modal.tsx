@@ -31,7 +31,7 @@ function SettingsDialog({
   const { t } = useI18n();
 
   return (
-    <Dialog open onOpenChange={onOpenChange}>
+    <Dialog open onOpenChange={onOpenChange} classNames={{ content: 'settings-dialog-content' }}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('settings.title')}</DialogTitle>

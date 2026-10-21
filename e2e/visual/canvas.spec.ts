@@ -306,5 +306,23 @@ test.describe('visual baseline — canvas', () => {
         ],
       });
     });
+
+    test(`profile dialog theme:${theme}`, async ({ page }) => {
+      await registerUser(page);
+      await createWorkspace(page, 'Profile canvas');
+      await page.getByRole('button', { name: 'Open account menu' }).click();
+      await page.getByRole('menuitem', { name: 'Profile' }).click();
+      await expect(page.getByRole('dialog')).toBeVisible();
+      await setTheme(page, theme);
+      const emails = page.getByText(/@example\.com/);
+      await expect(page).toHaveScreenshot(`canvas-profile-${theme}.png`, {
+        mask: [
+          ...dynamicMaskLocators(page),
+          emails.first().locator('xpath=../..'),
+          emails.nth(1).locator('xpath=..'),
+          page.getByPlaceholder(/@example\.com/),
+        ],
+      });
+    });
   }
 });

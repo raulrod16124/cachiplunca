@@ -29,6 +29,11 @@ body {
   max-width: 40rem;
 }
 
+/* Preferences need room for labels plus helper text without cramped lines. */
+.settings-dialog-content {
+  max-width: 32rem;
+}
+
 /* Share modal uses the extra horizontal room for member rows and role selects. */
 .share-dialog-content {
   max-width: 38rem;
@@ -60,13 +65,14 @@ body {
 }
 
 /* Profile tabs share the dialog width and read as one segmented control. */
-.profile-dialog-content .rr-tabs-list {
+.profile-tabs-list {
   display: flex;
+  flex: none;
   width: 100%;
   gap: var(--rr-space-1);
 }
 
-.profile-dialog-content .rr-tabs-trigger {
+.profile-tabs-trigger {
   flex: 1 1 0;
   text-align: center;
 }
