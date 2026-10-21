@@ -2,6 +2,7 @@ import { Search } from '@raulrod/icons';
 import type { ReactElement } from 'react';
 import { useMemo, useState } from 'react';
 import styled from 'styled-components';
+import { useI18n } from '../../i18n';
 import type { TextFontFamily } from '../../../domain/element';
 import { FONT_FAMILY_OPTIONS, fontFamilyCss, fontFamilyLabel } from './font-families';
 import { ToolbarDropdown } from './toolbar-dropdown';
@@ -24,6 +25,11 @@ const SearchInput = styled.input`
   background: none;
   color: ${({ theme }) => theme.color.text.primary};
   font-size: ${({ theme }) => theme.font.size.sm};
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.focusRing};
+    outline-offset: 2px;
+  }
 `;
 
 const FontOption = styled.button`
@@ -41,6 +47,11 @@ const FontOption = styled.button`
   &:hover {
     background-color: ${({ theme }) => theme.canvas.surfaceMuted};
   }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.focusRing};
+    outline-offset: 2px;
+  }
 `;
 
 const EmptyState = styled.span`
@@ -55,8 +66,14 @@ export interface FontFamilySelectProps {
 }
 
 export function FontFamilySelect({ value, onSelect }: FontFamilySelectProps): ReactElement {
+  const { t } = useI18n();
   const [query, setQuery] = useState('');
-  const label = value === undefined ? 'Default' : fontFamilyLabel(value);
+
+  function optionLabel(family: TextFontFamily): string {
+    return family === 'default' ? t('canvas.textFormat.fontDefault') : fontFamilyLabel(family);
+  }
+
+  const label = optionLabel(value ?? 'default');
 
   const options = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -65,12 +82,14 @@ export function FontFamilySelect({ value, onSelect }: FontFamilySelectProps): Re
       return FONT_FAMILY_OPTIONS;
     }
 
-    return FONT_FAMILY_OPTIONS.filter((option) => option.label.toLowerCase().includes(normalized));
-  }, [query]);
+    return FONT_FAMILY_OPTIONS.filter((option) =>
+      optionLabel(option.value).toLowerCase().includes(normalized),
+    );
+  }, [query, t]);
 
   return (
     <ToolbarDropdown
-      label="Font"
+      label={t('canvas.textFormat.font')}
       triggerContent={
         <span style={{ fontFamily: value === undefined ? 'inherit' : fontFamilyCss(value) }}>
           {label}
@@ -81,14 +100,14 @@ export function FontFamilySelect({ value, onSelect }: FontFamilySelectProps): Re
         <Search aria-hidden="true" size={14} />
         <SearchInput
           type="text"
-          aria-label="Search fonts"
-          placeholder="Search fonts"
+          aria-label={t('canvas.textFormat.searchFonts')}
+          placeholder={t('canvas.textFormat.searchFonts')}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
       </SearchField>
       {options.length === 0 ? (
-        <EmptyState>No matching fonts</EmptyState>
+        <EmptyState>{t('canvas.textFormat.noMatchingFonts')}</EmptyState>
       ) : (
         options.map((option) => (
           <FontOption
@@ -102,7 +121,7 @@ export function FontFamilySelect({ value, onSelect }: FontFamilySelectProps): Re
               setQuery('');
             }}
           >
-            {option.label}
+            {optionLabel(option.value)}
           </FontOption>
         ))
       )}

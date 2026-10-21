@@ -73,7 +73,7 @@ export function MembersList({
 
   if (status === 'loading') {
     return (
-      <LoadingState label="Loading members">
+      <LoadingState label={t('share.members.loading')}>
         <Stack gap="space-2">
           <Skeleton style={{ height: '56px', width: '100%' }} />
           <Skeleton style={{ height: '56px', width: '100%' }} />
@@ -85,8 +85,8 @@ export function MembersList({
   if (status === 'error') {
     return (
       <ErrorState
-        title="Could not load members"
-        description={errorMessage ?? 'Something went wrong.'}
+        title={t('share.members.error.title')}
+        description={errorMessage ?? t('share.members.error.generic')}
         actionLabel={t('common.retry')}
         onAction={onRetry}
       />
@@ -125,7 +125,10 @@ export function MembersList({
                         value={member.role}
                         onValueChange={(value) => onChangeRole(userId, value as MembershipRole)}
                       >
-                        <Select.Trigger aria-label={`Role for ${label}`} disabled={isPending}>
+                        <Select.Trigger
+                          aria-label={t('share.roleFor', { name: label })}
+                          disabled={isPending}
+                        >
                           <Select.Value />
                         </Select.Trigger>
                         <Select.Content>

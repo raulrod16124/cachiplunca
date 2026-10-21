@@ -11,6 +11,7 @@ import {
 import type { ReactElement } from 'react';
 import { TEXT_BOOLEAN_MARKS, TEXT_FONT_SIZES } from '../../../domain/element';
 import type { TextAlign } from '../../../domain/element';
+import type { TranslationKey } from '../../i18n';
 import { FONT_FAMILY_OPTIONS } from './font-families';
 import { TEXT_COLOR_SWATCHES } from './text-format-options';
 
@@ -18,29 +19,53 @@ export { FONT_FAMILY_OPTIONS, TEXT_COLOR_SWATCHES, TEXT_FONT_SIZES };
 
 export interface AlignOption {
   readonly value: TextAlign;
-  readonly label: string;
+  readonly labelKey: TranslationKey;
   readonly icon: ReactElement;
 }
 
 export const ALIGN_OPTIONS: readonly AlignOption[] = [
-  { value: 'left', label: 'Align left', icon: <AlignLeft aria-hidden="true" size={16} /> },
-  { value: 'center', label: 'Align center', icon: <AlignCenter aria-hidden="true" size={16} /> },
-  { value: 'right', label: 'Align right', icon: <AlignRight aria-hidden="true" size={16} /> },
-  { value: 'justify', label: 'Justify', icon: <AlignJustify aria-hidden="true" size={16} /> },
+  {
+    value: 'left',
+    labelKey: 'canvas.textFormat.alignLeft',
+    icon: <AlignLeft aria-hidden="true" size={16} />,
+  },
+  {
+    value: 'center',
+    labelKey: 'canvas.textFormat.alignCenter',
+    icon: <AlignCenter aria-hidden="true" size={16} />,
+  },
+  {
+    value: 'right',
+    labelKey: 'canvas.textFormat.alignRight',
+    icon: <AlignRight aria-hidden="true" size={16} />,
+  },
+  {
+    value: 'justify',
+    labelKey: 'canvas.textFormat.justify',
+    icon: <AlignJustify aria-hidden="true" size={16} />,
+  },
 ];
 
 export interface BooleanMarkOption {
   readonly mark: (typeof TEXT_BOOLEAN_MARKS)[number];
-  readonly label: string;
+  readonly labelKey: TranslationKey;
   readonly icon: ReactElement;
 }
 
 export const BOOLEAN_MARK_OPTIONS: readonly BooleanMarkOption[] = [
-  { mark: 'bold', label: 'Bold', icon: <Bold aria-hidden="true" size={16} /> },
-  { mark: 'underline', label: 'Underline', icon: <Underline aria-hidden="true" size={16} /> },
+  {
+    mark: 'bold',
+    labelKey: 'canvas.textFormat.bold',
+    icon: <Bold aria-hidden="true" size={16} />,
+  },
+  {
+    mark: 'underline',
+    labelKey: 'canvas.textFormat.underline',
+    icon: <Underline aria-hidden="true" size={16} />,
+  },
   {
     mark: 'strikethrough',
-    label: 'Strikethrough',
+    labelKey: 'canvas.textFormat.strikethrough',
     icon: <Strikethrough aria-hidden="true" size={16} />,
   },
 ];

@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react';
 import { useState } from 'react';
 import styled from 'styled-components';
+import { useI18n } from '../../i18n';
 import { TEXT_FONT_SIZES } from '../../../domain/element';
 import type { TextFontSize } from '../../../domain/element';
 
@@ -18,6 +19,11 @@ const SizeInput = styled.input`
   &:hover {
     background-color: ${({ theme }) => theme.canvas.surfaceMuted};
   }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.focusRing};
+    outline-offset: 2px;
+  }
 `;
 
 export interface FontSizeSelectProps {
@@ -26,6 +32,7 @@ export interface FontSizeSelectProps {
 }
 
 export function FontSizeSelect({ value, onSelect }: FontSizeSelectProps): ReactElement {
+  const { t } = useI18n();
   const [draft, setDraft] = useState<string | null>(null);
   const display = draft ?? (value === undefined ? '' : String(value));
 
@@ -48,8 +55,8 @@ export function FontSizeSelect({ value, onSelect }: FontSizeSelectProps): ReactE
     <SizeInput
       type="text"
       inputMode="numeric"
-      aria-label="Font size"
-      placeholder="Size"
+      aria-label={t('canvas.textFormat.fontSize')}
+      placeholder={t('canvas.textFormat.fontSizePlaceholder')}
       value={display}
       onChange={(event) => setDraft(event.target.value)}
       onBlur={commit}

@@ -2,6 +2,7 @@ import type { Editor } from '@tiptap/core';
 import type { ReactElement } from 'react';
 import styled from 'styled-components';
 import type { TextFontFamily, TextFontSize } from '../../../domain/element';
+import { useI18n } from '../../i18n';
 import { applyFormatToEditor, getEditorFormatState } from './editor-format';
 import {
   ALIGN_OPTIONS,
@@ -34,6 +35,11 @@ const Select = styled.select`
   border: 1px solid ${({ theme }) => theme.color.border.default};
   background-color: ${({ theme }) => theme.canvas.surface};
   color: ${({ theme }) => theme.color.text.primary};
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.focusRing};
+    outline-offset: 2px;
+  }
 `;
 
 const ToggleButton = styled.button<{ $active: boolean }>`
@@ -50,6 +56,11 @@ const ToggleButton = styled.button<{ $active: boolean }>`
     $active ? theme.canvas.surfaceMuted : theme.canvas.surface};
   color: ${({ theme }) => theme.color.text.primary};
   cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.focusRing};
+    outline-offset: 2px;
+  }
 `;
 
 const SwatchRow = styled.div`
@@ -67,6 +78,11 @@ const Swatch = styled.button<{ $color: string; $active: boolean }>`
   border-radius: 50%;
   background-color: ${({ $color }) => $color};
   cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.focusRing};
+    outline-offset: 2px;
+  }
 `;
 
 export interface TextFormatToolbarProps {
@@ -74,12 +90,17 @@ export interface TextFormatToolbarProps {
 }
 
 export function TextFormatToolbar({ editor }: TextFormatToolbarProps): ReactElement {
+  const { t } = useI18n();
   const state = getEditorFormatState(editor);
 
   return (
-    <Toolbar data-testid="text-format-toolbar" role="toolbar" aria-label="Text formatting">
+    <Toolbar
+      data-testid="text-format-toolbar"
+      role="toolbar"
+      aria-label={t('canvas.textFormat.label')}
+    >
       <Select
-        aria-label="Font"
+        aria-label={t('canvas.textFormat.font')}
         value={state.fontFamily ?? 'default'}
         onChange={(event) => {
           applyFormatToEditor(editor, {
@@ -96,7 +117,7 @@ export function TextFormatToolbar({ editor }: TextFormatToolbarProps): ReactElem
       </Select>
 
       <Select
-        aria-label="Font size"
+        aria-label={t('canvas.textFormat.fontSize')}
         value={state.fontSize === undefined ? '' : String(state.fontSize)}
         onChange={(event) => {
           const value = Number(event.target.value);
@@ -106,7 +127,7 @@ export function TextFormatToolbar({ editor }: TextFormatToolbarProps): ReactElem
         }}
       >
         <option value="" disabled>
-          Size
+          {t('canvas.textFormat.fontSizePlaceholder')}
         </option>
         {TEXT_FONT_SIZES.map((size) => (
           <option key={size} value={size}>
@@ -115,12 +136,12 @@ export function TextFormatToolbar({ editor }: TextFormatToolbarProps): ReactElem
         ))}
       </Select>
 
-      <SwatchRow role="group" aria-label="Text color">
+      <SwatchRow role="group" aria-label={t('canvas.textFormat.textColor')}>
         {TEXT_COLOR_SWATCHES.map((color) => (
           <Swatch
             key={color}
             type="button"
-            aria-label={`Text color ${color}`}
+            aria-label={t('canvas.textFormat.textColorValue', { color })}
             $color={color}
             $active={state.color === color}
             onClick={() => applyFormatToEditor(editor, { kind: 'color', value: color })}
@@ -132,7 +153,7 @@ export function TextFormatToolbar({ editor }: TextFormatToolbarProps): ReactElem
         <ToggleButton
           key={option.mark}
           type="button"
-          aria-label={option.label}
+          aria-label={t(option.labelKey)}
           aria-pressed={state[option.mark] === 'on'}
           $active={state[option.mark] === 'on' || state[option.mark] === 'mixed'}
           onClick={() => applyFormatToEditor(editor, { kind: 'toggleMark', mark: option.mark })}
@@ -145,7 +166,7 @@ export function TextFormatToolbar({ editor }: TextFormatToolbarProps): ReactElem
         <ToggleButton
           key={option.value}
           type="button"
-          aria-label={option.label}
+          aria-label={t(option.labelKey)}
           aria-pressed={state.align === option.value}
           $active={state.align === option.value}
           onClick={() => applyFormatToEditor(editor, { kind: 'align', value: option.value })}

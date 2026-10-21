@@ -224,6 +224,7 @@ function TextContentEditor({
   readonly onEditorReady?: (editor: Editor | null) => void;
   readonly commitGuardRef?: { readonly current: boolean };
 }): ReactElement {
+  const { t } = useI18n();
   const handleCommit = (document: RichTextDocument): void => {
     if (JSON.stringify(document) === JSON.stringify(element.content)) {
       onCancel();
@@ -237,7 +238,7 @@ function TextContentEditor({
     <EditorBox style={boxStyle(element)} data-testid="element-editor-box">
       <RichTextFieldEditor
         document={element.content}
-        ariaLabel="Text content"
+        ariaLabel={t('canvas.textContent')}
         dataField="content"
         autoFocus
         onCommit={handleCommit}
@@ -259,6 +260,7 @@ function NoteContentEditor({
   readonly onEditorReady?: (editor: Editor | null) => void;
   readonly commitGuardRef?: { readonly current: boolean };
 }): ReactElement {
+  const { t } = useI18n();
   const handleCommit = (document: RichTextDocument): void => {
     if (JSON.stringify(document) === JSON.stringify(element.content)) {
       onCancel();
@@ -278,7 +280,7 @@ function NoteContentEditor({
     >
       <RichTextFieldEditor
         document={element.content}
-        ariaLabel="Note content"
+        ariaLabel={t('canvas.noteContent')}
         dataField="content"
         autoFocus
         onCommit={handleCommit}
@@ -300,6 +302,7 @@ function FrameTitleEditor({
   readonly onEditorReady?: (editor: Editor | null) => void;
   readonly commitGuardRef?: { readonly current: boolean };
 }): ReactElement {
+  const { t } = useI18n();
   const handleCommit = (document: RichTextDocument): void => {
     if (JSON.stringify(document) === JSON.stringify(element.title)) {
       onCancel();
@@ -314,7 +317,7 @@ function FrameTitleEditor({
       <FrameHeader>
         <RichTextFieldEditor
           document={element.title}
-          ariaLabel="Frame title"
+          ariaLabel={t('canvas.frameTitle')}
           dataField="title"
           singleLine
           autoFocus
@@ -338,6 +341,7 @@ function LinkFieldsEditor({
   readonly onEditorReady?: (editor: Editor | null) => void;
   readonly commitGuardRef?: { readonly current: boolean };
 }): ReactElement {
+  const { t } = useI18n();
   const [urlDraft, setUrlDraft] = useState(element.url);
   const titleDraftRef = useRef<RichTextDocument>(element.title ?? richTextFromPlain(''));
   const cancelledRef = useRef(false);
@@ -417,7 +421,7 @@ function LinkFieldsEditor({
       <LinkTitle>
         <RichTextFieldEditor
           document={initialTitle}
-          ariaLabel="Link title"
+          ariaLabel={t('canvas.linkTitle')}
           dataField="title"
           singleLine
           onChange={(document) => {
@@ -432,7 +436,7 @@ function LinkFieldsEditor({
       </LinkTitle>
       <UrlField
         data-editor-field="url"
-        aria-label="Link URL"
+        aria-label={t('canvas.linkUrl')}
         placeholder="https://example.com"
         autoFocus
         value={urlDraft}

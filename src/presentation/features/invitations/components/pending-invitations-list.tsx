@@ -43,7 +43,7 @@ export function PendingInvitationsList({
   const { t } = useI18n();
   if (status === 'loading') {
     return (
-      <LoadingState label="Loading pending invitations">
+      <LoadingState label={t('invitations.loading')}>
         <Stack gap="space-2">
           <Skeleton style={{ height: '24px', width: '60%' }} />
           <Skeleton style={{ height: '24px', width: '50%' }} />
@@ -55,8 +55,8 @@ export function PendingInvitationsList({
   if (status === 'error') {
     return (
       <ErrorState
-        title="Could not load invitations"
-        description={errorMessage ?? 'Something went wrong.'}
+        title={t('invitations.error.title')}
+        description={errorMessage ?? t('invitations.error.generic')}
         actionLabel={t('common.retry')}
         onAction={onRetry}
       />

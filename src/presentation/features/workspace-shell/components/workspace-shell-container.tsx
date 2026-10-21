@@ -1123,7 +1123,7 @@ export function WorkspaceShellContainer({
   if (status === 'loading') {
     return (
       <Container>
-        <LoadingState label="Loading workspace">
+        <LoadingState label={t('workspaceShell.loadingWorkspace')}>
           <Stack gap="space-4">
             <Skeleton style={{ height: '32px', width: '40%' }} />
             <Skeleton style={{ height: '400px', width: '100%' }} />
@@ -1137,10 +1137,10 @@ export function WorkspaceShellContainer({
     return (
       <Container>
         <EmptyState
-          title="Workspace not found"
+          title={t('workspaceShell.notFoundTitle')}
           titleAs="h1"
-          description="The workspace you are looking for does not exist or you do not have access to it."
-          actionLabel="Back to workspaces"
+          description={t('workspaceShell.notFoundDescription')}
+          actionLabel={t('canvas.topbar.back')}
           onAction={onBack}
         />
       </Container>
@@ -1151,17 +1151,17 @@ export function WorkspaceShellContainer({
     const errorMessage =
       result?.status === 'error'
         ? localizeMessage(t, describeGetWorkspaceError(result.error))
-        : 'Something went wrong.';
+        : t('common.somethingWentWrong');
 
     return (
       <Container>
         <ErrorState
-          title="Could not load workspace"
+          title={t('workspaceShell.loadErrorTitle')}
           titleAs="h1"
           description={errorMessage}
-          actionLabel="Retry"
+          actionLabel={t('common.retry')}
           onAction={fetchWorkspace}
-          secondaryActionLabel="Back to workspaces"
+          secondaryActionLabel={t('canvas.topbar.back')}
           onSecondaryAction={onBack}
         />
       </Container>
@@ -1172,7 +1172,7 @@ export function WorkspaceShellContainer({
     if (elementsStatus === 'loading' || roleStatus === 'loading') {
       return (
         <Container>
-          <LoadingState label="Loading board">
+          <LoadingState label={t('workspaceShell.loadingBoard')}>
             <Stack gap="space-4">
               <Skeleton style={{ height: '32px', width: '40%' }} />
               <Skeleton style={{ height: '400px', width: '100%' }} />
@@ -1185,18 +1185,18 @@ export function WorkspaceShellContainer({
     if (elementsStatus === 'error') {
       const errorMessage =
         elementsError === null
-          ? 'Something went wrong.'
+          ? t('common.somethingWentWrong')
           : localizeMessage(t, describeLoadWorkspaceElementsError(elementsError));
 
       return (
         <Container>
           <ErrorState
-            title="Could not load board"
+            title={t('workspaceShell.boardErrorTitle')}
             titleAs="h1"
             description={errorMessage}
-            actionLabel="Retry"
+            actionLabel={t('common.retry')}
             onAction={fetchElements}
-            secondaryActionLabel="Back to workspaces"
+            secondaryActionLabel={t('canvas.topbar.back')}
             onSecondaryAction={onBack}
           />
         </Container>

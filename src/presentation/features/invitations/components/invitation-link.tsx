@@ -42,7 +42,7 @@ export function InvitationLink({
         <Text color="color.text.muted">{t('share.invite.linkHint')}</Text>
         <Input
           readOnly
-          aria-label="Invitation link"
+          aria-label={t('invitations.linkLabel')}
           value={link}
           onFocus={(event) => event.target.select()}
         />

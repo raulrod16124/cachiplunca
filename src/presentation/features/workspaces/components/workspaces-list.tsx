@@ -146,7 +146,7 @@ export function WorkspacesList({
 
   if (status === 'loading' || status === 'idle') {
     return (
-      <LoadingState label="Loading workspaces">
+      <LoadingState label={t('workspaces.loading')}>
         <ListGrid>
           {Array.from({ length: 6 }).map((_, index) => (
             <Card key={`workspace-skeleton-${index}`}>

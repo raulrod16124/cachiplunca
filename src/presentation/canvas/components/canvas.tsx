@@ -1205,7 +1205,7 @@ export function Canvas({
     <CanvasContainer
       ref={setContainerRef}
       role="application"
-      aria-label="Canvas"
+      aria-label={t('canvas.label')}
       aria-describedby={BOARD_SUMMARY_ID}
       aria-readonly={readOnly}
       aria-activedescendant={activeId === null ? undefined : `element-${activeId}`}

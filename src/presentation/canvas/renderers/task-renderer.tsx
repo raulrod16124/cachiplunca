@@ -263,6 +263,7 @@ interface TaskNotesProps {
 }
 
 function TaskNotes({ element, document, onResizeElement }: TaskNotesProps): ReactElement {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const panelId = useId();
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -358,14 +359,14 @@ function TaskNotes({ element, document, onResizeElement }: TaskNotesProps): Reac
         data-testid={`task-notes-toggle-${element.id.value}`}
         onClick={toggle}
       >
-        Notes
+        {t('canvas.notes')}
       </NotesToggle>
       {open ? (
         <NotesPanel
           ref={panelRef}
           id={panelId}
           role="region"
-          aria-label="Task notes"
+          aria-label={t('canvas.taskNotes')}
           data-task-notes="true"
         >
           <RichTextContent document={document} />

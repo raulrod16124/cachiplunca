@@ -5,6 +5,7 @@ import { useSyncExternalStore } from 'react';
 import styled from 'styled-components';
 import type { CanvasViewportStore } from '../../../application/services';
 import { MAX_CANVAS_SCALE, MIN_CANVAS_SCALE } from '../../../application/services';
+import { useI18n } from '../../i18n';
 
 const ICON_SIZE = 16;
 const SLIDER_STEPS = 1000;
@@ -114,6 +115,7 @@ export function ViewportControls({
   onUndo,
   onRedo,
 }: ViewportControlsProps): ReactElement {
+  const { t } = useI18n();
   const viewport = useSyncExternalStore(store.subscribe, store.getSnapshot);
   const zoomPercentage = Math.round(viewport.scale * 100);
 
@@ -124,24 +126,24 @@ export function ViewportControls({
   return (
     <Controls data-testid="viewport-controls">
       <Group>
-        <Tooltip content="Undo" placement="top">
+        <Tooltip content={t('canvas.undo')} placement="top">
           <IconButton
             type="button"
             variant="ghost"
             size="sm"
-            label="Undo"
+            label={t('canvas.undo')}
             disabled={!canUndo}
             onClick={onUndo}
           >
             <Undo2 aria-hidden="true" size={ICON_SIZE} />
           </IconButton>
         </Tooltip>
-        <Tooltip content="Redo" placement="top">
+        <Tooltip content={t('canvas.redo')} placement="top">
           <IconButton
             type="button"
             variant="ghost"
             size="sm"
-            label="Redo"
+            label={t('canvas.redo')}
             disabled={!canRedo}
             onClick={onRedo}
           >
@@ -153,7 +155,7 @@ export function ViewportControls({
       <Popover>
         <ZoomTrigger
           data-testid="zoom-level"
-          aria-label={`Zoom level ${zoomPercentage}%, adjust`}
+          aria-label={t('canvas.zoomLevelAdjust', { percent: zoomPercentage })}
           aria-live="polite"
         >
           {zoomPercentage}%
@@ -161,7 +163,7 @@ export function ViewportControls({
         <Popover.Content placement="top">
           <ZoomPanel>
             <Inline justify="between" align="center">
-              <Popover.Title>Zoom</Popover.Title>
+              <Popover.Title>{t('canvas.zoom')}</Popover.Title>
               <ZoomValue>{zoomPercentage}%</ZoomValue>
             </Inline>
             <ZoomSlider
@@ -171,7 +173,7 @@ export function ViewportControls({
               step={1}
               value={scaleToSliderValue(viewport.scale)}
               onChange={handleZoomChange}
-              aria-label="Zoom level"
+              aria-label={t('canvas.zoomLevel')}
               aria-valuetext={`${zoomPercentage}%`}
             />
           </ZoomPanel>
@@ -182,12 +184,12 @@ export function ViewportControls({
         type="button"
         variant="ghost"
         size="sm"
-        aria-label="Reset view"
+        aria-label={t('canvas.resetView')}
         onClick={() => store.reset()}
       >
         <Inline gap="space-2" align="center">
           <Maximize aria-hidden="true" size={ICON_SIZE} />
-          <Text>Reset view</Text>
+          <Text>{t('canvas.resetView')}</Text>
         </Inline>
       </Button>
     </Controls>
