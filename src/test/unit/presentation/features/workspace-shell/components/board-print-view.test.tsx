@@ -36,6 +36,7 @@ describe('BoardPrintView', () => {
     expect(view).toHaveTextContent('Exported on 2026-10-19');
     expect(view).toHaveTextContent('First milestone');
     expect(view).toHaveTextContent('A printed note');
+    expect(screen.queryByTestId(/^element-type-label-/)).not.toBeInTheDocument();
   });
 
   it('shows an empty state when the board has no elements', () => {

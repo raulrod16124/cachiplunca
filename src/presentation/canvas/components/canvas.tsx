@@ -1256,6 +1256,7 @@ export function Canvas({
               selected={selectedIdSet.has(element.id.value)}
               renderers={renderers}
               ariaLabel={ariaLabels.get(element.id.value)}
+              showTypeLabel={!presentation}
               connectorStart={geometry?.start}
               connectorEnd={geometry?.end}
               assigneeLabel={

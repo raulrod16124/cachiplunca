@@ -143,6 +143,7 @@ export function BoardPrintView({
                   key={element.id.value}
                   element={element}
                   selected={false}
+                  showTypeLabel={false}
                   connectorStart={geometry?.start}
                   connectorEnd={geometry?.end}
                 />

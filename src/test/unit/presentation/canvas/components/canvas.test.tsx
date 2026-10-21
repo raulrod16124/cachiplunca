@@ -236,6 +236,23 @@ describe('Canvas', () => {
     expect(screen.queryByRole('heading', { name: 'This board is empty' })).not.toBeInTheDocument();
   });
 
+  it('hides element type labels in presentation mode', () => {
+    const store = createCanvasViewportStore(Size.create(800, 600));
+    const selectionStore = createSelectionStore();
+
+    render(
+      <Canvas store={store} selectionStore={selectionStore} elements={[FIRST_ITEM]} presentation />,
+    );
+
+    expect(screen.queryByTestId('element-type-label-first')).not.toBeInTheDocument();
+  });
+
+  it('renders element type labels in the normal editor', () => {
+    renderCanvas([FIRST_ITEM]);
+
+    expect(screen.getByTestId('element-type-label-first')).toHaveTextContent('Text');
+  });
+
   it('renders an inert paper texture behind the canvas content', () => {
     const { container } = renderCanvas([]);
     const texture = container.querySelector('.cach-paper-texture');

@@ -6,7 +6,9 @@ import type { UpdateElementInput } from '../../../application/commands';
 import type { Element } from '../../../domain/element';
 import { Bounds, Position, type Size } from '../../../domain/shared';
 import { describeElement } from '../accessibility';
+import { useI18n } from '../../i18n';
 import type { ConnectorRenderGeometry, ElementRendererRegistry } from './element-renderer';
+import { elementTypeLabelKey } from './element-type-label';
 import { resolveElementRenderer } from './resolve-element-renderer';
 
 const Wrapper = styled.div`
@@ -14,12 +16,35 @@ const Wrapper = styled.div`
   box-sizing: border-box;
   transform-origin: center center;
   will-change: transform;
+
+  &[data-selected='true'] > [data-element-type-label='true'],
+  &:hover > [data-element-type-label='true'],
+  &:focus-within > [data-element-type-label='true'] {
+    opacity: 1;
+  }
 `;
 
 const ContentLayer = styled.div<{ $allowOverflow: boolean }>`
   position: absolute;
   inset: 0;
   contain: ${({ $allowOverflow }) => ($allowOverflow ? 'layout' : 'layout paint')};
+`;
+
+const TypeLabel = styled.span`
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translate(-50%, ${({ theme }) => theme.space[1]});
+  color: ${({ theme }) => theme.color.text.muted};
+  font-family: ${({ theme }) => theme.font.family.sans};
+  font-size: ${({ theme }) => theme.font.size['2xs']};
+  font-weight: ${({ theme }) => theme.font.weight.medium};
+  letter-spacing: ${({ theme }) => theme.font.tracking.wide};
+  line-height: ${({ theme }) => theme.font.leading.none};
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  opacity: 0;
 `;
 
 const CommentIndicator = styled.button`
@@ -61,6 +86,7 @@ export interface ElementViewProps {
   readonly renderers?: ElementRendererRegistry;
   readonly ariaLabel?: string;
   readonly zIndex?: number;
+  readonly showTypeLabel?: boolean;
   readonly connectorStart?: Position;
   readonly connectorEnd?: Position;
   readonly assigneeLabel?: string;
@@ -77,6 +103,7 @@ function ElementViewComponent({
   renderers,
   ariaLabel,
   zIndex,
+  showTypeLabel = true,
   connectorStart,
   connectorEnd,
   assigneeLabel,
@@ -86,6 +113,7 @@ function ElementViewComponent({
   onUpdateElement,
   onResizeElement,
 }: ElementViewProps): ReactElement {
+  const { t } = useI18n();
   const Renderer = resolveElementRenderer(renderers, element.type);
 
   const connectorGeometry = useMemo<ConnectorRenderGeometry | undefined>(() => {
@@ -139,6 +167,37 @@ function ElementViewComponent({
     zIndex,
   ]);
 
+  const typeLabelStyle = useMemo<CSSProperties>(() => {
+    const selectedStyle: CSSProperties = selected ? { opacity: 1 } : {};
+
+    if (element.type !== 'connector') {
+      return selectedStyle;
+    }
+
+    const start = connectorGeometry?.start ?? element.position;
+    const end =
+      connectorGeometry?.end ??
+      Position.create(
+        element.position.x + element.size.width,
+        element.position.y + element.size.height,
+      );
+    const origin = connectorGeometry?.origin ?? element.position;
+
+    return {
+      ...selectedStyle,
+      left: (start.x + end.x) / 2 - origin.x,
+      top: (start.y + end.y) / 2 - origin.y,
+      transform: 'translate(-50%, -50%)',
+    };
+  }, [
+    connectorGeometry,
+    element.position,
+    element.size.height,
+    element.size.width,
+    element.type,
+    selected,
+  ]);
+
   return (
     <Wrapper
       id={`element-${element.id.value}`}
@@ -162,6 +221,16 @@ function ElementViewComponent({
           onResizeElement={onResizeElement}
         />
       </ContentLayer>
+      {showTypeLabel ? (
+        <TypeLabel
+          aria-hidden="true"
+          data-element-type-label="true"
+          data-testid={`element-type-label-${element.id.value}`}
+          style={typeLabelStyle}
+        >
+          {t(elementTypeLabelKey(element.type))}
+        </TypeLabel>
+      ) : null}
       {commentCount > 0 && element.type !== 'connector' ? (
         <CommentIndicator
           type="button"

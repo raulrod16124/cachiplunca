@@ -1,5 +1,6 @@
 export { ElementView } from './element-view';
 export type { ElementViewProps } from './element-view';
+export { elementTypeLabelKey } from './element-type-label';
 export { DefaultElementRenderer } from './default-element-renderer';
 export { TextRenderer } from './text-renderer';
 export { NoteRenderer } from './note-renderer';
