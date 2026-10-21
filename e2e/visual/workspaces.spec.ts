@@ -40,6 +40,19 @@ test.describe('visual baseline — workspaces', () => {
         mask: dynamicMaskLocators(page),
       });
     });
+
+    test(`narrow 390 theme:${theme}`, async ({ page }) => {
+      await registerUser(page);
+      await createWorkspace(page, 'Narrow workspace');
+      await page.goto('/workspaces');
+      await expect(page.getByRole('heading', { level: 1, name: 'Your workspaces' })).toBeVisible();
+      await page.setViewportSize({ width: 390, height: 800 });
+      await setTheme(page, theme);
+      await waitForStable(page);
+      await expect(page).toHaveScreenshot(`workspaces-narrow-390-${theme}.png`, {
+        mask: dynamicMaskLocators(page),
+      });
+    });
   }
 
   test('narrow viewport', async ({ page }) => {

@@ -41,6 +41,20 @@ test.describe('visual baseline — narrow workspace', () => {
         mask: dynamicMaskLocators(page),
       });
     });
+
+    test(`actions menu at 390 theme:${theme}`, async ({ page }) => {
+      await registerUser(page);
+      await createWorkspace(page, 'Narrow actions');
+      await page.setViewportSize({ width: 390, height: 800 });
+      await setTheme(page, theme);
+      await waitForStable(page);
+      await page.getByRole('button', { name: 'More board actions' }).click();
+      await expect(page.getByRole('menuitem', { name: 'Present' })).toBeVisible();
+      await page.mouse.move(0, 0);
+      await expect(page).toHaveScreenshot(`canvas-narrow-actions-menu-${theme}.png`, {
+        mask: dynamicMaskLocators(page),
+      });
+    });
   }
 
   test('task plan drawer at 390', async ({ page }) => {

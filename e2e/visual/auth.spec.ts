@@ -23,6 +23,13 @@ test.describe('visual baseline — auth', () => {
       await expect(page).toHaveScreenshot(`auth-register-${theme}.png`);
     });
 
+    test(`login narrow theme:${theme}`, async ({ page }) => {
+      await page.goto('/login');
+      await page.setViewportSize({ width: 390, height: 800 });
+      await setTheme(page, theme);
+      await expect(page).toHaveScreenshot(`auth-login-narrow-${theme}.png`);
+    });
+
     test(`skip link focus theme:${theme}`, async ({ page }) => {
       await page.goto('/login');
       await setTheme(page, theme);
