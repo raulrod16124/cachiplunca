@@ -16,6 +16,12 @@ import {
 
 type ControlsProps = ComponentProps<typeof ViewportControls>;
 
+function styleText(): string {
+  return [...document.head.querySelectorAll('style')]
+    .map((style) => style.textContent ?? '')
+    .join('');
+}
+
 function renderControls(overrides: Partial<ControlsProps> = {}) {
   const store = createCanvasViewportStore(Size.create(800, 600));
   const onUndo = jest.fn();
@@ -37,7 +43,18 @@ describe('ViewportControls', () => {
     renderControls();
 
     const controls = screen.getByTestId('viewport-controls');
-    expect(controls).toHaveStyle({ bottom: '16px', left: '50%' });
+    expect(controls).toHaveStyle({ left: '50%' });
+    expect(styleText()).toContain('bottom:var(--rr-space-4)');
+  });
+
+  it('uses brand spacing and focus tokens', () => {
+    renderControls();
+
+    const css = styleText();
+    expect(css).toContain('var(--rr-space-4)');
+    expect(css).toContain('var(--rr-space-2)');
+    expect(css).toContain('var(--rr-color-focus-ring)');
+    expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
   });
 
   it('disables undo and redo by default', () => {

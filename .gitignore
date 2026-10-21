@@ -28,5 +28,11 @@ coverage
 *.njsproj
 *.sln
 *.sw?
+# Redesign board — local only
+/docs/CACHIPLUNCA_REDESIGN_JIRA.md
+/docs/design/
+
+# Playwright artifacts
 playwright-report/
 test-results/
+

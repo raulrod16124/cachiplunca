@@ -12,6 +12,7 @@ import {
 import type { MouseEvent as ReactMouseEvent, ReactElement } from 'react';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
+import { useI18n } from '../../i18n';
 import { ColorPicker } from './color-picker';
 import type { FormatPainterState } from './format-painter-store';
 import {
@@ -73,6 +74,7 @@ export function FloatingTextToolbar({
   enabled = true,
   onOpenChange,
 }: FloatingTextToolbarProps): ReactElement | null {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [anchor, setAnchor] = useState<TextSelectionSnapshot | null>(null);
   const [painter, setPainter] = useState<FormatPainterState>(idleFormatPainter);
@@ -314,7 +316,7 @@ export function FloatingTextToolbar({
     <Toolbar
       ref={toolbarRef}
       role="toolbar"
-      aria-label="Text formatting"
+      aria-label={t('canvas.textFormat.label')}
       data-testid="floating-text-toolbar"
       data-placement={position.placement}
       style={{ left: position.x, top: position.y }}
@@ -332,7 +334,7 @@ export function FloatingTextToolbar({
         />
         <ToolbarButton
           type="button"
-          aria-label="Increase font size"
+          aria-label={t('canvas.textFormat.increaseFontSize')}
           onClick={() => applyAction({ kind: 'increaseFontSize' })}
         >
           <StepLabel aria-hidden="true">A</StepLabel>
@@ -340,7 +342,7 @@ export function FloatingTextToolbar({
         </ToolbarButton>
         <ToolbarButton
           type="button"
-          aria-label="Decrease font size"
+          aria-label={t('canvas.textFormat.decreaseFontSize')}
           onClick={() => applyAction({ kind: 'decreaseFontSize' })}
         >
           <StepLabel aria-hidden="true">A</StepLabel>
@@ -349,7 +351,7 @@ export function FloatingTextToolbar({
         <ToolbarDivider />
         <ToolbarButton
           type="button"
-          aria-label="Format painter"
+          aria-label={t('canvas.textFormat.formatPainter')}
           aria-pressed={painter.armed}
           data-active={painter.armed}
           $active={painter.armed}
@@ -358,7 +360,7 @@ export function FloatingTextToolbar({
           <Paintbrush aria-hidden="true" size={16} />
         </ToolbarButton>
         <ToolbarDivider />
-        <ToolbarButton type="button" aria-label="Text effects" disabled>
+        <ToolbarButton type="button" aria-label={t('canvas.textFormat.effects')} disabled>
           <Sparkles aria-hidden="true" size={16} />
         </ToolbarButton>
         <ToolbarDivider />
@@ -366,19 +368,27 @@ export function FloatingTextToolbar({
       </Row>
       <Row>
         <ToolbarGroup>
-          {toggleButton('bold', 'Bold', <Bold aria-hidden="true" size={16} />)}
-          {toggleButton('italic', 'Italic', <Italic aria-hidden="true" size={16} />)}
-          {toggleButton('underline', 'Underline', <Underline aria-hidden="true" size={16} />)}
+          {toggleButton('bold', t('canvas.textFormat.bold'), <Bold aria-hidden="true" size={16} />)}
+          {toggleButton(
+            'italic',
+            t('canvas.textFormat.italic'),
+            <Italic aria-hidden="true" size={16} />,
+          )}
+          {toggleButton(
+            'underline',
+            t('canvas.textFormat.underline'),
+            <Underline aria-hidden="true" size={16} />,
+          )}
         </ToolbarGroup>
         <ToolbarDivider />
         <ColorPicker
-          label="Highlight color"
+          label={t('canvas.textFormat.highlightColor')}
           color={state.highlightColor}
           defaultColor={HIGHLIGHT_DEFAULT_COLOR}
           onPick={(value) => applyAction({ kind: 'highlightColor', value })}
         />
         <ColorPicker
-          label="Font color"
+          label={t('canvas.textFormat.fontColor')}
           color={state.color}
           defaultColor={FONT_COLOR_DEFAULT}
           onPick={(value) => applyAction({ kind: 'color', value })}
@@ -386,7 +396,7 @@ export function FloatingTextToolbar({
         <ToolbarDivider />
         <ToolbarButton
           type="button"
-          aria-label="Bulleted list"
+          aria-label={t('canvas.textFormat.bulletedList')}
           aria-pressed={state.bulletList === 'on'}
           data-mixed={state.bulletList === 'mixed'}
           $active={state.bulletList === 'on'}
@@ -398,7 +408,7 @@ export function FloatingTextToolbar({
         </ToolbarButton>
         <ToolbarButton
           type="button"
-          aria-label="Numbered list"
+          aria-label={t('canvas.textFormat.numberedList')}
           aria-pressed={state.orderedList === 'on'}
           data-mixed={state.orderedList === 'mixed'}
           $active={state.orderedList === 'on'}

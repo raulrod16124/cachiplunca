@@ -16,7 +16,7 @@ import type { MembershipRole } from '../../../../domain/membership';
 import { UserId, WorkspaceId } from '../../../../domain/shared';
 import { toAppError } from '../../../../shared/errors';
 import { describeInviteMemberError } from '../invitation-error-messages';
-import { localizeMessage, useI18n, type TranslationKey } from '../../../i18n';
+import { localizeFieldError, localizeMessage, useI18n, type TranslationKey } from '../../../i18n';
 
 const ROLE_OPTIONS: readonly { readonly value: MembershipRole; readonly label: TranslationKey }[] =
   [
@@ -104,7 +104,9 @@ export function InviteMemberForm({
               />
             )}
           </FormFieldControl>
-          {fieldErrors.email !== undefined && <FormFieldError>{fieldErrors.email}</FormFieldError>}
+          {fieldErrors.email !== undefined && (
+            <FormFieldError>{localizeFieldError(t, fieldErrors.email)}</FormFieldError>
+          )}
         </FormField>
         <FormField>
           <FormFieldLabel>{t('share.invite.role')}</FormFieldLabel>
@@ -124,14 +126,16 @@ export function InviteMemberForm({
               </Select>
             )}
           </FormFieldControl>
-          {fieldErrors.role !== undefined && <FormFieldError>{fieldErrors.role}</FormFieldError>}
+          {fieldErrors.role !== undefined && (
+            <FormFieldError>{localizeFieldError(t, fieldErrors.role)}</FormFieldError>
+          )}
         </FormField>
         {formError !== null && (
           <Text role="alert" color="color.text.danger">
             {formError}
           </Text>
         )}
-        <Button type="submit" loading={submitting}>
+        <Button type="submit" variant="primary" loading={submitting}>
           {t('share.invite.submit')}
         </Button>
       </Stack>

@@ -456,9 +456,33 @@ describe('WorkspaceTopBar', () => {
       />,
     );
 
-    expect(screen.getAllByRole('alert')).toHaveLength(2);
-    expect(screen.getByText('Not saved.')).toBeInTheDocument();
-    expect(screen.getByText('Out of sync.')).toBeInTheDocument();
+    const alerts = screen.getAllByRole('alert');
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]).toHaveTextContent('Not saved.');
+    expect(alerts[0]).toHaveTextContent('Out of sync.');
+  });
+
+  it('opens a localised title field when renaming', () => {
+    render(
+      <WorkspaceTopBar
+        workspace={WORKSPACE}
+        role="editor"
+        onBack={jest.fn()}
+        syncStatus="idle"
+        connectionStatus="connected"
+        connectedUsers={[]}
+        currentUser={CURRENT_USER}
+        logoutUser={LOGOUT_USER}
+        onRename={jest.fn(async () => ({ status: 'ok' as const, workspace: WORKSPACE }))}
+        persistenceErrorMessage={null}
+        collaborationErrorMessage={null}
+        creationErrorMessage={null}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Rename workspace' }));
+
+    expect(screen.getByRole('textbox', { name: 'Workspace name' })).toHaveValue('Roadmap Q4');
   });
 
   it('exposes the account menu that signs out', async () => {

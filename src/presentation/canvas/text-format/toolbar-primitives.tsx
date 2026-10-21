@@ -22,6 +22,11 @@ export const ToolbarButton = styled.button<{ $active?: boolean; $mixed?: boolean
     background-color: ${({ theme }) => theme.canvas.surfaceMuted};
   }
 
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.focusRing};
+    outline-offset: 2px;
+  }
+
   &:active:not(:disabled) {
     background-color: ${({ theme }) => theme.color.border.default};
   }

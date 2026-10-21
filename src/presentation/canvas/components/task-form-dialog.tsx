@@ -136,7 +136,6 @@ export function TaskFormDialog({
                     name="title"
                     autoComplete="off"
                     value={title}
-                    aria-invalid={titleError === null ? undefined : true}
                     onChange={(event) => {
                       setTitle(event.target.value);
                       if (titleError !== null) {
@@ -222,7 +221,7 @@ export function TaskFormDialog({
               </FormFieldControl>
             </FormField>
             <DialogFooter>
-              <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 {t('common.cancel')}
               </Button>
               <Button type="submit">

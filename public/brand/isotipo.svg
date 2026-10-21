@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none" role="img" aria-label="Cachiplunca">
+  <rect x="0" y="0" width="64" height="64" rx="16" fill="#173e2c" />
+  <path d="M46 22 A 16 16 0 1 0 46 42" stroke="#ff7a2f" stroke-width="9" stroke-linecap="round" fill="none" />
+  <path d="M14 16 L17 10" stroke="#ffb400" stroke-width="3" stroke-linecap="round" />
+  <path d="M22 13 L25 7" stroke="#ffb400" stroke-width="3" stroke-linecap="round" />
+</svg>

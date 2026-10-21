@@ -15,8 +15,9 @@ const PRINT_PAGE_HEIGHT = 640;
 const Root = styled.div`
   display: none;
   padding: ${({ theme }) => theme.space[6]};
-  background: #ffffff;
-  color: #111111;
+  background: ${({ theme }) => theme.color.background.surface};
+  color: ${({ theme }) => theme.color.text.primary};
+  font-family: ${({ theme }) => theme.font.family.sans};
 `;
 
 const Header = styled.header`
@@ -29,21 +30,25 @@ const Header = styled.header`
 
 const Title = styled.h1`
   margin: 0;
+  color: ${({ theme }) => theme.color.text.primary};
+  font-family: ${({ theme }) => theme.font.family.sans};
   font-size: 20px;
   font-weight: 700;
 `;
 
 const Meta = styled.p`
   margin: 0;
-  color: #555555;
+  color: ${({ theme }) => theme.color.text.muted};
+  font-family: ${({ theme }) => theme.font.family.sans};
   font-size: 12px;
 `;
 
 const Page = styled.div`
   position: relative;
   overflow: hidden;
-  border: 1px solid #dddddd;
-  background: #ffffff;
+  break-inside: avoid;
+  border: 1px solid ${({ theme }) => theme.color.border.strong};
+  background: ${({ theme }) => theme.color.background.surface};
 `;
 
 const World = styled.div`
@@ -54,8 +59,9 @@ const World = styled.div`
 const Empty = styled.p`
   margin: 0;
   padding: ${({ theme }) => theme.space[6]};
-  border: 1px dashed #cccccc;
-  color: #555555;
+  border: 1px dashed ${({ theme }) => theme.color.border.strong};
+  color: ${({ theme }) => theme.color.text.muted};
+  font-family: ${({ theme }) => theme.font.family.sans};
   text-align: center;
 `;
 

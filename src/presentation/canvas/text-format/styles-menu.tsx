@@ -2,6 +2,7 @@ import { Check, ChevronDown, Minus } from '@raulrod/icons';
 import type { CSSProperties, ReactElement, ReactNode } from 'react';
 import { useState } from 'react';
 import styled from 'styled-components';
+import { useI18n, type TranslationKey } from '../../i18n';
 import type { TextFormatAction, TextFormatState } from './text-format';
 import { ToolbarDropdown } from './toolbar-dropdown';
 
@@ -22,6 +23,11 @@ const StyleOption = styled.button`
 
   &:hover:not(:disabled) {
     background-color: ${({ theme }) => theme.canvas.surfaceMuted};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.focusRing};
+    outline-offset: 2px;
   }
 
   &:disabled {
@@ -56,7 +62,7 @@ function indicator(active: boolean, mixed: boolean): ReactNode {
 
 interface StyleDefinition {
   readonly id: string;
-  readonly label: string;
+  readonly labelKey: TranslationKey;
   readonly previewStyle: CSSProperties;
   readonly disabled?: boolean;
   readonly action?: TextFormatAction;
@@ -67,7 +73,7 @@ interface StyleDefinition {
 const STYLE_DEFINITIONS: readonly StyleDefinition[] = [
   {
     id: 'normal',
-    label: 'Normal',
+    labelKey: 'canvas.textFormat.styleNormal',
     previewStyle: {},
     action: { kind: 'heading', level: null },
     isActive: (state) => state.heading === 'off',
@@ -75,42 +81,42 @@ const STYLE_DEFINITIONS: readonly StyleDefinition[] = [
   },
   {
     id: 'heading-1',
-    label: 'Heading 1',
+    labelKey: 'canvas.textFormat.styleHeading1',
     previewStyle: { fontSize: '1.5em', fontWeight: 700 },
     action: { kind: 'heading', level: 1 },
     isActive: (state) => state.heading === 1,
   },
   {
     id: 'heading-2',
-    label: 'Heading 2',
+    labelKey: 'canvas.textFormat.styleHeading2',
     previewStyle: { fontSize: '1.25em', fontWeight: 700 },
     action: { kind: 'heading', level: 2 },
     isActive: (state) => state.heading === 2,
   },
   {
     id: 'heading-3',
-    label: 'Heading 3',
+    labelKey: 'canvas.textFormat.styleHeading3',
     previewStyle: { fontSize: '1.1em', fontWeight: 700 },
     action: { kind: 'heading', level: 3 },
     isActive: (state) => state.heading === 3,
   },
   {
     id: 'subtitle',
-    label: 'Subtitle',
+    labelKey: 'canvas.textFormat.styleSubtitle',
     previewStyle: { fontSize: '1.17em', fontWeight: 500 },
     disabled: true,
     isActive: () => false,
   },
   {
     id: 'quote',
-    label: 'Quote',
+    labelKey: 'canvas.textFormat.styleQuote',
     previewStyle: { fontStyle: 'italic', paddingLeft: '0.75em' },
     disabled: true,
     isActive: () => false,
   },
   {
     id: 'emphasis',
-    label: 'Emphasis',
+    labelKey: 'canvas.textFormat.styleEmphasis',
     previewStyle: { fontStyle: 'italic' },
     action: { kind: 'toggleMark', mark: 'italic' },
     isActive: (state) => state.italic === 'on',
@@ -124,11 +130,12 @@ export interface StylesMenuProps {
 }
 
 export function StylesMenu({ state, onAction }: StylesMenuProps): ReactElement {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
 
   return (
     <ToolbarDropdown
-      label="Styles"
+      label={t('canvas.textFormat.styles')}
       open={open}
       onOpenChange={setOpen}
       triggerContent={
@@ -153,7 +160,7 @@ export function StylesMenu({ state, onAction }: StylesMenuProps): ReactElement {
             setOpen(false);
           }}
         >
-          <StylePreview $previewStyle={style.previewStyle}>{style.label}</StylePreview>
+          <StylePreview $previewStyle={style.previewStyle}>{t(style.labelKey)}</StylePreview>
           {indicator(style.isActive(state), style.isMixed?.(state) === true)}
         </StyleOption>
       ))}

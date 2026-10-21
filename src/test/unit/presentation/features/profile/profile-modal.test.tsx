@@ -88,6 +88,9 @@ describe('ProfileModal', () => {
     );
 
     expect(screen.getByRole('heading', { name: 'Profile' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Display name')).toHaveAccessibleDescription(
+      'This is how collaborators see you.',
+    );
     fireEvent.change(screen.getByLabelText('Display name'), {
       target: { value: 'Grace Hopper' },
     });

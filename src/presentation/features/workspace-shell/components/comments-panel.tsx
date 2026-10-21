@@ -1,5 +1,5 @@
-import { Badge, Button, Heading, IconButton, Text, Textarea } from '@raulrod/ui';
-import { Check, MessageSquare, X } from '@raulrod/icons';
+import { Badge, Button, Heading, Text, Textarea } from '@raulrod/ui';
+import { Check, MessageSquare } from '@raulrod/icons';
 import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import styled from 'styled-components';
 import type { CommentServices } from '../../../../application/comment-services';
@@ -9,7 +9,10 @@ import { richTextToPlain, type Element, type ElementType } from '../../../../dom
 import { ElementId, UserId, WorkspaceId } from '../../../../domain/shared';
 import { toAppError } from '../../../../shared/errors';
 import { shortUserId } from '../../../collaboration';
+import { Card } from '../../../components/card';
 import { EmptyState } from '../../../components/empty-state';
+import { Panel as SharedPanel } from '../../../components/panel';
+import { PanelHeader } from '../../../components/panel-header';
 import { formatRelativeDate, useI18n, type TranslationKey } from '../../../i18n';
 import { describeCommentError } from '../comments-error-messages';
 import { SideDrawer } from './side-drawer';
@@ -24,43 +27,20 @@ const ELEMENT_TYPE_KEYS: Readonly<Record<ElementType, TranslationKey>> = {
   connector: 'comments.element.connector',
 };
 
-const Panel = styled.aside`
-  flex: 1 1 auto;
+const PanelLayout = styled.div`
   display: flex;
-  flex-direction: column;
-  min-width: 0;
+  flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
   background: ${({ theme }) => theme.canvas.surface};
-`;
 
-const Header = styled.div`
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: ${({ theme }) => theme.space[3]};
-  padding: ${({ theme }) => theme.space[4]};
-  border-bottom: 1px solid ${({ theme }) => theme.canvas.elementBorderSoft};
-`;
-
-const HeaderIdentity = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.space[1]};
-  min-width: 0;
-`;
-
-const HeaderTitle = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.space[2]};
-`;
-
-const TargetLabel = styled(Text)`
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  & > aside {
+    flex: 1 1 auto;
+    min-height: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
 `;
 
 const Body = styled.div`
@@ -77,18 +57,10 @@ const CommentList = styled.ul`
   margin: 0;
   padding: 0;
   list-style: none;
-`;
 
-const CommentCard = styled.li<{ readonly $resolved: boolean }>`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.space[2]};
-  padding: ${({ theme }) => theme.space[3]};
-  border: 1px solid ${({ theme }) => theme.canvas.elementBorderSoft};
-  border-radius: ${({ theme }) => theme.radius.md};
-  background: ${({ theme, $resolved }) =>
-    $resolved ? theme.canvas.surfaceMuted : theme.color.background.surface};
-  opacity: ${({ $resolved }) => ($resolved ? 0.82 : 1)};
+  & > li {
+    gap: ${({ theme }) => theme.space[2]};
+  }
 `;
 
 const CommentMeta = styled.div`
@@ -353,7 +325,14 @@ export function CommentsPanel({
           const resolving = resolvingId === comment.id.value;
 
           return (
-            <CommentCard key={comment.id.value} $resolved={resolved}>
+            <Card
+              key={comment.id.value}
+              as="li"
+              variant={resolved ? 'sunken' : 'surface'}
+              padding="sm"
+              data-resolved={resolved}
+              data-testid={`comment-card-${comment.id.value}`}
+            >
               <CommentMeta>
                 <CommentAuthor>
                   <Text weight="font.weight.semibold" size="font.size.sm">
@@ -375,7 +354,7 @@ export function CommentsPanel({
                 ) : (
                   <Button
                     type="button"
-                    variant="secondary"
+                    variant="outline"
                     size="sm"
                     disabled={busy}
                     onClick={() => void handleResolve(comment)}
@@ -384,7 +363,7 @@ export function CommentsPanel({
                   </Button>
                 )}
               </CommentActions>
-            </CommentCard>
+            </Card>
           );
         })}
       </CommentList>
@@ -393,61 +372,54 @@ export function CommentsPanel({
 
   return (
     <SideDrawer open onClose={onClose} label={t('comments.title')}>
-      <Panel id="comments-panel" aria-label={t('comments.title')} data-testid="comments-panel">
-        <Header>
-          <HeaderIdentity>
-            <HeaderTitle>
-              <MessageSquare aria-hidden="true" size={18} />
-              <Heading as="h2">{t('comments.title')}</Heading>
-            </HeaderTitle>
-            {targetLabel === null ? null : (
-              <TargetLabel color="color.text.muted" size="font.size.xs">
-                {targetLabel}
-              </TargetLabel>
-            )}
-          </HeaderIdentity>
-          <IconButton
-            type="button"
-            variant="ghost"
-            size="sm"
-            label={t('comments.close')}
-            onClick={onClose}
-          >
-            <X aria-hidden="true" size={16} />
-          </IconButton>
-        </Header>
-        <Body>
-          {errorMessage !== null && status !== 'error' ? (
-            <Text role="alert" color="color.text.danger" size="font.size.sm">
-              {errorMessage}
-            </Text>
-          ) : null}
-          {renderBody()}
-        </Body>
-        {elementId === undefined || !canComment ? null : (
-          <Form onSubmit={(event) => void handleSubmit(event)}>
-            <Textarea
-              aria-label={t('comments.bodyLabel')}
-              placeholder={t('comments.placeholder')}
-              rows={3}
-              maxLength={COMMENT_BODY_MAX_LENGTH}
-              value={draft}
-              disabled={submitting}
-              onChange={(event) => setDraft(event.target.value)}
-            />
-            <FormActions>
-              <Button
-                type="submit"
-                variant="primary"
-                size="sm"
-                disabled={busy || draft.trim().length === 0}
-              >
-                {submitting ? t('comments.submitting') : t('comments.submit')}
-              </Button>
-            </FormActions>
-          </Form>
-        )}
-      </Panel>
+      <PanelLayout>
+        <SharedPanel
+          as="aside"
+          padding="none"
+          id="comments-panel"
+          aria-label={t('comments.title')}
+          data-testid="comments-panel"
+        >
+          <PanelHeader
+            icon={<MessageSquare aria-hidden="true" size={18} />}
+            title={t('comments.title')}
+            description={targetLabel ?? undefined}
+            onClose={onClose}
+            closeLabel={t('comments.close')}
+          />
+          <Body>
+            {errorMessage !== null && status !== 'error' ? (
+              <Text role="alert" color="color.text.danger" size="font.size.sm">
+                {errorMessage}
+              </Text>
+            ) : null}
+            {renderBody()}
+          </Body>
+          {elementId === undefined || !canComment ? null : (
+            <Form onSubmit={(event) => void handleSubmit(event)}>
+              <Textarea
+                aria-label={t('comments.bodyLabel')}
+                placeholder={t('comments.placeholder')}
+                rows={3}
+                maxLength={COMMENT_BODY_MAX_LENGTH}
+                value={draft}
+                disabled={submitting}
+                onChange={(event) => setDraft(event.target.value)}
+              />
+              <FormActions>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  disabled={busy || draft.trim().length === 0}
+                >
+                  {submitting ? t('comments.submitting') : t('comments.submit')}
+                </Button>
+              </FormActions>
+            </Form>
+          )}
+        </SharedPanel>
+      </PanelLayout>
     </SideDrawer>
   );
 }
@@ -468,7 +440,7 @@ function ErrorBody({ title, message, retryLabel, onRetry }: ErrorBodyProps): Rea
           {message}
         </Text>
       )}
-      <Button type="button" variant="secondary" size="sm" onClick={onRetry}>
+      <Button type="button" variant="outline" size="sm" onClick={onRetry}>
         {retryLabel}
       </Button>
     </div>

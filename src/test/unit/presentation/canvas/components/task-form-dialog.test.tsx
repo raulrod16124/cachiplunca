@@ -154,6 +154,11 @@ describe('TaskFormDialog', () => {
     submit();
 
     expect(screen.getByText('Title is required')).toBeInTheDocument();
+    expect(screen.getByLabelText('Title')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText('Title')).toHaveAttribute(
+      'aria-describedby',
+      screen.getByText('Title is required').id,
+    );
     expect(onSubmit).not.toHaveBeenCalled();
   });
 

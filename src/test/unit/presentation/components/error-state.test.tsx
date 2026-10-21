@@ -2,6 +2,12 @@ import { screen, fireEvent } from '@testing-library/react';
 import { render } from '../../../setup/render-with-theme';
 import { ErrorState } from '../../../../presentation/components/error-state';
 
+function styleText(): string {
+  return [...document.head.querySelectorAll('style')]
+    .map((style) => style.textContent ?? '')
+    .join('');
+}
+
 describe('ErrorState', () => {
   it('renders with default title and alert role', () => {
     render(<ErrorState />);
@@ -52,5 +58,42 @@ describe('ErrorState', () => {
     expect(
       screen.getByRole('heading', { level: 1, name: 'Could not load workspace' }),
     ).toBeInTheDocument();
+  });
+
+  it('renders a decorative illustration without affecting actions', () => {
+    const onAction = jest.fn();
+    render(
+      <ErrorState
+        title="Could not load"
+        illustration={<span>!</span>}
+        actionLabel="Retry"
+        onAction={onAction}
+      />,
+    );
+
+    expect(screen.getByTestId('state-illustration')).toHaveAttribute('aria-hidden', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(onAction).toHaveBeenCalledTimes(1);
+  });
+
+  it('maps the danger tone and display title to tokens', () => {
+    render(
+      <ErrorState
+        title="Could not load"
+        illustration={<span>!</span>}
+        tone="danger"
+        titleVariant="display"
+      />,
+    );
+
+    const heading = screen.getByRole('heading', { name: 'Could not load' });
+    const displayStyle = heading.getAttribute('style') ?? '';
+    const css = styleText();
+
+    expect(displayStyle).toContain('font-family: var(--cach-font-display)');
+    expect(css).toContain('var(--rr-color-background-destructive)');
+    expect(css).toContain('var(--rr-color-border-danger)');
+    expect(css).toContain('var(--rr-color-text-destructive)');
+    expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
   });
 });

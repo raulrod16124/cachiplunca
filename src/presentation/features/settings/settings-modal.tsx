@@ -31,7 +31,7 @@ function SettingsDialog({
   const { t } = useI18n();
 
   return (
-    <Dialog open onOpenChange={onOpenChange}>
+    <Dialog open onOpenChange={onOpenChange} classNames={{ content: 'settings-dialog-content' }}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('settings.title')}</DialogTitle>
@@ -39,7 +39,7 @@ function SettingsDialog({
         </DialogHeader>
         <SettingsControls />
         <DialogFooter>
-          <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             {t('common.close')}
           </Button>
         </DialogFooter>

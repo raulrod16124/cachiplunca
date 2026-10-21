@@ -1,4 +1,4 @@
-import type { ReactElement, ReactNode } from 'react';
+import type { KeyboardEvent, ReactElement, ReactNode } from 'react';
 import { useEffect, useId, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { ToolbarButton } from './toolbar-primitives';
@@ -47,7 +47,9 @@ export function ToolbarDropdown({
   const open = controlledOpen ?? uncontrolledOpen;
   const panelId = useId();
   const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const focusOnOpenRef = useRef(false);
   const onOpenChangeRef = useRef(onOpenChange);
   onOpenChangeRef.current = onOpenChange;
 
@@ -80,6 +82,73 @@ export function ToolbarDropdown({
     onOpenChangeRef.current?.(next);
   }
 
+  function enabledOptions(): HTMLElement[] {
+    const panel = panelRef.current;
+
+    if (panel === null) {
+      return [];
+    }
+
+    return Array.from(panel.querySelectorAll<HTMLElement>('[role="option"]:not([disabled])'));
+  }
+
+  function focusFirstControl(): void {
+    panelRef.current?.querySelector<HTMLElement>('input, button, [role="option"]')?.focus();
+  }
+
+  function moveFocus(event: KeyboardEvent<HTMLDivElement>): void {
+    if (
+      event.key !== 'ArrowDown' &&
+      event.key !== 'ArrowUp' &&
+      event.key !== 'Home' &&
+      event.key !== 'End'
+    ) {
+      return;
+    }
+
+    const options = enabledOptions();
+
+    if (options.length === 0) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const currentIndex = options.indexOf(document.activeElement as HTMLElement);
+
+    if (event.key === 'Home') {
+      options[0]?.focus();
+      return;
+    }
+
+    if (event.key === 'End') {
+      options[options.length - 1]?.focus();
+      return;
+    }
+
+    const direction = event.key === 'ArrowDown' ? 1 : -1;
+    const nextIndex =
+      currentIndex === -1
+        ? direction === 1
+          ? 0
+          : options.length - 1
+        : (currentIndex + direction + options.length) % options.length;
+
+    options[nextIndex]?.focus();
+  }
+
+  useEffect(() => {
+    if (!open) {
+      focusOnOpenRef.current = false;
+      return;
+    }
+
+    if (focusOnOpenRef.current) {
+      focusOnOpenRef.current = false;
+      focusFirstControl();
+    }
+  }, [open]);
+
   return (
     <Wrapper ref={wrapperRef}>
       <ToolbarButton
@@ -92,11 +161,35 @@ export function ToolbarDropdown({
         disabled={disabled}
         data-testid={`toolbar-trigger-${label}`}
         onClick={() => changeOpen(!open)}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape' && open) {
+            event.stopPropagation();
+            changeOpen(false);
+            return;
+          }
+
+          if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') {
+            return;
+          }
+
+          event.preventDefault();
+
+          if (open) {
+            const options = enabledOptions();
+            const target = event.key === 'ArrowDown' ? options[0] : options[options.length - 1];
+            target?.focus();
+            return;
+          }
+
+          focusOnOpenRef.current = true;
+          changeOpen(true);
+        }}
       >
         {triggerContent}
       </ToolbarButton>
       {open ? (
         <Panel
+          ref={panelRef}
           id={panelId}
           role="listbox"
           aria-label={label}
@@ -106,7 +199,10 @@ export function ToolbarDropdown({
               event.stopPropagation();
               changeOpen(false);
               triggerRef.current?.focus();
+              return;
             }
+
+            moveFocus(event);
           }}
         >
           {children}

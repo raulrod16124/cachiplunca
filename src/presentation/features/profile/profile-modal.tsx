@@ -9,6 +9,7 @@ import {
   DialogTitle,
   FormField,
   FormFieldControl,
+  FormFieldDescription,
   FormFieldError,
   FormFieldLabel,
   Heading,
@@ -31,6 +32,7 @@ import { toAppError, ERROR_CODES, type AppError } from '../../../shared/errors';
 import { localizeFieldError, useI18n, type I18nContextValue } from '../../i18n';
 import { SettingsControls } from '../settings/settings-controls';
 import { PasswordInput } from '../auth/password-input';
+import { Card } from '../../components/card';
 import { useProfileServices } from './profile-services-provider';
 
 const PROFILE_TAB = 'profile';
@@ -39,14 +41,10 @@ const PREFERENCES_TAB = 'preferences';
 
 type ProfileTab = typeof PROFILE_TAB | typeof SECURITY_TAB | typeof PREFERENCES_TAB;
 
-const IdentityCard = styled.div`
-  display: flex;
+const IdentityCard = styled(Card)`
+  flex-direction: row;
   align-items: center;
   gap: ${({ theme }) => theme.space[4]};
-  padding: ${({ theme }) => theme.space[4]};
-  border: 1px solid ${({ theme }) => theme.color.border.default};
-  border-radius: ${({ theme }) => theme.radius.lg};
-  background: ${({ theme }) => theme.color.background.sunken};
 `;
 
 const IdentityText = styled.div`
@@ -177,7 +175,7 @@ function ProfileDialog({
           <DialogDescription>{t('profile.description')}</DialogDescription>
         </DialogHeader>
 
-        <IdentityCard>
+        <IdentityCard variant="sunken" padding="md">
           <Avatar name={avatarName} size="lg" />
           <IdentityText>
             <Text weight="font.weight.semibold" size="font.size.lg">
@@ -191,7 +189,14 @@ function ProfileDialog({
           </IdentityText>
         </IdentityCard>
 
-        <Tabs value={tab} onValueChange={(value) => setTab(value as ProfileTab)}>
+        <Tabs
+          value={tab}
+          onValueChange={(value) => setTab(value as ProfileTab)}
+          classNames={{
+            list: 'profile-tabs-list',
+            trigger: 'profile-tabs-trigger',
+          }}
+        >
           <Tabs.List>
             <Tabs.Trigger value={PROFILE_TAB}>{t('profile.tabs.profile')}</Tabs.Trigger>
             <Tabs.Trigger value={SECURITY_TAB}>{t('profile.tabs.security')}</Tabs.Trigger>
@@ -203,12 +208,7 @@ function ProfileDialog({
               <Section>
                 <SectionHeading>
                   <Sparkles aria-hidden="true" size={16} />
-                  <Stack gap="space-1">
-                    <SectionTitle as="h3">{t('profile.displayName.label')}</SectionTitle>
-                    <Text color="color.text.muted" size="font.size.sm">
-                      {t('profile.displayName.hint')}
-                    </Text>
-                  </Stack>
+                  <SectionTitle as="h3">{t('profile.displayName.label')}</SectionTitle>
                 </SectionHeading>
                 <DisplayNameForm
                   currentUser={currentUser}
@@ -315,6 +315,7 @@ function DisplayNameForm({
       <Stack gap="space-3">
         <FormField>
           <FormFieldLabel>{t('profile.displayName.label')}</FormFieldLabel>
+          <FormFieldDescription>{t('profile.displayName.hint')}</FormFieldDescription>
           <FormFieldControl>
             {(field) => (
               <Input
@@ -344,7 +345,13 @@ function DisplayNameForm({
           </Text>
         )}
         <FormActions>
-          <Button type="submit" size="sm" loading={submitting} disabled={!available}>
+          <Button
+            type="submit"
+            size="sm"
+            variant="primary"
+            loading={submitting}
+            disabled={!available}
+          >
             {submitting ? t('common.saving') : t('common.save')}
           </Button>
         </FormActions>
@@ -451,7 +458,7 @@ function ChangeEmailForm({ currentEmail }: { readonly currentEmail: string | nul
           </Text>
         )}
         <FormActions>
-          <Button type="submit" size="sm" variant="secondary" loading={submitting}>
+          <Button type="submit" size="sm" variant="primary" loading={submitting}>
             {t('profile.email.submit')}
           </Button>
         </FormActions>
@@ -573,7 +580,7 @@ function ChangePasswordForm(): ReactNode {
           </Text>
         )}
         <FormActions>
-          <Button type="submit" size="sm" loading={submitting}>
+          <Button type="submit" size="sm" variant="primary" loading={submitting}>
             {t('profile.password.submit')}
           </Button>
         </FormActions>

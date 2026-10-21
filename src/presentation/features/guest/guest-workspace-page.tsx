@@ -98,7 +98,7 @@ export function GuestWorkspacePage({
 
   if (session.status === 'loading' || state.status === 'loading' || state.status === 'idle') {
     return (
-      <Page>
+      <Page id="main-content" tabIndex={-1}>
         {session.status === 'loading' ? (
           <SessionLoading />
         ) : (
@@ -120,7 +120,7 @@ export function GuestWorkspacePage({
 
   if (state.status === 'invalid' || state.status === 'revoked') {
     return (
-      <Page>
+      <Page id="main-content" tabIndex={-1}>
         <Panel>
           <Stack gap="space-3">
             <Heading as="h1">
@@ -138,7 +138,7 @@ export function GuestWorkspacePage({
   }
 
   return (
-    <Page>
+    <Page id="main-content" tabIndex={-1}>
       <Panel>
         <Stack gap="space-3">
           <Heading as="h1">{t('guest.error.title')}</Heading>

@@ -25,6 +25,19 @@ describe('i18n', () => {
     expect(localizeMessage(t, 'Unknown provider message.')).toBe('Unknown provider message.');
   });
 
+  it('translates accessible text-format and canvas labels', () => {
+    expect(translate('en', 'canvas.textFormat.bold')).toBe('Bold');
+    expect(translate('es', 'canvas.textFormat.bold')).toBe('Negrita');
+    expect(translate('es', 'canvas.textFormat.colorOptions', { label: 'Color de fuente' })).toBe(
+      'Opciones de Color de fuente',
+    );
+    expect(translate('es', 'canvas.zoomLevelAdjust', { percent: 75 })).toBe(
+      'Nivel de zoom 75%, ajustar',
+    );
+    expect(translate('es', 'share.roleFor', { name: 'ana' })).toBe('Rol de ana');
+    expect(translate('en', 'share.roleFor', { name: 'ana' })).toBe('Role for ana');
+  });
+
   it('resolves an explicit locale before the system preference', () => {
     expect(resolveLocale('es', ['en-US'])).toBe('es');
     expect(resolveLocale('en', ['es-ES'])).toBe('en');

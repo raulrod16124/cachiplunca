@@ -1,27 +1,27 @@
-import { Button } from '@raulrod/ui';
-import styled from 'styled-components';
-import type { ReactNode, ButtonHTMLAttributes } from 'react';
+import { IconButton, type IconButtonProps } from '@raulrod/ui';
+import type { ReactElement, ReactNode } from 'react';
 
-const StyledToolbarButton = styled(Button)`
-  min-width: 32px;
-  padding-left: ${({ theme }) => theme.space[1]};
-  padding-right: ${({ theme }) => theme.space[1]};
-  font-size: ${({ theme }) => theme.font.size.sm};
-`;
-
-export interface ToolbarButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  active?: boolean;
-  children: ReactNode;
+export interface ToolbarButtonProps extends Omit<IconButtonProps, 'variant'> {
+  readonly active?: boolean;
+  readonly children: ReactNode;
 }
 
 export function ToolbarButton({
   active = false,
+  size = 'md',
+  label,
   children,
   ...rest
-}: ToolbarButtonProps): ReactNode {
+}: ToolbarButtonProps): ReactElement {
   return (
-    <StyledToolbarButton type="button" variant={active ? 'primary' : 'outline'} {...rest}>
+    <IconButton
+      type="button"
+      variant={active ? 'primary' : 'ghost'}
+      size={size}
+      label={label}
+      {...rest}
+    >
       {children}
-    </StyledToolbarButton>
+    </IconButton>
   );
 }

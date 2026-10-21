@@ -16,10 +16,10 @@ const Wrapper = styled.div`
   will-change: transform;
 `;
 
-const ContentLayer = styled.div`
+const ContentLayer = styled.div<{ $allowOverflow: boolean }>`
   position: absolute;
   inset: 0;
-  contain: layout paint;
+  contain: ${({ $allowOverflow }) => ($allowOverflow ? 'layout' : 'layout paint')};
 `;
 
 const CommentIndicator = styled.button`
@@ -29,20 +29,20 @@ const CommentIndicator = styled.button`
   z-index: 2;
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 5px;
+  gap: ${({ theme }) => theme.space[1]};
+  min-width: ${({ theme }) => theme.space[5]};
+  height: ${({ theme }) => theme.space[5]};
+  padding: 0 ${({ theme }) => theme.space[1]};
   transform: translate(40%, -40%);
   border: 1px solid ${({ theme }) => theme.color.border.strong};
   border-radius: ${({ theme }) => theme.radius.full};
-  background: ${({ theme }) => theme.color.background.surface};
+  background: ${({ theme }) => theme.color.background.warning};
   color: ${({ theme }) => theme.color.text.primary};
   box-shadow: ${({ theme }) => theme.shadow.sm};
   font-family: ${({ theme }) => theme.font.family.sans};
-  font-size: 11px;
+  font-size: ${({ theme }) => theme.font.size['2xs']};
   font-weight: ${({ theme }) => theme.font.weight.semibold};
-  line-height: 1;
+  line-height: ${({ theme }) => theme.font.leading.none};
   cursor: pointer;
 
   &:hover {
@@ -152,7 +152,7 @@ function ElementViewComponent({
       data-testid={`canvas-item-${element.id.value}`}
       style={style}
     >
-      <ContentLayer>
+      <ContentLayer $allowOverflow={element.type === 'note'}>
         <Renderer
           element={element}
           selected={selected}

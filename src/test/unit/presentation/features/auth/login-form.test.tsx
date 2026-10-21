@@ -36,7 +36,28 @@ describe('LoginForm', () => {
     expect(await screen.findByText('Enter your email address.')).toBeInTheDocument();
     expect(screen.getByText('Enter your password.')).toBeInTheDocument();
     expect(screen.getByLabelText('Email')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText('Email')).toHaveAttribute(
+      'aria-describedby',
+      screen.getByText('Enter your email address.').id,
+    );
     expect(signIn).not.toHaveBeenCalled();
+  });
+
+  it('toggles password visibility with an accessible pressed state', () => {
+    render(<LoginForm loginUser={createLoginUser(new FakeAuthPort())} />);
+
+    const password = screen.getByLabelText('Password');
+    const toggle = screen.getByRole('button', { name: 'Show password' });
+    expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    expect(toggle).toHaveAttribute('aria-controls', password.id);
+
+    fireEvent.click(toggle);
+
+    expect(screen.getByRole('button', { name: 'Hide password' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'text');
   });
 
   it('signs in with valid credentials without showing errors', async () => {

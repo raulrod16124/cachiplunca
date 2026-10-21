@@ -4,7 +4,7 @@ import type { ReactElement } from 'react';
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useI18n } from '../../i18n';
-import { NOTE_COLOR_PALETTE } from '../note-colors';
+import { isNoteColorSelected, NOTE_COLOR_PALETTE, NOTE_DEFAULT_COLOR } from '../note-colors';
 
 const AnchorTrigger = styled(DropdownMenu.Trigger)`
   position: absolute;
@@ -20,7 +20,7 @@ const Swatch = styled.span<{ $color: string }>`
   display: inline-block;
   width: 14px;
   height: 14px;
-  border: 1px solid ${({ theme }) => theme.color.border.default};
+  border: 1px solid ${({ theme }) => theme.color.border.strong};
   border-radius: ${({ theme }) => theme.radius.sm};
   background-color: ${({ $color }) => $color};
 `;
@@ -29,9 +29,9 @@ const DefaultSwatch = styled.span`
   display: inline-block;
   width: 14px;
   height: 14px;
-  border: 1px solid ${({ theme }) => theme.color.border.default};
+  border: 1px solid ${({ theme }) => theme.color.border.strong};
   border-radius: ${({ theme }) => theme.radius.sm};
-  background-color: ${({ theme }) => theme.canvas.surface};
+  background-color: ${NOTE_DEFAULT_COLOR};
 `;
 
 export interface ElementContextMenuNoteColor {
@@ -132,7 +132,7 @@ export function ElementContextMenu({
                   {t('canvas.contextMenu.noteColorDefault')}
                 </DropdownMenu.Item>
                 {NOTE_COLOR_PALETTE.map((option) => {
-                  const isCurrent = noteColor.currentColor === option.color;
+                  const isCurrent = isNoteColorSelected(option, noteColor.currentColor);
 
                   return (
                     <DropdownMenu.Item

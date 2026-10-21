@@ -2,6 +2,7 @@ import { Baseline, ChevronDown } from '@raulrod/icons';
 import type { ReactElement } from 'react';
 import { useState } from 'react';
 import styled from 'styled-components';
+import { useI18n } from '../../i18n';
 import { TEXT_COLOR_SWATCHES, TEXT_STANDARD_COLORS } from './text-format-options';
 import { ToolbarDropdown } from './toolbar-dropdown';
 import { ToolbarButton, ToolbarGroup } from './toolbar-primitives';
@@ -46,6 +47,11 @@ const SwatchButton = styled.button<{ $color: string }>`
   &:hover {
     outline: 2px solid ${({ theme }) => theme.color.focusRing};
   }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.focusRing};
+    outline-offset: 2px;
+  }
 `;
 
 const AutomaticRow = styled.button`
@@ -63,6 +69,11 @@ const AutomaticRow = styled.button`
 
   &:hover {
     background-color: ${({ theme }) => theme.canvas.surfaceMuted};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.focusRing};
+    outline-offset: 2px;
   }
 `;
 
@@ -93,6 +104,11 @@ const MoreColorsInput = styled.input`
   border-radius: ${({ theme }) => theme.radius.sm};
   background: none;
   cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.focusRing};
+    outline-offset: 2px;
+  }
 `;
 
 export interface ColorPickerProps {
@@ -112,6 +128,7 @@ export function ColorPicker({
   swatches = TEXT_COLOR_SWATCHES,
   standardColors = TEXT_STANDARD_COLORS,
 }: ColorPickerProps): ReactElement {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const activeColor = color ?? defaultColor;
 
@@ -132,34 +149,38 @@ export function ColorPicker({
         <ColorBar $color={activeColor} />
       </MainButton>
       <ToolbarDropdown
-        label={`${label} options`}
+        label={t('canvas.textFormat.colorOptions', { label })}
         open={open}
         onOpenChange={setOpen}
         triggerContent={<ChevronDown aria-hidden="true" size={12} />}
       >
-        <AutomaticRow type="button" aria-label="Automatic" onClick={() => pick(null)}>
+        <AutomaticRow
+          type="button"
+          aria-label={t('canvas.textFormat.automatic')}
+          onClick={() => pick(null)}
+        >
           <AutomaticPreview aria-hidden="true" />
-          Automatic
+          {t('canvas.textFormat.automatic')}
         </AutomaticRow>
-        <SectionLabel>Theme colors</SectionLabel>
+        <SectionLabel>{t('canvas.textFormat.themeColors')}</SectionLabel>
         <SwatchGrid>
           {swatches.map((swatch) => (
             <SwatchButton
               key={swatch}
               type="button"
-              aria-label={`Theme color ${swatch}`}
+              aria-label={t('canvas.textFormat.themeColor', { color: swatch })}
               $color={swatch}
               onClick={() => pick(swatch)}
             />
           ))}
         </SwatchGrid>
-        <SectionLabel>Standard colors</SectionLabel>
+        <SectionLabel>{t('canvas.textFormat.standardColors')}</SectionLabel>
         <SwatchGrid>
           {standardColors.map((swatch) => (
             <SwatchButton
               key={swatch}
               type="button"
-              aria-label={`Standard color ${swatch}`}
+              aria-label={t('canvas.textFormat.standardColor', { color: swatch })}
               $color={swatch}
               onClick={() => pick(swatch)}
             />
@@ -168,11 +189,11 @@ export function ColorPicker({
         <MoreColorsRow>
           <MoreColorsInput
             type="color"
-            aria-label="More colors"
+            aria-label={t('canvas.textFormat.moreColors')}
             value={activeColor}
             onChange={(event) => pick(event.target.value)}
           />
-          More colors
+          {t('canvas.textFormat.moreColors')}
         </MoreColorsRow>
       </ToolbarDropdown>
     </ToolbarGroup>

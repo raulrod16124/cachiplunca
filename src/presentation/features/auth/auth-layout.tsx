@@ -1,7 +1,9 @@
 import { Check } from '@raulrod/icons';
 import type { ReactNode } from 'react';
 import styled from 'styled-components';
+import { BrandLogo, DecorativeBlob, DecorativeSpark, PaperTexture } from '../../components';
 import { useI18n, type TranslationKey } from '../../i18n';
+import { brandVar } from '../../styles/brand/brand-tokens';
 
 const Screen = styled.main`
   min-height: 100dvh;
@@ -11,9 +13,9 @@ const Screen = styled.main`
   padding: ${({ theme }) => theme.space[6]};
   background:
     radial-gradient(
-      circle at top left,
-      color-mix(in srgb, ${({ theme }) => theme.color.action.primary.background} 12%, transparent),
-      transparent 45%
+      circle at 12% 0%,
+      color-mix(in srgb, ${brandVar('orange-500')} 14%, transparent),
+      transparent 42%
     ),
     ${({ theme }) => theme.color.background.default};
 `;
@@ -23,7 +25,7 @@ const Shell = styled.div`
   grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
   width: 100%;
   max-width: 980px;
-  min-height: 560px;
+  min-height: 580px;
   overflow: hidden;
   border: 1px solid ${({ theme }) => theme.color.border.default};
   border-radius: ${({ theme }) => theme.radius.lg};
@@ -37,13 +39,57 @@ const Shell = styled.div`
 `;
 
 const BrandPanel = styled.section`
+  position: relative;
   display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      circle at 88% 8%,
+      color-mix(in srgb, ${brandVar('mustard-500')} 16%, transparent),
+      transparent 38%
+    ),
+    linear-gradient(155deg, ${brandVar('green-900')} 0%, ${brandVar('green-950')} 100%);
+  color: ${brandVar('cream-0')};
+`;
+
+const PanelTexture = styled(PaperTexture)`
+  opacity: 0.3;
+`;
+
+const Decoration = styled.div`
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  & > svg:first-child {
+    position: absolute;
+    right: -1.5rem;
+    bottom: 2.5rem;
+    opacity: 0.22;
+  }
+
+  & > svg:last-child {
+    position: absolute;
+    top: 4.5rem;
+    right: 2.75rem;
+    opacity: 0.9;
+  }
+
+  @media (max-width: 860px) {
+    display: none;
+  }
+`;
+
+const PanelContent = styled.div`
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 1;
   flex-direction: column;
   justify-content: space-between;
   gap: ${({ theme }) => theme.space[8]};
   padding: ${({ theme }) => theme.space[10]};
-  background: ${({ theme }) => theme.color.action.primary.background};
-  color: ${({ theme }) => theme.color.action.primary.text};
 
   @media (max-width: 860px) {
     padding: ${({ theme }) => theme.space[6]};
@@ -57,25 +103,6 @@ const Brand = styled.div`
   gap: ${({ theme }) => theme.space[2]};
 `;
 
-const BrandMark = styled.span`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: ${({ theme }) => theme.space[10]};
-  height: ${({ theme }) => theme.space[10]};
-  border-radius: ${({ theme }) => theme.radius.md};
-  background: ${({ theme }) => theme.color.action.primary.text};
-  color: ${({ theme }) => theme.color.action.primary.background};
-  font-size: ${({ theme }) => theme.font.size.xl};
-  font-weight: ${({ theme }) => theme.font.weight.bold};
-`;
-
-const BrandName = styled.span`
-  font-size: ${({ theme }) => theme.font.size.xl};
-  font-weight: ${({ theme }) => theme.font.weight.semibold};
-  letter-spacing: ${({ theme }) => theme.font.tracking.tight};
-`;
-
 const Pitch = styled.div`
   display: flex;
   flex-direction: column;
@@ -84,11 +111,16 @@ const Pitch = styled.div`
 
 const PitchTitle = styled.p`
   margin: 0;
-  max-width: 22ch;
-  font-size: ${({ theme }) => theme.font.size['2xl']};
-  font-weight: ${({ theme }) => theme.font.weight.semibold};
-  line-height: ${({ theme }) => theme.font.leading.tight};
-  letter-spacing: ${({ theme }) => theme.font.tracking.tight};
+  max-width: 18ch;
+  font-family: ${({ theme }) => theme.font.family.display};
+  font-size: ${({ theme }) => theme.font.size['3xl']};
+  font-weight: ${({ theme }) => theme.font.weight.regular};
+  line-height: 1.05;
+  letter-spacing: ${({ theme }) => theme.font.tracking.normal};
+
+  @media (max-width: 860px) {
+    font-size: ${({ theme }) => theme.font.size['2xl']};
+  }
 `;
 
 const Points = styled.ul`
@@ -106,6 +138,12 @@ const Point = styled.li`
   gap: ${({ theme }) => theme.space[2]};
   font-size: ${({ theme }) => theme.font.size.sm};
   opacity: 0.9;
+`;
+
+const PointIcon = styled.span`
+  display: inline-flex;
+  flex: none;
+  color: ${brandVar('mustard-500')};
 `;
 
 const FormPanel = styled.section`
@@ -138,24 +176,32 @@ export function AuthLayout({ children }: AuthLayoutProps): ReactNode {
   const { t } = useI18n();
 
   return (
-    <Screen>
+    <Screen id="main-content" tabIndex={-1}>
       <Shell>
         <BrandPanel>
-          <Brand>
-            <BrandMark aria-hidden="true">C</BrandMark>
-            <BrandName>{t('brand.name')}</BrandName>
-          </Brand>
-          <Pitch>
-            <PitchTitle>{t('brand.tagline')}</PitchTitle>
-            <Points>
-              {POINTS.map((point) => (
-                <Point key={point}>
-                  <Check aria-hidden="true" size={16} />
-                  {t(point)}
-                </Point>
-              ))}
-            </Points>
-          </Pitch>
+          <PanelTexture />
+          <Decoration>
+            <DecorativeBlob color="olive-500" size="lg" />
+            <DecorativeSpark color="mustard-500" size="lg" />
+          </Decoration>
+          <PanelContent>
+            <Brand>
+              <BrandLogo variant="wordmark" size="lg" />
+            </Brand>
+            <Pitch>
+              <PitchTitle>{t('brand.tagline')}</PitchTitle>
+              <Points>
+                {POINTS.map((point) => (
+                  <Point key={point}>
+                    <PointIcon aria-hidden="true">
+                      <Check size={16} />
+                    </PointIcon>
+                    {t(point)}
+                  </Point>
+                ))}
+              </Points>
+            </Pitch>
+          </PanelContent>
         </BrandPanel>
         <FormPanel>
           <FormInner>{children}</FormInner>

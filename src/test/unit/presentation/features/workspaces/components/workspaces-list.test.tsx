@@ -7,10 +7,11 @@ import { UserId, WorkspaceId } from '../../../../../../domain/shared';
 
 const CREATED_BY = UserId.create('user-1');
 
-function createWorkspace(name: string, updatedAt: Date): Workspace {
+function createWorkspace(name: string, updatedAt: Date, description?: string): Workspace {
   const workspace = Workspace.create({
     id: WorkspaceId.create(`ws-${name}`),
     name,
+    description,
     createdBy: CREATED_BY,
   });
   // Override updatedAt for deterministic tests
@@ -70,6 +71,7 @@ describe('WorkspacesList', () => {
     render(<WorkspacesList status="success" workspaces={[]} {...baseProps} />);
 
     expect(screen.getByRole('heading', { name: /no workspaces yet/i })).toBeInTheDocument();
+    expect(screen.getByTestId('state-illustration')).toBeInTheDocument();
     expect(
       screen.getByText(/create your first workspace to start organizing ideas together/i),
     ).toBeInTheDocument();
@@ -88,6 +90,46 @@ describe('WorkspacesList', () => {
     expect(screen.getByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Beta' })).toBeInTheDocument();
     expect(screen.getAllByRole('article')).toHaveLength(2);
+  });
+
+  it('filters workspaces by name and description', async () => {
+    const user = userEvent.setup();
+    const workspaces = [
+      createWorkspace('Alpha', new Date(), 'Product launch'),
+      createWorkspace('Beta', new Date(), 'Research notes'),
+    ];
+
+    render(<WorkspacesList status="success" workspaces={workspaces} {...baseProps} />);
+
+    const search = screen.getByRole('searchbox', { name: /search workspaces/i });
+    expect(search).toHaveAccessibleDescription('2 workspaces');
+
+    await user.type(search, 'launch');
+    expect(screen.getByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Beta' })).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('1 workspace');
+
+    await user.clear(search);
+    await user.type(search, 'beta');
+    expect(screen.queryByRole('heading', { name: 'Alpha' })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Beta' })).toBeInTheDocument();
+  });
+
+  it('renders an illustrated no-results state and clears the search', async () => {
+    const user = userEvent.setup();
+    const workspaces = [createWorkspace('Alpha', new Date())];
+
+    render(<WorkspacesList status="success" workspaces={workspaces} {...baseProps} />);
+
+    await user.type(screen.getByRole('searchbox', { name: /search workspaces/i }), 'Gamma');
+
+    expect(screen.getByRole('heading', { name: /no matching workspaces/i })).toBeInTheDocument();
+    expect(screen.getByTestId('state-illustration')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /clear search/i }));
+
+    expect(screen.getByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
+    expect(screen.getByRole('searchbox', { name: /search workspaces/i })).toHaveValue('');
   });
 
   it('offers delete to owners only', () => {

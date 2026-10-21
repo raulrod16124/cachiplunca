@@ -20,11 +20,13 @@ const Sheet = styled(DialogContent)<{ readonly $size: SideDrawerSize }>`
   gap: 0;
   width: ${({ $size }) =>
     $size === 'board' ? 'clamp(640px, 60vw, 960px)' : 'clamp(320px, 28vw, 420px)'};
-  max-width: 100vw;
+  max-width: 100%;
   height: 100dvh;
   max-block-size: 100dvh;
+  min-width: 0;
   padding: 0;
   overflow: hidden;
+  overflow-x: hidden;
   border-left: 1px solid ${({ theme }) => theme.canvas.elementBorder};
   border-radius: 0;
   background: ${({ theme }) => theme.canvas.surface};
@@ -33,7 +35,7 @@ const Sheet = styled(DialogContent)<{ readonly $size: SideDrawerSize }>`
     ${({ theme }) => theme.motion.easing.enter};
 
   @media (max-width: 700px) {
-    width: 100vw;
+    width: 100%;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -43,7 +45,7 @@ const Sheet = styled(DialogContent)<{ readonly $size: SideDrawerSize }>`
   ${({ $size }) =>
     $size === 'default' &&
     css`
-      min-width: min(320px, 100vw);
+      min-width: min(320px, 100%);
     `}
 `;
 

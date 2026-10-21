@@ -15,6 +15,12 @@ jest.mock('../../../../../presentation/canvas/components/rich-text-editor', () =
   require('../../../../fixtures/rich-text-editor-stub'),
 );
 
+function styleText(): string {
+  return [...document.head.querySelectorAll('style')]
+    .map((style) => style.textContent ?? '')
+    .join('');
+}
+
 const WORKSPACE_ID = WorkspaceId.create('ws-1');
 const USER_ID = UserId.create('user-1');
 
@@ -374,6 +380,18 @@ describe('ElementEditorOverlay', () => {
       // commitGuardRef should prevent the title commit
       expect(onCommit).not.toHaveBeenCalled();
     });
+  });
+
+  it('renders tokenized focus rings for raw editor fields', () => {
+    render(
+      <ElementEditorOverlay
+        element={createLink('https://example.com', 'Example')}
+        onCommit={jest.fn()}
+        onCancel={jest.fn()}
+      />,
+    );
+
+    expect(styleText()).toContain('var(--rr-color-focus-ring)');
   });
 
   describe('image', () => {

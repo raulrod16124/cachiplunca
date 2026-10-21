@@ -95,6 +95,20 @@ describe('SettingsModal', () => {
     await waitFor(() => expect(repository.upserts.at(-1)?.theme).toBe('dark'));
   });
 
+  it('associates each control with its helper text', async () => {
+    const store = createUserSettingsStore(createRepository(null), TEST_ENVIRONMENT);
+    renderModal(store);
+
+    const theme = await screen.findByRole('combobox', { name: 'Theme' });
+    expect(theme).toHaveAccessibleDescription('Choose light, dark, or match your system.');
+    expect(screen.getByRole('combobox', { name: 'Font size' })).toHaveAccessibleDescription(
+      'Choose the text size that feels most comfortable.',
+    );
+    expect(screen.getByRole('switch', { name: 'Reduce motion' })).toHaveAccessibleDescription(
+      'Reduce animations and transitions across the app.',
+    );
+  });
+
   it('disables the controls while settings are still loading', async () => {
     const pending = deferred<UserSettings | null>();
     const store = createUserSettingsStore(

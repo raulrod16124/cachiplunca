@@ -6,6 +6,13 @@ test.describe('Authentication', () => {
     await registerUser(page);
     await expect(page.getByRole('heading', { level: 1, name: 'Your workspaces' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Create workspace' })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Workspaces' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    await expect(page.locator('#main-content')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Open navigation menu' })).toHaveCount(0);
   });
 
   test('logout ends the session and login restores it', async ({ page }) => {

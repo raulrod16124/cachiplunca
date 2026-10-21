@@ -1,28 +1,29 @@
+import { brandPrimitives } from '../styles/brand/brand-tokens';
+
 /**
  * Distinct, accessible identity colors for workspace participants. Every entry
- * keeps at least 4.9:1 contrast against white text, so labels and initials stay
- * legible in both light and dark themes and color is never the only signal.
+ * is a warm brand-adjacent tone that keeps at least 4.9:1 contrast against
+ * cream text, so labels and initials stay legible in both themes and color is
+ * never the only signal.
  */
 export const PRESENCE_COLOR_PALETTE: readonly string[] = [
-  '#334155',
-  '#b91c1c',
-  '#c2410c',
-  '#b45309',
-  '#854d0e',
+  '#173e2c',
+  '#166534',
+  '#365314',
   '#4d7c0f',
-  '#15803d',
-  '#047857',
-  '#0f766e',
-  '#0e7490',
-  '#0369a1',
-  '#1d4ed8',
-  '#4338ca',
-  '#6d28d9',
-  '#7e22ce',
-  '#a21caf',
-  '#be185d',
-  '#be123c',
+  '#5b4a2f',
+  '#6b4a2e',
+  '#854d0e',
+  '#9a3412',
+  '#8a2c1c',
+  '#7c2d12',
+  '#7f1d1d',
+  '#5c2e3a',
+  '#115e59',
+  '#44403c',
 ];
+
+export const PRESENCE_TEXT_COLOR: string = brandPrimitives['cream-0'];
 
 export interface PresenceColorAssigner {
   /**

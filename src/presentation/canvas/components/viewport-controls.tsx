@@ -1,10 +1,11 @@
-import { Button, Inline, Popover, Text, Tooltip } from '@raulrod/ui';
+import { Button, IconButton, Inline, Popover, Text, Tooltip } from '@raulrod/ui';
 import { Maximize, Redo2, Undo2 } from '@raulrod/icons';
 import type { ChangeEvent, ReactElement } from 'react';
 import { useSyncExternalStore } from 'react';
 import styled from 'styled-components';
 import type { CanvasViewportStore } from '../../../application/services';
 import { MAX_CANVAS_SCALE, MIN_CANVAS_SCALE } from '../../../application/services';
+import { useI18n } from '../../i18n';
 
 const ICON_SIZE = 16;
 const SLIDER_STEPS = 1000;
@@ -23,18 +24,23 @@ export function sliderValueToScale(value: number): number {
 
 const Controls = styled.div`
   position: absolute;
-  bottom: 16px;
+  bottom: ${({ theme }) => theme.space[4]};
   left: 50%;
   transform: translateX(-50%);
   z-index: 1;
   display: flex;
   gap: ${({ theme }) => theme.space[2]};
   align-items: center;
-  padding: 4px 8px;
+  padding: ${({ theme }) => `${theme.space[1]} ${theme.space[2]}`};
   border-radius: ${({ theme }) => theme.radius.md};
   background: ${({ theme }) => theme.canvas.surface};
   border: 1px solid ${({ theme }) => theme.canvas.elementBorder};
   box-shadow: ${({ theme }) => theme.shadow.sm};
+
+  @media (max-width: 900px) {
+    width: max-content;
+    max-width: calc(100% - ${({ theme }) => theme.space[4]} * 2);
+  }
 `;
 
 const Group = styled.div`
@@ -55,12 +61,18 @@ const ZoomTrigger = styled(Popover.Trigger)`
   justify-content: center;
   min-width: 5ch;
   padding: ${({ theme }) => theme.space[1]} ${({ theme }) => theme.space[2]};
+  border-radius: ${({ theme }) => theme.radius.sm};
   font-size: ${({ theme }) => theme.font.size.sm};
   font-variant-numeric: tabular-nums;
   color: ${({ theme }) => theme.color.text.primary};
 
   &:hover {
     background: ${({ theme }) => theme.color.background.sunken};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.focusRing};
+    outline-offset: 2px;
   }
 `;
 
@@ -81,6 +93,11 @@ const ZoomSlider = styled.input`
   margin: 0;
   accent-color: ${({ theme }) => theme.color.action.primary.background};
   cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.focusRing};
+    outline-offset: 2px;
+  }
 `;
 
 export interface ViewportControlsProps {
@@ -98,6 +115,7 @@ export function ViewportControls({
   onUndo,
   onRedo,
 }: ViewportControlsProps): ReactElement {
+  const { t } = useI18n();
   const viewport = useSyncExternalStore(store.subscribe, store.getSnapshot);
   const zoomPercentage = Math.round(viewport.scale * 100);
 
@@ -108,36 +126,36 @@ export function ViewportControls({
   return (
     <Controls data-testid="viewport-controls">
       <Group>
-        <Tooltip content="Undo" placement="top">
-          <Button
+        <Tooltip content={t('canvas.undo')} placement="top">
+          <IconButton
             type="button"
             variant="ghost"
             size="sm"
-            aria-label="Undo"
+            label={t('canvas.undo')}
             disabled={!canUndo}
             onClick={onUndo}
           >
             <Undo2 aria-hidden="true" size={ICON_SIZE} />
-          </Button>
+          </IconButton>
         </Tooltip>
-        <Tooltip content="Redo" placement="top">
-          <Button
+        <Tooltip content={t('canvas.redo')} placement="top">
+          <IconButton
             type="button"
             variant="ghost"
             size="sm"
-            aria-label="Redo"
+            label={t('canvas.redo')}
             disabled={!canRedo}
             onClick={onRedo}
           >
             <Redo2 aria-hidden="true" size={ICON_SIZE} />
-          </Button>
+          </IconButton>
         </Tooltip>
       </Group>
       <Separator aria-hidden="true" />
       <Popover>
         <ZoomTrigger
           data-testid="zoom-level"
-          aria-label={`Zoom level ${zoomPercentage}%, adjust`}
+          aria-label={t('canvas.zoomLevelAdjust', { percent: zoomPercentage })}
           aria-live="polite"
         >
           {zoomPercentage}%
@@ -145,7 +163,7 @@ export function ViewportControls({
         <Popover.Content placement="top">
           <ZoomPanel>
             <Inline justify="between" align="center">
-              <Popover.Title>Zoom</Popover.Title>
+              <Popover.Title>{t('canvas.zoom')}</Popover.Title>
               <ZoomValue>{zoomPercentage}%</ZoomValue>
             </Inline>
             <ZoomSlider
@@ -155,7 +173,7 @@ export function ViewportControls({
               step={1}
               value={scaleToSliderValue(viewport.scale)}
               onChange={handleZoomChange}
-              aria-label="Zoom level"
+              aria-label={t('canvas.zoomLevel')}
               aria-valuetext={`${zoomPercentage}%`}
             />
           </ZoomPanel>
@@ -166,12 +184,12 @@ export function ViewportControls({
         type="button"
         variant="ghost"
         size="sm"
-        aria-label="Reset view"
+        aria-label={t('canvas.resetView')}
         onClick={() => store.reset()}
       >
         <Inline gap="space-2" align="center">
           <Maximize aria-hidden="true" size={ICON_SIZE} />
-          <Text>Reset view</Text>
+          <Text>{t('canvas.resetView')}</Text>
         </Inline>
       </Button>
     </Controls>

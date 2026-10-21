@@ -35,6 +35,14 @@ const PaletteContent = styled(DialogContent)`
     max-width: 40rem;
     overflow: hidden;
     padding: ${({ theme }) => theme.space[5]};
+    border: 1px solid ${({ theme }) => theme.color.border.default};
+  }
+
+  @media (max-width: 700px) {
+    && {
+      gap: ${({ theme }) => theme.space[3]};
+      padding: ${({ theme }) => theme.space[4]};
+    }
   }
 `;
 
@@ -101,7 +109,7 @@ const OptionList = styled.ul`
   list-style: none;
 `;
 
-const Option = styled.li<{ $active: boolean; $disabled: boolean }>`
+const Option = styled.li<{ $disabled: boolean }>`
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -110,7 +118,7 @@ const Option = styled.li<{ $active: boolean; $disabled: boolean }>`
   padding: ${({ theme }) => `${theme.space[2]} ${theme.space[3]}`};
   border: 1px solid transparent;
   border-radius: ${({ theme }) => theme.radius.md};
-  background: ${({ theme, $active }) => ($active ? theme.color.background.sunken : 'transparent')};
+  background: transparent;
   color: ${({ theme, $disabled }) =>
     $disabled ? theme.color.text.muted : theme.color.text.primary};
   cursor: ${({ $disabled }) => ($disabled ? 'not-allowed' : 'pointer')};
@@ -119,12 +127,23 @@ const Option = styled.li<{ $active: boolean; $disabled: boolean }>`
     background-color ${({ theme }) => theme.motion.duration.fast} ease,
     border-color ${({ theme }) => theme.motion.duration.fast} ease;
 
-  &[aria-selected='true'] {
-    border-color: ${({ theme }) => theme.color.border.default};
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
   }
 
-  &:hover {
+  &:not([aria-disabled='true']):hover {
     background: ${({ theme }) => theme.color.background.sunken};
+  }
+
+  &[aria-selected='true'],
+  &[aria-selected='true']:hover {
+    border-color: ${({ theme }) => theme.color.border.primary};
+    background: color-mix(
+      in srgb,
+      ${({ theme }) => theme.color.action.primary.background} 12%,
+      transparent
+    );
+    box-shadow: inset 3px 0 0 ${({ theme }) => theme.color.border.primary};
   }
 
   &:focus-visible {
@@ -147,6 +166,10 @@ const OptionLabel = styled.span`
   line-height: ${({ theme }) => theme.font.leading.tight};
   text-overflow: ellipsis;
   white-space: nowrap;
+
+  ${Option}[aria-selected='true'] & {
+    font-weight: ${({ theme }) => theme.font.weight.semibold};
+  }
 `;
 
 const OptionDescription = styled.span`
@@ -164,10 +187,11 @@ const Shortcut = styled.kbd`
   border: 1px solid ${({ theme }) => theme.color.border.default};
   border-bottom-width: 2px;
   border-radius: ${({ theme }) => theme.radius.sm};
-  background: ${({ theme }) => theme.color.background.default};
-  color: ${({ theme }) => theme.color.text.muted};
+  background: ${({ theme }) => theme.color.background.sunken};
+  color: ${({ theme }) => theme.color.text.primary};
   font-family: ${({ theme }) => theme.font.family.mono};
   font-size: ${({ theme }) => theme.font.size.xs};
+  font-weight: ${({ theme }) => theme.font.weight.medium};
   white-space: nowrap;
 `;
 
@@ -180,7 +204,7 @@ const Hint = styled.div`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.space[2]};
-  border-top: 1px solid ${({ theme }) => theme.color.border.default};
+  border-top: 1px solid ${({ theme }) => theme.canvas.elementBorderSoft};
   padding-top: ${({ theme }) => theme.space[3]};
 `;
 
@@ -374,7 +398,6 @@ export function CommandPalette({
                             role="option"
                             aria-selected={active}
                             aria-disabled={disabled ? true : undefined}
-                            $active={active}
                             $disabled={disabled}
                             data-testid={`command-palette-item-${item.id}`}
                             onMouseMove={() => {

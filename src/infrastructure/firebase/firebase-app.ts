@@ -26,7 +26,9 @@ let cachedStorage: FirebaseStorage | null = null;
 export function getFirebaseAuth(): Auth {
   if (cachedAuth === null) {
     cachedAuth = getAuth(getFirebaseApp());
-    connectEmulatorIfEnabled(() => connectAuthEmulator(cachedAuth as Auth, AUTH_EMULATOR_URL));
+    connectEmulatorIfEnabled(() =>
+      connectAuthEmulator(cachedAuth as Auth, AUTH_EMULATOR_URL, { disableWarnings: true }),
+    );
   }
   return cachedAuth;
 }

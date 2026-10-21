@@ -224,7 +224,7 @@ export function ShareDialog({
             </Tabs.Panel>
           ) : null}
           <Tabs.Panel value={PEOPLE_TAB}>
-            <Stack gap="space-3">
+            <Stack gap="space-4">
               <Heading as="h3">{t('share.members')}</Heading>
               <MembersList
                 status={status}

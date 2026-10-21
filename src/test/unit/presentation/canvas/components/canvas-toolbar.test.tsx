@@ -49,6 +49,15 @@ describe('CanvasToolbar', () => {
     expect(screen.getByRole('toolbar', { name: 'Canvas toolbar' })).toBeInTheDocument();
   });
 
+  it('uses icon buttons with accessible labels and ghost styling for creation tools', () => {
+    renderToolbar();
+
+    const addText = screen.getByRole('button', { name: 'Add text' });
+
+    expect(addText).toHaveClass('rr-icon-button', 'rr-icon-button--ghost');
+    expect(addText).toHaveAttribute('type', 'button');
+  });
+
   it('creates each element type through its button', async () => {
     const user = userEvent.setup();
     const { onCreateElement } = renderToolbar();

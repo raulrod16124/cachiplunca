@@ -30,26 +30,76 @@ import { useI18n, type TranslationKey } from '../../i18n';
 const ICON_SIZE = 16;
 
 const ArrangeTrigger = styled(DropdownMenu.Trigger)`
-  min-width: 32px;
-  padding-left: ${({ theme }) => theme.space[1]};
-  padding-right: ${({ theme }) => theme.space[1]};
-  font-size: ${({ theme }) => theme.font.size.sm};
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: calc(${({ theme }) => theme.font.size.base} + ${({ theme }) => theme.space[4]} + 2px);
+  height: calc(${({ theme }) => theme.font.size.base} + ${({ theme }) => theme.space[4]} + 2px);
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: ${({ theme }) => theme.radius.md};
+  background: transparent;
+  color: ${({ theme }) => theme.color.text.primary};
+  font-family: ${({ theme }) => theme.font.family.sans};
+  font-size: ${({ theme }) => theme.font.size.base};
+  font-weight: ${({ theme }) => theme.font.weight.medium};
+  line-height: ${({ theme }) => theme.font.leading.none};
+  letter-spacing: ${({ theme }) => theme.font.tracking.normal};
+  cursor: pointer;
+  transition-property: background-color, color;
+  transition-duration: ${({ theme }) => theme.motion.duration.fast};
+  transition-timing-function: ${({ theme }) => theme.motion.easing.standard};
+
+  &:hover:not(:disabled) {
+    background: ${({ theme }) => theme.color.background.sunken};
+  }
+
+  &:active:not(:disabled) {
+    background: color-mix(
+      in srgb,
+      ${({ theme }) => theme.color.background.sunken} 82%,
+      ${({ theme }) => theme.color.text.primary}
+    );
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.focusRing};
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    background: ${({ theme }) => theme.color.action.disabled.background};
+    color: ${({ theme }) => theme.color.action.disabled.text};
+    cursor: not-allowed;
+  }
 `;
 
 const Bar = styled.div`
   position: absolute;
-  top: 16px;
+  top: ${({ theme }) => theme.space[4]};
   left: 50%;
   transform: translateX(-50%);
   z-index: 1;
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.space[2]};
-  padding: 4px 8px;
+  max-width: calc(100% - var(--rr-space-4) * 2);
+  padding: ${({ theme }) => `${theme.space[1]} ${theme.space[2]}`};
   border-radius: ${({ theme }) => theme.radius.md};
-  background: ${({ theme }) => theme.canvas.surface};
-  border: 1px solid ${({ theme }) => theme.canvas.elementBorder};
-  box-shadow: ${({ theme }) => theme.shadow.sm};
+  background: ${({ theme }) => theme.color.background.surface};
+  border: 1px solid ${({ theme }) => theme.color.border.default};
+  box-shadow: ${({ theme }) => theme.shadow.md};
+
+  @media (max-width: 900px) {
+    top: auto;
+    bottom: calc(var(--rr-space-4) + var(--rr-space-16) + var(--rr-space-2));
+    max-width: calc(100% - var(--rr-space-3) * 2);
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+  }
 `;
 
 const Group = styled.div`
@@ -59,9 +109,10 @@ const Group = styled.div`
 `;
 
 const Separator = styled.span`
+  flex: none;
   width: 1px;
-  height: 20px;
-  background: ${({ theme }) => theme.canvas.elementBorder};
+  height: ${({ theme }) => theme.space[5]};
+  background: ${({ theme }) => theme.color.border.default};
 `;
 
 interface ElementTool {
@@ -176,7 +227,7 @@ function ToolbarAction({
 }: ToolbarActionProps): ReactElement {
   return (
     <Tooltip content={label} placement="bottom">
-      <ToolbarButton aria-label={label} onClick={onClick} disabled={disabled}>
+      <ToolbarButton label={label} onClick={onClick} disabled={disabled}>
         {icon}
       </ToolbarButton>
     </Tooltip>
@@ -259,7 +310,6 @@ export function CanvasToolbar({
           <Tooltip content={t('canvas.toolbar.arrange')} placement="bottom">
             <DropdownMenu>
               <ArrangeTrigger
-                className="rr-button rr-button--outline rr-button--size-md"
                 aria-label={t('canvas.toolbar.arrange')}
                 disabled={!canAlign && !canDistribute}
                 data-testid="canvas-arrange-trigger"

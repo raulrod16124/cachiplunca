@@ -1,5 +1,7 @@
 import { Button, Input, Stack, Text } from '@raulrod/ui';
 import { useMemo, useState, type ReactNode } from 'react';
+import { ActionRow } from '../../../components/action-row';
+import { Card } from '../../../components/card';
 import { getPublicBasePath } from '../../../config/public-base';
 import { useI18n } from '../../../i18n';
 
@@ -35,24 +37,31 @@ export function InvitationLink({
   }
 
   return (
-    <Stack gap="space-2">
-      <Text color="color.text.muted">{t('share.invite.linkHint')}</Text>
-      <Input
-        readOnly
-        aria-label="Invitation link"
-        value={link}
-        onFocus={(event) => event.target.select()}
-      />
-      <Stack gap="space-1">
-        <Button type="button" variant="secondary" onClick={handleCopy}>
-          {t('common.copyLink')}
-        </Button>
-        {copied && (
-          <Text role="status" aria-live="polite" color="color.text.muted">
-            {t('common.copied')}
-          </Text>
-        )}
+    <Card variant="sunken" padding="sm">
+      <Stack gap="space-2">
+        <Text color="color.text.muted">{t('share.invite.linkHint')}</Text>
+        <Input
+          readOnly
+          aria-label={t('invitations.linkLabel')}
+          value={link}
+          onFocus={(event) => event.target.select()}
+        />
+        <ActionRow
+          align="center"
+          wrap
+          trailing={
+            <Button type="button" variant="outline" onClick={handleCopy}>
+              {t('common.copyLink')}
+            </Button>
+          }
+        >
+          {copied ? (
+            <Text role="status" aria-live="polite" color="color.text.muted">
+              {t('common.copied')}
+            </Text>
+          ) : null}
+        </ActionRow>
       </Stack>
-    </Stack>
+    </Card>
   );
 }

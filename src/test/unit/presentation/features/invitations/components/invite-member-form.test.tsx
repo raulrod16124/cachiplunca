@@ -74,6 +74,10 @@ describe('InviteMemberForm', () => {
 
     expect(await screen.findByText('Enter a valid email address.')).toBeInTheDocument();
     expect(screen.getByLabelText('Email')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText('Email')).toHaveAttribute(
+      'aria-describedby',
+      screen.getByText('Enter a valid email address.').id,
+    );
     expect(onInvited).not.toHaveBeenCalled();
     await expect(
       repository.listPendingByWorkspace(WorkspaceId.create(WORKSPACE_ID)),

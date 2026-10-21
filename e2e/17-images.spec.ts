@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { registerUser } from './helpers/auth';
-import { createWorkspace } from './helpers/workspace';
+import { createWorkspace, waitForBoardSaved } from './helpers/workspace';
 
 const PNG_BASE64 =
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
@@ -19,6 +19,7 @@ test.describe('Images', () => {
     const image = page.locator('[data-element-type="image"]').first();
     await expect(image).toBeVisible({ timeout: 20000 });
     await expect(image.getByRole('img', { name: 'diagram' })).toBeVisible();
+    await waitForBoardSaved(page);
 
     await page.reload();
 
@@ -36,6 +37,7 @@ test.describe('Images', () => {
         name: 'System architecture diagram',
       }),
     ).toBeVisible();
+    await waitForBoardSaved(page);
 
     await page.reload();
 
@@ -48,6 +50,7 @@ test.describe('Images', () => {
     await page.keyboard.press('Delete');
 
     await expect(page.locator('[data-element-type="image"]')).toHaveCount(0);
+    await waitForBoardSaved(page);
 
     await page.reload();
     await expect(page.locator('[data-element-type="image"]')).toHaveCount(0, { timeout: 20000 });

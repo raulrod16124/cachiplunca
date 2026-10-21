@@ -7,6 +7,7 @@ const Overlay = styled.div`
   position: absolute;
   box-sizing: border-box;
   border: 1.5px solid ${({ theme }) => theme.canvas.selection};
+  background: ${({ theme }) => theme.canvas.selectionFill};
   pointer-events: none;
 `;
 
@@ -16,8 +17,9 @@ const Handle = styled.span`
   height: 8px;
   box-sizing: border-box;
   border: 1.5px solid ${({ theme }) => theme.canvas.selection};
-  border-radius: 2px;
+  border-radius: ${({ theme }) => theme.radius.sm};
   background: ${({ theme }) => theme.canvas.handleFill};
+  box-shadow: ${({ theme }) => theme.shadow.sm};
   pointer-events: auto;
 `;
 
