@@ -34,6 +34,12 @@ function task(id: string, overrides: Partial<CreateTaskElementProps> = {}): Task
   });
 }
 
+function styleText(): string {
+  return [...document.head.querySelectorAll('style')]
+    .map((style) => style.textContent ?? '')
+    .join('');
+}
+
 function renderPanel(overrides: Partial<TaskPlanPanelProps> = {}): TaskPlanPanelProps {
   const props: TaskPlanPanelProps = {
     open: true,
@@ -78,6 +84,76 @@ describe('TaskPlanPanel', () => {
     expect(screen.getByText(`Due ${formatCalendarDate(dueDate, 'en')}`)).toBeInTheDocument();
     expect(screen.getByText('Unassigned')).toBeInTheDocument();
     expect(screen.getByText('No due date')).toBeInTheDocument();
+  });
+
+  it('uses semantic status badges and accents in the list view', () => {
+    renderPanel({
+      elements: [
+        task('Plan launch', { status: 'in_progress' }),
+        task('Blocked task', { status: 'blocked' }),
+      ],
+    });
+
+    const inProgressGroup = screen.getByRole('region', { name: 'In progress' });
+    expect(within(inProgressGroup).getByText('1')).toHaveClass('rr-badge--warning');
+
+    const inProgressRow = screen
+      .getByRole('button', { name: 'Select task Plan launch' })
+      .closest('[data-task-status]');
+    const blockedRow = screen
+      .getByRole('button', { name: 'Select task Blocked task' })
+      .closest('[data-task-status]');
+
+    expect(inProgressRow).toHaveAttribute('data-task-status', 'in_progress');
+    expect(blockedRow).toHaveAttribute('data-task-status', 'blocked');
+    expect(inProgressRow?.querySelector('[data-status-accent]')).toHaveAttribute(
+      'data-status-accent',
+      'in_progress',
+    );
+    expect(blockedRow?.querySelector('[data-status-accent]')).toHaveAttribute(
+      'data-status-accent',
+      'blocked',
+    );
+
+    const css = styleText();
+    expect(css).toContain('var(--rr-color-text-warning)');
+    expect(css).toContain('var(--rr-color-text-destructive)');
+    expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+  });
+
+  it('uses shared surfaces and status semantics in the board view', async () => {
+    const user = userEvent.setup();
+
+    renderPanel({
+      elements: [
+        task('Todo task'),
+        task('Progress task', { status: 'in_progress' }),
+        task('Done task', { status: 'completed' }),
+        task('Blocked task', { status: 'blocked' }),
+      ],
+    });
+
+    await user.click(screen.getByRole('tab', { name: 'Board' }));
+
+    const board = screen.getByRole('group', { name: 'Task board' });
+    const columns = within(board).getAllByRole('region');
+
+    expect(columns[0]?.tagName).toBe('SECTION');
+    expect(within(columns[0] as HTMLElement).getByText('1')).toHaveClass('rr-badge--neutral');
+    expect(within(columns[1] as HTMLElement).getByText('1')).toHaveClass('rr-badge--warning');
+    expect(within(columns[2] as HTMLElement).getByText('1')).toHaveClass('rr-badge--success');
+    expect(within(columns[3] as HTMLElement).getByText('1')).toHaveClass('rr-badge--destructive');
+
+    const card = within(columns[1] as HTMLElement)
+      .getByRole('button', { name: 'Select task Progress task' })
+      .closest('[data-task-status]');
+
+    expect(card?.tagName).toBe('LI');
+    expect(card).toHaveAttribute('data-task-status', 'in_progress');
+
+    const css = styleText();
+    expect(css).toContain('var(--rr-color-background-sunken)');
+    expect(css).toContain('var(--rr-radius-lg)');
   });
 
   it('shows member labels and marks overdue due dates', () => {

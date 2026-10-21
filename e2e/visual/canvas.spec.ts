@@ -226,6 +226,21 @@ test.describe('visual baseline — canvas', () => {
       });
     });
 
+    test(`task plan board theme:${theme}`, async ({ page }) => {
+      await registerUser(page);
+      await createWorkspace(page, 'Plan board canvas');
+      const task = await addElement(page, 'task');
+      await dragElement(page, task, -320, 0);
+      await waitForBoardSaved(page);
+      await openPlanPanel(page);
+      await page.getByRole('tab', { name: 'Board' }).click();
+      await setTheme(page, theme);
+      await waitForStable(page);
+      await expect(page).toHaveScreenshot(`canvas-plan-board-${theme}.png`, {
+        mask: dynamicMaskLocators(page),
+      });
+    });
+
     test(`comments drawer theme:${theme}`, async ({ page }) => {
       await registerUser(page);
       await createWorkspace(page, 'Comments canvas');
