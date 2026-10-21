@@ -342,7 +342,7 @@ export function WorkspaceShellLayout({
           )}
         </AccessBanner>
       )}
-      <CanvasArea>
+      <CanvasArea id="main-content" tabIndex={-1}>
         <CanvasRegion ref={canvasRegionRef}>
           {presenting ? null : (
             <WorkspaceTopBar

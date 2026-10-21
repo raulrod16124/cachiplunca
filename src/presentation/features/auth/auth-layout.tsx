@@ -176,7 +176,7 @@ export function AuthLayout({ children }: AuthLayoutProps): ReactNode {
   const { t } = useI18n();
 
   return (
-    <Screen>
+    <Screen id="main-content" tabIndex={-1}>
       <Shell>
         <BrandPanel>
           <PanelTexture />

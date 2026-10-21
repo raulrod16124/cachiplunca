@@ -23,6 +23,7 @@ import { UserId } from './domain/shared/value-objects/user-id';
 import { getFirebaseFirestore } from './infrastructure/firebase/firebase-app';
 import { ProfileServicesProvider } from './presentation/features/profile/profile-services-provider';
 import { I18nProvider } from './presentation/i18n';
+import { SkipLink } from './presentation/components/skip-link';
 import { SessionProvider, useSession } from './presentation/providers/session-provider';
 import { UserSettingsProvider } from './presentation/providers/user-settings-provider';
 import { AppThemeProvider } from './presentation/styles';
@@ -58,6 +59,7 @@ function AppContent({
   return (
     <UserSettingsProvider store={userSettingsServices.userSettingsStore} userId={userId}>
       <I18nProvider>
+        <SkipLink />
         <ProfileServicesProvider
           services={{
             updateUserProfile: authServices.updateUserProfile,

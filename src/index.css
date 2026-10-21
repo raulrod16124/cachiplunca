@@ -12,6 +12,54 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+.cach-skip-link {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  z-index: var(--rr-z-toast);
+  padding: var(--rr-space-2) var(--rr-space-4);
+  border: 1px solid var(--rr-color-action-primary-background);
+  border-radius: var(--rr-radius-md);
+  background: var(--rr-color-action-primary-background);
+  color: var(--rr-color-action-primary-text);
+  font-family: var(--rr-font-family-sans);
+  font-size: var(--rr-font-size-sm);
+  font-weight: var(--rr-font-weight-semibold);
+  text-decoration: none;
+  transform: translate(-50%, calc(-100% - var(--rr-space-4)));
+  transition: transform var(--rr-motion-duration-fast) ease;
+}
+
+.cach-skip-link:focus,
+.cach-skip-link:focus-visible {
+  transform: translate(-50%, var(--rr-space-3));
+  outline: 2px solid var(--rr-color-focus-ring);
+  outline-offset: 2px;
+}
+
+#main-content:focus {
+  outline: none;
+}
+
+:where(
+  a[href],
+  button,
+  input,
+  select,
+  textarea,
+  summary,
+  [tabindex]:not([tabindex='-1'])
+):focus-visible {
+  outline: 2px solid var(--rr-color-focus-ring);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cach-skip-link {
+    transition: none;
+  }
+}
+
 /*
  * @raulrod/ui renders `Select.Content` (and Popover/DropdownMenu panels) at
  * `z-index: var(--rr-z-overlay)` (100), below `Dialog` at `var(--rr-z-modal)`

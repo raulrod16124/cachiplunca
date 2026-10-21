@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { render } from '../../../../setup/render-with-theme';
 import { AuthLayout } from '../../../../../presentation/features/auth/auth-layout';
 
@@ -10,13 +10,16 @@ function styleText(): string {
 
 describe('AuthLayout', () => {
   it('renders the brand lockup, display tagline and value points around the form', () => {
-    render(
+    const { container } = render(
       <AuthLayout>
         <p>Auth form</p>
       </AuthLayout>,
     );
 
-    expect(screen.getByRole('main')).toBeInTheDocument();
+    const main = within(container).getByRole('main');
+    expect(main).toBeInTheDocument();
+    expect(main).toHaveAttribute('id', 'main-content');
+    expect(main).toHaveAttribute('tabindex', '-1');
     expect(screen.getByRole('img', { name: 'Cachiplunca' })).toBeInTheDocument();
     expect(screen.getByText('From scattered ideas to shared plans.')).toBeInTheDocument();
     expect(screen.getByText('An infinite canvas for your team')).toBeInTheDocument();

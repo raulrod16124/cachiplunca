@@ -7,6 +7,8 @@ const en = {
   'brand.point.realtime': 'Collaborate in real time, no setup',
   'brand.point.plan': 'Turn notes into an actionable plan',
 
+  'a11y.skipToContent': 'Skip to main content',
+
   'common.cancel': 'Cancel',
   'common.retry': 'Retry',
   'common.close': 'Close',
@@ -534,6 +536,8 @@ const es: Record<TranslationKey, string> = {
   'brand.point.canvas': 'Un canvas infinito para tu equipo',
   'brand.point.realtime': 'Colabora en tiempo real, sin configuración',
   'brand.point.plan': 'Convierte notas en un plan accionable',
+
+  'a11y.skipToContent': 'Saltar al contenido principal',
 
   'common.cancel': 'Cancelar',
   'common.retry': 'Reintentar',

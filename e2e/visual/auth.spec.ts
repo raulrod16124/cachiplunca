@@ -22,5 +22,13 @@ test.describe('visual baseline — auth', () => {
       await setTheme(page, theme);
       await expect(page).toHaveScreenshot(`auth-register-${theme}.png`);
     });
+
+    test(`skip link focus theme:${theme}`, async ({ page }) => {
+      await page.goto('/login');
+      await setTheme(page, theme);
+      await page.keyboard.press('Tab');
+      await expect(page.getByRole('link', { name: 'Skip to main content' })).toBeFocused();
+      await expect(page).toHaveScreenshot(`auth-skip-link-${theme}.png`);
+    });
   }
 });

@@ -89,7 +89,7 @@ export function GuestWorkspaceView({
           <Badge variant="warning">{t('guest.viewOnly')}</Badge>
         </Text>
       </Header>
-      <CanvasArea>
+      <CanvasArea id="main-content" tabIndex={-1}>
         <Canvas
           store={viewportStore}
           selectionStore={selectionStore}
