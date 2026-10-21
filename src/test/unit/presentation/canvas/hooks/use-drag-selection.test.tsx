@@ -89,7 +89,32 @@ describe('useDragSelection', () => {
     expect(onClear).not.toHaveBeenCalled();
   });
 
-  it('clears the selection when clicking empty space', async () => {
+  it('clears the selection when shift-clicking empty space', async () => {
+    const onSelect = jest.fn();
+    const onClear = jest.fn();
+    render(
+      <DragSelectionTestbench
+        items={[ITEM]}
+        viewport={VIEWPORT}
+        onSelect={onSelect}
+        onClear={onClear}
+      />,
+    );
+    const surface = screen.getByTestId('drag-surface');
+    const user = userEvent.setup();
+
+    await user.keyboard('{Shift>}');
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: surface, coords: { x: 500, y: 500 } },
+      { keys: '[/MouseLeft]' },
+    ]);
+    await user.keyboard('{/Shift}');
+
+    expect(onClear).toHaveBeenCalledTimes(1);
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it('does not handle a plain left drag on empty space', async () => {
     const onSelect = jest.fn();
     const onClear = jest.fn();
     render(
@@ -104,12 +129,14 @@ describe('useDragSelection', () => {
     const user = userEvent.setup();
 
     await user.pointer([
-      { keys: '[MouseLeft>]', target: surface, coords: { x: 500, y: 500 } },
+      { keys: '[MouseLeft>]', target: surface, coords: { x: 0, y: 0 } },
+      { coords: { x: 250, y: 250 } },
       { keys: '[/MouseLeft]' },
     ]);
 
-    expect(onClear).toHaveBeenCalledTimes(1);
     expect(onSelect).not.toHaveBeenCalled();
+    expect(onClear).not.toHaveBeenCalled();
+    expect(surface).toHaveAttribute('data-selecting', 'false');
   });
 
   it('does not clear while dragging below the threshold', async () => {
@@ -126,6 +153,7 @@ describe('useDragSelection', () => {
     const surface = screen.getByTestId('drag-surface');
     const user = userEvent.setup();
 
+    await user.keyboard('{Shift>}');
     await user.pointer([
       { keys: '[MouseLeft>]', target: surface, coords: { x: 400, y: 400 } },
       { coords: { x: 402, y: 401 } },
@@ -134,6 +162,7 @@ describe('useDragSelection', () => {
     expect(surface).toHaveAttribute('data-selecting', 'false');
 
     await user.pointer({ keys: '[/MouseLeft]' });
+    await user.keyboard('{/Shift}');
 
     expect(onClear).toHaveBeenCalledTimes(1);
     expect(onSelect).not.toHaveBeenCalled();
@@ -153,14 +182,16 @@ describe('useDragSelection', () => {
     const surface = screen.getByTestId('drag-surface');
     const user = userEvent.setup();
 
+    await user.keyboard('{Shift>}');
     await user.pointer([
       { keys: '[MouseLeft>]', target: surface, coords: { x: 0, y: 0 } },
       { coords: { x: 350, y: 300 } },
       { keys: '[/MouseLeft]' },
     ]);
+    await user.keyboard('{/Shift}');
 
     expect(onSelect).toHaveBeenCalledTimes(1);
-    expect(onSelect).toHaveBeenCalledWith(['item', 'second'], false);
+    expect(onSelect).toHaveBeenCalledWith(['item', 'second'], true);
     expect(onClear).not.toHaveBeenCalled();
   });
 
@@ -177,6 +208,7 @@ describe('useDragSelection', () => {
     const surface = screen.getByTestId('drag-surface');
     const user = userEvent.setup();
 
+    await user.keyboard('{Shift>}');
     await user.pointer([
       { keys: '[MouseLeft>]', target: surface, coords: { x: 40, y: 60 } },
       { coords: { x: 140, y: 90 } },
@@ -190,6 +222,7 @@ describe('useDragSelection', () => {
     expect(marquee.style.height).toBe('30px');
 
     await user.pointer({ keys: '[/MouseLeft]' });
+    await user.keyboard('{/Shift}');
 
     expect(surface).toHaveAttribute('data-selecting', 'false');
     expect(screen.queryByTestId('marquee')).not.toBeInTheDocument();
@@ -208,13 +241,15 @@ describe('useDragSelection', () => {
     const surface = screen.getByTestId('drag-surface');
     const user = userEvent.setup();
 
+    await user.keyboard('{Shift>}');
     await user.pointer([
       { keys: '[MouseLeft>]', target: surface, coords: { x: 250, y: 250 } },
       { coords: { x: 50, y: 50 } },
       { keys: '[/MouseLeft]' },
     ]);
+    await user.keyboard('{/Shift}');
 
-    expect(onSelect).toHaveBeenCalledWith(['item'], false);
+    expect(onSelect).toHaveBeenCalledWith(['item'], true);
   });
 
   it('selects nothing but replaces the selection when the rectangle is empty', async () => {
@@ -230,13 +265,15 @@ describe('useDragSelection', () => {
     const surface = screen.getByTestId('drag-surface');
     const user = userEvent.setup();
 
+    await user.keyboard('{Shift>}');
     await user.pointer([
       { keys: '[MouseLeft>]', target: surface, coords: { x: 500, y: 500 } },
       { coords: { x: 600, y: 600 } },
       { keys: '[/MouseLeft]' },
     ]);
+    await user.keyboard('{/Shift}');
 
-    expect(onSelect).toHaveBeenCalledWith([], false);
+    expect(onSelect).toHaveBeenCalledWith([], true);
   });
 
   it('flags an additive drag with a modifier key', async () => {
@@ -277,11 +314,13 @@ describe('useDragSelection', () => {
     const surface = screen.getByTestId('drag-surface');
     const user = userEvent.setup();
 
+    await user.keyboard('{Shift>}');
     await user.pointer([
       { keys: '[MouseLeft>]', target: surface, coords: { x: 150, y: 150 } },
       { coords: { x: 400, y: 400 } },
       { keys: '[/MouseLeft]' },
     ]);
+    await user.keyboard('{/Shift}');
 
     expect(onSelect).not.toHaveBeenCalled();
     expect(onClear).not.toHaveBeenCalled();
@@ -304,11 +343,13 @@ describe('useDragSelection', () => {
     const button = screen.getByTestId('interactive-button');
     const user = userEvent.setup();
 
+    await user.keyboard('{Shift>}');
     await user.pointer([
       { keys: '[MouseLeft>]', target: button, coords: { x: 0, y: 0 } },
       { coords: { x: 200, y: 200 } },
       { keys: '[/MouseLeft]' },
     ]);
+    await user.keyboard('{/Shift}');
 
     expect(onSelect).not.toHaveBeenCalled();
     expect(onClear).not.toHaveBeenCalled();
@@ -329,11 +370,13 @@ describe('useDragSelection', () => {
     const surface = screen.getByTestId('drag-surface');
     const user = userEvent.setup();
 
+    await user.keyboard('{Shift>}');
     await user.pointer([
       { keys: '[MouseLeft>]', target: surface, coords: { x: 0, y: 0 } },
       { coords: { x: 250, y: 250 } },
       { keys: '[/MouseLeft]' },
     ]);
+    await user.keyboard('{/Shift}');
 
     expect(onSelect).not.toHaveBeenCalled();
     expect(onClear).not.toHaveBeenCalled();
@@ -359,14 +402,16 @@ describe('useDragSelection', () => {
     const topLeft = viewport.worldToScreen(Position.create(100, 100));
     const bottomRight = viewport.worldToScreen(Position.create(200, 200));
 
+    await user.keyboard('{Shift>}');
     await user.pointer([
       { keys: '[MouseLeft>]', target: surface, coords: { x: 0, y: 0 } },
       { coords: { x: bottomRight.x, y: bottomRight.y } },
       { keys: '[/MouseLeft]' },
     ]);
+    await user.keyboard('{/Shift}');
 
     expect(topLeft.x).toBeGreaterThan(0);
-    expect(onSelect).toHaveBeenCalledWith(['item'], false);
+    expect(onSelect).toHaveBeenCalledWith(['item'], true);
   });
 
   it('cancels the drag without committing on pointer cancel', () => {
@@ -382,7 +427,13 @@ describe('useDragSelection', () => {
     );
     const surface = screen.getByTestId('drag-surface');
 
-    dispatchPointer('pointerdown', surface, { button: 0, pointerId: 1, clientX: 0, clientY: 0 });
+    dispatchPointer('pointerdown', surface, {
+      button: 0,
+      pointerId: 1,
+      shiftKey: true,
+      clientX: 0,
+      clientY: 0,
+    });
     act(() => {
       dispatchPointer('pointermove', surface, { pointerId: 1, clientX: 250, clientY: 250 });
     });
@@ -411,11 +462,13 @@ describe('useDragSelection', () => {
     const surface = screen.getByTestId('drag-surface');
     const user = userEvent.setup();
 
+    await user.keyboard('{Shift>}');
     await user.pointer([
       { keys: '[MouseLeft>]', target: surface, coords: { x: 0, y: 0 } },
       { coords: { x: 250, y: 250 } },
       { keys: '[/MouseLeft]' },
     ]);
+    await user.keyboard('{/Shift}');
 
     expect(onSelect).not.toHaveBeenCalled();
     expect(onClear).not.toHaveBeenCalled();

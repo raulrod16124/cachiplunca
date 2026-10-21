@@ -23,6 +23,48 @@ test.describe('Board (MVP happy path)', () => {
     await expect(page.locator('[data-testid^="canvas-item-"]')).toHaveCount(3);
   });
 
+  test('pans by dragging empty space and reserves shift-drag for marquee selection', async ({
+    page,
+  }) => {
+    await registerUser(page);
+    await createWorkspace(page, 'Pan board');
+
+    const canvas = page.getByRole('application', { name: 'Canvas' });
+    const world = page.getByTestId('canvas-world');
+    const box = await canvas.boundingBox();
+
+    if (box === null) {
+      throw new Error('Canvas has no bounding box');
+    }
+
+    const startX = box.x + box.width * 0.8;
+    const startY = box.y + box.height * 0.7;
+
+    const initialTransform = await world.evaluate((element) => getComputedStyle(element).transform);
+
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await page.mouse.move(startX + 60, startY + 40, { steps: 8 });
+    await page.mouse.up();
+
+    await expect
+      .poll(() => world.evaluate((element) => getComputedStyle(element).transform))
+      .not.toBe(initialTransform);
+
+    const pannedTransform = await world.evaluate((element) => getComputedStyle(element).transform);
+
+    await page.keyboard.down('Shift');
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await page.mouse.move(startX + 60, startY + 40, { steps: 8 });
+    await page.mouse.up();
+    await page.keyboard.up('Shift');
+
+    await expect
+      .poll(() => world.evaluate((element) => getComputedStyle(element).transform))
+      .toBe(pannedTransform);
+  });
+
   test('creates and edits a task through the task form', async ({ page }) => {
     await registerUser(page);
     await createWorkspace(page, 'Task board');

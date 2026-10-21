@@ -219,7 +219,7 @@ describe('Canvas', () => {
     expect(screen.getByRole('application', { name: 'Canvas' })).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Arrow keys to move selection · Shift + Arrow to extend selection · Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo · Ctrl/Cmd + ] to bring to front · Ctrl/Cmd + [ to send to back · Right-click an object for more options',
+        'Arrow keys to move selection · Shift + Arrow to extend selection · Drag on empty canvas to pan · Shift + drag to select · Space + drag or middle-drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo · Ctrl/Cmd + ] to bring to front · Ctrl/Cmd + [ to send to back · Right-click an object for more options',
       ),
     ).toBeInTheDocument();
   });
@@ -388,6 +388,39 @@ describe('Canvas', () => {
     const world = screen.getByTestId('canvas-world');
     expect(world.style.transform).toContain('translate(50px, 25px)');
     expect(world.style.transform).toContain('scale(1)');
+  });
+
+  it('pans the viewport when dragging empty space with the left button', async () => {
+    renderCanvas();
+    const canvas = screen.getByRole('application', { name: 'Canvas' });
+    const user = userEvent.setup();
+
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: canvas, coords: { x: 600, y: 450 } },
+      { coords: { x: 650, y: 475 } },
+    ]);
+
+    expect(canvas).toHaveAttribute('data-panning', 'true');
+    expect(screen.getByTestId('canvas-world').style.transform).toContain('translate(50px, 25px)');
+
+    await user.pointer({ keys: '[/MouseLeft]' });
+
+    expect(canvas).toHaveAttribute('data-panning', 'false');
+  });
+
+  it('does not pan when dragging an element', async () => {
+    renderCanvas([FIRST_ITEM]);
+    const canvas = screen.getByRole('application', { name: 'Canvas' });
+    const item = screen.getByTestId('canvas-item-first');
+    const user = userEvent.setup();
+
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: item, coords: { x: 150, y: 130 } },
+      { coords: { x: 250, y: 230 } },
+    ]);
+
+    expect(canvas).toHaveAttribute('data-panning', 'false');
+    expect(screen.getByTestId('canvas-world').style.transform).toContain('translate(0px, 0px)');
   });
 
   it('pans the viewport with a plain wheel scroll', () => {
@@ -613,11 +646,13 @@ describe('Canvas', () => {
       const canvas = screen.getByRole('application', { name: 'Canvas' });
       const user = userEvent.setup();
 
+      await user.keyboard('{Shift>}');
       await user.pointer([
         { keys: '[MouseLeft>]', target: canvas, coords: { x: 0, y: 0 } },
         { coords: { x: 450, y: 350 } },
         { keys: '[/MouseLeft]' },
       ]);
+      await user.keyboard('{/Shift}');
 
       expect(selectionStore.getSnapshot().selectedIds).toEqual(['first', 'second']);
       expect(screen.getByTestId('canvas-item-first')).toHaveAttribute('data-selected', 'true');
@@ -630,6 +665,7 @@ describe('Canvas', () => {
       const canvas = screen.getByRole('application', { name: 'Canvas' });
       const user = userEvent.setup();
 
+      await user.keyboard('{Shift>}');
       await user.pointer([
         { keys: '[MouseLeft>]', target: canvas, coords: { x: 10, y: 20 } },
         { coords: { x: 210, y: 170 } },
@@ -643,6 +679,7 @@ describe('Canvas', () => {
       expect(marquee.style.height).toBe('150px');
 
       await user.pointer({ keys: '[/MouseLeft]' });
+      await user.keyboard('{/Shift}');
 
       expect(canvas).toHaveAttribute('data-selecting', 'false');
       expect(screen.queryByTestId('drag-selection-rect')).not.toBeInTheDocument();

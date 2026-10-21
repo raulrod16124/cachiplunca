@@ -99,7 +99,7 @@ const CanvasContainer = styled.div`
   height: 100%;
   overflow: hidden;
   touch-action: none;
-  cursor: default;
+  cursor: grab;
   user-select: none;
   outline: none;
   background: ${({ theme }) => theme.canvas.surface};
@@ -188,7 +188,7 @@ export const CULLING_MARGIN = 64;
 const BOARD_SUMMARY_ID = 'canvas-board-summary';
 
 const CANVAS_SHORTCUTS =
-  'Arrow keys to move selection · Shift + Arrow to extend selection · Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo · Ctrl/Cmd + ] to bring to front · Ctrl/Cmd + [ to send to back · Right-click an object for more options';
+  'Arrow keys to move selection · Shift + Arrow to extend selection · Drag on empty canvas to pan · Shift + drag to select · Space + drag or middle-drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo · Ctrl/Cmd + ] to bring to front · Ctrl/Cmd + [ to send to back · Right-click an object for more options';
 
 const EDITABLE_ELEMENT_TYPES: ReadonlySet<ElementType> = new Set<ElementType>([
   'text',
@@ -287,7 +287,9 @@ export function Canvas({
   const viewport = useSyncExternalStore(store.subscribe, store.getSnapshot);
   const selection = useSyncExternalStore(selectionStore.subscribe, selectionStore.getSnapshot);
   const spacePressed = useSpacePressed();
-  const { isPanning, ref: panRef } = usePan({ onPan: store.pan, spacePressed });
+  const handleClear = useCallback(() => {
+    selectionStore.clear();
+  }, [selectionStore]);
   const { ref: zoomRef } = useZoom({ onZoom: store.zoom });
   const { ref: canvasFocusRef } = useCanvasFocus();
   const { size: measuredSize, ref: elementSizeRef } = useElementSize();
@@ -370,6 +372,13 @@ export function Canvas({
     return [...connectors, ...others];
   }, [elements]);
   const boardSummary = useMemo(() => describeBoard(elements), [elements]);
+  const { isPanning, ref: panRef } = usePan({
+    onPan: store.pan,
+    onEmptyClick: handleClear,
+    items,
+    viewport,
+    spacePressed,
+  });
 
   const handleSelect = useCallback(
     (id: string, additive: boolean) => {
@@ -412,10 +421,6 @@ export function Canvas({
     },
     [selectionStore],
   );
-
-  const handleClear = useCallback(() => {
-    selectionStore.clear();
-  }, [selectionStore]);
 
   const handleNavigate = useCallback(
     (id: string, additive: boolean) => {

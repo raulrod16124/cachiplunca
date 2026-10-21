@@ -52,7 +52,7 @@ describe('usePan', () => {
     expect(onPan).not.toHaveBeenCalled();
   });
 
-  it('does not pan with a plain left drag', async () => {
+  it('pans with a plain left drag on empty space', async () => {
     const onPan = jest.fn();
     render(<PanTestbench onPan={onPan} />);
     const surface = screen.getByTestId('pan-surface');
@@ -63,7 +63,124 @@ describe('usePan', () => {
       { coords: { x: 20, y: 10 } },
     ]);
 
+    expect(onPan).toHaveBeenCalledTimes(1);
+    expect(onPan).toHaveBeenCalledWith(Position.create(20, 10));
+  });
+
+  it('does not report panning until the drag threshold is exceeded', async () => {
+    const onPan = jest.fn();
+    render(<PanTestbench onPan={onPan} />);
+    const surface = screen.getByTestId('pan-surface');
+    const user = userEvent.setup();
+
+    await user.pointer({ keys: '[MouseLeft>]', target: surface, coords: { x: 0, y: 0 } });
+    await user.pointer({ coords: { x: 2, y: 1 } });
+
+    expect(surface).toHaveAttribute('data-panning', 'false');
     expect(onPan).not.toHaveBeenCalled();
+
+    await user.pointer({ coords: { x: 20, y: 10 } });
+
+    expect(surface).toHaveAttribute('data-panning', 'true');
+    expect(onPan).toHaveBeenCalledWith(Position.create(20, 10));
+  });
+
+  it('calls onEmptyClick for a left click without dragging', async () => {
+    const onPan = jest.fn();
+    const onEmptyClick = jest.fn();
+    render(<PanTestbench onPan={onPan} onEmptyClick={onEmptyClick} />);
+    const surface = screen.getByTestId('pan-surface');
+    const user = userEvent.setup();
+
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: surface, coords: { x: 10, y: 10 } },
+      { keys: '[/MouseLeft]' },
+    ]);
+
+    expect(onEmptyClick).toHaveBeenCalledTimes(1);
+    expect(onPan).not.toHaveBeenCalled();
+  });
+
+  it('does not call onEmptyClick after panning', async () => {
+    const onPan = jest.fn();
+    const onEmptyClick = jest.fn();
+    render(<PanTestbench onPan={onPan} onEmptyClick={onEmptyClick} />);
+    const surface = screen.getByTestId('pan-surface');
+    const user = userEvent.setup();
+
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: surface, coords: { x: 0, y: 0 } },
+      { coords: { x: 20, y: 10 } },
+      { keys: '[/MouseLeft]' },
+    ]);
+
+    expect(onPan).toHaveBeenCalledTimes(1);
+    expect(onEmptyClick).not.toHaveBeenCalled();
+  });
+
+  it('does not pan or clear when starting on a selectable item', async () => {
+    const onPan = jest.fn();
+    const onEmptyClick = jest.fn();
+    render(
+      <PanTestbench onPan={onPan} onEmptyClick={onEmptyClick}>
+        <div data-testid="selectable" data-selectable="true">
+          Element
+        </div>
+      </PanTestbench>,
+    );
+    const selectable = screen.getByTestId('selectable');
+    const user = userEvent.setup();
+
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: selectable, coords: { x: 0, y: 0 } },
+      { coords: { x: 20, y: 10 } },
+      { keys: '[/MouseLeft]' },
+    ]);
+
+    expect(onPan).not.toHaveBeenCalled();
+    expect(onEmptyClick).not.toHaveBeenCalled();
+  });
+
+  it('does not pan or clear when starting on an interactive control', async () => {
+    const onPan = jest.fn();
+    const onEmptyClick = jest.fn();
+    render(
+      <PanTestbench onPan={onPan} onEmptyClick={onEmptyClick}>
+        <button type="button" data-testid="interactive">
+          Action
+        </button>
+      </PanTestbench>,
+    );
+    const button = screen.getByTestId('interactive');
+    const user = userEvent.setup();
+
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: button, coords: { x: 0, y: 0 } },
+      { coords: { x: 20, y: 10 } },
+      { keys: '[/MouseLeft]' },
+    ]);
+
+    expect(onPan).not.toHaveBeenCalled();
+    expect(onEmptyClick).not.toHaveBeenCalled();
+  });
+
+  it('reserves shift + left drag for marquee selection', async () => {
+    const onPan = jest.fn();
+    const onEmptyClick = jest.fn();
+    render(<PanTestbench onPan={onPan} onEmptyClick={onEmptyClick} />);
+    const surface = screen.getByTestId('pan-surface');
+    const user = userEvent.setup();
+
+    await user.keyboard('{Shift>}');
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: surface, coords: { x: 0, y: 0 } },
+      { coords: { x: 20, y: 10 } },
+      { keys: '[/MouseLeft]' },
+    ]);
+    await user.keyboard('{/Shift}');
+
+    expect(onPan).not.toHaveBeenCalled();
+    expect(onEmptyClick).not.toHaveBeenCalled();
   });
 
   it('calls onPan with the pointer movement delta while space is pressed', async () => {
