@@ -86,6 +86,42 @@ describe('ViewportControls', () => {
     expect(screen.getByTestId('zoom-level')).toHaveTextContent('100%');
   });
 
+  it('renders zoom out and zoom in controls', () => {
+    renderControls();
+
+    expect(screen.getByRole('button', { name: 'Zoom out' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Zoom in' })).toBeEnabled();
+  });
+
+  it('zooms in and out in predictable steps', async () => {
+    const user = userEvent.setup();
+    const { store } = renderControls();
+
+    await user.click(screen.getByRole('button', { name: 'Zoom in' }));
+
+    expect(store.getSnapshot().scale).toBeCloseTo(1.2);
+    expect(screen.getByTestId('zoom-level')).toHaveTextContent('120%');
+
+    await user.click(screen.getByRole('button', { name: 'Zoom out' }));
+
+    expect(store.getSnapshot().scale).toBeCloseTo(1);
+    expect(screen.getByTestId('zoom-level')).toHaveTextContent('100%');
+  });
+
+  it('disables zoom controls at the scale limits', () => {
+    const { store } = renderControls();
+
+    act(() => store.setScale(MIN_CANVAS_SCALE));
+
+    expect(screen.getByRole('button', { name: 'Zoom out' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Zoom in' })).toBeEnabled();
+
+    act(() => store.setScale(MAX_CANVAS_SCALE));
+
+    expect(screen.getByRole('button', { name: 'Zoom out' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Zoom in' })).toBeDisabled();
+  });
+
   describe('zoom slider', () => {
     it('opens a slider popover when the zoom percentage is clicked', async () => {
       const user = userEvent.setup();

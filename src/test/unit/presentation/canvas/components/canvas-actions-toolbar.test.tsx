@@ -2,9 +2,9 @@ import { act, fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ComponentProps } from 'react';
 import { render } from '../../../../setup/render-with-theme';
-import { CanvasToolbar } from '../../../../../presentation/canvas/components/canvas-toolbar';
+import { CanvasActionsToolbar } from '../../../../../presentation/canvas/components/canvas-actions-toolbar';
 
-type ToolbarProps = ComponentProps<typeof CanvasToolbar>;
+type ToolbarProps = ComponentProps<typeof CanvasActionsToolbar>;
 
 function renderToolbar(overrides: Partial<ToolbarProps> = {}) {
   const onCreateElement = jest.fn();
@@ -30,7 +30,7 @@ function renderToolbar(overrides: Partial<ToolbarProps> = {}) {
     ...overrides,
   };
 
-  render(<CanvasToolbar {...props} />);
+  render(<CanvasActionsToolbar {...props} />);
 
   return {
     onCreateElement,
@@ -42,11 +42,14 @@ function renderToolbar(overrides: Partial<ToolbarProps> = {}) {
   };
 }
 
-describe('CanvasToolbar', () => {
+describe('CanvasActionsToolbar', () => {
   it('exposes an accessible toolbar', () => {
     renderToolbar();
 
-    expect(screen.getByRole('toolbar', { name: 'Canvas toolbar' })).toBeInTheDocument();
+    expect(screen.getByRole('toolbar', { name: 'Canvas toolbar' })).toHaveAttribute(
+      'aria-orientation',
+      'vertical',
+    );
   });
 
   it('uses icon buttons with accessible labels and ghost styling for creation tools', () => {
@@ -157,7 +160,7 @@ describe('CanvasToolbar', () => {
     expect(addNote).toHaveAttribute('tabindex', '-1');
 
     act(() => addText.focus());
-    await user.keyboard('{ArrowRight}');
+    await user.keyboard('{ArrowDown}');
 
     expect(addNote).toHaveFocus();
     expect(addNote).toHaveAttribute('tabindex', '0');
@@ -178,7 +181,7 @@ describe('CanvasToolbar', () => {
 
     const addText = screen.getByRole('button', { name: 'Add text' });
     act(() => addText.focus());
-    fireEvent.keyDown(addText, { key: 'ArrowRight' });
+    fireEvent.keyDown(addText, { key: 'ArrowDown' });
 
     document.removeEventListener('keydown', onDocumentKeyDown);
 
