@@ -25,6 +25,7 @@ import type { AlignmentMode, DistributionAxis } from '../../../application/servi
 import type { ElementType } from '../../../domain/element';
 import { ToolbarButton } from '../../components';
 import { useRovingFocus } from '../../hooks';
+import { useMediaQuery } from '../../hooks/use-media-query';
 import { useI18n, type TranslationKey } from '../../i18n';
 
 const ICON_SIZE = 16;
@@ -77,42 +78,63 @@ const ArrangeTrigger = styled(DropdownMenu.Trigger)`
 
 const Bar = styled.div`
   position: absolute;
-  top: ${({ theme }) => theme.space[4]};
-  left: 50%;
-  transform: translateX(-50%);
+  top: 50%;
+  left: ${({ theme }) => theme.space[4]};
+  transform: translateY(-50%);
   z-index: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: ${({ theme }) => theme.space[2]};
-  max-width: calc(100% - var(--rr-space-4) * 2);
-  padding: ${({ theme }) => `${theme.space[1]} ${theme.space[2]}`};
+  max-height: calc(100% - var(--rr-space-4) * 2);
+  padding: ${({ theme }) => `${theme.space[2]} ${theme.space[1]}`};
   border-radius: ${({ theme }) => theme.radius.md};
   background: ${({ theme }) => theme.color.background.surface};
   border: 1px solid ${({ theme }) => theme.color.border.default};
   box-shadow: ${({ theme }) => theme.shadow.md};
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
 
   @media (max-width: 900px) {
     top: auto;
     bottom: calc(var(--rr-space-4) + var(--rr-space-16) + var(--rr-space-2));
+    left: 50%;
+    transform: translateX(-50%);
+    flex-direction: row;
     max-width: calc(100% - var(--rr-space-3) * 2);
+    max-height: none;
+    padding: ${({ theme }) => `${theme.space[1]} ${theme.space[2]}`};
     overflow-x: auto;
     overflow-y: hidden;
     overscroll-behavior-x: contain;
+    overscroll-behavior-y: auto;
     scrollbar-width: thin;
   }
 `;
 
 const Group = styled.div`
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: ${({ theme }) => theme.space[1]};
+
+  @media (max-width: 900px) {
+    flex-direction: row;
+  }
 `;
 
 const Separator = styled.span`
   flex: none;
-  width: 1px;
-  height: ${({ theme }) => theme.space[5]};
+  width: ${({ theme }) => theme.space[5]};
+  height: 1px;
   background: ${({ theme }) => theme.color.border.default};
+
+  @media (max-width: 900px) {
+    width: 1px;
+    height: ${({ theme }) => theme.space[5]};
+  }
 `;
 
 interface ElementTool {
@@ -217,6 +239,7 @@ interface ToolbarActionProps {
   readonly icon: ReactNode;
   readonly onClick: () => void;
   readonly disabled?: boolean;
+  readonly tooltipPlacement: 'bottom' | 'right';
 }
 
 function ToolbarAction({
@@ -224,9 +247,10 @@ function ToolbarAction({
   icon,
   onClick,
   disabled = false,
+  tooltipPlacement,
 }: ToolbarActionProps): ReactElement {
   return (
-    <Tooltip content={label} placement="bottom">
+    <Tooltip content={label} placement={tooltipPlacement}>
       <ToolbarButton label={label} onClick={onClick} disabled={disabled}>
         {icon}
       </ToolbarButton>
@@ -234,7 +258,7 @@ function ToolbarAction({
   );
 }
 
-export interface CanvasToolbarProps {
+export interface CanvasActionsToolbarProps {
   readonly onCreateElement: (type: ElementType) => void;
   readonly onCreateConnector?: (mode: 'free' | 'bound') => void;
   readonly onDeleteSelection: () => void;
@@ -250,7 +274,7 @@ export interface CanvasToolbarProps {
   readonly canDistribute?: boolean;
 }
 
-export function CanvasToolbar({
+export function CanvasActionsToolbar({
   onCreateElement,
   onCreateConnector,
   onDeleteSelection,
@@ -264,8 +288,11 @@ export function CanvasToolbar({
   canCreateConnector = false,
   canAlign = false,
   canDistribute = false,
-}: CanvasToolbarProps): ReactElement {
-  const { ref } = useRovingFocus<HTMLDivElement>();
+}: CanvasActionsToolbarProps): ReactElement {
+  const isNarrow = useMediaQuery('(max-width: 900px)');
+  const orientation = isNarrow ? 'horizontal' : 'vertical';
+  const tooltipPlacement = isNarrow ? 'bottom' : 'right';
+  const { ref } = useRovingFocus<HTMLDivElement>({ orientation });
   const { t } = useI18n();
   const showArrange = onAlign !== undefined || onDistribute !== undefined;
 
@@ -274,7 +301,7 @@ export function CanvasToolbar({
       ref={ref}
       role="toolbar"
       aria-label={t('canvas.toolbar.label')}
-      aria-orientation="horizontal"
+      aria-orientation={orientation}
       data-testid="canvas-toolbar"
     >
       <Group>
@@ -287,6 +314,7 @@ export function CanvasToolbar({
               label={t(tool.label)}
               icon={tool.icon}
               disabled={disabled}
+              tooltipPlacement={tooltipPlacement}
               onClick={() => onCreateElement(tool.type)}
             />
           );
@@ -295,19 +323,21 @@ export function CanvasToolbar({
           label={t('canvas.toolbar.addConnector')}
           icon={<ArrowUpRight aria-hidden="true" size={ICON_SIZE} />}
           disabled={!canCreateFreeConnector}
+          tooltipPlacement={tooltipPlacement}
           onClick={() => onCreateConnector?.('free')}
         />
         <ToolbarAction
           label={t('canvas.toolbar.connectSelected')}
           icon={<Waypoints aria-hidden="true" size={ICON_SIZE} />}
           disabled={!canCreateConnector}
+          tooltipPlacement={tooltipPlacement}
           onClick={() => onCreateConnector?.('bound')}
         />
       </Group>
       {showArrange ? (
         <>
           <Separator aria-hidden="true" />
-          <Tooltip content={t('canvas.toolbar.arrange')} placement="bottom">
+          <Tooltip content={t('canvas.toolbar.arrange')} placement={tooltipPlacement}>
             <DropdownMenu>
               <ArrangeTrigger
                 aria-label={t('canvas.toolbar.arrange')}
@@ -316,7 +346,7 @@ export function CanvasToolbar({
               >
                 <AlignHorizontalSpaceBetween aria-hidden="true" size={ICON_SIZE} />
               </ArrangeTrigger>
-              <DropdownMenu.Content placement="bottom-start">
+              <DropdownMenu.Content placement={isNarrow ? 'bottom-start' : 'right-start'}>
                 {onAlign === undefined
                   ? null
                   : ALIGNMENT_TOOLS.map((tool) => (
@@ -353,12 +383,14 @@ export function CanvasToolbar({
         <ToolbarAction
           label={t('canvas.toolbar.fitView')}
           icon={<Scan aria-hidden="true" size={ICON_SIZE} />}
+          tooltipPlacement={tooltipPlacement}
           onClick={onFitView}
         />
         <ToolbarAction
           label={t('canvas.toolbar.deleteSelection')}
           icon={<Trash2 aria-hidden="true" size={ICON_SIZE} />}
           disabled={!hasSelection}
+          tooltipPlacement={tooltipPlacement}
           onClick={onDeleteSelection}
         />
       </Group>

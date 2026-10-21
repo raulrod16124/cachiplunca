@@ -1934,7 +1934,7 @@ describe('Canvas', () => {
       const user = userEvent.setup();
 
       act(() => screen.getByRole('button', { name: 'Add text' }).focus());
-      await user.keyboard('{ArrowRight}');
+      await user.keyboard('{ArrowDown}');
 
       expect(screen.getByRole('button', { name: 'Add note' })).toHaveFocus();
       expect(selectionStore.getSnapshot().selectedIds).toEqual([]);

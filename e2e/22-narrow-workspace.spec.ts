@@ -19,6 +19,29 @@ async function expectWithinViewport(
 test.describe('Narrow workspace surfaces', () => {
   test.use({ viewport: { width: 1280, height: 900 } });
 
+  test('anchors the canvas actions toolbar vertically on the left on desktop', async ({ page }) => {
+    await registerUser(page);
+    await createWorkspace(page, 'Desktop toolbar');
+
+    const toolbar = page.getByTestId('canvas-toolbar');
+    const canvas = page.getByRole('application', { name: 'Canvas' });
+    const toolbarBox = await toolbar.boundingBox();
+    const canvasBox = await canvas.boundingBox();
+
+    await expect(toolbar).toHaveAttribute('aria-orientation', 'vertical');
+    expect(toolbarBox).not.toBeNull();
+    expect(canvasBox).not.toBeNull();
+    expect(toolbarBox?.x ?? Number.POSITIVE_INFINITY).toBeLessThan(64);
+    expect(toolbarBox?.height ?? 0).toBeGreaterThan(toolbarBox?.width ?? 0);
+
+    const toolbarCenterY = (toolbarBox?.y ?? 0) + (toolbarBox?.height ?? 0) / 2;
+    const canvasTop = canvasBox?.y ?? 0;
+    const canvasHeight = canvasBox?.height ?? 0;
+
+    expect(toolbarCenterY).toBeGreaterThan(canvasTop + canvasHeight * 0.25);
+    expect(toolbarCenterY).toBeLessThan(canvasTop + canvasHeight * 0.75);
+  });
+
   test('keeps topbar actions, toolbar and drawers usable at narrow viewports', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await registerUser(page);
@@ -34,6 +57,7 @@ test.describe('Narrow workspace surfaces', () => {
 
       const toolbar = page.getByTestId('canvas-toolbar');
       await expect(toolbar).toBeVisible();
+      await expect(toolbar).toHaveAttribute('aria-orientation', 'horizontal');
       await expectWithinViewport(toolbar, width, 800);
 
       const deleteSelection = page.getByRole('button', { name: 'Delete selection' });

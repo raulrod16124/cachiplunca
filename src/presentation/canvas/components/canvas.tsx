@@ -77,7 +77,7 @@ import type { ElementRendererRegistry } from '../renderers';
 import { DecorativeSpark, PaperTexture } from '../../components/decorative';
 import { EmptyState } from '../../components/empty-state';
 import { useI18n } from '../../i18n';
-import { CanvasToolbar } from './canvas-toolbar';
+import { CanvasActionsToolbar } from './canvas-actions-toolbar';
 import { ElementContextMenu } from './element-context-menu';
 import { ElementEditorOverlay } from './element-editor-overlay';
 import { RemoteCursorsOverlay } from './remote-cursors-overlay';
@@ -1329,7 +1329,7 @@ export function Canvas({
         />
       )}
       {presentation ? null : (
-        <CanvasToolbar
+        <CanvasActionsToolbar
           onCreateElement={handleCreateElement}
           onCreateConnector={handleCreateConnector}
           onDeleteSelection={handleToolbarDelete}
