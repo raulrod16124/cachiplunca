@@ -53,15 +53,11 @@ const ArrangeTrigger = styled(DropdownMenu.Trigger)`
   transition-timing-function: ${({ theme }) => theme.motion.easing.standard};
 
   &:hover:not(:disabled) {
-    background: ${({ theme }) => theme.color.background.sunken};
+    background: var(--cach-control-hover);
   }
 
   &:active:not(:disabled) {
-    background: color-mix(
-      in srgb,
-      ${({ theme }) => theme.color.background.sunken} 82%,
-      ${({ theme }) => theme.color.text.primary}
-    );
+    background: var(--cach-control-active);
   }
 
   &:focus-visible {

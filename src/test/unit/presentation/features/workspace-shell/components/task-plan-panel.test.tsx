@@ -152,7 +152,7 @@ describe('TaskPlanPanel', () => {
     expect(card).toHaveAttribute('data-task-status', 'in_progress');
 
     const css = styleText();
-    expect(css).toContain('var(--rr-color-background-sunken)');
+    expect(css).toContain('var(--cach-control-hover)');
     expect(css).toContain('var(--rr-radius-lg)');
   });
 

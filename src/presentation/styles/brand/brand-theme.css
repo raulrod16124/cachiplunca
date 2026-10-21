@@ -34,6 +34,10 @@
   --cach-info-700: #1d4ed8;
   --cach-warning-500: #f9c80e;
 
+  /* Neutral control interaction surfaces. Dark theme overrides these below. */
+  --cach-control-hover: var(--cach-sand-200);
+  --cach-control-active: color-mix(in srgb, var(--cach-sand-200) 82%, var(--cach-graphite-900));
+
   /*
    * Sticky-note palette. Five pastel surfaces keep the canvas coherent while
    * staying distinguishable; `default` preserves the pre-redesign cream note.
@@ -300,6 +304,16 @@
   --rr-color-background-default: #14201b;
   --rr-color-background-surface: #1b2a23;
   --rr-color-background-sunken: #243830;
+  --cach-control-hover: color-mix(
+    in srgb,
+    var(--cach-olive-500) 28%,
+    var(--rr-color-background-surface)
+  );
+  --cach-control-active: color-mix(
+    in srgb,
+    var(--cach-olive-500) 38%,
+    var(--rr-color-background-surface)
+  );
   --rr-color-text-primary: var(--cach-cream-50);
   --rr-color-text-muted: #b9c0ae;
   --rr-color-text-inverse: #14201b;
@@ -376,6 +390,16 @@
     --rr-color-background-default: #14201b;
     --rr-color-background-surface: #1b2a23;
     --rr-color-background-sunken: #243830;
+    --cach-control-hover: color-mix(
+      in srgb,
+      var(--cach-olive-500) 28%,
+      var(--rr-color-background-surface)
+    );
+    --cach-control-active: color-mix(
+      in srgb,
+      var(--cach-olive-500) 38%,
+      var(--rr-color-background-surface)
+    );
     --rr-color-text-primary: var(--cach-cream-50);
     --rr-color-text-muted: #b9c0ae;
     --rr-color-text-inverse: #14201b;

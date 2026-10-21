@@ -1,5 +1,6 @@
-import { IconButton, type IconButtonProps } from '@raulrod/ui';
+import type { IconButtonProps } from '@raulrod/ui';
 import type { ReactElement, ReactNode } from 'react';
+import { NeutralIconButton } from './neutral-controls';
 
 export interface ToolbarButtonProps extends Omit<IconButtonProps, 'variant'> {
   readonly active?: boolean;
@@ -14,7 +15,7 @@ export function ToolbarButton({
   ...rest
 }: ToolbarButtonProps): ReactElement {
   return (
-    <IconButton
+    <NeutralIconButton
       type="button"
       variant={active ? 'primary' : 'ghost'}
       size={size}
@@ -22,6 +23,6 @@ export function ToolbarButton({
       {...rest}
     >
       {children}
-    </IconButton>
+    </NeutralIconButton>
   );
 }

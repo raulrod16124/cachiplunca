@@ -40,7 +40,7 @@ const MenuTrigger = styled(Dialog.Trigger)`
       ${({ theme }) => theme.motion.easing.standard};
 
   &:hover {
-    background: ${({ theme }) => theme.color.background.sunken};
+    background: var(--cach-control-hover);
   }
 
   &:focus-visible {

@@ -4,6 +4,12 @@ import { SessionTimer } from '../../../../../../presentation/features/workspace-
 
 const START = new Date('2026-01-01T12:00:00.000Z');
 
+function styleText(): string {
+  return [...document.head.querySelectorAll('style')]
+    .map((style) => style.textContent ?? '')
+    .join('');
+}
+
 function openTimer(): void {
   fireEvent.click(screen.getByTestId('session-timer-trigger'));
 }
@@ -24,6 +30,18 @@ afterEach(() => {
 });
 
 describe('SessionTimer', () => {
+  it('uses the shared neutral trigger styling', () => {
+    render(<SessionTimer />);
+
+    const trigger = screen.getByTestId('session-timer-trigger');
+    expect(getComputedStyle(trigger).borderTopColor).toBe('transparent');
+
+    const css = styleText();
+    expect(css).toContain('border:1px solid transparent');
+    expect(css).toContain('var(--rr-radius-md)');
+    expect(css).toContain('var(--cach-control-hover)');
+  });
+
   it('opens from the top bar and shows the default preset', () => {
     render(<SessionTimer />);
 

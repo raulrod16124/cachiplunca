@@ -1,9 +1,10 @@
-import { Heading, IconButton, Text } from '@raulrod/ui';
+import { Heading, Text } from '@raulrod/ui';
 import type { HeadingLevel } from '@raulrod/ui';
 import { X } from '@raulrod/icons';
 import type { HTMLAttributes, ReactNode } from 'react';
 import styled from 'styled-components';
 import { ActionRow } from './action-row';
+import { NeutralIconButton } from './neutral-controls';
 
 const Header = styled(ActionRow)`
   padding: ${({ theme }) => theme.space[4]};
@@ -68,9 +69,15 @@ export function PanelHeader({
       <Actions>
         {actions}
         {onClose === undefined ? null : (
-          <IconButton type="button" variant="ghost" size="sm" label={closeLabel} onClick={onClose}>
+          <NeutralIconButton
+            type="button"
+            variant="ghost"
+            size="sm"
+            label={closeLabel}
+            onClick={onClose}
+          >
             <X aria-hidden="true" size={16} />
-          </IconButton>
+          </NeutralIconButton>
         )}
       </Actions>
     );

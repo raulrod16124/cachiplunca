@@ -1,9 +1,7 @@
 import {
   Avatar,
   Badge,
-  Button,
   DropdownMenu,
-  IconButton,
   Inline,
   Popover,
   Text,
@@ -31,6 +29,7 @@ import type { PersistenceSyncStatus } from '../../../../application/services';
 import type { Presence } from '../../../../domain/collaboration';
 import type { MembershipRole } from '../../../../domain/membership';
 import type { Workspace } from '../../../../domain/workspace';
+import { NeutralButton, NeutralIconButton } from '../../../components';
 import {
   presenceColorFor,
   PRESENCE_TEXT_COLOR,
@@ -154,7 +153,7 @@ const PresenceTrigger = styled(Popover.Trigger)`
   cursor: pointer;
 
   &:hover {
-    background: ${({ theme }) => theme.color.background.sunken};
+    background: var(--cach-control-hover);
   }
 
   &:focus-visible {
@@ -199,11 +198,11 @@ const PresenceIdentity = styled.span`
   }
 `;
 
-const BackButton = styled(Button)`
+const BackButton = styled(NeutralButton)`
   flex: none;
 `;
 
-const TopbarButton = styled(IconButton)`
+const TopbarButton = styled(NeutralIconButton)`
   flex: none;
 `;
 
@@ -232,15 +231,11 @@ const MenuTrigger = styled(DropdownMenu.Trigger)`
       ${({ theme }) => theme.motion.easing.standard};
 
   &:hover:not(:disabled) {
-    background: ${({ theme }) => theme.color.background.sunken};
+    background: var(--cach-control-hover);
   }
 
   &:active:not(:disabled) {
-    background: color-mix(
-      in srgb,
-      ${({ theme }) => theme.color.background.sunken} 82%,
-      ${({ theme }) => theme.color.text.primary}
-    );
+    background: var(--cach-control-active);
   }
 
   &:focus-visible {
@@ -475,7 +470,7 @@ export function WorkspaceTopBar({
             <Tooltip content={t('canvas.topbar.share')} placement="bottom">
               <TopbarButton
                 type="button"
-                variant="secondary"
+                variant="ghost"
                 size="sm"
                 label={t('canvas.topbar.share')}
                 onClick={onShare}

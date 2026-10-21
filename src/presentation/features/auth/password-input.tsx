@@ -1,7 +1,8 @@
-import { IconButton, Input, type InputProps } from '@raulrod/ui';
+import { Input, type InputProps } from '@raulrod/ui';
 import { Eye, EyeOff } from '@raulrod/icons';
 import { useState, type ReactElement } from 'react';
 import styled from 'styled-components';
+import { NeutralIconButton } from '../../components';
 import { useI18n } from '../../i18n';
 
 const Wrapper = styled.span`
@@ -14,7 +15,7 @@ const Wrapper = styled.span`
   }
 `;
 
-const Toggle = styled(IconButton)`
+const Toggle = styled(NeutralIconButton)`
   position: absolute;
   top: 50%;
   right: ${({ theme }) => theme.space[1]};

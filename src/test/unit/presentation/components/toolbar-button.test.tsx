@@ -2,6 +2,12 @@ import { screen, fireEvent } from '@testing-library/react';
 import { render } from '../../../setup/render-with-theme';
 import { ToolbarButton } from '../../../../presentation/components/toolbar-button';
 
+function styleText(): string {
+  return [...document.head.querySelectorAll('style')]
+    .map((style) => style.textContent ?? '')
+    .join('');
+}
+
 describe('ToolbarButton', () => {
   it('renders children and is interactive', () => {
     const onClick = jest.fn();
@@ -26,6 +32,14 @@ describe('ToolbarButton', () => {
       </ToolbarButton>,
     );
     expect(screen.getByRole('button', { name: 'Idle' })).toHaveClass('rr-icon-button--primary');
+  });
+
+  it('uses the neutral sunken hover instead of the secondary action color', () => {
+    render(<ToolbarButton label="Neutral">Neutral</ToolbarButton>);
+
+    const css = styleText();
+    expect(css).toContain('var(--cach-control-hover)');
+    expect(css).not.toContain('var(--rr-color-action-secondary-background)');
   });
 
   it('uses the medium icon button size by default', () => {

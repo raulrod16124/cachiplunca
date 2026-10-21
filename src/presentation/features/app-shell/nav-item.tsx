@@ -32,7 +32,7 @@ const Root = styled.a<{ $active: boolean }>`
   }
 
   &:hover {
-    background: ${({ theme }) => theme.color.background.sunken};
+    background: var(--cach-control-hover);
     color: ${({ theme }) => theme.color.text.primary};
   }
 

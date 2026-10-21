@@ -214,7 +214,9 @@ describe('WorkspaceTopBar', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Share' }));
+    const share = screen.getByRole('button', { name: 'Share' });
+    expect(share).toHaveClass('rr-icon-button--ghost');
+    fireEvent.click(share);
     expect(onShare).toHaveBeenCalledTimes(1);
     unmount();
 

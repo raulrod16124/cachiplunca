@@ -42,4 +42,10 @@ describe('brand tokens', () => {
     expect(BRAND_THEME_CSS).not.toContain('#2563eb');
     expect(BRAND_THEME_CSS).not.toContain('#155dfc');
   });
+
+  it('defines distinct neutral control hover surfaces for light and dark', () => {
+    expect(BRAND_THEME_CSS).toContain('--cach-control-hover: var(--cach-sand-200);');
+    expect(BRAND_THEME_CSS.match(/--cach-control-hover: color-mix\(/g) ?? []).toHaveLength(2);
+    expect(BRAND_THEME_CSS).toContain('var(--cach-olive-500) 28%');
+  });
 });

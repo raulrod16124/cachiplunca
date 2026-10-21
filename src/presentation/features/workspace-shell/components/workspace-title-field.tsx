@@ -1,10 +1,10 @@
-import { Heading, IconButton, Input, Tooltip } from '@raulrod/ui';
+import { Heading, Input, Tooltip } from '@raulrod/ui';
 import { Pencil } from '@raulrod/icons';
 import { useId, useLayoutEffect, useRef, useState } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
 import styled from 'styled-components';
 import type { UpdateWorkspaceResult } from '../../../../application/commands';
-import { FieldError } from '../../../components';
+import { FieldError, NeutralIconButton } from '../../../components';
 import { localizeFieldError, useI18n } from '../../../i18n';
 
 const TitleGroup = styled.span`
@@ -28,7 +28,7 @@ const TruncatedHeading = styled(Heading)`
   }
 `;
 
-const EditAffordance = styled(IconButton)`
+const EditAffordance = styled(NeutralIconButton)`
   flex: none;
   opacity: 0;
   transition: opacity ${({ theme }) => theme.motion.duration.fast} ease;

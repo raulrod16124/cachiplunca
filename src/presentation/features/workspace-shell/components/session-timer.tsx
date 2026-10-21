@@ -36,7 +36,7 @@ const Trigger = styled(Popover.Trigger)`
   align-items: center;
   gap: ${({ theme }) => theme.space[1]};
   padding: ${({ theme }) => `${theme.space[1]} ${theme.space[2]}`};
-  border: 1px solid ${({ theme }) => theme.color.border.strong};
+  border: 1px solid transparent;
   border-radius: ${({ theme }) => theme.radius.md};
   background: transparent;
   color: ${({ theme }) => theme.color.text.primary};
@@ -46,9 +46,16 @@ const Trigger = styled(Popover.Trigger)`
   line-height: ${({ theme }) => theme.font.leading.none};
   font-variant-numeric: tabular-nums;
   cursor: pointer;
+  transition-property: background-color, color;
+  transition-duration: ${({ theme }) => theme.motion.duration.fast};
+  transition-timing-function: ${({ theme }) => theme.motion.easing.standard};
 
   &:hover {
-    background: ${({ theme }) => theme.color.background.sunken};
+    background: var(--cach-control-hover);
+  }
+
+  &:active {
+    background: var(--cach-control-active);
   }
 
   &:focus-visible {

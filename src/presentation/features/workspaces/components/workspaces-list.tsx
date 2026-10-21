@@ -6,6 +6,7 @@ import { can } from '../../../../domain/membership';
 import type { MembershipRole } from '../../../../domain/membership';
 import type { Workspace } from '../../../../domain/workspace';
 import { Card } from '../../../components/card';
+import { NeutralIconButton } from '../../../components/neutral-controls';
 import { EmptyState } from '../../../components/empty-state';
 import { ErrorState } from '../../../components/error-state';
 import { LoadingState } from '../../../components/loading-state';
@@ -282,7 +283,7 @@ export function WorkspacesList({
                       <CardActions>
                         {canEdit && onEdit !== undefined && (
                           <Tooltip content={t('workspaces.card.edit')}>
-                            <IconButton
+                            <NeutralIconButton
                               type="button"
                               variant="ghost"
                               size="sm"
@@ -290,12 +291,12 @@ export function WorkspacesList({
                               onClick={() => onEdit(workspace)}
                             >
                               <Pencil aria-hidden="true" size={15} />
-                            </IconButton>
+                            </NeutralIconButton>
                           </Tooltip>
                         )}
                         {canDuplicate && onDuplicate !== undefined && (
                           <Tooltip content={t('workspaces.card.duplicate')}>
-                            <IconButton
+                            <NeutralIconButton
                               type="button"
                               variant="ghost"
                               size="sm"
@@ -304,7 +305,7 @@ export function WorkspacesList({
                               onClick={() => onDuplicate(workspace)}
                             >
                               <Copy aria-hidden="true" size={15} />
-                            </IconButton>
+                            </NeutralIconButton>
                           </Tooltip>
                         )}
                         {canDelete && onRequestDelete !== undefined && (

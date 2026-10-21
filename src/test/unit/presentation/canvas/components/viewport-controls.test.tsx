@@ -54,6 +54,8 @@ describe('ViewportControls', () => {
     expect(css).toContain('var(--rr-space-4)');
     expect(css).toContain('var(--rr-space-2)');
     expect(css).toContain('var(--rr-color-focus-ring)');
+    expect(css).toContain('var(--cach-control-hover)');
+    expect(css).not.toContain('var(--rr-color-action-secondary-background)');
     expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
   });
 
