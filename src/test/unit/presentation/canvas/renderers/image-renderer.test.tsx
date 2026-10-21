@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { createImageElement, createTextElement } from '../../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../../domain/shared';
 import { ElementView, ImageRenderer } from '../../../../../presentation/canvas/renderers';
@@ -38,6 +38,59 @@ describe('ImageRenderer', () => {
 
     const image = document.querySelector('img');
     expect(image).toHaveAttribute('alt', '');
+  });
+
+  it('starts in the loading state with a visual placeholder', () => {
+    render(<ImageRenderer element={createImage()} selected={false} />);
+
+    const content = document.querySelector('[data-element-content]');
+    expect(content).toHaveAttribute('data-image-state', 'loading');
+    expect(content).toHaveAttribute('aria-busy', 'true');
+    expect(document.querySelector('[data-image-overlay]')).toBeInTheDocument();
+  });
+
+  it('switches to the loaded state after the image loads', () => {
+    render(<ImageRenderer element={createImage()} selected={false} />);
+
+    fireEvent.load(screen.getByRole('img', { name: 'Architecture diagram' }));
+
+    const content = document.querySelector('[data-element-content]');
+    expect(content).toHaveAttribute('data-image-state', 'loaded');
+    expect(content).not.toHaveAttribute('aria-busy');
+    expect(document.querySelector('[data-image-overlay]')).not.toBeInTheDocument();
+  });
+
+  it('shows a non-color error state when the image fails', () => {
+    render(<ImageRenderer element={createImage()} selected={false} />);
+
+    fireEvent.error(screen.getByRole('img', { name: 'Architecture diagram' }));
+
+    const content = document.querySelector('[data-element-content]');
+    expect(content).toHaveAttribute('data-image-state', 'error');
+    expect(document.querySelector('[data-image-overlay]')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Architecture diagram' })).toBeInTheDocument();
+  });
+
+  it('returns to the loading state when the source changes', () => {
+    const { rerender } = render(<ImageRenderer element={createImage()} selected={false} />);
+
+    fireEvent.load(screen.getByRole('img', { name: 'Architecture diagram' }));
+    expect(document.querySelector('[data-element-content]')).toHaveAttribute(
+      'data-image-state',
+      'loaded',
+    );
+
+    rerender(
+      <ImageRenderer
+        element={createImage({ src: 'https://example.com/another-image.png' })}
+        selected={false}
+      />,
+    );
+
+    expect(document.querySelector('[data-element-content]')).toHaveAttribute(
+      'data-image-state',
+      'loading',
+    );
   });
 
   it('returns null for a non-image element', () => {

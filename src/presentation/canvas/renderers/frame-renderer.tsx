@@ -12,11 +12,12 @@ const Content = styled.div`
   flex-direction: column;
   overflow: hidden;
   border: 1px dashed ${({ theme }) => theme.canvas.elementBorder};
-  border-radius: ${({ theme }) => theme.radius.sm};
+  border-radius: ${({ theme }) => theme.radius.md};
   background-color: ${({ theme }) => theme.canvas.surfaceMuted};
   color: ${({ theme }) => theme.color.text.primary};
+  font-family: ${({ theme }) => theme.font.family.sans};
   font-size: ${({ theme }) => theme.font.size.sm};
-  line-height: 1.4;
+  line-height: ${({ theme }) => theme.font.leading.normal};
   cursor: pointer;
 `;
 

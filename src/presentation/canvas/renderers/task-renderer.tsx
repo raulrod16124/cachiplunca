@@ -23,7 +23,7 @@ const Content = styled.div<{ readonly $overdue: boolean }>`
   gap: 6px;
   padding: 12px;
   overflow: hidden;
-  border-radius: ${({ theme }) => theme.radius.sm};
+  border-radius: ${({ theme }) => theme.radius.md};
   border-width: 1px;
   border-style: solid;
   border-color: ${({ $overdue, theme }) =>
@@ -32,6 +32,7 @@ const Content = styled.div<{ readonly $overdue: boolean }>`
     $overdue ? `inset 3px 0 0 ${theme.color.border.danger}` : 'none'};
   background-color: ${({ theme }) => theme.canvas.surface};
   color: ${({ theme }) => theme.color.text.primary};
+  font-family: ${({ theme }) => theme.font.family.sans};
   font-size: ${({ theme }) => theme.font.size.sm};
   line-height: 1.4;
   cursor: pointer;
@@ -85,6 +86,12 @@ const StatusTrigger = styled(DropdownMenu.Trigger)`
   background: none;
   cursor: pointer;
   font: inherit;
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.focusRing};
+    outline-offset: 2px;
+    border-radius: ${({ theme }) => theme.radius.sm};
+  }
 `;
 
 const Caret = styled.span`

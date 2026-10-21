@@ -14,14 +14,15 @@ const Content = styled.div`
   gap: 4px;
   padding: 12px;
   overflow: hidden;
-  border-radius: ${({ theme }) => theme.radius.sm};
+  border-radius: ${({ theme }) => theme.radius.md};
   border-width: 1px;
   border-style: solid;
   border-color: ${({ theme }) => theme.canvas.elementBorderSoft};
   background-color: ${({ theme }) => theme.canvas.surface};
   color: ${({ theme }) => theme.color.text.primary};
+  font-family: ${({ theme }) => theme.font.family.sans};
   font-size: ${({ theme }) => theme.font.size.sm};
-  line-height: 1.4;
+  line-height: ${({ theme }) => theme.font.leading.normal};
   cursor: pointer;
 `;
 
@@ -33,6 +34,9 @@ const Title = styled.div`
 const Url = styled.div`
   color: ${({ theme }) => theme.color.link.text};
   overflow-wrap: anywhere;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
 `;
 
 export function LinkRenderer({ element }: ElementRendererProps): ReactElement | null {
