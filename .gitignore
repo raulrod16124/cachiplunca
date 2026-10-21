@@ -28,8 +28,10 @@ coverage
 *.njsproj
 *.sln
 *.sw?
-# Redesign board — local only
+# Local planning docs — not committed
 /docs/CACHIPLUNCA_REDESIGN_JIRA.md
+/docs/CACHIPLUNCA_HARDENING_JIRA.md
+/docs/CACHIPLUNCA_UX_IMPROVEMENTS_JIRA.md
 /docs/design/
 
 # Playwright artifacts
