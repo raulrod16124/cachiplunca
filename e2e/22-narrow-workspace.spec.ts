@@ -82,6 +82,15 @@ test.describe('Narrow workspace surfaces', () => {
     const plan = page.getByTestId('task-plan-panel');
     await expect(plan).toBeVisible();
     await expectWithinViewport(plan, 390, 800);
+
+    const planTabs = plan.getByRole('tablist', { name: 'Task plan view' });
+    await expect(planTabs).toBeVisible();
+    await expectWithinViewport(planTabs, 390, 800);
+    const tabsOverflow = await planTabs.evaluate(
+      (element) => element.scrollWidth > element.clientWidth + 1,
+    );
+    expect(tabsOverflow).toBe(false);
+
     await page.getByRole('button', { name: 'Close task plan' }).click();
     await expect(plan).toBeHidden();
 

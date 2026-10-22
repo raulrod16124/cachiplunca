@@ -136,6 +136,27 @@ body {
   text-align: center;
 }
 
+/*
+ * The task plan lives inside a right-anchored drawer whose body owns the only
+ * vertical scroll. The DS tab rail is `inline-flex` with `overflow-x: auto`,
+ * which opens a second scrollport and can clip the 2px focus ring. Scope the
+ * full-width rail and shrinkable triggers to the plan without touching the DS.
+ */
+.task-plan-view-tabs {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+  scroll-snap-type: none;
+}
+
+.task-plan-view-trigger {
+  flex: 1 1 0;
+  min-width: 0;
+  white-space: nowrap;
+  text-align: center;
+}
+
 /* Board export: only the snapshot is printed, never the interactive shell. */
 @media print {
   @page {
