@@ -1445,6 +1445,80 @@ describe('Canvas', () => {
     });
   });
 
+  describe('clipboard paste', () => {
+    function clipboardData(files: readonly File[] = [], text = '') {
+      return {
+        files,
+        getData: (format: string) => (format === 'text/plain' ? text : ''),
+      };
+    }
+
+    function renderPasteCanvas(props: {
+      readonly onPasteText?: (text: string, position?: Position) => void;
+      readonly onUploadImage?: (
+        file: File,
+        position?: Position,
+      ) => Promise<ElementId | void> | ElementId | void;
+      readonly readOnly?: boolean;
+    }) {
+      const store = createCanvasViewportStore(Size.create(800, 600));
+      const selectionStore = createSelectionStore();
+
+      render(<Canvas store={store} selectionStore={selectionStore} {...props} />);
+
+      return screen.getByRole('application', { name: 'Canvas' });
+    }
+
+    it('creates text at the viewport centre on paste', () => {
+      const onPasteText = jest.fn();
+      const canvas = renderPasteCanvas({ onPasteText });
+
+      const notPrevented = fireEvent.paste(canvas, {
+        clipboardData: clipboardData([], 'Hello\nWorld'),
+      });
+
+      expect(notPrevented).toBe(false);
+      expect(onPasteText).toHaveBeenCalledWith(
+        'Hello\nWorld',
+        expect.objectContaining({ x: 320, y: 280 }),
+      );
+    });
+
+    it('forwards a pasted image with the default image size position', () => {
+      const onUploadImage = jest.fn();
+      const file = new File(['image'], 'screenshot.png', { type: 'image/png' });
+      const canvas = renderPasteCanvas({ onUploadImage });
+
+      fireEvent.paste(canvas, { clipboardData: clipboardData([file]) });
+
+      expect(onUploadImage).toHaveBeenCalledWith(file, expect.objectContaining({ x: 240, y: 200 }));
+    });
+
+    it('does not accept pasted content in read-only mode', () => {
+      const onPasteText = jest.fn();
+      const canvas = renderPasteCanvas({ onPasteText, readOnly: true });
+
+      fireEvent.paste(canvas, { clipboardData: clipboardData([], 'Hello') });
+
+      expect(onPasteText).not.toHaveBeenCalled();
+    });
+
+    it('does not intercept paste inside a contenteditable element', () => {
+      const onPasteText = jest.fn();
+      const canvas = renderPasteCanvas({ onPasteText });
+      const editable = document.createElement('div');
+      editable.setAttribute('contenteditable', 'true');
+      canvas.appendChild(editable);
+
+      const notPrevented = fireEvent.paste(editable, {
+        clipboardData: clipboardData([], 'Hello'),
+      });
+
+      expect(notPrevented).toBe(true);
+      expect(onPasteText).not.toHaveBeenCalled();
+    });
+  });
+
   describe('z-order', () => {
     it('brings the selected item to the front on Ctrl+]', async () => {
       const onReorderElements = jest.fn();

@@ -588,6 +588,40 @@ export function WorkspaceShellContainer({
     [imageServices, localUserId, workspaceId, createElement, commitElements],
   );
 
+  const handlePasteText = useCallback(
+    (text: string, position?: Position): ElementId | void => {
+      if (localUserId === undefined) {
+        return;
+      }
+
+      const size = defaultElementSize('text');
+      const createPosition =
+        position ??
+        resolveElementCreatePosition(canvasViewportStoreRef.current.getSnapshot(), size);
+
+      const created = createElement({
+        type: 'text',
+        workspaceId: WorkspaceId.create(workspaceId),
+        createdBy: UserId.create(localUserId),
+        position: createPosition,
+        size,
+        content: text,
+      });
+
+      if (created.status === 'error') {
+        setCreationError(created.error);
+        return;
+      }
+
+      setCreationError(null);
+      commitElements([...elementsRef.current, created.element], 'Create text');
+      selectionStoreRef.current.select(created.element.id.value);
+
+      return created.element.id;
+    },
+    [localUserId, workspaceId, createElement, commitElements],
+  );
+
   const handleCreateConnector = useCallback(
     (mode: 'free' | 'bound'): ElementId | void => {
       if (localUserId === undefined) {
@@ -1283,6 +1317,7 @@ export function WorkspaceShellContainer({
           onUploadImage={
             canCreateElement && imageServices !== undefined ? handleUploadImage : undefined
           }
+          onPasteText={canCreateElement ? handlePasteText : undefined}
           onCreateConnector={canCreateElement ? handleCreateConnector : undefined}
           onCreateTask={canCreateElement ? handleCreateTask : undefined}
           onCreateTaskFromElement={canCreateElement ? handleCreateTaskFromElement : undefined}

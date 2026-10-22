@@ -10,6 +10,17 @@ export const IMAGE_ALLOWED_CONTENT_TYPES = [
   'image/gif',
 ] as const;
 
+const IMAGE_FILE_EXTENSION_PATTERN = /\.(png|jpe?g|webp|gif)$/i;
+
+export interface ImageFileDescriptor {
+  readonly name: string;
+  readonly type: string;
+}
+
+export function isImageFileLike(file: ImageFileDescriptor): boolean {
+  return isAllowedContentType(file.type) || IMAGE_FILE_EXTENSION_PATTERN.test(file.name);
+}
+
 export function validateImageUploadFile(file: ImageUploadFile): AppError | null {
   if (!isAllowedContentType(file.contentType)) {
     return createAppError(

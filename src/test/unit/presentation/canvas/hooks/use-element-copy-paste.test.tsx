@@ -28,6 +28,13 @@ function CopyPasteTestbench({ children, ...options }: CopyPasteTestbenchProps): 
   );
 }
 
+function clipboardData(files: readonly File[] = [], text = '') {
+  return {
+    files,
+    getData: (format: string) => (format === 'text/plain' ? text : ''),
+  };
+}
+
 const CREATED_AT = new Date('2024-01-01T00:00:00Z');
 
 function createElement(id: string): Element {
@@ -55,7 +62,7 @@ const FIRST_ITEM = createElement('first');
 const SECOND_ITEM = createElement('second');
 
 describe('useElementCopyPaste', () => {
-  it('does not call any handler without a keydown', () => {
+  it('does not call any handler without a keydown or paste', () => {
     const onPasteElements = jest.fn();
 
     render(
@@ -70,7 +77,7 @@ describe('useElementCopyPaste', () => {
     expect(onPasteElements).not.toHaveBeenCalled();
   });
 
-  it('copies the selection and pastes a new element on Ctrl+C then Ctrl+V', () => {
+  it('copies the selection and pastes a new element on Ctrl+C then paste', () => {
     const onPasteElements = jest.fn();
     render(
       <CopyPasteTestbench
@@ -83,7 +90,7 @@ describe('useElementCopyPaste', () => {
 
     const surface = screen.getByTestId('copy-paste-surface');
     fireEvent.keyDown(surface, { key: 'c', ctrlKey: true });
-    fireEvent.keyDown(surface, { key: 'v', ctrlKey: true });
+    fireEvent.paste(surface, { clipboardData: clipboardData() });
 
     expect(onPasteElements).toHaveBeenCalledTimes(1);
 
@@ -97,7 +104,7 @@ describe('useElementCopyPaste', () => {
     expect(pasted.position.y).toBe(36);
   });
 
-  it('pastes on Cmd+V after copying on Cmd+C', async () => {
+  it('pastes a new element on Cmd+V after copying on Cmd+C', async () => {
     const onPasteElements = jest.fn();
     render(
       <CopyPasteTestbench
@@ -108,10 +115,11 @@ describe('useElementCopyPaste', () => {
       />,
     );
 
-    screen.getByTestId('copy-paste-surface').focus();
+    const surface = screen.getByTestId('copy-paste-surface');
+    surface.focus();
     const user = userEvent.setup();
     await user.keyboard('{Meta>}c{/Meta}');
-    await user.keyboard('{Meta>}v{/Meta}');
+    fireEvent.paste(surface, { clipboardData: clipboardData() });
 
     expect(onPasteElements).toHaveBeenCalledTimes(1);
   });
@@ -129,11 +137,93 @@ describe('useElementCopyPaste', () => {
 
     const surface = screen.getByTestId('copy-paste-surface');
     fireEvent.keyDown(surface, { key: 'c', ctrlKey: true });
-    fireEvent.keyDown(surface, { key: 'v', ctrlKey: true });
+    fireEvent.paste(surface, { clipboardData: clipboardData() });
 
     const [elements, pastedIds] = onPasteElements.mock.calls[0];
     expect(elements).toHaveLength(4);
     expect(pastedIds).toEqual(['pasted-1', 'pasted-2']);
+  });
+
+  it('pastes plain text from the system clipboard', () => {
+    const onPasteText = jest.fn();
+    render(
+      <CopyPasteTestbench
+        elements={[FIRST_ITEM]}
+        selectedIds={['first']}
+        onPasteText={onPasteText}
+      />,
+    );
+
+    const notPrevented = fireEvent.paste(screen.getByTestId('copy-paste-surface'), {
+      clipboardData: clipboardData([], 'Hello\nWorld'),
+    });
+
+    expect(notPrevented).toBe(false);
+    expect(onPasteText).toHaveBeenCalledTimes(1);
+    expect(onPasteText).toHaveBeenCalledWith('Hello\nWorld');
+  });
+
+  it('pastes an image from the system clipboard', () => {
+    const onPasteImage = jest.fn();
+    const file = new File(['image'], 'screenshot.png', { type: 'image/png' });
+    render(
+      <CopyPasteTestbench
+        elements={[FIRST_ITEM]}
+        selectedIds={['first']}
+        onPasteImage={onPasteImage}
+      />,
+    );
+
+    const notPrevented = fireEvent.paste(screen.getByTestId('copy-paste-surface'), {
+      clipboardData: clipboardData([file]),
+    });
+
+    expect(notPrevented).toBe(false);
+    expect(onPasteImage).toHaveBeenCalledTimes(1);
+    expect(onPasteImage).toHaveBeenCalledWith(file);
+  });
+
+  it('prefers external text over internally copied elements', () => {
+    const onPasteElements = jest.fn();
+    const onPasteText = jest.fn();
+    render(
+      <CopyPasteTestbench
+        elements={[FIRST_ITEM]}
+        selectedIds={['first']}
+        generateId={sequentialIds()}
+        onPasteElements={onPasteElements}
+        onPasteText={onPasteText}
+      />,
+    );
+
+    const surface = screen.getByTestId('copy-paste-surface');
+    fireEvent.keyDown(surface, { key: 'c', ctrlKey: true });
+    fireEvent.paste(surface, { clipboardData: clipboardData([], 'external') });
+
+    expect(onPasteText).toHaveBeenCalledWith('external');
+    expect(onPasteElements).not.toHaveBeenCalled();
+  });
+
+  it('prefers an external image over internally copied elements', () => {
+    const onPasteElements = jest.fn();
+    const onPasteImage = jest.fn();
+    const file = new File(['image'], 'screenshot.png', { type: 'image/png' });
+    render(
+      <CopyPasteTestbench
+        elements={[FIRST_ITEM]}
+        selectedIds={['first']}
+        generateId={sequentialIds()}
+        onPasteElements={onPasteElements}
+        onPasteImage={onPasteImage}
+      />,
+    );
+
+    const surface = screen.getByTestId('copy-paste-surface');
+    fireEvent.keyDown(surface, { key: 'c', ctrlKey: true });
+    fireEvent.paste(surface, { clipboardData: clipboardData([file]) });
+
+    expect(onPasteImage).toHaveBeenCalledWith(file);
+    expect(onPasteElements).not.toHaveBeenCalled();
   });
 
   it('does nothing on paste when nothing was copied', () => {
@@ -147,9 +237,8 @@ describe('useElementCopyPaste', () => {
       />,
     );
 
-    const notPrevented = fireEvent.keyDown(screen.getByTestId('copy-paste-surface'), {
-      key: 'v',
-      ctrlKey: true,
+    const notPrevented = fireEvent.paste(screen.getByTestId('copy-paste-surface'), {
+      clipboardData: clipboardData(),
     });
 
     expect(notPrevented).toBe(true);
@@ -169,12 +258,12 @@ describe('useElementCopyPaste', () => {
 
     const surface = screen.getByTestId('copy-paste-surface');
     fireEvent.keyDown(surface, { key: 'c', ctrlKey: true });
-    fireEvent.keyDown(surface, { key: 'v', ctrlKey: true });
+    fireEvent.paste(surface, { clipboardData: clipboardData() });
 
     expect(onPasteElements).not.toHaveBeenCalled();
   });
 
-  it('ignores a plain v without a modifier', () => {
+  it('ignores a plain v without a modifier', async () => {
     const onPasteElements = jest.fn();
     render(
       <CopyPasteTestbench
@@ -188,6 +277,8 @@ describe('useElementCopyPaste', () => {
     const surface = screen.getByTestId('copy-paste-surface');
     fireEvent.keyDown(surface, { key: 'c', ctrlKey: true });
     fireEvent.keyDown(surface, { key: 'v' });
+
+    await Promise.resolve();
 
     expect(onPasteElements).not.toHaveBeenCalled();
   });
@@ -210,7 +301,7 @@ describe('useElementCopyPaste', () => {
     expect(onPasteElements).not.toHaveBeenCalled();
   });
 
-  it('ignores repeated paste keydowns', () => {
+  it('ignores repeated paste keydowns and pastes once from the fallback', async () => {
     const onPasteElements = jest.fn();
     render(
       <CopyPasteTestbench
@@ -226,10 +317,59 @@ describe('useElementCopyPaste', () => {
     fireEvent.keyDown(surface, { key: 'v', ctrlKey: true });
     fireEvent.keyDown(surface, { key: 'v', ctrlKey: true, repeat: true });
 
+    await Promise.resolve();
+
     expect(onPasteElements).toHaveBeenCalledTimes(1);
   });
 
-  it('ignores commands while an editable target is focused', () => {
+  it('keeps the keydown fallback when the paste event does not fire', async () => {
+    const onPasteElements = jest.fn();
+    render(
+      <CopyPasteTestbench
+        elements={[FIRST_ITEM]}
+        selectedIds={['first']}
+        generateId={sequentialIds()}
+        onPasteElements={onPasteElements}
+      />,
+    );
+
+    const surface = screen.getByTestId('copy-paste-surface');
+    fireEvent.keyDown(surface, { key: 'c', ctrlKey: true });
+    fireEvent.keyDown(surface, { key: 'v', ctrlKey: true });
+
+    await Promise.resolve();
+
+    expect(onPasteElements).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not intercept paste inside editable targets', () => {
+    const onPasteText = jest.fn();
+    const onPasteElements = jest.fn();
+    render(
+      <CopyPasteTestbench
+        elements={[FIRST_ITEM]}
+        selectedIds={['first']}
+        generateId={sequentialIds()}
+        onPasteElements={onPasteElements}
+        onPasteText={onPasteText}
+      >
+        <input data-testid="editable" />
+        <div data-testid="rich-editable" contentEditable="true" />
+      </CopyPasteTestbench>,
+    );
+
+    for (const testId of ['editable', 'rich-editable']) {
+      const notPrevented = fireEvent.paste(screen.getByTestId(testId), {
+        clipboardData: clipboardData([], 'hello'),
+      });
+      expect(notPrevented).toBe(true);
+    }
+
+    expect(onPasteText).not.toHaveBeenCalled();
+    expect(onPasteElements).not.toHaveBeenCalled();
+  });
+
+  it('ignores copy commands while an editable target is focused', () => {
     const onPasteElements = jest.fn();
     render(
       <CopyPasteTestbench
@@ -245,7 +385,7 @@ describe('useElementCopyPaste', () => {
     const editable = screen.getByTestId('editable');
     editable.focus();
     fireEvent.keyDown(editable, { key: 'c', ctrlKey: true });
-    fireEvent.keyDown(editable, { key: 'v', ctrlKey: true });
+    fireEvent.paste(editable, { clipboardData: clipboardData() });
 
     expect(onPasteElements).not.toHaveBeenCalled();
   });
@@ -264,7 +404,7 @@ describe('useElementCopyPaste', () => {
 
     const surface = screen.getByTestId('copy-paste-surface');
     fireEvent.keyDown(surface, { key: 'c', ctrlKey: true });
-    fireEvent.keyDown(surface, { key: 'v', ctrlKey: true });
+    fireEvent.paste(surface, { clipboardData: clipboardData() });
 
     expect(onPasteElements).not.toHaveBeenCalled();
   });
@@ -281,7 +421,7 @@ describe('useElementCopyPaste', () => {
 
     const surface = screen.getByTestId('copy-paste-surface');
     fireEvent.keyDown(surface, { key: 'c', ctrlKey: true });
-    const notPrevented = fireEvent.keyDown(surface, { key: 'v', ctrlKey: true });
+    const notPrevented = fireEvent.paste(surface, { clipboardData: clipboardData() });
 
     expect(notPrevented).toBe(true);
     expect(onPasteElements).not.toHaveBeenCalled();
@@ -298,7 +438,7 @@ describe('useElementCopyPaste', () => {
 
     const surface = screen.getByTestId('copy-paste-surface');
     fireEvent.keyDown(surface, { key: 'c', ctrlKey: true });
-    const notPrevented = fireEvent.keyDown(surface, { key: 'v', ctrlKey: true });
+    const notPrevented = fireEvent.paste(surface, { clipboardData: clipboardData() });
 
     expect(notPrevented).toBe(true);
   });
@@ -316,7 +456,9 @@ describe('useElementCopyPaste', () => {
 
     const surface = screen.getByTestId('copy-paste-surface');
     const copyNotPrevented = fireEvent.keyDown(surface, { key: 'c', ctrlKey: true });
-    const pasteNotPrevented = fireEvent.keyDown(surface, { key: 'v', ctrlKey: true });
+    const pasteNotPrevented = fireEvent.paste(surface, {
+      clipboardData: clipboardData(),
+    });
 
     expect(copyNotPrevented).toBe(false);
     expect(pasteNotPrevented).toBe(false);
@@ -337,7 +479,7 @@ describe('useElementCopyPaste', () => {
     const surface = screen.getByTestId('copy-paste-surface');
     fireEvent.keyDown(surface, { key: 'c', ctrlKey: true });
     unmount();
-    fireEvent.keyDown(surface, { key: 'v', ctrlKey: true });
+    fireEvent.paste(surface, { clipboardData: clipboardData() });
 
     expect(onPasteElements).not.toHaveBeenCalled();
   });

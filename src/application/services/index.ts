@@ -43,3 +43,4 @@ export * from './presentation';
 export * from './task-due-date';
 export * from './task-from-element';
 export * from './image-upload';
+export * from './clipboard-content';

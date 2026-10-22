@@ -47,9 +47,11 @@ import {
   findSelectableAt,
   getVisibleElementIds,
   IMAGE_ALLOWED_CONTENT_TYPES,
+  isImageFileLike,
   parseTaskDueDateInput,
   resolveConnectorGeometry,
   resolveDropCreatePosition,
+  resolveElementCreatePosition,
   sendElementsToBack,
   taskDraftFromElement,
   taskDueDateInputValue,
@@ -226,8 +228,6 @@ const BOARD_SUMMARY_ID = 'canvas-board-summary';
 const CANVAS_SHORTCUTS =
   'Arrow keys to move selection · Shift + Arrow to extend selection · Drag on empty canvas to pan · Shift + drag to select · Space + drag or middle-drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo · Ctrl/Cmd + ] to bring to front · Ctrl/Cmd + [ to send to back · Right-click an object for more options';
 
-const IMAGE_FILE_EXTENSION_PATTERN = /\.(png|jpe?g|webp|gif)$/i;
-
 function hasFilePayload(dataTransfer: DataTransfer | null): boolean {
   return (
     dataTransfer !== null &&
@@ -235,25 +235,18 @@ function hasFilePayload(dataTransfer: DataTransfer | null): boolean {
   );
 }
 
-function isAllowedImageType(contentType: string): boolean {
-  return (IMAGE_ALLOWED_CONTENT_TYPES as readonly string[]).includes(contentType);
-}
-
-function looksLikeImageFile(file: File): boolean {
-  return isAllowedImageType(file.type) || IMAGE_FILE_EXTENSION_PATTERN.test(file.name);
-}
-
 function transferContainsImage(dataTransfer: DataTransfer | null): boolean {
   if (dataTransfer === null) {
     return false;
   }
 
-  if (Array.from(dataTransfer.files).some(looksLikeImageFile)) {
+  if (Array.from(dataTransfer.files).some(isImageFileLike)) {
     return true;
   }
 
   return Array.from(dataTransfer.items ?? []).some(
-    (item) => item.kind === 'file' && (item.type === '' || isAllowedImageType(item.type)),
+    (item) =>
+      item.kind === 'file' && (item.type === '' || isImageFileLike({ name: '', type: item.type })),
   );
 }
 
@@ -295,6 +288,7 @@ export interface CanvasProps {
     file: File,
     position?: Position,
   ) => Promise<ElementId | void> | ElementId | void;
+  readonly onPasteText?: (text: string, position?: Position) => ElementId | void;
   readonly onCreateConnector?: (mode: 'free' | 'bound') => ElementId | void;
   readonly onCreateTask?: (values: TaskFormValues) => ElementId | void;
   readonly onCreateTaskFromElement?: (element: Element) => ElementId | void;
@@ -340,6 +334,7 @@ export function Canvas({
   onRedoElements,
   onCreateElement,
   onUploadImage,
+  onPasteText,
   onCreateConnector,
   onCreateTask,
   onCreateTaskFromElement,
@@ -455,6 +450,30 @@ export function Canvas({
       void onUploadImage(file, position);
     },
     [canDropImage, onUploadImage, resetDropState, viewport],
+  );
+
+  const handlePasteImage = useCallback(
+    (file: File): void => {
+      if (onUploadImage === undefined) {
+        return;
+      }
+
+      const position = resolveElementCreatePosition(viewport, defaultElementSize('image'));
+      void onUploadImage(file, position);
+    },
+    [onUploadImage, viewport],
+  );
+
+  const handlePasteText = useCallback(
+    (text: string): void => {
+      if (onPasteText === undefined) {
+        return;
+      }
+
+      const position = resolveElementCreatePosition(viewport, defaultElementSize('text'));
+      onPasteText(text, position);
+    },
+    [onPasteText, viewport],
   );
 
   const handleCursorMove = useCallback(
@@ -709,6 +728,8 @@ export function Canvas({
     selectedIds: selection.selectedIds,
     generateId,
     onPasteElements: handlePasteElements,
+    onPasteText: onPasteText === undefined ? undefined : handlePasteText,
+    onPasteImage: onUploadImage === undefined ? undefined : handlePasteImage,
     disabled: readOnly,
   });
 

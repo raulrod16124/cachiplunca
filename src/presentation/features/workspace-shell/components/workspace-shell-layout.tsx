@@ -100,6 +100,7 @@ export interface WorkspaceShellLayoutProps {
     file: File,
     position?: Position,
   ) => Promise<ElementId | void> | ElementId | void;
+  readonly onPasteText?: (text: string, position?: Position) => ElementId | void;
   readonly onCreateConnector?: (mode: 'free' | 'bound') => ElementId | void;
   readonly onCreateTask?: (values: TaskFormValues) => ElementId | void;
   readonly onCreateTaskFromElement?: (element: Element) => ElementId | void;
@@ -153,6 +154,7 @@ export function WorkspaceShellLayout({
   onRedoElements,
   onCreateElement,
   onUploadImage,
+  onPasteText,
   onCreateConnector,
   onCreateTask,
   onCreateTaskFromElement,
@@ -390,6 +392,7 @@ export function WorkspaceShellLayout({
             onRedoElements={onRedoElements}
             onCreateElement={onCreateElement}
             onUploadImage={onUploadImage}
+            onPasteText={onPasteText}
             onCreateConnector={onCreateConnector}
             onCreateTask={onCreateTask}
             onCreateTaskFromElement={onCreateTaskFromElement}
