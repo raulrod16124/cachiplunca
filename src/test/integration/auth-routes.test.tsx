@@ -47,6 +47,9 @@ function renderApp(
         async update() {
           throw new Error('Not implemented');
         },
+        async touchActivity() {
+          throw new Error('Not implemented');
+        },
         async delete() {
           throw new Error('Not implemented');
         },

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { registerUser } from './helpers/auth';
-import { createWorkspace } from './helpers/workspace';
+import { addElement, createWorkspace } from './helpers/workspace';
 
 test.describe('Workspaces (owner edits a workspace)', () => {
   test('owner updates the name and description from the workspace card', async ({ page }) => {
@@ -26,6 +26,7 @@ test.describe('Workspaces (owner edits a workspace)', () => {
       updatedCard.getByRole('heading', { level: 3, name: 'Renamed board' }),
     ).toBeVisible();
     await expect(updatedCard).toContainText('Updated description');
+    await expect(updatedCard).toContainText(/Created /);
     await expect(page.getByRole('heading', { level: 3, name: 'Editable board' })).toHaveCount(0);
 
     await updatedCard.getByRole('button', { name: 'Open' }).click();
@@ -34,5 +35,25 @@ test.describe('Workspaces (owner edits a workspace)', () => {
     });
     await expect(page.getByRole('button', { name: 'Rename workspace' })).toHaveCount(0);
     await expect(page.getByRole('textbox', { name: 'Workspace name' })).toHaveCount(0);
+  });
+
+  test('orders boards by the most recent activity', async ({ page }) => {
+    await registerUser(page);
+
+    await createWorkspace(page, 'Older board');
+    await page.getByRole('button', { name: 'Back to boards' }).click();
+
+    await createWorkspace(page, 'Newer board');
+    await page.getByRole('button', { name: 'Back to boards' }).click();
+
+    const cards = page.getByRole('article');
+    await expect(cards.first()).toContainText('Newer board');
+
+    const olderCard = cards.filter({ hasText: 'Older board' });
+    await olderCard.getByRole('button', { name: 'Open' }).click();
+    await addElement(page, 'text');
+    await page.getByRole('button', { name: 'Back to boards' }).click();
+
+    await expect(cards.first()).toContainText('Older board');
   });
 });

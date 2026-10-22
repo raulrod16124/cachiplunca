@@ -13,20 +13,21 @@ function styleText(): string {
     .join('');
 }
 
-function createWorkspace(name: string, updatedAt: Date, description?: string): Workspace {
-  const workspace = Workspace.create({
+function createWorkspace(
+  name: string,
+  activityAt: Date,
+  description?: string,
+  createdAt: Date = activityAt,
+): Workspace {
+  return Workspace.create({
     id: WorkspaceId.create(`ws-${name}`),
     name,
     description,
     createdBy: CREATED_BY,
+    createdAt,
+    updatedAt: createdAt,
+    lastActivityAt: activityAt,
   });
-  // Override updatedAt for deterministic tests
-  Object.defineProperty(workspace, 'updatedAt', {
-    value: updatedAt,
-    writable: false,
-    configurable: true,
-  });
-  return workspace;
 }
 
 describe('WorkspacesList', () => {
@@ -96,6 +97,17 @@ describe('WorkspacesList', () => {
     expect(screen.getByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Beta' })).toBeInTheDocument();
     expect(screen.getAllByRole('article')).toHaveLength(2);
+  });
+
+  it('shows last activity and creation dates on each card', () => {
+    const createdAt = new Date('2025-01-02T00:00:00Z');
+    const activityAt = new Date('2025-03-04T00:00:00Z');
+    const workspaces = [createWorkspace('Alpha', activityAt, undefined, createdAt)];
+
+    render(<WorkspacesList status="success" workspaces={workspaces} {...baseProps} />);
+
+    expect(screen.getByText(/^Updated/)).toBeInTheDocument();
+    expect(screen.getByText(/^Created/)).toBeInTheDocument();
   });
 
   it('tints workspace card icons with brand surface tokens', () => {

@@ -137,4 +137,62 @@ describe('createElementPersistenceOrchestrator', () => {
       expect(result.error.message).toBe('Write failed');
     }
   });
+
+  it('touches workspace activity after a successful persisted change', async () => {
+    const repository = new FakeElementRepository();
+    const touchActivity = jest.fn().mockResolvedValue(undefined);
+    const now = new Date('2026-10-22T10:00:00.000Z');
+    const orchestrator = createElementPersistenceOrchestrator(
+      createElementPersistence(repository),
+      { workspaceRepository: { touchActivity }, now: () => now },
+    );
+
+    const result = await orchestrator.persistDelta([], [buildTextElement('el-1')], WORKSPACE_ID);
+
+    expect(result).toEqual({ status: 'ok' });
+    expect(touchActivity).toHaveBeenCalledWith(WORKSPACE_ID, now);
+  });
+
+  it('does not touch activity when nothing changed or no workspace is provided', async () => {
+    const repository = new FakeElementRepository();
+    const touchActivity = jest.fn().mockResolvedValue(undefined);
+    const orchestrator = createElementPersistenceOrchestrator(
+      createElementPersistence(repository),
+      { workspaceRepository: { touchActivity } },
+    );
+    const element = buildTextElement('el-1');
+
+    await orchestrator.persistDelta([element], [element], WORKSPACE_ID);
+    await orchestrator.persistDelta([], [buildTextElement('el-2')]);
+
+    expect(touchActivity).not.toHaveBeenCalled();
+  });
+
+  it('does not touch activity when persistence fails', async () => {
+    const repository = new FakeElementRepository();
+    const touchActivity = jest.fn().mockResolvedValue(undefined);
+    const orchestrator = createElementPersistenceOrchestrator(
+      createElementPersistence(repository),
+      { workspaceRepository: { touchActivity } },
+    );
+    jest.spyOn(repository, 'saveMany').mockRejectedValueOnce(new Error('Write failed'));
+
+    await orchestrator.persistDelta([], [buildTextElement('el-1')], WORKSPACE_ID);
+
+    expect(touchActivity).not.toHaveBeenCalled();
+  });
+
+  it('treats a failed activity touch as best-effort', async () => {
+    const repository = new FakeElementRepository();
+    const touchActivity = jest.fn().mockRejectedValue(new Error('Activity failed'));
+    const orchestrator = createElementPersistenceOrchestrator(
+      createElementPersistence(repository),
+      { workspaceRepository: { touchActivity } },
+    );
+
+    const result = await orchestrator.persistDelta([], [buildTextElement('el-1')], WORKSPACE_ID);
+
+    expect(result).toEqual({ status: 'ok' });
+    expect(touchActivity).toHaveBeenCalledTimes(1);
+  });
 });

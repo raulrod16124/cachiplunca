@@ -11,7 +11,7 @@ import { EmptyState } from '../../../components/empty-state';
 import { ErrorState } from '../../../components/error-state';
 import { LoadingState } from '../../../components/loading-state';
 import { DecorativeArrow, DecorativeSpark } from '../../../components/decorative';
-import { formatRelativeDate, useI18n } from '../../../i18n';
+import { formatRelativeDate, formatShortDate, useI18n } from '../../../i18n';
 
 const RESULTS_COUNT_ID = 'workspaces-results-count';
 
@@ -289,11 +289,18 @@ export function WorkspacesList({
                       </CardIcon>
                       <Stack gap="space-1">
                         <CardTitle as="h3">{workspace.name}</CardTitle>
-                        <Text color="color.text.muted" size="font.size.sm">
-                          {t('workspaces.card.updated', {
-                            when: formatRelativeDate(workspace.updatedAt, locale),
-                          })}
-                        </Text>
+                        <Stack gap="space-1">
+                          <Text color="color.text.muted" size="font.size.sm">
+                            {t('workspaces.card.updated', {
+                              when: formatRelativeDate(workspace.activityAt, locale),
+                            })}
+                          </Text>
+                          <Text color="color.text.muted" size="font.size.sm">
+                            {t('workspaces.card.created', {
+                              when: formatShortDate(workspace.createdAt, locale),
+                            })}
+                          </Text>
+                        </Stack>
                       </Stack>
                     </CardHeading>
                     <Description color="color.text.muted" size="font.size.sm">

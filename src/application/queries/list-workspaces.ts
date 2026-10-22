@@ -19,9 +19,9 @@ export function sortWorkspacesForList(workspaces: readonly Workspace[]): Workspa
 }
 
 function compareWorkspacesForList(a: Workspace, b: Workspace): number {
-  const updatedDiff = b.updatedAt.getTime() - a.updatedAt.getTime();
-  if (updatedDiff !== 0) {
-    return updatedDiff;
+  const activityDiff = b.activityAt.getTime() - a.activityAt.getTime();
+  if (activityDiff !== 0) {
+    return activityDiff;
   }
 
   const createdDiff = b.createdAt.getTime() - a.createdAt.getTime();

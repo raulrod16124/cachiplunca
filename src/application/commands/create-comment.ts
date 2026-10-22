@@ -2,6 +2,10 @@ import { Comment } from '../../domain/comment';
 import type { CommentId, ElementId, UserId, WorkspaceId } from '../../domain/shared';
 import { isAppError, type AppError } from '../../shared/errors';
 import type { CommentRepository } from '../ports';
+import {
+  recordActivityBestEffort,
+  type RecordWorkspaceActivity,
+} from '../services/record-activity';
 import { toValidationAppError } from './to-validation-app-error';
 
 export interface CreateCommentInput {
@@ -14,6 +18,7 @@ export interface CreateCommentInput {
 export interface CreateCommentDeps {
   readonly repository: CommentRepository;
   readonly generateId: () => CommentId;
+  readonly recordActivity?: RecordWorkspaceActivity;
   readonly now?: () => Date;
 }
 
@@ -35,6 +40,7 @@ export function createCreateComment(deps: CreateCommentDeps): CreateComment {
         createdAt: deps.now === undefined ? undefined : deps.now(),
       });
       const saved = await deps.repository.save(comment);
+      await recordActivityBestEffort(deps.recordActivity, saved.workspaceId, saved.createdAt);
       return { status: 'ok', comment: saved };
     } catch (error) {
       return { status: 'error', error: isAppError(error) ? error : toValidationAppError(error) };

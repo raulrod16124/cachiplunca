@@ -108,13 +108,20 @@ service cloud.firestore {
     // workspaces: lectura limitada a miembros del workspace (ADR-0034) o a
     // guests con un enlace válido. create exige que el creador quede registrado
     // como createdBy para poder crear su membership de owner y rechaza sesiones
-    // anónimas. update/delete exclusivos de owner.
+    // anónimas. update de metadatos y delete exclusivos de owner; owner/editor
+    // pueden actualizar únicamente lastActivityAt.
     match /workspaces/{workspaceId} {
       allow read: if isMember(workspaceId) || isGuestViewer(workspaceId);
       allow create: if signedIn() &&
         !isAnonymous() &&
         request.resource.data.createdBy == request.auth.uid;
-      allow update, delete: if hasRole(workspaceId, ['owner']);
+      allow update: if hasRole(workspaceId, ['owner']) || (
+        hasRole(workspaceId, ['owner', 'editor']) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastActivityAt']) &&
+        request.resource.data.lastActivityAt is timestamp &&
+        request.resource.data.lastActivityAt >= resource.data.createdAt
+      );
+      allow delete: if hasRole(workspaceId, ['owner']);
     }
 
     // memberships: el rol del usuario en el workspace.

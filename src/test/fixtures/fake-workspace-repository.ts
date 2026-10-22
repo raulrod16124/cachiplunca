@@ -43,6 +43,23 @@ export class FakeWorkspaceRepository implements WorkspaceRepository {
     return updated;
   }
 
+  async touchActivity(id: WorkspaceId, at?: Date): Promise<Workspace> {
+    const current = this.#workspaces.get(id.value);
+    if (current === undefined) {
+      throw notFoundError(id);
+    }
+
+    let touched: Workspace;
+    try {
+      touched = current.touchActivity(at);
+    } catch (error) {
+      throw toValidationError(error);
+    }
+
+    this.#workspaces.set(id.value, touched);
+    return touched;
+  }
+
   async delete(id: WorkspaceId): Promise<void> {
     if (!this.#workspaces.delete(id.value)) {
       throw notFoundError(id);

@@ -15,6 +15,7 @@ function makeWorkspace(): Workspace {
     description: 'notes',
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+    lastActivityAt: new Date('2026-01-03T00:00:00.000Z'),
   });
 }
 
@@ -28,6 +29,7 @@ describe('firebase-workspace-mapper', () => {
         createdBy: 'user-1',
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+        lastActivityAt: new Date('2026-01-03T00:00:00.000Z'),
         description: 'notes',
       });
     });
@@ -56,11 +58,13 @@ describe('firebase-workspace-mapper', () => {
       expect(rebuilt.description).toBe(workspace.description);
       expect(rebuilt.createdAt.getTime()).toBe(workspace.createdAt.getTime());
       expect(rebuilt.updatedAt.getTime()).toBe(workspace.updatedAt.getTime());
+      expect(rebuilt.lastActivityAt.getTime()).toBe(workspace.lastActivityAt.getTime());
     });
 
     it('accepts Timestamp-like date fields', () => {
       const createdAt = new Date('2026-03-01T00:00:00.000Z');
       const updatedAt = new Date('2026-03-01T01:00:00.000Z');
+      const lastActivityAt = new Date('2026-03-01T02:00:00.000Z');
 
       const workspace = fromWorkspaceDocument('ws-3', {
         name: 'From timestamp',
@@ -68,10 +72,28 @@ describe('firebase-workspace-mapper', () => {
         description: null,
         createdAt: { toDate: () => createdAt },
         updatedAt: { toDate: () => updatedAt },
+        lastActivityAt: { toDate: () => lastActivityAt },
       });
 
       expect(workspace.createdAt.getTime()).toBe(createdAt.getTime());
       expect(workspace.updatedAt.getTime()).toBe(updatedAt.getTime());
+      expect(workspace.lastActivityAt.getTime()).toBe(lastActivityAt.getTime());
+    });
+
+    it('falls back to updatedAt when lastActivityAt is missing', () => {
+      const createdAt = new Date('2026-03-01T00:00:00.000Z');
+      const updatedAt = new Date('2026-03-01T01:00:00.000Z');
+
+      const workspace = fromWorkspaceDocument('ws-legacy', {
+        name: 'Legacy',
+        createdBy: CREATED_BY.value,
+        description: null,
+        createdAt,
+        updatedAt,
+      });
+
+      expect(workspace.lastActivityAt.getTime()).toBe(updatedAt.getTime());
+      expect(workspace.activityAt.getTime()).toBe(updatedAt.getTime());
     });
 
     it('normalizes a missing description to null', () => {

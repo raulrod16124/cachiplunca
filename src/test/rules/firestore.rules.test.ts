@@ -566,6 +566,47 @@ describe('firestore.rules — workspaces', () => {
     );
   });
 
+  test('owners and editors can touch only lastActivityAt', async () => {
+    const activityAt = new Date(now.getTime() + 60_000);
+
+    await assertSucceeds(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', WS1), { lastActivityAt: activityAt }),
+    );
+    await assertSucceeds(
+      updateDoc(doc(dbOf(ROLE_UIDS.editor), 'workspaces', WS1), { lastActivityAt: activityAt }),
+    );
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.viewer), 'workspaces', WS1), { lastActivityAt: activityAt }),
+    );
+    await assertFails(
+      updateDoc(doc(dbOf(OUTSIDER_UID), 'workspaces', WS1), { lastActivityAt: activityAt }),
+    );
+  });
+
+  test('editors cannot change metadata together with lastActivityAt', async () => {
+    const activityAt = new Date(now.getTime() + 60_000);
+
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.editor), 'workspaces', WS1), {
+        name: 'Renamed',
+        lastActivityAt: activityAt,
+      }),
+    );
+  });
+
+  test('lastActivityAt must be a timestamp not earlier than createdAt', async () => {
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.editor), 'workspaces', WS1), {
+        lastActivityAt: 'not-a-timestamp',
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.editor), 'workspaces', WS1), {
+        lastActivityAt: new Date(now.getTime() - 60_000),
+      }),
+    );
+  });
+
   test('only the owner can delete a workspace', async () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await setDoc(doc(ctx.firestore(), 'workspaces', 'del-editor'), workspaceData());

@@ -22,6 +22,7 @@ function expectSameWorkspace(actual: Workspace, expected: Workspace): void {
   expect(actual.description).toBe(expected.description);
   expect(actual.createdAt.getTime()).toBe(expected.createdAt.getTime());
   expect(actual.updatedAt.getTime()).toBe(expected.updatedAt.getTime());
+  expect(actual.lastActivityAt.getTime()).toBe(expected.lastActivityAt.getTime());
 }
 
 export function describeWorkspaceRepositoryContract(
@@ -49,6 +50,7 @@ export function describeWorkspaceRepositoryContract(
       expect(workspace.description).toBeNull();
       expect(workspace.createdAt).toBeInstanceOf(Date);
       expect(workspace.updatedAt.getTime()).toBeGreaterThanOrEqual(workspace.createdAt.getTime());
+      expect(workspace.lastActivityAt.getTime()).toBe(workspace.createdAt.getTime());
     });
 
     it('exposes created workspaces through list and findById', async () => {
@@ -156,6 +158,35 @@ export function describeWorkspaceRepositoryContract(
       expect(stored?.name).toBe('Original');
     });
 
+    it('touches activity without changing metadata timestamps', async () => {
+      const created = await repository.create({ name: 'Active', createdBy: CREATED_BY });
+      const activityAt = new Date(created.createdAt.getTime() + 60_000);
+
+      const touched = await repository.touchActivity(created.id, activityAt);
+
+      expect(touched.lastActivityAt.getTime()).toBe(activityAt.getTime());
+      expect(touched.updatedAt.getTime()).toBe(created.updatedAt.getTime());
+      expect(touched.createdAt.getTime()).toBe(created.createdAt.getTime());
+      expectSameWorkspace(requireWorkspace(await repository.findById(created.id)), touched);
+    });
+
+    it('keeps metadata updates from changing last activity', async () => {
+      const created = await repository.create({ name: 'Original', createdBy: CREATED_BY });
+      const activityAt = new Date(created.createdAt.getTime() + 60_000);
+      const touched = await repository.touchActivity(created.id, activityAt);
+
+      const updated = await repository.update(created.id, { name: 'Renamed' });
+
+      expect(updated.lastActivityAt.getTime()).toBe(touched.lastActivityAt.getTime());
+    });
+
+    it('rejects touchActivity with a notFound AppError for an unknown id', async () => {
+      await expect(repository.touchActivity(WorkspaceId.create('missing'))).rejects.toMatchObject({
+        kind: 'notFound',
+        code: ERROR_CODES.NOT_FOUND_RESOURCE,
+      });
+    });
+
     it('deletes a workspace and stops exposing it', async () => {
       const created = await repository.create({ name: 'Disposable', createdBy: CREATED_BY });
 
@@ -178,6 +209,7 @@ export function describeWorkspaceRepositoryContract(
       const operations = [
         repository.create({ name: '', createdBy: CREATED_BY }),
         repository.update(unknownId, { name: 'Nope' }),
+        repository.touchActivity(unknownId),
         repository.delete(unknownId),
       ];
 

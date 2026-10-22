@@ -75,6 +75,19 @@ export function createFirebaseWorkspaceRepository(db: Firestore): WorkspaceRepos
       return updated;
     },
 
+    async touchActivity(id: WorkspaceId, at?: Date): Promise<Workspace> {
+      const current = await findById(id);
+      if (current === null) {
+        throw notFoundError(id);
+      }
+      const touched = buildWorkspace(() => current.touchActivity(at));
+
+      await withMappedErrors(() =>
+        updateDoc(workspaceRef(id), { lastActivityAt: touched.lastActivityAt }),
+      );
+      return touched;
+    },
+
     async delete(id: WorkspaceId): Promise<void> {
       const current = await findById(id);
       if (current === null) {

@@ -17,5 +17,6 @@ export interface WorkspaceRepository {
   list(): Promise<Workspace[]>;
   findById(id: WorkspaceId): Promise<Workspace | null>;
   update(id: WorkspaceId, updates: WorkspaceUpdateInput): Promise<Workspace>;
+  touchActivity(id: WorkspaceId, at?: Date): Promise<Workspace>;
   delete(id: WorkspaceId): Promise<void>;
 }

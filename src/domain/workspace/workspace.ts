@@ -9,6 +9,7 @@ export interface WorkspaceProps {
   readonly createdBy: UserId;
   readonly createdAt: Date;
   readonly updatedAt: Date;
+  readonly lastActivityAt: Date;
   readonly description?: string | null;
 }
 
@@ -18,6 +19,7 @@ export class Workspace {
   private readonly _createdBy: UserId;
   private readonly _createdAt: Date;
   private readonly _updatedAt: Date;
+  private readonly _lastActivityAt: Date;
   private readonly _description: string | null;
 
   private constructor(props: WorkspaceProps) {
@@ -26,6 +28,7 @@ export class Workspace {
     this._createdBy = props.createdBy;
     this._createdAt = props.createdAt;
     this._updatedAt = props.updatedAt;
+    this._lastActivityAt = props.lastActivityAt;
     this._description = props.description ?? null;
   }
 
@@ -35,14 +38,16 @@ export class Workspace {
     readonly createdBy: UserId;
     readonly createdAt?: Date;
     readonly updatedAt?: Date;
+    readonly lastActivityAt?: Date;
     readonly description?: string | null;
   }): Workspace {
     const name = Workspace.validateName(props.name);
     const now = new Date();
     const createdAt = props.createdAt ?? now;
     const updatedAt = props.updatedAt ?? createdAt;
+    const lastActivityAt = props.lastActivityAt ?? updatedAt;
 
-    Workspace.validateTimestamps(createdAt, updatedAt);
+    Workspace.validateTimestamps(createdAt, updatedAt, lastActivityAt);
 
     return new Workspace({
       id: props.id,
@@ -50,6 +55,7 @@ export class Workspace {
       createdBy: props.createdBy,
       createdAt,
       updatedAt,
+      lastActivityAt,
       description: props.description,
     });
   }
@@ -63,7 +69,7 @@ export class Workspace {
     const description = updates.description !== undefined ? updates.description : this._description;
     const updatedAt = updates.updatedAt ?? new Date();
 
-    Workspace.validateTimestamps(this._createdAt, updatedAt);
+    Workspace.validateTimestamps(this._createdAt, updatedAt, this._lastActivityAt);
 
     return new Workspace({
       id: this._id,
@@ -71,7 +77,24 @@ export class Workspace {
       createdBy: this._createdBy,
       createdAt: this._createdAt,
       updatedAt,
+      lastActivityAt: this._lastActivityAt,
       description,
+    });
+  }
+
+  touchActivity(at?: Date): Workspace {
+    const lastActivityAt = at ?? new Date();
+
+    Workspace.validateTimestamps(this._createdAt, this._updatedAt, lastActivityAt);
+
+    return new Workspace({
+      id: this._id,
+      name: this._name,
+      createdBy: this._createdBy,
+      createdAt: this._createdAt,
+      updatedAt: this._updatedAt,
+      lastActivityAt,
+      description: this._description,
     });
   }
 
@@ -86,15 +109,26 @@ export class Workspace {
     return trimmed;
   }
 
-  private static validateTimestamps(createdAt: Date, updatedAt: Date): void {
-    if (!(createdAt instanceof Date) || !(updatedAt instanceof Date)) {
+  private static validateTimestamps(createdAt: Date, updatedAt: Date, lastActivityAt: Date): void {
+    if (
+      !(createdAt instanceof Date) ||
+      !(updatedAt instanceof Date) ||
+      !(lastActivityAt instanceof Date)
+    ) {
       throw new Error('Timestamps must be valid Date instances');
     }
-    if (isNaN(createdAt.getTime()) || isNaN(updatedAt.getTime())) {
+    if (
+      isNaN(createdAt.getTime()) ||
+      isNaN(updatedAt.getTime()) ||
+      isNaN(lastActivityAt.getTime())
+    ) {
       throw new Error('Timestamps must be valid Date instances');
     }
     if (updatedAt < createdAt) {
       throw new Error('Updated at cannot be before created at');
+    }
+    if (lastActivityAt < createdAt) {
+      throw new Error('Last activity at cannot be before created at');
     }
   }
 
@@ -118,6 +152,14 @@ export class Workspace {
     return this._updatedAt;
   }
 
+  get lastActivityAt(): Date {
+    return this._lastActivityAt;
+  }
+
+  get activityAt(): Date {
+    return this._lastActivityAt;
+  }
+
   get description(): string | null {
     return this._description;
   }
@@ -128,6 +170,7 @@ export class Workspace {
     createdBy: string;
     createdAt: string;
     updatedAt: string;
+    lastActivityAt: string;
     description: string | null;
   } {
     return {
@@ -136,6 +179,7 @@ export class Workspace {
       createdBy: this._createdBy.value,
       createdAt: this._createdAt.toISOString(),
       updatedAt: this._updatedAt.toISOString(),
+      lastActivityAt: this._lastActivityAt.toISOString(),
       description: this._description,
     };
   }

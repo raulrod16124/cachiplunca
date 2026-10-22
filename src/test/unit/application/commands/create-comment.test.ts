@@ -58,6 +58,53 @@ describe('createCreateComment', () => {
     expect(repository.list()).toHaveLength(0);
   });
 
+  it('records workspace activity after saving the comment', async () => {
+    const repository = new FakeCommentRepository();
+    const recordActivity = jest.fn().mockResolvedValue(undefined);
+    const createComment = createCreateComment({
+      repository,
+      generateId: () => CommentId.create('comment-1'),
+      recordActivity,
+      now: () => NOW,
+    });
+
+    await createComment(makeInput());
+
+    expect(recordActivity).toHaveBeenCalledWith(WorkspaceId.create('ws-1'), NOW);
+  });
+
+  it('treats a failed activity record as best-effort', async () => {
+    const repository = new FakeCommentRepository();
+    const recordActivity = jest.fn().mockRejectedValue(new Error('Activity failed'));
+    const createComment = createCreateComment({
+      repository,
+      generateId: () => CommentId.create('comment-1'),
+      recordActivity,
+      now: () => NOW,
+    });
+
+    const result = await createComment(makeInput());
+
+    expect(result.status).toBe('ok');
+    expect(recordActivity).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not record activity when saving fails', async () => {
+    const repository = new FakeCommentRepository();
+    repository.save = jest.fn().mockRejectedValue(new Error('Write failed'));
+    const recordActivity = jest.fn().mockResolvedValue(undefined);
+    const createComment = createCreateComment({
+      repository,
+      generateId: () => CommentId.create('comment-1'),
+      recordActivity,
+    });
+
+    const result = await createComment(makeInput());
+
+    expect(result.status).toBe('error');
+    expect(recordActivity).not.toHaveBeenCalled();
+  });
+
   it('propagates repository errors without wrapping them again', async () => {
     const failure: AppError = createAppError(
       'authorization',

@@ -2,6 +2,10 @@ import type { Comment } from '../../domain/comment';
 import { CommentId, WorkspaceId } from '../../domain/shared';
 import { createAppError, ERROR_CODES, isAppError, type AppError } from '../../shared/errors';
 import type { CommentRepository } from '../ports';
+import {
+  recordActivityBestEffort,
+  type RecordWorkspaceActivity,
+} from '../services/record-activity';
 import { toValidationAppError } from './to-validation-app-error';
 
 export interface ResolveCommentInput {
@@ -11,6 +15,7 @@ export interface ResolveCommentInput {
 
 export interface ResolveCommentDeps {
   readonly repository: CommentRepository;
+  readonly recordActivity?: RecordWorkspaceActivity;
   readonly now?: () => Date;
 }
 
@@ -31,8 +36,10 @@ export function createResolveComment(deps: ResolveCommentDeps): ResolveComment {
         return { status: 'error', error: notFoundError(input.commentId) };
       }
 
-      const resolved = current.resolve(deps.now === undefined ? undefined : deps.now());
+      const resolvedAt = deps.now === undefined ? new Date() : deps.now();
+      const resolved = current.resolve(resolvedAt);
       const saved = await deps.repository.save(resolved);
+      await recordActivityBestEffort(deps.recordActivity, workspaceId, resolvedAt);
       return { status: 'ok', comment: saved };
     } catch (error) {
       return { status: 'error', error: isAppError(error) ? error : toValidationAppError(error) };

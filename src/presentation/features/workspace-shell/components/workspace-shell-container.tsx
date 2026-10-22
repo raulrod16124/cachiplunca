@@ -343,6 +343,7 @@ export function WorkspaceShellContainer({
   if (persistenceBatcherRef.current === null) {
     persistenceBatcherRef.current = createElementPersistenceBatcher({
       orchestrator: elementPersistenceOrchestrator,
+      workspaceId: WorkspaceId.create(workspaceId),
       onResult: (result) => {
         setPersistenceError(result.status === 'error' ? result.error : null);
       },

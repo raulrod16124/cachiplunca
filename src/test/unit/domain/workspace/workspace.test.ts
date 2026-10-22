@@ -88,6 +88,89 @@ describe('Workspace', () => {
     expect(workspace.createdAt.getTime()).toBeGreaterThanOrEqual(before.getTime());
     expect(workspace.createdAt.getTime()).toBeLessThanOrEqual(after.getTime());
     expect(workspace.updatedAt.getTime()).toBe(workspace.createdAt.getTime());
+    expect(workspace.lastActivityAt.getTime()).toBe(workspace.createdAt.getTime());
+    expect(workspace.activityAt.getTime()).toBe(workspace.createdAt.getTime());
+  });
+
+  it('uses updatedAt as the default last activity for legacy data', () => {
+    const createdAt = new Date('2024-01-01T00:00:00.000Z');
+    const updatedAt = new Date('2024-01-02T00:00:00.000Z');
+
+    const workspace = Workspace.create({
+      createdBy: CREATED_BY,
+      id: WorkspaceId.create('ws-123'),
+      name: 'Legacy',
+      createdAt,
+      updatedAt,
+    });
+
+    expect(workspace.lastActivityAt).toBe(updatedAt);
+    expect(workspace.activityAt).toBe(updatedAt);
+  });
+
+  it('accepts an explicit last activity timestamp', () => {
+    const createdAt = new Date('2024-01-01T00:00:00.000Z');
+    const lastActivityAt = new Date('2024-01-03T00:00:00.000Z');
+
+    const workspace = Workspace.create({
+      createdBy: CREATED_BY,
+      id: WorkspaceId.create('ws-123'),
+      name: 'Active',
+      createdAt,
+      lastActivityAt,
+    });
+
+    expect(workspace.lastActivityAt).toBe(lastActivityAt);
+  });
+
+  it('throws when lastActivityAt is before createdAt', () => {
+    expect(() =>
+      Workspace.create({
+        createdBy: CREATED_BY,
+        id: WorkspaceId.create('ws-123'),
+        name: 'Test',
+        createdAt: new Date('2024-01-02T00:00:00.000Z'),
+        lastActivityAt: new Date('2024-01-01T00:00:00.000Z'),
+      }),
+    ).toThrow('Last activity at cannot be before created at');
+  });
+
+  it('touches activity without changing metadata timestamps', () => {
+    const createdAt = new Date('2024-01-01T00:00:00.000Z');
+    const updatedAt = new Date('2024-01-02T00:00:00.000Z');
+    const lastActivityAt = new Date('2024-01-03T00:00:00.000Z');
+    const workspace = Workspace.create({
+      createdBy: CREATED_BY,
+      id: WorkspaceId.create('ws-123'),
+      name: 'Test',
+      createdAt,
+      updatedAt,
+    });
+
+    const touched = workspace.touchActivity(lastActivityAt);
+
+    expect(touched).not.toBe(workspace);
+    expect(touched.lastActivityAt).toBe(lastActivityAt);
+    expect(touched.activityAt).toBe(lastActivityAt);
+    expect(touched.updatedAt).toBe(updatedAt);
+    expect(touched.createdAt).toBe(createdAt);
+    expect(touched.name).toBe(workspace.name);
+  });
+
+  it('preserves lastActivityAt when updating metadata', () => {
+    const lastActivityAt = new Date('2024-01-03T00:00:00.000Z');
+    const workspace = Workspace.create({
+      createdBy: CREATED_BY,
+      id: WorkspaceId.create('ws-123'),
+      name: 'Test',
+      createdAt: new Date('2024-01-01T00:00:00.000Z'),
+      lastActivityAt,
+    });
+
+    const updated = workspace.update({ name: 'Renamed' });
+
+    expect(updated.lastActivityAt).toBe(lastActivityAt);
+    expect(updated.updatedAt.getTime()).toBeGreaterThanOrEqual(workspace.updatedAt.getTime());
   });
 
   it('throws when updatedAt is before createdAt', () => {
@@ -213,6 +296,7 @@ describe('Workspace', () => {
       createdBy: 'user-1',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T01:00:00.000Z',
+      lastActivityAt: '2024-01-01T01:00:00.000Z',
       description: 'Description',
     });
   });
