@@ -1,6 +1,7 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ImageElement } from '../../domain/element';
+import { installDragEventPolyfill } from '../fixtures/drag-event';
 import { DEFAULT_CREDENTIALS, createAppHarness } from './harness';
 
 function pngFile(name = 'diagram.png') {
@@ -20,6 +21,8 @@ async function openBoard() {
 
 describe('image elements', () => {
   beforeAll(() => {
+    installDragEventPolyfill();
+
     if (!('setPointerCapture' in Element.prototype)) {
       Object.defineProperty(Element.prototype, 'setPointerCapture', {
         value: jest.fn(),
@@ -71,5 +74,42 @@ describe('image elements', () => {
 
     expect(await screen.findByText('Choose a PNG, JPEG, WebP or GIF image.')).toBeInTheDocument();
     expect(harness.imageStoragePort.uploads).toHaveLength(0);
+  });
+
+  it('creates the image at the drop position from a dropped file', async () => {
+    const { harness, workspace } = await openBoard();
+    const canvas = screen.getByRole('application', { name: 'Canvas' });
+    const file = pngFile('dropped.png');
+    const dataTransfer = {
+      files: [file],
+      types: ['Files'],
+      items: [{ kind: 'file', type: file.type, getAsFile: () => file }],
+      dropEffect: 'none',
+      effectAllowed: 'all',
+      setData: jest.fn(),
+      getData: jest.fn(),
+      clearData: jest.fn(),
+      setDragImage: jest.fn(),
+    } as unknown as DataTransfer;
+
+    fireEvent.dragEnter(canvas, { dataTransfer });
+
+    expect(await screen.findByTestId('canvas-drop-overlay')).toBeInTheDocument();
+
+    fireEvent.drop(canvas, { dataTransfer, clientX: 600, clientY: 450 });
+
+    const image = await waitFor(async () => {
+      const stored = await harness.elementRepository.listByWorkspace(workspace.id);
+      const created = stored.find((element): element is ImageElement => element.type === 'image');
+
+      expect(created).toBeDefined();
+      return created as ImageElement;
+    });
+
+    expect(image.alt).toBe('dropped');
+    expect(image.position.x).toBe(440);
+    expect(image.position.y).toBe(350);
+    expect(harness.imageStoragePort.uploads).toHaveLength(1);
+    expect(screen.queryByTestId('canvas-drop-overlay')).not.toBeInTheDocument();
   });
 });

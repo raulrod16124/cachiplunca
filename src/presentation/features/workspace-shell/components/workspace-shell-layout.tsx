@@ -96,7 +96,10 @@ export interface WorkspaceShellLayoutProps {
   readonly onUndoElements: (elements: readonly Element[]) => void;
   readonly onRedoElements: (elements: readonly Element[]) => void;
   readonly onCreateElement?: (type: ElementType) => ElementId | void;
-  readonly onUploadImage?: (file: File) => Promise<ElementId | void> | ElementId | void;
+  readonly onUploadImage?: (
+    file: File,
+    position?: Position,
+  ) => Promise<ElementId | void> | ElementId | void;
   readonly onCreateConnector?: (mode: 'free' | 'bound') => ElementId | void;
   readonly onCreateTask?: (values: TaskFormValues) => ElementId | void;
   readonly onCreateTaskFromElement?: (element: Element) => ElementId | void;

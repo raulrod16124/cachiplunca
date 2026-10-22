@@ -532,7 +532,7 @@ export function WorkspaceShellContainer({
   );
 
   const handleUploadImage = useCallback(
-    async (file: File): Promise<ElementId | void> => {
+    async (file: File, position?: Position): Promise<ElementId | void> => {
       if (imageServices === undefined || localUserId === undefined) {
         return;
       }
@@ -560,15 +560,14 @@ export function WorkspaceShellContainer({
       }
 
       const size = defaultElementSize('image');
-      const position = resolveElementCreatePosition(
-        canvasViewportStoreRef.current.getSnapshot(),
-        size,
-      );
+      const createPosition =
+        position ??
+        resolveElementCreatePosition(canvasViewportStoreRef.current.getSnapshot(), size);
       const created = createElement({
         type: 'image',
         workspaceId: WorkspaceId.create(workspaceId),
         createdBy: UserId.create(localUserId),
-        position,
+        position: createPosition,
         size,
         src: result.image.url,
         alt: imageAltFromFileName(file.name),

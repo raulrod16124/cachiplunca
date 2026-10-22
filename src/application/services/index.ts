@@ -10,6 +10,7 @@ export * from './element-alignment';
 export * from './element-resize';
 export * from './element-rotate';
 export * from './element-creation';
+export * from './canvas-drop-position';
 export * from './element-search';
 export * from './text-search';
 export * from './connector-geometry';

@@ -56,6 +56,49 @@ test.describe('Images', () => {
     await expect(page.locator('[data-element-type="image"]')).toHaveCount(0, { timeout: 20000 });
   });
 
+  test('adds an image dropped onto the canvas', async ({ page }) => {
+    await registerUser(page);
+    await createWorkspace(page, 'Drop image board');
+
+    const canvas = page.getByRole('application', { name: 'Canvas' });
+    const box = await canvas.boundingBox();
+
+    if (box === null) {
+      throw new Error('The canvas has no bounding box.');
+    }
+
+    const clientX = box.x + box.width * 0.65;
+    const clientY = box.y + box.height * 0.6;
+    const dataTransfer = await page.evaluateHandle((base64: string) => {
+      const binary = atob(base64);
+      const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+      const transfer = new DataTransfer();
+
+      transfer.items.add(new File([bytes], 'dropped.png', { type: 'image/png' }));
+
+      return transfer;
+    }, PNG_BASE64);
+
+    await canvas.dispatchEvent('dragenter', { dataTransfer, clientX, clientY });
+    await expect(page.getByTestId('canvas-drop-overlay')).toBeVisible();
+
+    await canvas.dispatchEvent('dragover', { dataTransfer, clientX, clientY });
+    await canvas.dispatchEvent('drop', { dataTransfer, clientX, clientY });
+
+    await expect(page.getByTestId('canvas-drop-overlay')).toBeHidden();
+
+    const image = page.locator('[data-element-type="image"]').first();
+    await expect(image).toBeVisible({ timeout: 20000 });
+    await expect(image.getByRole('img', { name: 'dropped' })).toBeVisible();
+    await waitForBoardSaved(page);
+
+    await page.reload();
+
+    await expect(
+      page.locator('[data-element-type="image"]').getByRole('img', { name: 'dropped' }),
+    ).toBeVisible({ timeout: 20000 });
+  });
+
   test('restores a deleted image with undo before the cleanup window closes', async ({ page }) => {
     await registerUser(page);
     await createWorkspace(page, 'Undo image board');
