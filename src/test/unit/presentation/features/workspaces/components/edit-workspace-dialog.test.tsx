@@ -111,14 +111,14 @@ describe('EditWorkspaceDialog', () => {
     const user = userEvent.setup();
     const updateWorkspace: UpdateWorkspace = jest.fn().mockResolvedValue({
       status: 'invalid-input',
-      fieldErrors: { name: 'Enter a workspace name.' },
+      fieldErrors: { name: 'Enter a board name.' },
     });
     const { onOpenChange, onUpdated } = renderDialog({ updateWorkspace });
 
     await user.clear(screen.getByLabelText('Name'));
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
-    expect(await screen.findByText('Enter a workspace name.')).toBeInTheDocument();
+    expect(await screen.findByText('Enter a board name.')).toBeInTheDocument();
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(onOpenChange).not.toHaveBeenCalled();
     expect(onUpdated).not.toHaveBeenCalled();

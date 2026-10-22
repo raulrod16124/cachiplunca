@@ -44,7 +44,7 @@ describe('PendingInvitationsPanel', () => {
   it('shows the invited workspace and role', () => {
     renderPanel();
 
-    expect(screen.getByText(/A workspace/)).toBeInTheDocument();
+    expect(screen.getByText(/A board/)).toBeInTheDocument();
     expect(screen.getByText(/editor/i)).toBeInTheDocument();
   });
 

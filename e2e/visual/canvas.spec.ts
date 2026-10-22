@@ -336,7 +336,7 @@ test.describe('visual baseline — canvas', () => {
       await openCommandPalette(page);
       await page.getByRole('combobox', { name: 'Search commands' }).fill('undo');
       await expect(page.getByTestId('command-palette-item-undo')).toBeVisible();
-      await expect(page.getByText('Loading workspaces…')).toHaveCount(0);
+      await expect(page.getByText('Loading boards…')).toHaveCount(0);
       await page.mouse.move(0, 0);
       await waitForStable(page);
       await expect(page).toHaveScreenshot(`canvas-command-palette-${theme}.png`, {

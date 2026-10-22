@@ -7,7 +7,7 @@ test.describe('Workspaces (owner edits a workspace)', () => {
     await registerUser(page);
     await createWorkspace(page, 'Editable board');
 
-    await page.getByRole('button', { name: 'Back to workspaces' }).click();
+    await page.getByRole('button', { name: 'Back to boards' }).click();
     const card = page.getByRole('article').filter({ hasText: 'Editable board' });
     await expect(card).toBeVisible();
 

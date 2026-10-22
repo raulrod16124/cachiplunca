@@ -51,7 +51,7 @@ describe('DeleteWorkspaceDialog', () => {
     const { deleteWorkspace, onOpenChange, onDeleted } = renderDialog();
 
     expect(screen.getByRole('dialog')).toHaveTextContent('Alpha');
-    expect(screen.getByRole('heading', { level: 2, name: 'Delete workspace?' })).toBeVisible();
+    expect(screen.getByRole('heading', { level: 2, name: 'Delete board?' })).toBeVisible();
 
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
 
@@ -64,7 +64,7 @@ describe('DeleteWorkspaceDialog', () => {
     const user = userEvent.setup();
     const { deleteWorkspace, onOpenChange, onDeleted } = renderDialog();
 
-    await user.click(screen.getByRole('button', { name: 'Delete workspace' }));
+    await user.click(screen.getByRole('button', { name: 'Delete board' }));
 
     await waitFor(() => expect(onDeleted).toHaveBeenCalledTimes(1));
     expect(deleteWorkspace).toHaveBeenCalledWith({ id: 'ws-alpha', actorUserId: 'user-1' });
@@ -79,7 +79,7 @@ describe('DeleteWorkspaceDialog', () => {
     });
     const { onOpenChange, onDeleted } = renderDialog({ deleteWorkspace });
 
-    await user.click(screen.getByRole('button', { name: 'Delete workspace' }));
+    await user.click(screen.getByRole('button', { name: 'Delete board' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'The service is temporarily unavailable. Please try again.',

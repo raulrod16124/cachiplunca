@@ -79,7 +79,7 @@ describe('NarrowNavMenu', () => {
 
     const dialog = screen.getByRole('dialog', { name: 'Navigation' });
     expect(within(dialog).getByRole('navigation')).toBeInTheDocument();
-    expect(within(dialog).getByRole('link', { name: 'Workspaces' })).toHaveAttribute(
+    expect(within(dialog).getByRole('link', { name: 'Boards' })).toHaveAttribute(
       'aria-current',
       'page',
     );

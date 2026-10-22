@@ -41,7 +41,11 @@ const Header = styled.header`
   justify-content: space-between;
   gap: ${({ theme }) => theme.space[4]};
   flex-wrap: wrap;
-  margin-bottom: ${({ theme }) => theme.space[8]};
+  margin-bottom: ${({ theme }) => theme.space[6]};
+`;
+
+const PageTitle = styled(Heading)`
+  font-size: ${({ theme }) => theme.font.size['2xl']};
 `;
 
 const Section = styled.section`
@@ -110,7 +114,7 @@ export function WorkspacesPage({
     >
       <Main id="main-content" tabIndex={-1}>
         <Header>
-          <Heading as="h1">{t('workspaces.title')}</Heading>
+          <PageTitle as="h1">{t('workspaces.title')}</PageTitle>
           <Button type="button" variant="primary" onClick={handleCreateWorkspace}>
             <Plus aria-hidden="true" size={16} />
             {t('workspaces.create')}

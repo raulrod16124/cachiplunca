@@ -12,7 +12,7 @@ test.describe('Workspaces (owner duplicates a workspace)', () => {
     const items = page.locator('[data-testid^="canvas-item-"]');
     await expect(items).toHaveCount(2);
 
-    await page.getByRole('button', { name: 'Back to workspaces' }).click();
+    await page.getByRole('button', { name: 'Back to boards' }).click();
     const sourceCard = page.getByRole('article').filter({
       has: page.getByRole('heading', { level: 3, name: 'Duplicate me', exact: true }),
     });
@@ -27,7 +27,7 @@ test.describe('Workspaces (owner duplicates a workspace)', () => {
       copyCard.getByRole('heading', { level: 3, name: 'Copy of Duplicate me', exact: true }),
     ).toBeVisible({ timeout: 20000 });
     await expect(sourceCard).toBeVisible();
-    await expect(page.getByRole('heading', { level: 1, name: 'Your workspaces' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Your boards' })).toBeVisible();
 
     await copyCard.getByRole('button', { name: 'Open' }).click();
     await expect(page.getByRole('heading', { level: 1, name: 'Copy of Duplicate me' })).toBeVisible(

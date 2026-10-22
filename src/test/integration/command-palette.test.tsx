@@ -176,13 +176,13 @@ describe('command palette', () => {
     const user = userEvent.setup();
 
     harness.render({ initialPath: '/workspaces' });
-    await screen.findByRole('heading', { name: 'Your workspaces' });
+    await screen.findByRole('heading', { name: 'Your boards' });
 
     await openCommandPalette();
     await user.click(await screen.findByTestId('command-palette-item-create-workspace'));
 
     expect(
-      await screen.findByRole('heading', { level: 2, name: 'Create workspace' }),
+      await screen.findByRole('heading', { level: 2, name: 'Create board' }),
     ).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
 

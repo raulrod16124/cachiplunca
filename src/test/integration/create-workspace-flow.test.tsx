@@ -76,7 +76,7 @@ async function renderAuthenticatedApp() {
 }
 
 function openCreateDialog(): void {
-  const [trigger] = screen.getAllByRole('button', { name: 'Create workspace' });
+  const [trigger] = screen.getAllByRole('button', { name: 'Create board' });
   fireEvent.click(trigger);
 }
 
@@ -84,14 +84,14 @@ describe('create workspace flow', () => {
   it('creates a workspace from the empty state and shows it in the list', async () => {
     const { repository, membershipRepository, listWorkspaces } = await renderAuthenticatedApp();
 
-    expect(await screen.findByRole('heading', { name: 'No workspaces yet' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'No boards yet' })).toBeInTheDocument();
     expect(listWorkspaces).toHaveBeenCalledTimes(1);
 
     openCreateDialog();
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Create' }));
-    expect(await screen.findByText('Enter a workspace name.')).toBeInTheDocument();
+    expect(await screen.findByText('Enter a board name.')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Roadmap Q4' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create' }));
@@ -113,7 +113,7 @@ describe('create workspace flow', () => {
   it('leaves the list untouched when the dialog is cancelled', async () => {
     const { repository, membershipRepository, listWorkspaces } = await renderAuthenticatedApp();
 
-    expect(await screen.findByRole('heading', { name: 'No workspaces yet' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'No boards yet' })).toBeInTheDocument();
 
     openCreateDialog();
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Discarded draft' } });
@@ -125,7 +125,7 @@ describe('create workspace flow', () => {
     await expect(
       membershipRepository.listByUser(UserId.create('fake-uid-1')),
     ).resolves.toHaveLength(0);
-    expect(screen.getByRole('heading', { name: 'No workspaces yet' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'No boards yet' })).toBeInTheDocument();
   });
 
   it('creates a workspace with the selected template and its elements', async () => {

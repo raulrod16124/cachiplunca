@@ -75,12 +75,7 @@ function toValidationError(error: unknown): AppError {
 }
 
 function notFoundError(id: WorkspaceId): AppError {
-  return createAppError(
-    'notFound',
-    ERROR_CODES.NOT_FOUND_RESOURCE,
-    'The workspace does not exist.',
-    {
-      details: { workspaceId: id.value },
-    },
-  );
+  return createAppError('notFound', ERROR_CODES.NOT_FOUND_RESOURCE, 'The board does not exist.', {
+    details: { workspaceId: id.value },
+  });
 }

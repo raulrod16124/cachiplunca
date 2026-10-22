@@ -76,7 +76,7 @@ describe('createCreateWorkspaceWithOwner', () => {
 
     expect(result.status).toBe('invalid-input');
     if (result.status === 'invalid-input') {
-      expect(result.fieldErrors.name).toBe('Enter a workspace name.');
+      expect(result.fieldErrors.name).toBe('Enter a board name.');
     }
     expect(createWorkspace).not.toHaveBeenCalled();
     expect(createMembership).not.toHaveBeenCalled();

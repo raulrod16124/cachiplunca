@@ -13,9 +13,10 @@ const FIELD_ERROR_KEYS: Readonly<Record<string, TranslationKey>> = {
   'Enter your current password.': 'profile.currentPassword.required',
   'Choose a new password.': 'profile.password.newRequired',
   'Passwords do not match.': 'profile.password.mismatch',
-  'Enter a workspace name.': 'workspaces.errors.nameRequired',
-  'Workspace name cannot exceed 100 characters.': 'workspaces.errors.nameTooLong',
-  'Workspace names cannot exceed 100 characters.': 'workspaces.errors.nameTooLong',
+  'Enter a board name.': 'workspaces.errors.nameRequired',
+  'Board name cannot exceed 100 characters.': 'workspaces.errors.nameTooLong',
+  'Board name must be at most 100 characters.': 'workspaces.errors.nameTooLong',
+  'Board names cannot exceed 100 characters.': 'workspaces.errors.nameTooLong',
 };
 
 export function localizeFieldError(t: I18nContextValue['t'], message: string): string {

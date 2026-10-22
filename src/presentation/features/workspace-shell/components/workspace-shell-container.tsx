@@ -1312,7 +1312,7 @@ export function WorkspaceShellContainer({
           readOnly={!canElementWrite}
           accessErrorMessage={
             roleStatus === 'failed'
-              ? 'We could not verify your access to this workspace. The board is view-only.'
+              ? 'We could not verify your access to this board. It is view-only.'
               : null
           }
           onRetryRole={roleStatus === 'failed' ? handleRetryRole : undefined}

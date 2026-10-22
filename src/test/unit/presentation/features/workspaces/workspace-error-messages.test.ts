@@ -36,7 +36,7 @@ describe('describeListWorkspacesError', () => {
     const error = createAppError('unknown', ERROR_CODES.UNKNOWN_UNEXPECTED, 'internal-secret');
 
     expect(describeListWorkspacesError(error)).toBe(
-      'We could not load your workspaces. Please try again.',
+      'We could not load your boards. Please try again.',
     );
   });
 });
@@ -71,14 +71,14 @@ describe('describeCreateWorkspaceError', () => {
       'Your session has expired. Sign in again to continue.',
     );
     expect(describeCreateWorkspaceError(forbidden)).toBe(
-      'You do not have permission to create workspaces.',
+      'You do not have permission to create boards.',
     );
   });
 
   it('maps an existing membership conflict to a membership message', () => {
     const error = createAppError('conflict', ERROR_CODES.MEMBERSHIP_ALREADY_EXISTS, 'raw');
 
-    expect(describeCreateWorkspaceError(error)).toBe('You are already a member of this workspace.');
+    expect(describeCreateWorkspaceError(error)).toBe('You are already a member of this board.');
   });
 
   it('falls back to the error message for unmapped codes', () => {
@@ -116,24 +116,24 @@ describe('describeUpdateWorkspaceError', () => {
       describeUpdateWorkspaceError(
         createAppError('authorization', ERROR_CODES.AUTH_FORBIDDEN, 'raw'),
       ),
-    ).toBe('You do not have permission to edit this workspace.');
+    ).toBe('You do not have permission to edit this board.');
     expect(
       describeUpdateWorkspaceError(
         createAppError('notFound', ERROR_CODES.NOT_FOUND_RESOURCE, 'raw'),
       ),
-    ).toBe('The workspace does not exist.');
+    ).toBe('The board does not exist.');
     expect(
       describeUpdateWorkspaceError(
         createAppError('validation', ERROR_CODES.VALIDATION_INVALID_INPUT, 'raw'),
       ),
-    ).toBe('Check the workspace details and try again.');
+    ).toBe('Check the board details and try again.');
   });
 
   it('does not leak the underlying message for unknown errors', () => {
     const error = createAppError('unknown', ERROR_CODES.UNKNOWN_UNEXPECTED, 'internal-secret');
 
     expect(describeUpdateWorkspaceError(error)).toBe(
-      'We could not update this workspace. Please try again.',
+      'We could not update this board. Please try again.',
     );
   });
 });
@@ -162,19 +162,19 @@ describe('describeDuplicateWorkspaceError', () => {
       describeDuplicateWorkspaceError(
         createAppError('authorization', ERROR_CODES.AUTH_FORBIDDEN, 'raw'),
       ),
-    ).toBe('You do not have permission to duplicate this workspace.');
+    ).toBe('You do not have permission to duplicate this board.');
     expect(
       describeDuplicateWorkspaceError(
         createAppError('notFound', ERROR_CODES.NOT_FOUND_RESOURCE, 'raw'),
       ),
-    ).toBe('The workspace does not exist.');
+    ).toBe('The board does not exist.');
   });
 
   it('does not leak the underlying message for unknown errors', () => {
     const error = createAppError('unknown', ERROR_CODES.UNKNOWN_UNEXPECTED, 'internal-secret');
 
     expect(describeDuplicateWorkspaceError(error)).toBe(
-      'We could not duplicate this workspace. Please try again.',
+      'We could not duplicate this board. Please try again.',
     );
   });
 });
@@ -202,7 +202,7 @@ describe('describeDeleteWorkspaceError', () => {
     const error = createAppError('authorization', ERROR_CODES.AUTH_FORBIDDEN, 'raw');
 
     expect(describeDeleteWorkspaceError(error)).toBe(
-      'You do not have permission to delete this workspace.',
+      'You do not have permission to delete this board.',
     );
   });
 
@@ -210,7 +210,7 @@ describe('describeDeleteWorkspaceError', () => {
     const error = createAppError('unknown', ERROR_CODES.UNKNOWN_UNEXPECTED, 'internal-secret');
 
     expect(describeDeleteWorkspaceError(error)).toBe(
-      'We could not delete this workspace. Please try again.',
+      'We could not delete this board. Please try again.',
     );
   });
 });

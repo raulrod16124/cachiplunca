@@ -10,7 +10,7 @@ export function describeListWorkspacesError(error: AppError): string {
     case ERROR_CODES.AUTH_UNAUTHENTICATED:
       return 'Your session has expired. Sign in again to continue.';
     default:
-      return 'We could not load your workspaces. Please try again.';
+      return 'We could not load your boards. Please try again.';
   }
 }
 
@@ -24,9 +24,9 @@ export function describeCreateWorkspaceError(error: AppError): string {
     case ERROR_CODES.AUTH_UNAUTHENTICATED:
       return 'Your session has expired. Sign in again to continue.';
     case ERROR_CODES.AUTH_FORBIDDEN:
-      return 'You do not have permission to create workspaces.';
+      return 'You do not have permission to create boards.';
     case ERROR_CODES.MEMBERSHIP_ALREADY_EXISTS:
-      return 'You are already a member of this workspace.';
+      return 'You are already a member of this board.';
     default:
       return error.message;
   }
@@ -42,13 +42,13 @@ export function describeUpdateWorkspaceError(error: AppError): string {
     case ERROR_CODES.AUTH_UNAUTHENTICATED:
       return 'Your session has expired. Sign in again to continue.';
     case ERROR_CODES.AUTH_FORBIDDEN:
-      return 'You do not have permission to edit this workspace.';
+      return 'You do not have permission to edit this board.';
     case ERROR_CODES.NOT_FOUND_RESOURCE:
-      return 'The workspace does not exist.';
+      return 'The board does not exist.';
     case ERROR_CODES.VALIDATION_INVALID_INPUT:
-      return 'Check the workspace details and try again.';
+      return 'Check the board details and try again.';
     default:
-      return 'We could not update this workspace. Please try again.';
+      return 'We could not update this board. Please try again.';
   }
 }
 
@@ -62,11 +62,11 @@ export function describeDuplicateWorkspaceError(error: AppError): string {
     case ERROR_CODES.AUTH_UNAUTHENTICATED:
       return 'Your session has expired. Sign in again to continue.';
     case ERROR_CODES.AUTH_FORBIDDEN:
-      return 'You do not have permission to duplicate this workspace.';
+      return 'You do not have permission to duplicate this board.';
     case ERROR_CODES.NOT_FOUND_RESOURCE:
-      return 'The workspace does not exist.';
+      return 'The board does not exist.';
     default:
-      return 'We could not duplicate this workspace. Please try again.';
+      return 'We could not duplicate this board. Please try again.';
   }
 }
 
@@ -80,10 +80,10 @@ export function describeDeleteWorkspaceError(error: AppError): string {
     case ERROR_CODES.AUTH_UNAUTHENTICATED:
       return 'Your session has expired. Sign in again to continue.';
     case ERROR_CODES.AUTH_FORBIDDEN:
-      return 'You do not have permission to delete this workspace.';
+      return 'You do not have permission to delete this board.';
     case ERROR_CODES.NOT_FOUND_RESOURCE:
-      return 'The workspace does not exist.';
+      return 'The board does not exist.';
     default:
-      return 'We could not delete this workspace. Please try again.';
+      return 'We could not delete this board. Please try again.';
   }
 }

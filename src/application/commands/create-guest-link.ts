@@ -94,7 +94,7 @@ function forbiddenError(workspaceId: WorkspaceId, actorUserId: UserId): AppError
   return createAppError(
     'authorization',
     ERROR_CODES.AUTH_FORBIDDEN,
-    'You do not have permission to create a view link for this workspace.',
+    'You do not have permission to create a view link for this board.',
     {
       details: {
         workspaceId: workspaceId.value,

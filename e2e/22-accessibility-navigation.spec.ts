@@ -22,12 +22,12 @@ test.describe('Accessibility navigation', () => {
 
     await registerUser(page);
     await page.reload();
-    await expect(page.getByRole('heading', { level: 1, name: 'Your workspaces' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Your boards' })).toBeVisible();
     await page.keyboard.press('Tab');
     await expect(skipLink).toBeFocused();
     await page.keyboard.press('Enter');
     await expect(page.locator('#main-content')).toBeFocused();
-    await expect(page.getByRole('link', { name: 'Workspaces' })).toHaveAttribute(
+    await expect(page.getByRole('link', { name: 'Boards' })).toHaveAttribute(
       'aria-current',
       'page',
     );
@@ -64,9 +64,7 @@ test.describe('Profile page accessibility navigation', () => {
       'aria-current',
       'page',
     );
-    await expect(page.getByRole('link', { name: 'Workspaces' })).not.toHaveAttribute(
-      'aria-current',
-    );
+    await expect(page.getByRole('link', { name: 'Boards' })).not.toHaveAttribute('aria-current');
 
     const skipLink = page.getByRole('link', { name: SKIP_LINK });
     await page.keyboard.press('Tab');

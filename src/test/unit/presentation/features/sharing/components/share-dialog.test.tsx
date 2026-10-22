@@ -177,7 +177,7 @@ describe('ShareDialog', () => {
     const { onLeft } = renderDialog(repository, { canChangeRole: false, canRemove: false });
     await screen.findByText('You');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Leave workspace' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Leave board' }));
 
     await waitFor(() => expect(onLeft).toHaveBeenCalledTimes(1));
   });
@@ -198,9 +198,7 @@ describe('ShareDialog', () => {
     fireEvent.click(await screen.findByRole('option', { name: 'Viewer' }));
 
     expect(
-      await screen.findByText(
-        'You do not have permission to change member roles in this workspace.',
-      ),
+      await screen.findByText('You do not have permission to change member roles in this board.'),
     ).toBeInTheDocument();
   });
 

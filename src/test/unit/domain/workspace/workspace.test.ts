@@ -41,7 +41,7 @@ describe('Workspace', () => {
         id: WorkspaceId.create('ws-123'),
         name: '',
       }),
-    ).toThrow('Workspace name cannot be empty');
+    ).toThrow('Board name cannot be empty');
   });
 
   it('throws when name is only whitespace', () => {
@@ -51,7 +51,7 @@ describe('Workspace', () => {
         id: WorkspaceId.create('ws-123'),
         name: '   ',
       }),
-    ).toThrow('Workspace name cannot be empty');
+    ).toThrow('Board name cannot be empty');
   });
 
   it('throws when name exceeds 100 characters', () => {
@@ -62,7 +62,7 @@ describe('Workspace', () => {
         id: WorkspaceId.create('ws-123'),
         name: longName,
       }),
-    ).toThrow('Workspace name cannot exceed 100 characters');
+    ).toThrow('Board name cannot exceed 100 characters');
   });
 
   it('accepts name with exactly 100 characters', () => {
@@ -190,7 +190,7 @@ describe('Workspace', () => {
       name: 'Test',
     });
 
-    expect(() => workspace.update({ name: '' })).toThrow('Workspace name cannot be empty');
+    expect(() => workspace.update({ name: '' })).toThrow('Board name cannot be empty');
   });
 
   it('serializes to JSON correctly', () => {

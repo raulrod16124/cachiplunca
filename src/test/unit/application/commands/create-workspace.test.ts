@@ -16,13 +16,13 @@ describe('validateCreateWorkspaceInput', () => {
   });
 
   it('rejects empty and whitespace-only names', () => {
-    expect(validateCreateWorkspaceInput({ name: '' }).name).toBe('Enter a workspace name.');
-    expect(validateCreateWorkspaceInput({ name: '   ' }).name).toBe('Enter a workspace name.');
+    expect(validateCreateWorkspaceInput({ name: '' }).name).toBe('Enter a board name.');
+    expect(validateCreateWorkspaceInput({ name: '   ' }).name).toBe('Enter a board name.');
   });
 
   it('rejects names above the maximum length', () => {
     const errors = validateCreateWorkspaceInput({ name: 'x'.repeat(101) });
-    expect(errors.name).toBe('Workspace name must be at most 100 characters.');
+    expect(errors.name).toBe('Board name must be at most 100 characters.');
   });
 
   it('accepts names at the exact maximum length', () => {
@@ -82,7 +82,7 @@ describe('createCreateWorkspace', () => {
 
     expect(result.status).toBe('invalid-input');
     if (result.status === 'invalid-input') {
-      expect(result.fieldErrors.name).toBe('Enter a workspace name.');
+      expect(result.fieldErrors.name).toBe('Enter a board name.');
     }
     expect(create).not.toHaveBeenCalled();
   });
@@ -110,7 +110,7 @@ describe('createCreateWorkspace', () => {
     jest.spyOn(repository, 'create').mockRejectedValue({
       kind: 'validation',
       code: ERROR_CODES.VALIDATION_INVALID_INPUT,
-      message: 'Workspace name cannot exceed 100 characters',
+      message: 'Board name cannot exceed 100 characters',
     });
     const createWorkspace = createCreateWorkspace(repository);
 

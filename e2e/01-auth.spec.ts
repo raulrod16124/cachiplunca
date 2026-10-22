@@ -4,10 +4,10 @@ import { loginUser, logout, registerUser, uniqueEmail } from './helpers/auth';
 test.describe('Authentication', () => {
   test('register creates a session and lands on the workspaces list', async ({ page }) => {
     await registerUser(page);
-    await expect(page.getByRole('heading', { level: 1, name: 'Your workspaces' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Create workspace' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Your boards' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Create board' })).toBeVisible();
     await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Workspaces' })).toHaveAttribute(
+    await expect(page.getByRole('link', { name: 'Boards' })).toHaveAttribute(
       'aria-current',
       'page',
     );
@@ -20,7 +20,7 @@ test.describe('Authentication', () => {
     await logout(page);
 
     await loginUser(page, email);
-    await expect(page.getByRole('heading', { level: 1, name: 'Your workspaces' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Your boards' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Open account menu' })).toBeVisible();
   });
 
@@ -50,7 +50,7 @@ test.describe('Authentication', () => {
     await expect(remember).toBeChecked();
     await remember.uncheck();
     await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page.getByRole('heading', { level: 1, name: 'Your workspaces' })).toBeVisible({
+    await expect(page.getByRole('heading', { level: 1, name: 'Your boards' })).toBeVisible({
       timeout: 30000,
     });
 
@@ -67,13 +67,13 @@ test.describe('Authentication', () => {
     await page.getByLabel('Password', { exact: true }).fill('Secret123');
     await expect(page.getByRole('checkbox', { name: 'Remember me' })).toBeChecked();
     await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page.getByRole('heading', { level: 1, name: 'Your workspaces' })).toBeVisible({
+    await expect(page.getByRole('heading', { level: 1, name: 'Your boards' })).toBeVisible({
       timeout: 30000,
     });
 
     const localTab = await context.newPage();
     await localTab.goto('/workspaces');
-    await expect(localTab.getByRole('heading', { level: 1, name: 'Your workspaces' })).toBeVisible({
+    await expect(localTab.getByRole('heading', { level: 1, name: 'Your boards' })).toBeVisible({
       timeout: 30000,
     });
     await localTab.close();

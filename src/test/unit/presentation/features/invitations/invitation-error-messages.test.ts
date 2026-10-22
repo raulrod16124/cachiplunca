@@ -18,7 +18,7 @@ describe('describeAcceptInvitationError', () => {
     const error = createAppError('validation', ERROR_CODES.INVITATION_EXPIRED, 'raw');
 
     expect(describeAcceptInvitationError(error)).toBe(
-      'This invitation has expired. Ask the workspace owner for a new one.',
+      'This invitation has expired. Ask the board owner for a new one.',
     );
   });
 
@@ -34,14 +34,14 @@ describe('describeAcceptInvitationError', () => {
     const error = createAppError('authorization', ERROR_CODES.AUTH_FORBIDDEN, 'raw');
 
     expect(describeAcceptInvitationError(error)).toBe(
-      'We could not add you to this workspace. Please try again or ask for a new invitation.',
+      'We could not add you to this board. Please try again or ask for a new invitation.',
     );
   });
 
   it('maps an existing membership', () => {
     const error = createAppError('conflict', ERROR_CODES.MEMBERSHIP_ALREADY_EXISTS, 'raw');
 
-    expect(describeAcceptInvitationError(error)).toBe('You already have access to this workspace.');
+    expect(describeAcceptInvitationError(error)).toBe('You already have access to this board.');
   });
 
   it('falls back to the error message for unmapped codes', () => {
@@ -84,7 +84,7 @@ describe('describeInviteMemberError', () => {
       'Your session has expired. Sign in again to continue.',
     );
     expect(describeInviteMemberError(forbidden)).toBe(
-      'You do not have permission to invite members to this workspace.',
+      'You do not have permission to invite members to this board.',
     );
   });
 
@@ -120,7 +120,7 @@ describe('describePendingInvitationsError', () => {
     const error = createAppError('authorization', ERROR_CODES.AUTH_FORBIDDEN, 'raw');
 
     expect(describePendingInvitationsError(error)).toBe(
-      'You do not have permission to view the invitations of this workspace.',
+      'You do not have permission to view the invitations of this board.',
     );
   });
 

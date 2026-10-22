@@ -45,11 +45,11 @@ describe('critical journey', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Create account' }));
 
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Your workspaces' }),
+      await screen.findByRole('heading', { level: 1, name: 'Your boards' }),
     ).toBeInTheDocument();
-    expect(await screen.findByRole('heading', { name: 'No workspaces yet' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'No boards yet' })).toBeInTheDocument();
 
-    const [createTrigger] = screen.getAllByRole('button', { name: 'Create workspace' });
+    const [createTrigger] = screen.getAllByRole('button', { name: 'Create board' });
     fireEvent.click(createTrigger);
     fireEvent.change(await screen.findByLabelText('Name'), { target: { value: 'Roadmap Q4' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create' }));

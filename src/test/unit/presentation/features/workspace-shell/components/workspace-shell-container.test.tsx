@@ -291,7 +291,7 @@ describe('WorkspaceShellContainer', () => {
 
     renderContainer(getWorkspace);
 
-    expect(screen.getByRole('status')).toHaveTextContent('Loading workspace');
+    expect(screen.getByRole('status')).toHaveTextContent('Loading board');
   });
 
   it('renders the workspace shell when the workspace is found', async () => {
@@ -300,7 +300,7 @@ describe('WorkspaceShellContainer', () => {
     renderContainer(getWorkspace);
 
     expect(await screen.findByRole('heading', { name: 'Roadmap Q4' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Back to workspaces' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Back to boards' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Open account menu' })).toBeInTheDocument();
     expect(screen.getByRole('application', { name: 'Canvas' })).toBeInTheDocument();
     expect(getWorkspace).toHaveBeenCalledWith('ws-test');
@@ -461,8 +461,8 @@ describe('WorkspaceShellContainer', () => {
 
     renderContainer(getWorkspace, { id: 'ws-missing' });
 
-    expect(await screen.findByRole('heading', { name: 'Workspace not found' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Back to workspaces' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Board not found' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Back to boards' })).toBeInTheDocument();
     expect(getWorkspace).toHaveBeenCalledWith('ws-missing');
   });
 
@@ -476,7 +476,7 @@ describe('WorkspaceShellContainer', () => {
     renderContainer(getWorkspace);
 
     expect(
-      await screen.findByRole('heading', { name: 'Could not load workspace' }),
+      await screen.findByRole('heading', { name: 'Could not load board' }),
     ).toBeInTheDocument();
     expect(screen.getByText('Network failure')).toBeInTheDocument();
 
@@ -499,7 +499,7 @@ describe('WorkspaceShellContainer', () => {
     renderContainer(getWorkspace);
 
     expect(
-      await screen.findByRole('heading', { name: 'Could not load workspace' }),
+      await screen.findByRole('heading', { name: 'Could not load board' }),
     ).toBeInTheDocument();
     expect(
       screen.getByText('We could not reach the server. Check your connection and try again.'),
@@ -1680,7 +1680,7 @@ describe('WorkspaceShellContainer', () => {
 
     renderContainer(getWorkspace, { presencePort, localUserId: userId.value });
 
-    expect(screen.getByRole('status')).toHaveTextContent('Loading workspace');
+    expect(screen.getByRole('status')).toHaveTextContent('Loading board');
     await flushMicrotasks();
 
     expect(presencePort.presenceOf(WorkspaceId.create('ws-test'), userId)).toBeUndefined();

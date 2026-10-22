@@ -80,7 +80,7 @@ describe('AcceptInvitationPage', () => {
       userEmail: 'invitee@example.com',
       userEmailVerified: true,
     });
-    expect(screen.getByRole('button', { name: 'Go to workspace' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Go to board' })).toBeInTheDocument();
   });
 
   it('shows a friendly message when the invitation cannot be accepted', async () => {
@@ -97,7 +97,7 @@ describe('AcceptInvitationPage', () => {
     renderPage(authPort, acceptInvitation);
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'This invitation has expired. Ask the workspace owner for a new one.',
+      'This invitation has expired. Ask the board owner for a new one.',
     );
   });
 

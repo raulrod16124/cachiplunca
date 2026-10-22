@@ -16,7 +16,7 @@ test.describe('Sharing (editor accepts from the pending list)', () => {
 
     await ownerPage.getByRole('button', { name: 'Share' }).click();
     const dialog = ownerPage.getByRole('dialog');
-    await expect(dialog.getByRole('heading', { name: 'Share workspace' })).toBeVisible();
+    await expect(dialog.getByRole('heading', { name: 'Share board' })).toBeVisible();
 
     await dialog.getByLabel('Email').fill(editorEmail);
     await expect(dialog.getByLabel('Role')).toHaveText(/Editor/);
@@ -35,7 +35,7 @@ test.describe('Sharing (editor accepts from the pending list)', () => {
     await notifications.click();
 
     const invitationsDialog = editorPage.getByRole('dialog', { name: 'Invitations' });
-    await expect(invitationsDialog.getByText(/A workspace/)).toBeVisible();
+    await expect(invitationsDialog.getByText(/A board/)).toBeVisible();
     await invitationsDialog.getByRole('button', { name: 'Accept invitation' }).click();
 
     const canvas = editorPage.getByRole('application', { name: 'Canvas' });
@@ -63,7 +63,7 @@ test.describe('Sharing (viewer happy path)', () => {
 
     await ownerPage.getByRole('button', { name: 'Share' }).click();
     const dialog = ownerPage.getByRole('dialog');
-    await expect(dialog.getByRole('heading', { name: 'Share workspace' })).toBeVisible();
+    await expect(dialog.getByRole('heading', { name: 'Share board' })).toBeVisible();
 
     await dialog.getByLabel('Email').fill(viewerEmail);
     await dialog.getByLabel('Role').click();
@@ -100,7 +100,7 @@ test.describe('Sharing (viewer happy path)', () => {
     ).toBeVisible({ timeout: 30000 });
     await expect(viewerPage.getByText(/as viewer/i)).toBeVisible();
 
-    await viewerPage.getByRole('button', { name: 'Go to workspace' }).click();
+    await viewerPage.getByRole('button', { name: 'Go to board' }).click();
     const canvas = viewerPage.getByRole('application', { name: 'Canvas' });
     await expect(canvas).toBeVisible({ timeout: 20000 });
 

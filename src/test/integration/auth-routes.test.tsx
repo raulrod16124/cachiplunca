@@ -101,7 +101,7 @@ describe('auth routes', () => {
     renderApp(authPort, '/');
 
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Your workspaces' }),
+      await screen.findByRole('heading', { level: 1, name: 'Your boards' }),
     ).toBeInTheDocument();
     expect(screen.getByTestId('location')).toHaveTextContent('/workspaces');
   });
@@ -115,7 +115,7 @@ describe('auth routes', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
 
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Your workspaces' }),
+      await screen.findByRole('heading', { level: 1, name: 'Your boards' }),
     ).toBeInTheDocument();
     expect(screen.getByTestId('location')).toHaveTextContent('/workspaces');
   });
@@ -130,7 +130,7 @@ describe('auth routes', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
 
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Your workspaces' }),
+      await screen.findByRole('heading', { level: 1, name: 'Your boards' }),
     ).toBeInTheDocument();
     expect(authPort.sessionPersistence).toBe('session');
   });
@@ -142,7 +142,7 @@ describe('auth routes', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Create account' }));
 
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Your workspaces' }),
+      await screen.findByRole('heading', { level: 1, name: 'Your boards' }),
     ).toBeInTheDocument();
     expect(screen.getByTestId('location')).toHaveTextContent('/workspaces');
   });
@@ -153,7 +153,7 @@ describe('auth routes', () => {
     renderApp(authPort, '/login');
 
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Your workspaces' }),
+      await screen.findByRole('heading', { level: 1, name: 'Your boards' }),
     ).toBeInTheDocument();
     expect(screen.getByTestId('location')).toHaveTextContent('/workspaces');
   });
@@ -166,7 +166,7 @@ describe('auth routes', () => {
     renderApp(authPort, '/workspaces');
 
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Your workspaces' }),
+      await screen.findByRole('heading', { level: 1, name: 'Your boards' }),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Open account menu' }));
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Sign out' }));
@@ -207,7 +207,7 @@ describe('auth routes', () => {
     renderApp(authPort, '/workspaces');
 
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Your workspaces' }),
+      await screen.findByRole('heading', { level: 1, name: 'Your boards' }),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Open account menu' }));
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Preferences' }));

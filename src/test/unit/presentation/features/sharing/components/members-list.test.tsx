@@ -85,7 +85,7 @@ describe('MembersList', () => {
     const props = renderList({ canLeave: true });
 
     expect(screen.getByText('You')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Leave workspace' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Leave board' }));
     expect(props.onLeave).toHaveBeenCalledTimes(1);
   });
 

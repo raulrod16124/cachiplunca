@@ -32,10 +32,7 @@ describe('AppShell', () => {
 
     expect(screen.getByText('Cachiplunca')).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Primary navigation' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Workspaces' })).toHaveAttribute(
-      'aria-current',
-      'page',
-    );
+    expect(screen.getByRole('link', { name: 'Boards' })).toHaveAttribute('aria-current', 'page');
     expect(screen.queryByRole('link', { name: 'Invitations' })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Profile' })).not.toHaveAttribute('aria-current');
     expect(screen.queryByRole('button', { name: 'Open navigation menu' })).not.toBeInTheDocument();
@@ -67,7 +64,7 @@ describe('AppShell', () => {
     );
 
     expect(screen.getByRole('link', { name: 'Profile' })).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByRole('link', { name: 'Workspaces' })).not.toHaveAttribute('aria-current');
+    expect(screen.getByRole('link', { name: 'Boards' })).not.toHaveAttribute('aria-current');
   });
 
   it('does not render a create workspace action in the shell', () => {
@@ -78,6 +75,6 @@ describe('AppShell', () => {
     );
 
     expect(screen.queryByRole('button', { name: 'New workspace' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Create workspace' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Create board' })).not.toBeInTheDocument();
   });
 });

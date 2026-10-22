@@ -46,7 +46,7 @@ describe('accept invitation route', () => {
       ).toBeInTheDocument();
     });
     expect(screen.getByText(/as viewer/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Go to workspace' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Go to board' })).toBeInTheDocument();
   });
 
   it('lets an invitee accept from the workspaces list without the invitation link', async () => {
@@ -78,7 +78,7 @@ describe('accept invitation route', () => {
     fireEvent.click(notifications);
 
     const dialog = await screen.findByRole('dialog', { name: 'Invitations' });
-    expect(within(dialog).getByText(/A workspace/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/A board/)).toBeInTheDocument();
     expect(within(dialog).getByText(/editor/i)).toBeInTheDocument();
 
     fireEvent.click(within(dialog).getByRole('button', { name: 'Accept invitation' }));

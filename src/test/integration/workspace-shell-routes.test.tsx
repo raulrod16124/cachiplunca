@@ -108,10 +108,10 @@ describe('workspace shell routes', () => {
   it('deep-links to the workspace shell and loads the workspace', async () => {
     await renderAuthenticatedApp('/workspaces/ws-does-not-exist');
 
-    expect(await screen.findByRole('heading', { name: 'Workspace not found' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Board not found' })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Back to workspaces' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Back to boards' }));
 
-    expect(await screen.findByRole('heading', { name: 'Your workspaces' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Your boards' })).toBeInTheDocument();
   });
 });

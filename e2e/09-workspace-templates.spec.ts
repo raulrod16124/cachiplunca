@@ -6,7 +6,7 @@ test.describe('Workspace templates', () => {
   test('creates a retrospective workspace with prebuilt elements', async ({ page }) => {
     await registerUser(page);
 
-    await page.getByRole('button', { name: 'Create workspace' }).first().click();
+    await page.getByRole('button', { name: 'Create board' }).first().click();
     await page.getByLabel('Name').fill('Sprint retrospective');
     await page.getByRole('radio', { name: 'Retrospective' }).check();
     await page.getByRole('button', { name: 'Create', exact: true }).click();

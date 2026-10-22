@@ -20,7 +20,7 @@ test.describe('Invitation notifications', () => {
 
     await ownerPage.getByRole('button', { name: 'Share' }).click();
     const dialog = ownerPage.getByRole('dialog');
-    await expect(dialog.getByRole('heading', { name: 'Share workspace' })).toBeVisible();
+    await expect(dialog.getByRole('heading', { name: 'Share board' })).toBeVisible();
     await dialog.getByLabel('Email').fill(inviteeEmail);
     await dialog.getByRole('button', { name: 'Send invitation' }).click();
     await expect(dialog.getByLabel('Invitation link')).toBeVisible({ timeout: 15000 });

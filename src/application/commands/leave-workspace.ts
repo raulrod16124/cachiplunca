@@ -38,7 +38,7 @@ function forbiddenError(input: LeaveWorkspaceInput): AppError {
   return createAppError(
     'authorization',
     ERROR_CODES.AUTH_FORBIDDEN,
-    'You do not have permission to leave this workspace.',
+    'You do not have permission to leave this board.',
     {
       details: {
         workspaceId: input.workspaceId.value,

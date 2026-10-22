@@ -39,7 +39,7 @@ function forbiddenError(input: RemoveMemberInput): AppError {
   return createAppError(
     'authorization',
     ERROR_CODES.AUTH_FORBIDDEN,
-    'You do not have permission to remove members from this workspace.',
+    'You do not have permission to remove members from this board.',
     {
       details: {
         workspaceId: input.workspaceId.value,

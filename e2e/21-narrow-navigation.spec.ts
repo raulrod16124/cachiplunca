@@ -9,7 +9,7 @@ test.describe('Narrow navigation menu', () => {
   }) => {
     await registerUser(page);
     await page.goto('/workspaces');
-    await expect(page.getByRole('heading', { level: 1, name: 'Your workspaces' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Your boards' })).toBeVisible();
 
     const trigger = page.getByRole('button', { name: 'Open navigation menu' });
     await expect(trigger).toBeVisible();
@@ -17,7 +17,7 @@ test.describe('Narrow navigation menu', () => {
     await trigger.click();
     const menu = page.getByRole('dialog', { name: 'Navigation' });
     await expect(menu).toBeVisible();
-    await expect(menu.getByRole('link', { name: 'Workspaces' })).toHaveAttribute(
+    await expect(menu.getByRole('link', { name: 'Boards' })).toHaveAttribute(
       'aria-current',
       'page',
     );
@@ -34,8 +34,8 @@ test.describe('Narrow navigation menu', () => {
     await invitationsDialog.getByRole('button', { name: 'Close' }).click();
     await expect(invitationsDialog).toBeHidden();
 
-    await page.locator('header').getByRole('button', { name: 'Create workspace' }).click();
-    const createDialog = page.getByRole('dialog', { name: 'Create workspace' });
+    await page.locator('header').getByRole('button', { name: 'Create board' }).click();
+    const createDialog = page.getByRole('dialog', { name: 'Create board' });
     await expect(createDialog).toBeVisible();
     await createDialog.getByRole('button', { name: 'Cancel' }).click();
     await expect(createDialog).toBeHidden();
