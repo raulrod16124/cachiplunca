@@ -85,12 +85,13 @@ describe('brand tokens', () => {
     expect(BRAND_THEME_CSS).not.toContain('#155dfc');
   });
 
-  it('uses white surfaces, neutral sunken panels and a distinct board color in light', () => {
+  it('uses white surfaces and neutral board/page backgrounds in light', () => {
     for (const declaration of [
       '--rr-color-background-default: var(--cach-white);',
       '--rr-color-background-surface: var(--cach-white);',
       '--rr-color-background-sunken: var(--cach-neutral-100);',
-      '--cach-canvas-surface: var(--cach-board-green-100);',
+      '--cach-canvas-surface: var(--cach-neutral-100);',
+      '--cach-surface-page: var(--cach-neutral-100);',
       '--rr-color-border-default: var(--cach-sand-600);',
     ]) {
       expect(LIGHT_THEME_DECLARATIONS).toContain(declaration);

@@ -12,7 +12,7 @@ import { NarrowNavMenu } from './narrow-nav-menu';
 const Layout = styled.div`
   display: flex;
   min-height: 100dvh;
-  background: ${({ theme }) => theme.color.background.default};
+  background: ${({ theme }) => theme.color.background.page};
   background-image: var(--cach-surface-page-pattern);
   background-size: var(--cach-surface-page-pattern-size);
 

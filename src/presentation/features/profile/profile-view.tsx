@@ -121,7 +121,7 @@ export function ProfileView({ currentUser, tab, onTabChange }: ProfileViewProps)
 
   return (
     <Stack gap="space-5">
-      <IdentityCard variant="sunken" padding="md" data-testid="profile-identity">
+      <IdentityCard variant="surface" padding="md" data-testid="profile-identity">
         <Avatar name={avatarName} size="lg" />
         <IdentityText>
           <Text weight="font.weight.semibold" size="font.size.lg">

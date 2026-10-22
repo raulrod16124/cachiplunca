@@ -58,10 +58,12 @@
   /*
    * Surface roles. Neutral by default for the dark fallback; the light theme
    * opts into the logo palette below and the dark theme overrides these roles
-   * with the scale above. Floating containers use `surface`, while the board
-   * owns its own differentiating color through `canvasSurface`.
+   * with the scale above. Floating containers use `surface`; the board and the
+   * app pages share `page`/`canvasSurface` so the work area blends with the
+   * boards and profile pages.
    */
   --cach-canvas-surface: var(--rr-color-background-default);
+  --cach-surface-page: var(--rr-color-background-default);
   --cach-floating-surface: var(--rr-color-background-default);
   --cach-floating-surface-muted: var(--rr-color-background-surface);
   --cach-surface-sidebar: var(--rr-color-background-surface);
@@ -212,7 +214,8 @@
   --rr-color-text-danger: var(--cach-error-700);
   --rr-color-border-default: var(--cach-sand-600);
   --rr-color-border-strong: var(--cach-brown-700);
-  --cach-canvas-surface: var(--cach-board-green-100);
+  --cach-canvas-surface: var(--cach-neutral-100);
+  --cach-surface-page: var(--cach-neutral-100);
   --cach-floating-surface: var(--cach-white);
   --cach-floating-surface-muted: var(--cach-neutral-100);
   --cach-surface-sidebar: var(--cach-white);
@@ -299,7 +302,8 @@
     --rr-color-text-danger: var(--cach-error-700);
     --rr-color-border-default: var(--cach-sand-600);
     --rr-color-border-strong: var(--cach-brown-700);
-    --cach-canvas-surface: var(--cach-board-green-100);
+    --cach-canvas-surface: var(--cach-neutral-100);
+    --cach-surface-page: var(--cach-neutral-100);
     --cach-floating-surface: var(--cach-white);
     --cach-floating-surface-muted: var(--cach-neutral-100);
     --cach-surface-sidebar: var(--cach-white);

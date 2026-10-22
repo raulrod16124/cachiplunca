@@ -43,6 +43,7 @@ export const appTheme = {
   color: {
     background: {
       default: token('color.background.default'),
+      page: 'var(--cach-surface-page)',
       surface: token('color.background.surface'),
       sunken: token('color.background.sunken'),
       success: token('color.background.success'),
