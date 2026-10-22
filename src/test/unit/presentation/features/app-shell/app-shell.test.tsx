@@ -54,6 +54,8 @@ describe('AppShell', () => {
 
     expect(css).toContain('var(--cach-surface-sidebar)');
     expect(css).toContain('var(--cach-shell-border)');
+    expect(css).toContain('var(--cach-surface-page-pattern)');
+    expect(css).toContain('var(--cach-surface-sidebar-pattern)');
   });
 
   it('renders the notifications slot in the shell header', () => {

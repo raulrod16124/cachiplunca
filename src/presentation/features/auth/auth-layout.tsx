@@ -12,6 +12,8 @@ const Screen = styled.main`
   justify-content: center;
   padding: ${({ theme }) => theme.space[6]};
   background: ${({ theme }) => theme.color.background.default};
+  background-image: var(--cach-surface-page-pattern);
+  background-size: var(--cach-surface-page-pattern-size);
 `;
 
 const Shell = styled.div`

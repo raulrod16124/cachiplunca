@@ -13,6 +13,8 @@ const Layout = styled.div`
   display: flex;
   min-height: 100dvh;
   background: ${({ theme }) => theme.color.background.default};
+  background-image: var(--cach-surface-page-pattern);
+  background-size: var(--cach-surface-page-pattern-size);
 
   @media (max-width: 900px) {
     flex-direction: column;
@@ -31,6 +33,8 @@ const Sidebar = styled.aside`
   padding: ${({ theme }) => theme.space[5]};
   border-right: 1px solid var(--cach-shell-border);
   background: var(--cach-surface-sidebar);
+  background-image: var(--cach-surface-sidebar-pattern);
+  background-size: var(--cach-surface-sidebar-pattern-size);
 
   @media (max-width: 900px) {
     width: 100%;
