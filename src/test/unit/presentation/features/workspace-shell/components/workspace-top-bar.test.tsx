@@ -470,27 +470,26 @@ describe('WorkspaceTopBar', () => {
     expect(alerts[0]).toHaveTextContent('Out of sync.');
   });
 
-  it('opens a localised title field when renaming', () => {
+  it('does not offer inline renaming in the top bar', () => {
     render(
       <WorkspaceTopBar
         workspace={WORKSPACE}
-        role="editor"
+        role="owner"
         onBack={jest.fn()}
         syncStatus="idle"
         connectionStatus="connected"
         connectedUsers={[]}
         currentUser={CURRENT_USER}
         logoutUser={LOGOUT_USER}
-        onRename={jest.fn(async () => ({ status: 'ok' as const, workspace: WORKSPACE }))}
         persistenceErrorMessage={null}
         collaborationErrorMessage={null}
         creationErrorMessage={null}
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Rename workspace' }));
-
-    expect(screen.getByRole('textbox', { name: 'Workspace name' })).toHaveValue('Roadmap Q4');
+    expect(screen.getByRole('heading', { level: 1, name: 'Roadmap Q4' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Rename workspace' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'Workspace name' })).not.toBeInTheDocument();
   });
 
   it('exposes the account menu that signs out', async () => {

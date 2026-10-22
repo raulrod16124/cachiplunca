@@ -9,11 +9,7 @@ import type { ElementId, Position } from '../../../../domain/shared';
 import type { MembershipRole } from '../../../../domain/membership';
 import type { Membership } from '../../../../domain/membership';
 import type { Presence } from '../../../../domain/collaboration';
-import type {
-  LogoutUser,
-  UpdateElementInput,
-  UpdateWorkspaceResult,
-} from '../../../../application/commands';
+import type { LogoutUser, UpdateElementInput } from '../../../../application/commands';
 import type { ListWorkspaces } from '../../../../application/queries';
 import { connectorCandidateIds, selectPresentationFrames } from '../../../../application/services';
 import type {
@@ -119,7 +115,6 @@ export interface WorkspaceShellLayoutProps {
   readonly onExportJson?: () => void;
   readonly onExportPdf?: () => void;
   readonly exportErrorMessage?: string | null;
-  readonly onRename?: (name: string) => Promise<UpdateWorkspaceResult>;
   readonly readOnly?: boolean;
   readonly accessErrorMessage?: string | null;
   readonly onRetryRole?: () => void;
@@ -173,7 +168,6 @@ export function WorkspaceShellLayout({
   onExportJson,
   onExportPdf,
   exportErrorMessage = null,
-  onRename,
   readOnly = false,
   accessErrorMessage = null,
   onRetryRole,
@@ -366,7 +360,6 @@ export function WorkspaceShellLayout({
               onShowShortcuts={() => setShortcutsOpen(true)}
               onExportJson={onExportJson}
               onExportPdf={onExportPdf}
-              onRename={onRename}
               onPresent={startPresentation}
               canPresent={presentationFrames.length > 0}
               persistenceErrorMessage={persistenceErrorMessage}

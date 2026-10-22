@@ -10,7 +10,6 @@ import type {
   LeaveWorkspace,
   LogoutUser,
   RemoveMember,
-  UpdateWorkspace,
 } from '../../../application/commands';
 import type {
   GetWorkspace,
@@ -43,7 +42,6 @@ export interface WorkspaceShellPageProps {
   readonly changeMemberRole?: ChangeMemberRole;
   readonly removeMember?: RemoveMember;
   readonly leaveWorkspace?: LeaveWorkspace;
-  readonly updateWorkspace?: UpdateWorkspace;
   readonly fileDownload?: FileDownloadPort;
   readonly listWorkspaces?: ListWorkspaces;
   readonly comments?: CommentServices;
@@ -66,7 +64,6 @@ export function WorkspaceShellPage({
   changeMemberRole,
   removeMember,
   leaveWorkspace,
-  updateWorkspace,
   fileDownload,
   listWorkspaces,
   comments,
@@ -103,7 +100,6 @@ export function WorkspaceShellPage({
       changeMemberRole={changeMemberRole}
       removeMember={removeMember}
       leaveWorkspace={leaveWorkspace}
-      updateWorkspace={updateWorkspace}
       fileDownload={fileDownload}
       listWorkspaces={listWorkspaces}
       comments={comments}

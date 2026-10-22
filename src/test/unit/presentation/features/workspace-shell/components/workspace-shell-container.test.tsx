@@ -25,7 +25,6 @@ import {
   type InviteMember,
   type LeaveWorkspace,
   type RemoveMember,
-  type UpdateWorkspace,
 } from '../../../../../../application/commands';
 import {
   createElementPersistence,
@@ -214,7 +213,6 @@ interface RenderOptions {
   readonly changeMemberRole?: ChangeMemberRole;
   readonly removeMember?: RemoveMember;
   readonly leaveWorkspace?: LeaveWorkspace;
-  readonly updateWorkspace?: UpdateWorkspace;
   readonly fileDownload?: FileDownloadPort;
 }
 
@@ -253,7 +251,6 @@ function renderContainer(getWorkspace: GetWorkspace, options: RenderOptions = {}
         changeMemberRole={options.changeMemberRole}
         removeMember={options.removeMember}
         leaveWorkspace={options.leaveWorkspace}
-        updateWorkspace={options.updateWorkspace}
         fileDownload={options.fileDownload}
       />
     </MemoryRouter>,
@@ -2210,47 +2207,19 @@ describe('WorkspaceShellContainer', () => {
     expect(screen.getByRole('button', { name: 'Add text' })).toBeDisabled();
   });
 
-  it('renames the workspace inline when the user is the owner', async () => {
+  it('does not offer inline renaming to workspace owners', async () => {
     const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
-    const updateWorkspace = jest.fn().mockImplementation(async (input: { name?: string }) => ({
-      status: 'ok' as const,
-      workspace: WORKSPACE.update({ name: input.name ?? '' }),
-    }));
-    const user = userEvent.setup();
 
     renderContainer(getWorkspace, {
       role: 'owner',
       localUserId: 'user-1',
-      updateWorkspace,
     });
 
-    await user.click(await screen.findByRole('button', { name: 'Rename workspace' }));
-    const input = screen.getByRole('textbox', { name: 'Workspace name' });
-    await user.clear(input);
-    await user.type(input, 'Roadmap 2027{Enter}');
-
-    await waitFor(() =>
-      expect(updateWorkspace).toHaveBeenCalledWith({
-        id: 'ws-test',
-        name: 'Roadmap 2027',
-      }),
-    );
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Roadmap 2027' }),
+      await screen.findByRole('heading', { level: 1, name: 'Roadmap Q4' }),
     ).toBeInTheDocument();
-  });
-
-  it('does not offer renaming to editors', async () => {
-    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
-
-    renderContainer(getWorkspace, {
-      role: 'editor',
-      localUserId: 'user-1',
-      updateWorkspace: jest.fn(),
-    });
-
-    await screen.findByRole('heading', { level: 1, name: 'Roadmap Q4' });
     expect(screen.queryByRole('button', { name: 'Rename workspace' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'Workspace name' })).not.toBeInTheDocument();
   });
 });
 

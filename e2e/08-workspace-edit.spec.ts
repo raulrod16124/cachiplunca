@@ -32,5 +32,7 @@ test.describe('Workspaces (owner edits a workspace)', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Renamed board' })).toBeVisible({
       timeout: 20000,
     });
+    await expect(page.getByRole('button', { name: 'Rename workspace' })).toHaveCount(0);
+    await expect(page.getByRole('textbox', { name: 'Workspace name' })).toHaveCount(0);
   });
 });

@@ -13,8 +13,6 @@ import {
   type LogoutUser,
   type RemoveMember,
   type UpdateElementInput,
-  type UpdateWorkspace,
-  type UpdateWorkspaceResult,
 } from '../../../../application/commands';
 import type {
   GetWorkspace,
@@ -166,7 +164,6 @@ export interface WorkspaceShellContainerProps {
   readonly changeMemberRole?: ChangeMemberRole;
   readonly removeMember?: RemoveMember;
   readonly leaveWorkspace?: LeaveWorkspace;
-  readonly updateWorkspace?: UpdateWorkspace;
   readonly fileDownload?: FileDownloadPort;
   readonly listWorkspaces?: ListWorkspaces;
   readonly onOpenWorkspace?: (workspaceId: string) => void;
@@ -204,7 +201,6 @@ export function WorkspaceShellContainer({
   changeMemberRole,
   removeMember,
   leaveWorkspace,
-  updateWorkspace,
   fileDownload,
   listWorkspaces,
   onOpenWorkspace,
@@ -925,28 +921,6 @@ export function WorkspaceShellContainer({
     }
   }, [getWorkspace, workspaceId]);
 
-  const handleRenameWorkspace = useCallback(
-    async (name: string): Promise<UpdateWorkspaceResult> => {
-      if (updateWorkspace === undefined) {
-        return {
-          status: 'error',
-          error: toAppError(new Error('Renaming is not available.')),
-        };
-      }
-
-      const result = await updateWorkspace({ id: workspaceId, name });
-      if (result.status === 'ok') {
-        setResult((previous) =>
-          previous === null || previous.status !== 'ok'
-            ? previous
-            : { status: 'ok', workspace: result.workspace },
-        );
-      }
-      return result;
-    },
-    [updateWorkspace, workspaceId],
-  );
-
   const fetchElements = useCallback(async (): Promise<void> => {
     setElementsStatus('loading');
     setElementsError(null);
@@ -1272,9 +1246,6 @@ export function WorkspaceShellContainer({
     const canMemberRemove = !permissionsEnforced || permissions.can('member:remove');
     const canMemberLeave = !permissionsEnforced || permissions.can('member:leave');
     const canCreateElement = canElementWrite && localUserId !== undefined;
-    const canRename =
-      updateWorkspace !== undefined &&
-      (!permissionsEnforced || permissions.can('workspace:update'));
 
     const canShare =
       localUserId !== undefined &&
@@ -1349,7 +1320,6 @@ export function WorkspaceShellContainer({
           onExportJson={fileDownload === undefined ? undefined : handleExportJson}
           onExportPdf={fileDownload === undefined ? undefined : handleExportPdf}
           exportErrorMessage={exportError}
-          onRename={canRename ? handleRenameWorkspace : undefined}
           listWorkspaces={listWorkspaces}
           onOpenWorkspace={onOpenWorkspace}
           commentServices={comments}

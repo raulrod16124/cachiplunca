@@ -198,7 +198,6 @@ export function AppRoutes({
                 changeMemberRole={changeMemberRole}
                 removeMember={removeMember}
                 leaveWorkspace={leaveWorkspace}
-                updateWorkspace={updateWorkspace}
                 fileDownload={fileDownload}
                 listWorkspaces={listWorkspaces}
                 comments={comments}
