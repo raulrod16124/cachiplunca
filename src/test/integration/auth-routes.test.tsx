@@ -211,23 +211,22 @@ describe('auth routes', () => {
     expect(screen.getByRole('tab', { name: 'Profile' })).toHaveAttribute('aria-selected', 'true');
   });
 
-  it('opens the preferences tab from the account menu', async () => {
+  it('keeps the preferences tab reachable from the profile navigation', async () => {
     const authPort = new FakeAuthPort();
     await authPort.signUp(CREDENTIALS);
-    renderApp(authPort, '/workspaces');
-
-    expect(
-      await screen.findByRole('heading', { level: 1, name: 'Your boards' }),
-    ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Open account menu' }));
-    fireEvent.click(await screen.findByRole('menuitem', { name: 'Preferences' }));
+    renderApp(authPort, '/profile');
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Profile' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Preferences' }));
+
     expect(screen.getByRole('tab', { name: 'Preferences' })).toHaveAttribute(
       'aria-selected',
       'true',
     );
-    expect(screen.getByTestId('location')).toHaveTextContent('/profile?tab=preferences');
+    await waitFor(() =>
+      expect(screen.getByTestId('location')).toHaveTextContent('/profile?tab=preferences'),
+    );
   });
 
   it('keeps the selected profile tab in the query string', async () => {

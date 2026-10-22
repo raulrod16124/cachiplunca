@@ -5,8 +5,8 @@ test.describe('Accessibility preferences', () => {
   test('applies and persists the account font size and reduced motion', async ({ page }) => {
     await registerUser(page);
 
-    await page.getByRole('button', { name: 'Open account menu' }).click();
-    await page.getByRole('menuitem', { name: 'Preferences' }).click();
+    await page.getByRole('link', { name: 'Profile' }).click();
+    await page.getByRole('tab', { name: 'Preferences' }).click();
 
     await expect(page).toHaveURL(/\/profile\?tab=preferences$/);
     await expect(page.getByRole('heading', { level: 1, name: 'Profile' })).toBeVisible();

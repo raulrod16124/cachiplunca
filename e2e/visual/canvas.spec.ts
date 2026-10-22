@@ -351,9 +351,9 @@ test.describe('visual baseline — canvas', () => {
 
     test(`profile preferences page theme:${theme}`, async ({ page }) => {
       await registerUser(page);
-      await createWorkspace(page, 'Settings canvas');
-      await page.getByRole('button', { name: 'Open account menu' }).click();
-      await page.getByRole('menuitem', { name: 'Preferences' }).click();
+      await expect(page.getByText('Test User', { exact: true }).first()).toBeVisible();
+      await page.getByRole('link', { name: 'Profile' }).click();
+      await page.getByRole('tab', { name: 'Preferences' }).click();
       await expect(page.getByRole('heading', { level: 1, name: 'Profile' })).toBeVisible();
       await expect(page.getByRole('tab', { name: 'Preferences' })).toHaveAttribute(
         'aria-selected',
@@ -373,9 +373,9 @@ test.describe('visual baseline — canvas', () => {
 
     test(`profile page theme:${theme}`, async ({ page }) => {
       await registerUser(page);
-      await createWorkspace(page, 'Profile canvas');
-      await page.getByRole('button', { name: 'Open account menu' }).click();
-      await page.getByRole('menuitem', { name: 'Profile' }).click();
+      await expect(page.getByText('Test User', { exact: true }).first()).toBeVisible();
+      await page.getByRole('link', { name: 'Profile' }).click();
+      await expect(page.getByLabel('Display name')).toHaveValue('Test User');
       await expect(page.getByRole('heading', { level: 1, name: 'Profile' })).toBeVisible();
       await setTheme(page, theme);
       await waitForStable(page);
