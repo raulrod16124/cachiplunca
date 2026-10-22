@@ -1,6 +1,6 @@
 import { Heading, Stack, Text } from '@raulrod/ui';
 import type { ReactNode } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import type { LogoutUser } from '../../../application/commands';
 import { useI18n } from '../../i18n';
@@ -33,7 +33,6 @@ export interface ProfilePageProps {
 
 export function ProfilePage({ logoutUser }: ProfilePageProps): ReactNode {
   const session = useSession();
-  const navigate = useNavigate();
   const { t } = useI18n();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -59,9 +58,6 @@ export function ProfilePage({ logoutUser }: ProfilePageProps): ReactNode {
     <AppShell
       currentUser={currentUser}
       logoutUser={logoutUser}
-      onCreateWorkspace={() => {
-        navigate('/workspaces');
-      }}
       notifications={<InvitationsButton />}
     >
       <Main id="main-content" tabIndex={-1}>

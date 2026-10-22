@@ -4,7 +4,9 @@ import { registerUser } from './helpers/auth';
 test.describe('Narrow navigation menu', () => {
   test.use({ viewport: { width: 900, height: 800 } });
 
-  test('navigates, creates a workspace and signs out from the menu', async ({ page }) => {
+  test('navigates, creates a workspace from the content and signs out from the menu', async ({
+    page,
+  }) => {
     await registerUser(page);
     await page.goto('/workspaces');
     await expect(page.getByRole('heading', { level: 1, name: 'Your workspaces' })).toBeVisible();
@@ -20,6 +22,7 @@ test.describe('Narrow navigation menu', () => {
       'page',
     );
     await expect(menu.getByRole('link', { name: 'Invitations' })).toHaveCount(0);
+    await expect(menu.getByRole('button', { name: 'New workspace' })).toHaveCount(0);
 
     await menu.getByRole('button', { name: 'Close navigation menu' }).click();
     await expect(menu).toBeHidden();
@@ -31,8 +34,7 @@ test.describe('Narrow navigation menu', () => {
     await invitationsDialog.getByRole('button', { name: 'Close' }).click();
     await expect(invitationsDialog).toBeHidden();
 
-    await trigger.click();
-    await menu.getByRole('button', { name: 'New workspace' }).click();
+    await page.locator('header').getByRole('button', { name: 'Create workspace' }).click();
     const createDialog = page.getByRole('dialog', { name: 'Create workspace' });
     await expect(createDialog).toBeVisible();
     await createDialog.getByRole('button', { name: 'Cancel' }).click();

@@ -1,5 +1,5 @@
 import { Button, Dialog, DialogContent, Text } from '@raulrod/ui';
-import { LogOut, Menu, Plus } from '@raulrod/icons';
+import { LogOut, Menu } from '@raulrod/icons';
 import { useState, type ReactNode } from 'react';
 import styled, { keyframes } from 'styled-components';
 import type { LogoutUser } from '../../../application/commands';
@@ -111,24 +111,14 @@ const Identity = styled.div`
 export interface NarrowNavMenuProps {
   readonly currentUser: AuthUser | null;
   readonly logoutUser: LogoutUser;
-  readonly onCreateWorkspace: () => void;
 }
 
-export function NarrowNavMenu({
-  currentUser,
-  logoutUser,
-  onCreateWorkspace,
-}: NarrowNavMenuProps): ReactNode {
+export function NarrowNavMenu({ currentUser, logoutUser }: NarrowNavMenuProps): ReactNode {
   const { t } = useI18n();
   const isNarrow = useMediaQuery('(max-width: 900px)');
   const { signingOut, signOutError, signOut } = useSignOut(logoutUser);
   const [open, setOpen] = useState(false);
   const name = currentUser?.displayName ?? t('shell.account.identity');
-
-  const handleCreateWorkspace = () => {
-    setOpen(false);
-    onCreateWorkspace();
-  };
 
   if (!isNarrow) {
     return null;
@@ -155,10 +145,6 @@ export function NarrowNavMenu({
               }}
             />
           </DrawerNav>
-          <Button type="button" variant="primary" onClick={handleCreateWorkspace}>
-            <Plus aria-hidden="true" size={16} />
-            {t('shell.newWorkspace')}
-          </Button>
         </Body>
         <Footer>
           {signOutError === null ? null : (

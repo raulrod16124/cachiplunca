@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { render as renderWithTheme } from '../../../../setup/render-with-theme';
@@ -25,7 +25,7 @@ describe('AppShell', () => {
 
   it('renders the brand, navigation and account identity', () => {
     render(
-      <AppShell currentUser={CURRENT_USER} logoutUser={logoutUser} onCreateWorkspace={jest.fn()}>
+      <AppShell currentUser={CURRENT_USER} logoutUser={logoutUser}>
         <p>Content</p>
       </AppShell>,
     );
@@ -49,7 +49,6 @@ describe('AppShell', () => {
       <AppShell
         currentUser={CURRENT_USER}
         logoutUser={logoutUser}
-        onCreateWorkspace={jest.fn()}
         notifications={<button type="button">Notifications</button>}
       >
         <p>Content</p>
@@ -61,7 +60,7 @@ describe('AppShell', () => {
 
   it('marks the profile link as current on the profile route', () => {
     render(
-      <AppShell currentUser={CURRENT_USER} logoutUser={logoutUser} onCreateWorkspace={jest.fn()}>
+      <AppShell currentUser={CURRENT_USER} logoutUser={logoutUser}>
         <p>Content</p>
       </AppShell>,
       ['/profile'],
@@ -71,19 +70,14 @@ describe('AppShell', () => {
     expect(screen.getByRole('link', { name: 'Workspaces' })).not.toHaveAttribute('aria-current');
   });
 
-  it('forwards the new workspace action', () => {
-    const onCreateWorkspace = jest.fn();
+  it('does not render a create workspace action in the shell', () => {
     render(
-      <AppShell
-        currentUser={CURRENT_USER}
-        logoutUser={logoutUser}
-        onCreateWorkspace={onCreateWorkspace}
-      >
+      <AppShell currentUser={CURRENT_USER} logoutUser={logoutUser}>
         <p>Content</p>
       </AppShell>,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'New workspace' }));
-    expect(onCreateWorkspace).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: 'New workspace' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Create workspace' })).not.toBeInTheDocument();
   });
 });

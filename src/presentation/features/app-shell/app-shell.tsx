@@ -1,5 +1,4 @@
-import { Button, Text } from '@raulrod/ui';
-import { Plus } from '@raulrod/icons';
+import { Text } from '@raulrod/ui';
 import type { ReactNode } from 'react';
 import styled from 'styled-components';
 import type { LogoutUser } from '../../../application/commands';
@@ -106,18 +105,9 @@ const Content = styled.div`
   min-width: 0;
 `;
 
-const CreateButton = styled(Button)`
-  width: 100%;
-
-  @media (max-width: 900px) {
-    width: auto;
-  }
-`;
-
 export interface AppShellProps {
   readonly currentUser: AuthUser | null;
   readonly logoutUser: LogoutUser;
-  readonly onCreateWorkspace: () => void;
   readonly notifications?: ReactNode;
   readonly children: ReactNode;
 }
@@ -125,7 +115,6 @@ export interface AppShellProps {
 export function AppShell({
   currentUser,
   logoutUser,
-  onCreateWorkspace,
   notifications,
   children,
 }: AppShellProps): ReactNode {
@@ -141,18 +130,9 @@ export function AppShell({
           </Brand>
           <BrandActions>
             {notifications}
-            <NarrowNavMenu
-              currentUser={currentUser}
-              logoutUser={logoutUser}
-              onCreateWorkspace={onCreateWorkspace}
-            />
+            <NarrowNavMenu currentUser={currentUser} logoutUser={logoutUser} />
           </BrandActions>
         </BrandRow>
-
-        <CreateButton type="button" variant="primary" onClick={onCreateWorkspace}>
-          <Plus aria-hidden="true" size={16} />
-          {t('shell.newWorkspace')}
-        </CreateButton>
 
         <Nav id="app-nav" aria-label={t('shell.nav.label')}>
           <NavLinks />

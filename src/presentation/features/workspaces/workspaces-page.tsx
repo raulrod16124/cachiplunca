@@ -106,7 +106,6 @@ export function WorkspacesPage({
     <AppShell
       currentUser={currentUser}
       logoutUser={logoutUser}
-      onCreateWorkspace={handleCreateWorkspace}
       notifications={<InvitationsButton />}
     >
       <Main id="main-content" tabIndex={-1}>
