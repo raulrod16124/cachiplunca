@@ -19,16 +19,17 @@ test.describe('Narrow navigation menu', () => {
       'aria-current',
       'page',
     );
-    await expect(menu.getByRole('link', { name: 'Invitations' })).toBeVisible();
+    await expect(menu.getByRole('link', { name: 'Invitations' })).toHaveCount(0);
 
     await menu.getByRole('button', { name: 'Close navigation menu' }).click();
     await expect(menu).toBeHidden();
     await expect(trigger).toBeFocused();
 
-    await trigger.click();
-    await menu.getByRole('link', { name: 'Invitations' }).click();
-    await expect(menu).toBeHidden();
-    expect(new URL(page.url()).hash).toBe('#pending-invitations');
+    await page.getByRole('button', { name: 'Notifications' }).click();
+    const invitationsDialog = page.getByRole('dialog', { name: 'Invitations' });
+    await expect(invitationsDialog.getByText('No pending invitations.')).toBeVisible();
+    await invitationsDialog.getByRole('button', { name: 'Close' }).click();
+    await expect(invitationsDialog).toBeHidden();
 
     await trigger.click();
     await menu.getByRole('button', { name: 'New workspace' }).click();

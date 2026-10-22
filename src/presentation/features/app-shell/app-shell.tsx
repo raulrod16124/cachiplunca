@@ -58,6 +58,12 @@ const Brand = styled.div`
   min-width: 0;
 `;
 
+const BrandActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.space[1]};
+`;
+
 const Nav = styled.nav`
   display: flex;
   flex-direction: column;
@@ -112,7 +118,7 @@ export interface AppShellProps {
   readonly currentUser: AuthUser | null;
   readonly logoutUser: LogoutUser;
   readonly onCreateWorkspace: () => void;
-  readonly pendingInvitationCount?: number;
+  readonly notifications?: ReactNode;
   readonly children: ReactNode;
 }
 
@@ -120,7 +126,7 @@ export function AppShell({
   currentUser,
   logoutUser,
   onCreateWorkspace,
-  pendingInvitationCount = 0,
+  notifications,
   children,
 }: AppShellProps): ReactNode {
   const { t } = useI18n();
@@ -133,12 +139,14 @@ export function AppShell({
           <Brand>
             <BrandLogo variant="wordmark" responsive size="md" />
           </Brand>
-          <NarrowNavMenu
-            currentUser={currentUser}
-            logoutUser={logoutUser}
-            onCreateWorkspace={onCreateWorkspace}
-            pendingInvitationCount={pendingInvitationCount}
-          />
+          <BrandActions>
+            {notifications}
+            <NarrowNavMenu
+              currentUser={currentUser}
+              logoutUser={logoutUser}
+              onCreateWorkspace={onCreateWorkspace}
+            />
+          </BrandActions>
         </BrandRow>
 
         <CreateButton type="button" variant="primary" onClick={onCreateWorkspace}>
@@ -147,7 +155,7 @@ export function AppShell({
         </CreateButton>
 
         <Nav id="app-nav" aria-label={t('shell.nav.label')}>
-          <NavLinks pendingInvitationCount={pendingInvitationCount} />
+          <NavLinks />
         </Nav>
 
         <SidebarFooter>

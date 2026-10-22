@@ -1,5 +1,11 @@
 export { AcceptInvitationPage, type AcceptInvitationPageProps } from './accept-invitation-page';
 export { InvitationNotice, type InvitationNoticeProps } from './components/invitation-notice';
+export { InvitationsButton } from './components/invitations-button';
+export { InvitationsDialog, type InvitationsDialogProps } from './components/invitations-dialog';
+export {
+  PendingInvitationsPanel,
+  type PendingInvitationsPanelProps,
+} from './components/pending-invitations-panel';
 export { InvitePanel, type InvitePanelProps } from './components/invite-panel';
 export {
   InviteMemberForm,

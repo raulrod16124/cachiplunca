@@ -28,11 +28,15 @@ test.describe('Sharing (editor accepts from the pending list)', () => {
     await registerUser(editorPage, editorEmail);
     await verifyEmail(editorEmail);
 
-    await expect(
-      editorPage.getByRole('heading', { level: 2, name: 'Pending invitations' }),
-    ).toBeVisible({ timeout: 20000 });
-    await expect(editorPage.getByText(/A workspace/)).toBeVisible();
-    await editorPage.getByRole('button', { name: 'Accept invitation' }).click();
+    const notifications = editorPage.getByRole('button', {
+      name: /Notifications, 1 pending/i,
+    });
+    await expect(notifications).toBeVisible({ timeout: 20000 });
+    await notifications.click();
+
+    const invitationsDialog = editorPage.getByRole('dialog', { name: 'Invitations' });
+    await expect(invitationsDialog.getByText(/A workspace/)).toBeVisible();
+    await invitationsDialog.getByRole('button', { name: 'Accept invitation' }).click();
 
     const canvas = editorPage.getByRole('application', { name: 'Canvas' });
     await expect(canvas).toBeVisible({ timeout: 20000 });

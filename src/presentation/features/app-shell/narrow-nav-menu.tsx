@@ -112,14 +112,12 @@ export interface NarrowNavMenuProps {
   readonly currentUser: AuthUser | null;
   readonly logoutUser: LogoutUser;
   readonly onCreateWorkspace: () => void;
-  readonly pendingInvitationCount?: number;
 }
 
 export function NarrowNavMenu({
   currentUser,
   logoutUser,
   onCreateWorkspace,
-  pendingInvitationCount = 0,
 }: NarrowNavMenuProps): ReactNode {
   const { t } = useI18n();
   const isNarrow = useMediaQuery('(max-width: 900px)');
@@ -152,7 +150,6 @@ export function NarrowNavMenu({
         <Body>
           <DrawerNav aria-label={t('shell.nav.label')}>
             <NavLinks
-              pendingInvitationCount={pendingInvitationCount}
               onNavigate={() => {
                 setOpen(false);
               }}

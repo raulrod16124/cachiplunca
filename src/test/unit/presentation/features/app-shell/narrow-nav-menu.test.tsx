@@ -101,32 +101,12 @@ describe('NarrowNavMenu', () => {
       'aria-current',
       'page',
     );
-    expect(within(dialog).getByRole('link', { name: 'Invitations' })).not.toHaveAttribute(
-      'aria-current',
-    );
+    expect(within(dialog).queryByRole('link', { name: 'Invitations' })).not.toBeInTheDocument();
     expect(within(dialog).getByRole('link', { name: 'Profile' })).not.toHaveAttribute(
       'aria-current',
     );
     expect(within(dialog).getByText('Ada Lovelace')).toBeInTheDocument();
     expect(within(dialog).getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
-  });
-
-  it('exposes the pending invitations count in the drawer', () => {
-    render(
-      <NarrowNavMenu
-        currentUser={CURRENT_USER}
-        logoutUser={logoutUser}
-        onCreateWorkspace={jest.fn()}
-        pendingInvitationCount={3}
-      />,
-    );
-
-    openMenu();
-    const dialog = screen.getByRole('dialog', { name: 'Navigation' });
-    expect(
-      within(dialog).getByRole('link', { name: /Invitations, 3 pending/i }),
-    ).toBeInTheDocument();
-    expect(within(dialog).getByText('3')).toBeInTheDocument();
   });
 
   it('creates a workspace and closes the drawer', () => {

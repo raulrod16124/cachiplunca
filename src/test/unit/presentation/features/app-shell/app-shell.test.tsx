@@ -36,7 +36,7 @@ describe('AppShell', () => {
       'aria-current',
       'page',
     );
-    expect(screen.getByRole('link', { name: 'Invitations' })).not.toHaveAttribute('aria-current');
+    expect(screen.queryByRole('link', { name: 'Invitations' })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Profile' })).not.toHaveAttribute('aria-current');
     expect(screen.queryByRole('button', { name: 'Open navigation menu' })).not.toBeInTheDocument();
     expect(screen.getByText('Ada Lovelace')).toBeInTheDocument();
@@ -44,36 +44,19 @@ describe('AppShell', () => {
     expect(screen.getByText('Content')).toBeInTheDocument();
   });
 
-  it('shows the pending invitations badge with an accessible count', () => {
+  it('renders the notifications slot in the shell header', () => {
     render(
       <AppShell
         currentUser={CURRENT_USER}
         logoutUser={logoutUser}
         onCreateWorkspace={jest.fn()}
-        pendingInvitationCount={2}
+        notifications={<button type="button">Notifications</button>}
       >
         <p>Content</p>
       </AppShell>,
     );
 
-    expect(screen.getByRole('link', { name: /Invitations, 2 pending/i })).toBeInTheDocument();
-    expect(screen.getByText('2')).toBeInTheDocument();
-  });
-
-  it('hides the pending invitations badge when the count is zero', () => {
-    render(
-      <AppShell
-        currentUser={CURRENT_USER}
-        logoutUser={logoutUser}
-        onCreateWorkspace={jest.fn()}
-        pendingInvitationCount={0}
-      >
-        <p>Content</p>
-      </AppShell>,
-    );
-
-    expect(screen.getByRole('link', { name: 'Invitations' })).toBeInTheDocument();
-    expect(screen.queryByText(/pending invitations/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Notifications' })).toBeInTheDocument();
   });
 
   it('marks the profile link as current on the profile route', () => {

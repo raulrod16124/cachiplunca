@@ -18,9 +18,9 @@ describe('NavItem', () => {
   });
 
   it('omits aria-current on inactive items', () => {
-    render(<NavItem href="#pending-invitations">Invitations</NavItem>);
+    render(<NavItem href="#section">Updates</NavItem>);
 
-    expect(screen.getByRole('link', { name: 'Invitations' })).not.toHaveAttribute('aria-current');
+    expect(screen.getByRole('link', { name: 'Updates' })).not.toHaveAttribute('aria-current');
   });
 
   it('renders router links for internal destinations', () => {
@@ -39,19 +39,19 @@ describe('NavItem', () => {
   it('renders an optional badge without changing the accessible name', () => {
     render(
       <NavItem
-        href="#pending-invitations"
-        aria-label="Invitations, 2 pending"
+        href="#section"
+        aria-label="Updates, 2 new"
         badge={
           <span aria-hidden="true" data-testid="nav-badge">
             2
           </span>
         }
       >
-        Invitations
+        Updates
       </NavItem>,
     );
 
-    expect(screen.getByRole('link', { name: 'Invitations, 2 pending' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Updates, 2 new' })).toBeInTheDocument();
     expect(screen.getByTestId('nav-badge')).toHaveTextContent('2');
   });
 });

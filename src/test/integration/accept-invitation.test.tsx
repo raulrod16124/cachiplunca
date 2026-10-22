@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { StrictMode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { SessionProvider } from '../../presentation/providers/session-provider';
@@ -72,13 +72,16 @@ describe('accept invitation route', () => {
 
     harness.render({ initialPath: '/workspaces' });
 
-    expect(
-      await screen.findByRole('heading', { level: 2, name: 'Pending invitations' }),
-    ).toBeInTheDocument();
-    expect(await screen.findByText(/A workspace/)).toBeInTheDocument();
-    expect(await screen.findByText(/editor/i)).toBeInTheDocument();
+    const notifications = await screen.findByRole('button', {
+      name: 'Notifications, 1 pending',
+    });
+    fireEvent.click(notifications);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Accept invitation' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Invitations' });
+    expect(within(dialog).getByText(/A workspace/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/editor/i)).toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Accept invitation' }));
 
     expect(await screen.findByRole('application', { name: 'Canvas' })).toBeInTheDocument();
     await expect(

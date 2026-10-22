@@ -25,11 +25,10 @@ async function invite(
 }
 
 describe('in-app invitation notifications', () => {
-  it('shows a badge and notice for new invitations, dismisses locally and accepts', async () => {
+  it('shows a badge, dismisses the notice and accepts from the notifications dialog', async () => {
     const harness = createAppHarness();
     const owner = await harness.register();
-    const firstWorkspace = await harness.createOwnerWorkspace('Notify board');
-    const secondWorkspace = await harness.createOwnerWorkspace('Accept board');
+    const workspace = await harness.createOwnerWorkspace('Notify board');
 
     const invitee = await harness.authPort.signUp({
       email: 'invitee@example.com',
@@ -39,13 +38,14 @@ describe('in-app invitation notifications', () => {
 
     harness.render({ initialPath: '/workspaces' });
     expect(await screen.findByText('Cachiplunca')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Invitations' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Notifications' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Invitations/i })).not.toBeInTheDocument();
 
-    await invite(harness, owner.uid, firstWorkspace, 'invitee@example.com');
+    await invite(harness, owner.uid, workspace, 'invitee@example.com');
 
     const notice = await screen.findByRole('status', { name: 'New invitation' });
     expect(within(notice).getByText(/invited you as editor/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Invitations, 1 pending/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Notifications, 1 pending/i })).toBeInTheDocument();
 
     const user = userEvent.setup();
     await user.click(screen.getByRole('button', { name: 'Dismiss' }));
@@ -53,22 +53,17 @@ describe('in-app invitation notifications', () => {
     await waitFor(() => {
       expect(screen.queryByRole('status', { name: 'New invitation' })).not.toBeInTheDocument();
     });
-    expect(screen.getByRole('link', { name: 'Invitations' })).toBeInTheDocument();
-    expect(
-      await screen.findByRole('heading', { level: 2, name: 'Pending invitations' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Notifications, 1 pending/i })).toBeInTheDocument();
 
-    await invite(harness, owner.uid, secondWorkspace, 'invitee@example.com');
+    await user.click(screen.getByRole('button', { name: /Notifications, 1 pending/i }));
 
-    const secondNotice = await screen.findByRole('status', { name: 'New invitation' });
-    await user.click(within(secondNotice).getByRole('button', { name: 'Accept invitation' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Invitations' });
+    expect(within(dialog).getByText(/invited you as editor/i)).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'Accept invitation' }));
 
     expect(await screen.findByRole('application', { name: 'Canvas' })).toBeInTheDocument();
     await expect(
-      harness.membershipRepository.findByUserAndWorkspace(
-        UserId.create(invitee.uid),
-        secondWorkspace.id,
-      ),
+      harness.membershipRepository.findByUserAndWorkspace(UserId.create(invitee.uid), workspace.id),
     ).resolves.toMatchObject({ role: 'editor' });
   });
 
@@ -91,9 +86,12 @@ describe('in-app invitation notifications', () => {
     await waitFor(() => {
       expect(screen.queryByRole('status', { name: 'New invitation' })).not.toBeInTheDocument();
     });
-    expect(screen.getByRole('link', { name: 'Invitations' })).toBeInTheDocument();
-    expect(
-      screen.queryByRole('heading', { level: 2, name: 'Pending invitations' }),
-    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Notifications' })).toBeInTheDocument();
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Notifications' }));
+
+    const dialog = await screen.findByRole('dialog', { name: 'Invitations' });
+    expect(within(dialog).getByText('No pending invitations.')).toBeInTheDocument();
   });
 });

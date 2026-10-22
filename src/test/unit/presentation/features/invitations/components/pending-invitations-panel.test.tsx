@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Invitation } from '../../../../../../domain/invitation';
 import { InvitationId, UserId, WorkspaceId } from '../../../../../../domain/shared';
-import { PendingInvitationsPanel } from '../../../../../../presentation/features/workspaces/components/pending-invitations-panel';
+import { PendingInvitationsPanel } from '../../../../../../presentation/features/invitations/components/pending-invitations-panel';
 
 const WORKSPACE = WorkspaceId.create('ws-1');
 
@@ -44,9 +44,6 @@ describe('PendingInvitationsPanel', () => {
   it('shows the invited workspace and role', () => {
     renderPanel();
 
-    expect(
-      screen.getByRole('heading', { level: 2, name: 'Pending invitations' }),
-    ).toBeInTheDocument();
     expect(screen.getByText(/A workspace/)).toBeInTheDocument();
     expect(screen.getByText(/editor/i)).toBeInTheDocument();
   });
@@ -61,13 +58,14 @@ describe('PendingInvitationsPanel', () => {
     expect(onAccept).toHaveBeenCalledWith(expect.objectContaining({ role: 'editor' }));
   });
 
-  it('renders nothing while idle, loading or without invitations', () => {
-    const { container, rerender } = renderPanel({ status: 'loading' });
-    expect(container).toBeEmptyDOMElement();
+  it('shows a loading state while idle or loading', () => {
+    const { rerender } = renderPanel({ status: 'idle' });
+    expect(screen.getByRole('status')).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByText('Loading pending invitations')).toBeInTheDocument();
 
     rerender(
       <PendingInvitationsPanel
-        status="ready"
+        status="loading"
         invitations={[]}
         loadError={null}
         actionError={null}
@@ -79,7 +77,13 @@ describe('PendingInvitationsPanel', () => {
         onSendVerification={jest.fn()}
       />,
     );
-    expect(container).toBeEmptyDOMElement();
+    expect(screen.getByRole('status')).toHaveAttribute('aria-busy', 'true');
+  });
+
+  it('shows an empty state when there are no pending invitations', () => {
+    renderPanel({ invitations: [] });
+
+    expect(screen.getByText('No pending invitations.')).toBeInTheDocument();
   });
 
   it('shows the load error and forwards retry', async () => {
