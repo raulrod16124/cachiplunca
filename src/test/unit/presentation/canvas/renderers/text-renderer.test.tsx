@@ -60,6 +60,13 @@ describe('TextRenderer', () => {
     expect(content).toHaveStyle({ borderTopWidth: '1px', borderTopStyle: 'solid' });
   });
 
+  it('shows a pointer cursor over the element', () => {
+    render(<TextRenderer element={createElement('hello')} selected={false} />);
+
+    const content = document.querySelector('[data-element-content]');
+    expect(content).toHaveStyle({ cursor: 'pointer' });
+  });
+
   it('returns null for a non-text element', () => {
     const note = createNoteElement({
       id: ElementId.create('elem-2'),

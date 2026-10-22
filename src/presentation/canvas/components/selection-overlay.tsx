@@ -13,6 +13,21 @@ const Overlay = styled.div`
   pointer-events: none;
 `;
 
+const ROTATE_CURSOR_SVG = `
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+    <g fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 7a8 8 0 1 0 1 6" />
+      <path d="M16 3l5 4-5 2" />
+    </g>
+    <g fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 7a8 8 0 1 0 1 6" />
+      <path d="M16 3l5 4-5 2" />
+    </g>
+  </svg>
+`;
+
+const ROTATE_CURSOR = `url("data:image/svg+xml,${encodeURIComponent(ROTATE_CURSOR_SVG)}") 12 12, grab`;
+
 const Handle = styled.span`
   position: absolute;
   width: 8px;
@@ -38,11 +53,11 @@ const RotateHandle = styled.button`
   border-radius: 50%;
   background: ${({ theme }) => theme.canvas.handleFill};
   box-shadow: ${({ theme }) => theme.shadow.sm};
-  cursor: grab;
+  cursor: ${ROTATE_CURSOR};
   pointer-events: auto;
 
   &[data-dragging='true'] {
-    cursor: grabbing;
+    cursor: ${ROTATE_CURSOR};
   }
 
   &:focus-visible {
