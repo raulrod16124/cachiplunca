@@ -30,7 +30,39 @@ const CardContent = styled(Stack)`
   justify-content: space-between;
 `;
 
-const CardIcon = styled.span`
+type CardAccent = 'green' | 'peach' | 'mustard';
+
+const CARD_ACCENT_VARS: Record<
+  CardAccent,
+  { readonly background: string; readonly foreground: string }
+> = {
+  green: {
+    background: 'var(--cach-card-icon-green)',
+    foreground: 'var(--cach-card-icon-green-fg)',
+  },
+  peach: {
+    background: 'var(--cach-card-icon-peach)',
+    foreground: 'var(--cach-card-icon-peach-fg)',
+  },
+  mustard: {
+    background: 'var(--cach-card-icon-mustard)',
+    foreground: 'var(--cach-card-icon-mustard-fg)',
+  },
+};
+
+const CARD_ACCENTS: readonly CardAccent[] = ['green', 'peach', 'mustard'];
+
+function cardAccentFor(workspaceName: string): CardAccent {
+  let hash = 0;
+
+  for (const character of workspaceName) {
+    hash = (hash + character.charCodeAt(0)) % CARD_ACCENTS.length;
+  }
+
+  return CARD_ACCENTS[hash] ?? 'green';
+}
+
+const CardIcon = styled.span<{ $accent: CardAccent }>`
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -38,8 +70,8 @@ const CardIcon = styled.span`
   width: ${({ theme }) => theme.space[8]};
   height: ${({ theme }) => theme.space[8]};
   border-radius: ${({ theme }) => theme.radius.md};
-  background: ${({ theme }) => theme.color.background.sunken};
-  color: ${({ theme }) => theme.color.text.muted};
+  background: ${({ $accent }) => CARD_ACCENT_VARS[$accent].background};
+  color: ${({ $accent }) => CARD_ACCENT_VARS[$accent].foreground};
 `;
 
 const CardHeading = styled.div`
@@ -245,13 +277,14 @@ export function WorkspacesList({
             const canDuplicate = onDuplicate !== undefined && role === 'owner';
             const isDuplicating = duplicatingWorkspaceId === workspace.id.value;
             const hasActions = onSelect !== undefined || canEdit || canDelete || canDuplicate;
+            const accent = cardAccentFor(workspace.name);
 
             return (
               <Card key={workspace.id.value} as="article" interactive>
                 <CardContent gap="space-4">
                   <Stack gap="space-3">
                     <CardHeading>
-                      <CardIcon aria-hidden="true">
+                      <CardIcon aria-hidden="true" $accent={accent}>
                         <LayoutGrid size={16} />
                       </CardIcon>
                       <Stack gap="space-1">

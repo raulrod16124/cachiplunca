@@ -7,6 +7,12 @@ import { UserId, WorkspaceId } from '../../../../../../domain/shared';
 
 const CREATED_BY = UserId.create('user-1');
 
+function styleText(): string {
+  return [...document.head.querySelectorAll('style')]
+    .map((style) => style.textContent ?? '')
+    .join('');
+}
+
 function createWorkspace(name: string, updatedAt: Date, description?: string): Workspace {
   const workspace = Workspace.create({
     id: WorkspaceId.create(`ws-${name}`),
@@ -90,6 +96,25 @@ describe('WorkspacesList', () => {
     expect(screen.getByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Beta' })).toBeInTheDocument();
     expect(screen.getAllByRole('article')).toHaveLength(2);
+  });
+
+  it('tints workspace card icons with brand surface tokens', () => {
+    const workspaces = [
+      createWorkspace('A', new Date()),
+      createWorkspace('B', new Date()),
+      createWorkspace('C', new Date()),
+    ];
+
+    render(<WorkspacesList status="success" workspaces={workspaces} {...baseProps} />);
+
+    const css = styleText();
+    expect(css).toContain('var(--cach-card-icon-green)');
+    expect(css).toContain('var(--cach-card-icon-green-fg)');
+    expect(css).toContain('var(--cach-card-icon-peach)');
+    expect(css).toContain('var(--cach-card-icon-peach-fg)');
+    expect(css).toContain('var(--cach-card-icon-mustard)');
+    expect(css).toContain('var(--cach-card-icon-mustard-fg)');
+    expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
   });
 
   it('filters workspaces by name and description', async () => {

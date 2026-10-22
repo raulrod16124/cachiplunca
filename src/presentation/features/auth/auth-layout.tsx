@@ -11,13 +11,7 @@ const Screen = styled.main`
   align-items: center;
   justify-content: center;
   padding: ${({ theme }) => theme.space[6]};
-  background:
-    radial-gradient(
-      circle at 12% 0%,
-      color-mix(in srgb, ${brandVar('orange-500')} 14%, transparent),
-      transparent 42%
-    ),
-    ${({ theme }) => theme.color.background.default};
+  background: ${({ theme }) => theme.color.background.default};
 `;
 
 const Shell = styled.div`

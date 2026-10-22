@@ -172,18 +172,18 @@ body {
   :root[data-theme],
   :root:not([data-theme]) {
     color-scheme: light;
-    --rr-color-background-default: var(--cach-cream-50);
-    --rr-color-background-surface: var(--cach-cream-0);
-    --rr-color-background-sunken: var(--cach-sand-200);
+    --rr-color-background-default: var(--cach-white);
+    --rr-color-background-surface: var(--cach-white);
+    --rr-color-background-sunken: var(--cach-neutral-100);
     --rr-color-text-primary: var(--cach-graphite-900);
     --rr-color-text-muted: var(--cach-muted-600);
-    --rr-color-text-inverse: var(--cach-cream-0);
+    --rr-color-text-inverse: var(--cach-white);
     --rr-color-text-danger: var(--cach-error-700);
     --rr-color-text-destructive: var(--cach-error-700);
     --rr-color-text-success: var(--cach-green-900);
     --rr-color-text-warning: var(--cach-brown-700);
     --rr-color-text-info: var(--cach-info-700);
-    --rr-color-border-default: var(--cach-sand-500);
+    --rr-color-border-default: var(--cach-sand-600);
     --rr-color-border-strong: var(--cach-brown-700);
     --rr-color-border-danger: var(--cach-error-700);
     --rr-color-border-primary: var(--cach-green-900);
@@ -202,7 +202,7 @@ body {
       var(--cach-graphite-900)
     );
     --rr-color-action-destructive-text: var(--cach-cream-0);
-    --rr-color-action-disabled-background: var(--cach-sand-200);
+    --rr-color-action-disabled-background: var(--cach-neutral-100);
     --rr-color-action-disabled-text: var(--cach-muted-600);
     --rr-color-action-success-background: var(--cach-success-700);
     --rr-color-action-success-background-hover: color-mix(

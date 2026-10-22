@@ -103,7 +103,7 @@ const CanvasContainer = styled.div`
   cursor: grab;
   user-select: none;
   outline: none;
-  background: ${({ theme }) => theme.canvas.surface};
+  background: ${({ theme }) => theme.canvas.board};
 
   &:focus-visible {
     outline: 2px solid ${({ theme }) => theme.color.focusRing};

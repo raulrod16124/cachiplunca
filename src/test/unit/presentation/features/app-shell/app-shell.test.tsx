@@ -41,6 +41,21 @@ describe('AppShell', () => {
     expect(screen.getByText('Content')).toBeInTheDocument();
   });
 
+  it('uses the white sidebar surface token without hardcoded colors', () => {
+    render(
+      <AppShell currentUser={CURRENT_USER} logoutUser={logoutUser}>
+        <p>Content</p>
+      </AppShell>,
+    );
+
+    const css = [...document.head.querySelectorAll('style')]
+      .map((style) => style.textContent ?? '')
+      .join('');
+
+    expect(css).toContain('var(--cach-surface-sidebar)');
+    expect(css).toContain('var(--cach-shell-border)');
+  });
+
   it('renders the notifications slot in the shell header', () => {
     render(
       <AppShell

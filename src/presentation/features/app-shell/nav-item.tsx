@@ -9,8 +9,9 @@ const itemStyles = css<{ $active: boolean }>`
   gap: ${({ theme }) => theme.space[2]};
   padding: ${({ theme }) => `${theme.space[2]} ${theme.space[3]}`};
   border-radius: ${({ theme }) => theme.radius.md};
-  color: ${({ theme, $active }) => ($active ? theme.color.text.primary : theme.color.text.muted)};
-  background: ${({ theme, $active }) => ($active ? theme.color.background.sunken : 'transparent')};
+  color: ${({ theme, $active }) =>
+    $active ? 'var(--cach-nav-active-text)' : theme.color.text.muted};
+  background: ${({ $active }) => ($active ? 'var(--cach-surface-nav-active)' : 'transparent')};
   font-size: ${({ theme }) => theme.font.size.sm};
   font-weight: ${({ theme, $active }) =>
     $active ? theme.font.weight.semibold : theme.font.weight.regular};
@@ -27,14 +28,15 @@ const itemStyles = css<{ $active: boolean }>`
     width: 3px;
     height: 1.4em;
     border-radius: ${({ theme }) => theme.radius.full};
-    background: ${({ theme, $active }) =>
-      $active ? theme.color.action.primary.background : 'transparent'};
+    background: ${({ $active }) => ($active ? 'var(--cach-nav-accent)' : 'transparent')};
     transform: translateY(-50%);
   }
 
   &:hover {
-    background: var(--cach-control-hover);
-    color: ${({ theme }) => theme.color.text.primary};
+    background: ${({ $active }) =>
+      $active ? 'var(--cach-surface-nav-active)' : 'var(--cach-control-hover)'};
+    color: ${({ theme, $active }) =>
+      $active ? 'var(--cach-nav-active-text)' : theme.color.text.primary};
   }
 
   &:focus-visible {

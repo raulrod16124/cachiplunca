@@ -20,6 +20,8 @@ const Layout = styled.div`
 `;
 
 const Sidebar = styled.aside`
+  position: sticky;
+  top: 0;
   display: flex;
   flex: none;
   flex-direction: column;
@@ -27,18 +29,16 @@ const Sidebar = styled.aside`
   width: 264px;
   height: 100dvh;
   padding: ${({ theme }) => theme.space[5]};
-  border-right: 1px solid ${({ theme }) => theme.color.border.default};
-  background: ${({ theme }) => theme.color.background.surface};
-  position: sticky;
-  top: 0;
+  border-right: 1px solid var(--cach-shell-border);
+  background: var(--cach-surface-sidebar);
 
   @media (max-width: 900px) {
     width: 100%;
     height: auto;
-    position: static;
+    position: relative;
     padding: ${({ theme }) => `${theme.space[3]} ${theme.space[4]}`};
     border-right: none;
-    border-bottom: 1px solid ${({ theme }) => theme.color.border.default};
+    border-bottom: 1px solid var(--cach-shell-border);
     gap: ${({ theme }) => theme.space[3]};
   }
 `;

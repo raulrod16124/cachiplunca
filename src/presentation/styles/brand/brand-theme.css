@@ -21,11 +21,15 @@
   --cach-mustard-600: #e6a200;
   --cach-orange-500: #ff7a2f;
   --cach-orange-600: #e85f12;
+  --cach-white: #ffffff;
+  --cach-neutral-100: #f2f2ef;
+  --cach-board-green-100: #d9e4ce;
   --cach-cream-0: #fffdf9;
   --cach-cream-50: #fbf6f1;
   --cach-sand-200: #eadfc8;
   --cach-sand-400: #c9a688;
   --cach-sand-500: #9c8a72;
+  --cach-sand-600: #8a7659;
   --cach-brown-700: #885e3c;
   --cach-graphite-900: #202d2d;
   --cach-muted-600: #5f6558;
@@ -35,8 +39,33 @@
   --cach-warning-500: #f9c80e;
 
   /* Neutral control interaction surfaces. Dark theme overrides these below. */
-  --cach-control-hover: var(--cach-sand-200);
-  --cach-control-active: color-mix(in srgb, var(--cach-sand-200) 82%, var(--cach-graphite-900));
+  --cach-control-hover: var(--cach-neutral-100);
+  --cach-control-active: color-mix(in srgb, var(--cach-neutral-100) 82%, var(--cach-graphite-900));
+
+  /*
+   * Surface roles. Neutral by default so the dark theme keeps its current
+   * appearance; the light theme opts into the logo palette below. Floating
+   * containers use `surface` (white in light mode), while the board owns its
+   * own differentiating color through `canvasSurface`.
+   */
+  --cach-canvas-surface: var(--rr-color-background-default);
+  --cach-floating-surface: var(--rr-color-background-default);
+  --cach-floating-surface-muted: var(--rr-color-background-surface);
+  --cach-surface-sidebar: var(--rr-color-background-surface);
+  --cach-surface-nav-active: var(--rr-color-background-sunken);
+  --cach-nav-active-text: var(--rr-color-text-primary);
+  --cach-nav-accent: var(--rr-color-action-primary-background);
+  --cach-card-icon-green: var(--rr-color-background-sunken);
+  --cach-card-icon-green-fg: var(--rr-color-text-muted);
+  --cach-card-icon-peach: var(--rr-color-background-sunken);
+  --cach-card-icon-peach-fg: var(--rr-color-text-muted);
+  --cach-card-icon-mustard: var(--rr-color-background-sunken);
+  --cach-card-icon-mustard-fg: var(--rr-color-text-muted);
+  --cach-icon-accent: var(--rr-color-text-muted);
+  --cach-surface-empty: var(--rr-color-background-sunken);
+  --cach-border-accent: var(--rr-color-border-strong);
+  --cach-shell-border: var(--rr-color-border-default);
+  --cach-header-accent: transparent;
 
   /*
    * Sticky-note palette. Five pastel surfaces keep the canvas coherent while
@@ -157,15 +186,33 @@
 }
 
 :root[data-theme='light'] {
-  --rr-color-background-default: var(--cach-cream-50);
-  --rr-color-background-surface: var(--cach-cream-0);
-  --rr-color-background-sunken: var(--cach-sand-200);
+  --rr-color-background-default: var(--cach-white);
+  --rr-color-background-surface: var(--cach-white);
+  --rr-color-background-sunken: var(--cach-neutral-100);
   --rr-color-text-primary: var(--cach-graphite-900);
   --rr-color-text-muted: var(--cach-muted-600);
-  --rr-color-text-inverse: var(--cach-cream-0);
+  --rr-color-text-inverse: var(--cach-white);
   --rr-color-text-danger: var(--cach-error-700);
-  --rr-color-border-default: var(--cach-sand-500);
+  --rr-color-border-default: var(--cach-sand-600);
   --rr-color-border-strong: var(--cach-brown-700);
+  --cach-canvas-surface: var(--cach-board-green-100);
+  --cach-floating-surface: var(--cach-white);
+  --cach-floating-surface-muted: var(--cach-neutral-100);
+  --cach-surface-sidebar: var(--cach-white);
+  --cach-surface-nav-active: var(--cach-green-900);
+  --cach-nav-active-text: var(--cach-white);
+  --cach-nav-accent: var(--cach-mustard-500);
+  --cach-card-icon-green: var(--cach-green-900);
+  --cach-card-icon-green-fg: var(--cach-white);
+  --cach-card-icon-peach: var(--cach-orange-500);
+  --cach-card-icon-peach-fg: var(--cach-graphite-900);
+  --cach-card-icon-mustard: var(--cach-mustard-500);
+  --cach-card-icon-mustard-fg: var(--cach-graphite-900);
+  --cach-icon-accent: var(--cach-white);
+  --cach-surface-empty: var(--cach-green-900);
+  --cach-border-accent: var(--cach-orange-600);
+  --cach-shell-border: var(--cach-sand-600);
+  --cach-header-accent: linear-gradient(90deg, var(--cach-orange-500), var(--cach-mustard-500));
   --rr-color-border-danger: var(--cach-error-700);
   --rr-color-border-primary: var(--cach-green-900);
   --rr-color-border-primary-hover: var(--cach-green-950);
@@ -183,7 +230,7 @@
     var(--cach-graphite-900)
   );
   --rr-color-action-destructive-text: var(--cach-cream-0);
-  --rr-color-action-disabled-background: var(--cach-sand-200);
+  --rr-color-action-disabled-background: var(--cach-neutral-100);
   --rr-color-action-disabled-text: var(--cach-muted-600);
   --rr-color-action-success-background: var(--cach-success-700);
   --rr-color-action-success-background-hover: color-mix(
@@ -226,15 +273,33 @@
 
 @media (prefers-color-scheme: light) {
   :root:not([data-theme]) {
-    --rr-color-background-default: var(--cach-cream-50);
-    --rr-color-background-surface: var(--cach-cream-0);
-    --rr-color-background-sunken: var(--cach-sand-200);
+    --rr-color-background-default: var(--cach-white);
+    --rr-color-background-surface: var(--cach-white);
+    --rr-color-background-sunken: var(--cach-neutral-100);
     --rr-color-text-primary: var(--cach-graphite-900);
     --rr-color-text-muted: var(--cach-muted-600);
-    --rr-color-text-inverse: var(--cach-cream-0);
+    --rr-color-text-inverse: var(--cach-white);
     --rr-color-text-danger: var(--cach-error-700);
-    --rr-color-border-default: var(--cach-sand-500);
+    --rr-color-border-default: var(--cach-sand-600);
     --rr-color-border-strong: var(--cach-brown-700);
+    --cach-canvas-surface: var(--cach-board-green-100);
+    --cach-floating-surface: var(--cach-white);
+    --cach-floating-surface-muted: var(--cach-neutral-100);
+    --cach-surface-sidebar: var(--cach-white);
+    --cach-surface-nav-active: var(--cach-green-900);
+    --cach-nav-active-text: var(--cach-white);
+    --cach-nav-accent: var(--cach-mustard-500);
+    --cach-card-icon-green: var(--cach-green-900);
+    --cach-card-icon-green-fg: var(--cach-white);
+    --cach-card-icon-peach: var(--cach-orange-500);
+    --cach-card-icon-peach-fg: var(--cach-graphite-900);
+    --cach-card-icon-mustard: var(--cach-mustard-500);
+    --cach-card-icon-mustard-fg: var(--cach-graphite-900);
+    --cach-icon-accent: var(--cach-white);
+    --cach-surface-empty: var(--cach-green-900);
+    --cach-border-accent: var(--cach-orange-600);
+    --cach-shell-border: var(--cach-sand-600);
+    --cach-header-accent: linear-gradient(90deg, var(--cach-orange-500), var(--cach-mustard-500));
     --rr-color-border-danger: var(--cach-error-700);
     --rr-color-border-primary: var(--cach-green-900);
     --rr-color-border-primary-hover: var(--cach-green-950);
@@ -252,7 +317,7 @@
       var(--cach-graphite-900)
     );
     --rr-color-action-destructive-text: var(--cach-cream-0);
-    --rr-color-action-disabled-background: var(--cach-sand-200);
+    --rr-color-action-disabled-background: var(--cach-neutral-100);
     --rr-color-action-disabled-text: var(--cach-muted-600);
     --rr-color-action-success-background: var(--cach-success-700);
     --rr-color-action-success-background-hover: color-mix(

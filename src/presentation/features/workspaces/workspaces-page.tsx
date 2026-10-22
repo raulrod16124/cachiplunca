@@ -44,6 +44,22 @@ const Header = styled.header`
   margin-bottom: ${({ theme }) => theme.space[6]};
 `;
 
+const HeaderTitle = styled.div`
+  position: relative;
+  display: inline-flex;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: calc(-1 * ${({ theme }) => theme.space[1]});
+    left: 0;
+    width: min(88px, 70%);
+    height: 3px;
+    border-radius: var(--rr-radius-full);
+    background: var(--cach-header-accent);
+  }
+`;
+
 const PageTitle = styled(Heading)`
   font-size: ${({ theme }) => theme.font.size['2xl']};
 `;
@@ -114,7 +130,9 @@ export function WorkspacesPage({
     >
       <Main id="main-content" tabIndex={-1}>
         <Header>
-          <PageTitle as="h1">{t('workspaces.title')}</PageTitle>
+          <HeaderTitle>
+            <PageTitle as="h1">{t('workspaces.title')}</PageTitle>
+          </HeaderTitle>
           <Button type="button" variant="primary" onClick={handleCreateWorkspace}>
             <Plus aria-hidden="true" size={16} />
             {t('workspaces.create')}

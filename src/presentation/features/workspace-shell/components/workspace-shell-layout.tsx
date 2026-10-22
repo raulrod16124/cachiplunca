@@ -59,7 +59,7 @@ const CanvasArea = styled.main`
   flex: 1 1 auto;
   display: flex;
   min-height: 0;
-  background: ${({ theme }) => theme.canvas.surface};
+  background: ${({ theme }) => theme.canvas.board};
 `;
 
 const CanvasRegion = styled.div`

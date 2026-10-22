@@ -48,6 +48,7 @@ describe('Card', () => {
 
     const css = styleText();
     expect(css).toContain(':hover');
+    expect(css).toContain('var(--cach-border-accent)');
     expect(css).toContain('translateY(-1px)');
     expect(css).toContain('@media (prefers-reduced-motion: reduce)');
   });
