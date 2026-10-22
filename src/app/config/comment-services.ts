@@ -1,5 +1,9 @@
 import type { CommentServices } from '../../application/comment-services';
-import { createCreateComment, createResolveComment } from '../../application/commands';
+import {
+  createCreateComment,
+  createEditComment,
+  createResolveComment,
+} from '../../application/commands';
 import { createListComments, createListWorkspaceComments } from '../../application/queries';
 import type { RecordWorkspaceActivity } from '../../application/services/record-activity';
 import { CommentId } from '../../domain/shared';
@@ -23,6 +27,7 @@ export function createCommentServices(): CommentServices {
       generateId: () => CommentId.create(crypto.randomUUID()),
       recordActivity,
     }),
+    editComment: createEditComment({ repository }),
     resolveComment: createResolveComment({ repository, recordActivity }),
   };
 }

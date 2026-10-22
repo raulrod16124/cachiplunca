@@ -15,6 +15,7 @@ export * from './delete-image';
 export * from './delete-workspace';
 export * from './duplicate-element';
 export * from './duplicate-workspace';
+export * from './edit-comment';
 export * from './invite-member';
 export * from './leave-workspace';
 export * from './login-user';

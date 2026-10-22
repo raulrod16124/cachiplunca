@@ -8,6 +8,7 @@ import {
   createAcceptInvitation,
   createAcceptInvitationById,
   createCreateComment,
+  createEditComment,
   createRefreshUser,
   createResolveComment,
   createSendEmailVerification,
@@ -236,6 +237,7 @@ export function createAppHarness(): AppHarness {
         repository: commentRepository,
         generateId: () => CommentId.create(`comment-${++elementSequence}`),
       }),
+      editComment: createEditComment({ repository: commentRepository }),
       resolveComment: createResolveComment({ repository: commentRepository }),
     },
     imageServices: {

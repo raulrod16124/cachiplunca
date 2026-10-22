@@ -1,4 +1,8 @@
-import { Comment, COMMENT_BODY_MAX_LENGTH } from '../../../../domain/comment';
+import {
+  Comment,
+  COMMENT_BODY_MAX_LENGTH,
+  COMMENT_EDIT_WINDOW_MS,
+} from '../../../../domain/comment';
 import { CommentId, ElementId, UserId, WorkspaceId } from '../../../../domain/shared';
 
 const CREATED_AT = new Date('2026-10-20T10:00:00.000Z');
@@ -25,6 +29,8 @@ describe('Comment', () => {
     expect(comment.authorId.value).toBe('user-1');
     expect(comment.body).toBe('Looks good to me');
     expect(comment.createdAt).toEqual(CREATED_AT);
+    expect(comment.editedAt).toBeUndefined();
+    expect(comment.isEdited()).toBe(false);
     expect(comment.resolvedAt).toBeUndefined();
     expect(comment.isResolved()).toBe(false);
   });
@@ -61,6 +67,66 @@ describe('Comment', () => {
     );
   });
 
+  it('rejects an edited date before creation', () => {
+    expect(() => makeComment({ editedAt: new Date('2026-10-20T09:59:59.000Z') })).toThrow(
+      'Edited at cannot be before created at',
+    );
+    expect(() => makeComment({ editedAt: new Date('2026-10-20T10:00:00.000Z') })).not.toThrow();
+  });
+
+  it('edits an open comment within the window and preserves history', () => {
+    const comment = makeComment();
+    const editedAt = new Date(CREATED_AT.getTime() + 10 * 60 * 1000);
+    const edited = comment.editBody('  Updated  ', editedAt);
+
+    expect(edited).not.toBe(comment);
+    expect(comment.body).toBe('Looks good to me');
+    expect(edited.body).toBe('Updated');
+    expect(edited.editedAt).toEqual(editedAt);
+    expect(edited.isEdited()).toBe(true);
+    expect(edited.isResolved()).toBe(false);
+    expect(edited.createdAt).toEqual(comment.createdAt);
+    expect(edited.authorId.equals(comment.authorId)).toBe(true);
+  });
+
+  it('rejects editing when resolved or outside the window', () => {
+    const comment = makeComment();
+    expect(() =>
+      comment.editBody('Updated', new Date(CREATED_AT.getTime() + COMMENT_EDIT_WINDOW_MS + 1000)),
+    ).toThrow('Comment can only be edited within 15 minutes of creation');
+    expect(() => comment.editBody('Updated', new Date(CREATED_AT.getTime() - 1000))).toThrow(
+      'Edited at cannot be before created at',
+    );
+    const resolved = comment.resolve(new Date(CREATED_AT.getTime() + 60_000));
+    expect(() => resolved.editBody('Updated')).toThrow('Cannot edit a resolved comment');
+    expect(() => makeComment().editBody('', new Date(CREATED_AT.getTime() + 60_000))).toThrow(
+      'Comment body cannot be empty',
+    );
+  });
+
+  it('canEdit respects resolution, validity and window', () => {
+    const comment = makeComment();
+    expect(comment.canEdit(new Date(CREATED_AT.getTime() + COMMENT_EDIT_WINDOW_MS))).toBe(true);
+    expect(comment.canEdit(new Date(CREATED_AT.getTime() + COMMENT_EDIT_WINDOW_MS + 1))).toBe(
+      false,
+    );
+    expect(comment.canEdit(new Date(CREATED_AT.getTime() - 1000))).toBe(false);
+    expect(comment.canEdit(new Date('invalid'))).toBe(false);
+    expect(
+      makeComment()
+        .resolve(new Date(CREATED_AT.getTime() + 1000))
+        .canEdit(),
+    ).toBe(false);
+  });
+
+  it('resolve preserves editedAt', () => {
+    const editedAt = new Date(CREATED_AT.getTime() + 60_000);
+    const edited = makeComment().editBody('Updated', editedAt);
+    const resolved = edited.resolve(new Date(CREATED_AT.getTime() + 120_000));
+    expect(resolved.editedAt).toEqual(editedAt);
+    expect(resolved.body).toBe('Updated');
+  });
+
   it('resolves an open comment without mutating the original', () => {
     const comment = makeComment();
     const resolvedAt = new Date('2026-10-20T11:00:00.000Z');
@@ -73,6 +139,7 @@ describe('Comment', () => {
     expect(resolved.resolvedAt).toEqual(resolvedAt);
     expect(resolved.body).toBe(comment.body);
     expect(resolved.createdAt).toEqual(comment.createdAt);
+    expect(resolved.editedAt).toBeUndefined();
   });
 
   it('rejects resolving twice or before creation', () => {

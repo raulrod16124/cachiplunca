@@ -51,6 +51,7 @@ function makeServices(overrides: Partial<CommentServices> = {}): CommentServices
     listWorkspaceComments: jest.fn().mockResolvedValue({ status: 'ok', comments: [] }),
     listComments: jest.fn().mockResolvedValue({ status: 'ok', comments: [] }),
     createComment: jest.fn(),
+    editComment: jest.fn(),
     resolveComment: jest.fn(),
     ...overrides,
   };
@@ -205,6 +206,40 @@ describe('CommentsPanel', () => {
 
     expect(await screen.findByText('We could not add your comment.')).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'Comment' })).toHaveValue('Keep me');
+  });
+
+  it('allows editing own comment within window and updates it', async () => {
+    const createdAt = new Date(Date.now() - 60_000);
+    const editedAt = new Date(Date.now());
+    const comment = makeComment('comment-1', { createdAt });
+    const edited = comment.editBody('Updated body', editedAt);
+    const editComment = jest.fn().mockResolvedValue({ status: 'ok', comment: edited });
+    const onCommentSaved = jest.fn();
+    renderPanel({
+      services: makeServices({
+        listComments: jest.fn().mockResolvedValue({ status: 'ok', comments: [comment] }),
+        editComment,
+      }),
+      onCommentSaved,
+    });
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole('button', { name: 'Edit' }));
+    const textarea = screen.getByRole('textbox', { name: 'Edit comment' });
+    expect(textarea).toHaveValue('Looks good to me');
+    await user.clear(textarea);
+    await user.type(textarea, 'Updated body');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(editComment).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      commentId: 'comment-1',
+      actorId: CURRENT_USER,
+      body: 'Updated body',
+    });
+    expect(await screen.findByText('Updated body')).toBeInTheDocument();
+    expect(screen.getByText('Comment updated.')).toBeInTheDocument();
+    expect(onCommentSaved).toHaveBeenCalledWith(edited);
   });
 
   it('closes from the shared panel header', async () => {

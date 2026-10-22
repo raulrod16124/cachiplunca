@@ -86,5 +86,18 @@ export function describeCommentRepositoryContract(
       expect(found?.resolvedAt).toEqual(RESOLVED_AT);
       expect(found?.isResolved()).toBe(true);
     });
+
+    it('persists an edited comment and returns it with editedAt', async () => {
+      const comment = await repository.save(makeComment('comment-1'));
+      const editedAt = new Date('2026-10-20T10:10:00.000Z');
+
+      await repository.save(comment.editBody('Updated', editedAt));
+
+      const found = await repository.findById(WORKSPACE, CommentId.create('comment-1'));
+      expect(found?.body).toBe('Updated');
+      expect(found?.editedAt).toEqual(editedAt);
+      expect(found?.isEdited()).toBe(true);
+      expect(found?.isResolved()).toBe(false);
+    });
   });
 }

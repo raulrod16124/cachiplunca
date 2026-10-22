@@ -8,6 +8,7 @@ export interface CommentDocument {
   readonly authorId: string;
   readonly body: string;
   readonly createdAt: Date;
+  readonly editedAt?: Date;
   readonly resolvedAt?: Date;
 }
 
@@ -19,6 +20,7 @@ export function toCommentDocument(comment: Comment): CommentDocument {
     authorId: comment.authorId.value,
     body: comment.body,
     createdAt: comment.createdAt,
+    ...(comment.editedAt === undefined ? {} : { editedAt: comment.editedAt }),
     ...(comment.resolvedAt === undefined ? {} : { resolvedAt: comment.resolvedAt }),
   };
 }
@@ -29,6 +31,7 @@ export function fromCommentDocument(data: unknown): Comment {
   }
 
   const resolvedAt = data.resolvedAt;
+  const editedAt = data.editedAt;
 
   return Comment.create({
     id: CommentId.create(readString(data.id, 'id')),
@@ -37,6 +40,9 @@ export function fromCommentDocument(data: unknown): Comment {
     authorId: UserId.create(readString(data.authorId, 'authorId')),
     body: readString(data.body, 'body'),
     createdAt: readDate(data.createdAt, 'createdAt'),
+    ...(editedAt === undefined || editedAt === null
+      ? {}
+      : { editedAt: readDate(editedAt, 'editedAt') }),
     ...(resolvedAt === undefined || resolvedAt === null
       ? {}
       : { resolvedAt: readDate(resolvedAt, 'resolvedAt') }),

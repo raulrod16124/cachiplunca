@@ -93,6 +93,45 @@ describe('comments integration', () => {
     });
   });
 
+  it('edits own comment and persists it', async () => {
+    const harness = createAppHarness();
+    await harness.register(DEFAULT_CREDENTIALS);
+    const workspace = await harness.createOwnerWorkspace('Comments board');
+    const createdBy = UserId.create(harness.currentUser?.uid ?? 'user-1');
+    await harness.elementRepository.save(createNote(workspace, createdBy));
+
+    const first = harness.render({ initialPath: `/workspaces/${workspace.id.value}` });
+    await screen.findByRole('application', { name: 'Canvas' });
+    await selectNoteAndOpenComments();
+
+    const user = userEvent.setup();
+    await user.type(await screen.findByRole('textbox', { name: 'Comment' }), 'Draft');
+    await user.click(await screen.findByRole('button', { name: 'Add comment' }));
+    expect(await screen.findByText('Draft')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Edit' }));
+    const textarea = screen.getByRole('textbox', { name: 'Edit comment' });
+    await user.clear(textarea);
+    await user.type(textarea, 'Revised');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(await screen.findByText('Revised')).toBeInTheDocument();
+    expect(await screen.findByText(/Edited/)).toBeInTheDocument();
+
+    first.unmount();
+    harness.render({ initialPath: `/workspaces/${workspace.id.value}` });
+    await screen.findByRole('application', { name: 'Canvas' });
+    await selectNoteAndOpenComments();
+    expect(await screen.findByText('Revised')).toBeInTheDocument();
+    await waitFor(async () => {
+      const comment = await harness.commentRepository.findById(
+        workspace.id,
+        CommentId.create('comment-1'),
+      );
+      expect(comment?.body).toBe('Revised');
+      expect(comment?.isEdited()).toBe(true);
+    });
+  });
+
   it('lets a viewer comment without granting canvas editing', async () => {
     const harness = createAppHarness();
     await harness.register(DEFAULT_CREDENTIALS);

@@ -1282,6 +1282,12 @@ describe('firestore.rules — comments', () => {
       ),
     );
     await assertFails(
+      setDoc(doc(dbOf(ROLE_UIDS.editor), 'workspaces', WS1, 'comments', 'c-pre-edited'), {
+        ...commentData(WS1, 'e1', ROLE_UIDS.editor, 'c-pre-edited'),
+        editedAt: now,
+      }),
+    );
+    await assertFails(
       setDoc(
         doc(dbOf(OUTSIDER_UID), 'workspaces', WS1, 'comments', 'c-outsider'),
         commentData(WS1, 'e1', OUTSIDER_UID, 'c-outsider'),
@@ -1337,6 +1343,67 @@ describe('firestore.rules — comments', () => {
     await assertFails(
       updateDoc(doc(unauthed().firestore(), 'workspaces', WS1, 'comments', 'c1'), {
         resolvedAt: new Date(now.getTime() + 60_000),
+      }),
+    );
+  });
+
+  test('author can edit own comment within 15 minutes', async () => {
+    const recent = new Date(Date.now());
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'workspaces', WS1, 'comments', 'c-edit'), {
+        id: 'c-edit',
+        workspaceId: WS1,
+        elementId: 'e1',
+        authorId: ROLE_UIDS.owner,
+        body: 'Original',
+        createdAt: recent,
+      });
+    });
+
+    await assertSucceeds(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', WS1, 'comments', 'c-edit'), {
+        body: 'Updated',
+        editedAt: new Date(Date.now()),
+      }),
+    );
+
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.editor), 'workspaces', WS1, 'comments', 'c-edit'), {
+        body: 'Hijack',
+        editedAt: new Date(Date.now()),
+      }),
+    );
+
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', WS1, 'comments', 'c-resolved'), {
+        body: 'Edit resolved',
+        editedAt: new Date(Date.now()),
+      }),
+    );
+
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', WS1, 'comments', 'c-edit'), {
+        body: 'Only body',
+      }),
+    );
+  });
+
+  test('author cannot edit a comment older than 15 minutes', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'workspaces', WS1, 'comments', 'c-old'), {
+        id: 'c-old',
+        workspaceId: WS1,
+        elementId: 'e1',
+        authorId: ROLE_UIDS.owner,
+        body: 'Old',
+        createdAt: new Date(Date.now() - 16 * 60 * 1000),
+      });
+    });
+
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', WS1, 'comments', 'c-old'), {
+        body: 'Too late',
+        editedAt: new Date(Date.now()),
       }),
     );
   });

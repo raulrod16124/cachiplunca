@@ -51,4 +51,38 @@ test.describe('Comments', () => {
     });
     await expect(page.getByTestId(/^comment-indicator-/)).toBeHidden();
   });
+
+  test('edits an own comment within the window', async ({ page }) => {
+    await registerUser(page);
+    await createWorkspace(page, 'Comments edit');
+
+    const note = await addElement(page, 'note');
+    await expect(note).toHaveAttribute('data-selected', 'true');
+
+    await page.getByRole('button', { name: 'Comments' }).click();
+    const panel = page.getByTestId('comments-panel');
+    await expect(panel).toBeVisible();
+
+    await panel.getByRole('textbox', { name: 'Comment' }).fill('First draft');
+    await panel.getByRole('button', { name: 'Add comment' }).click();
+    await expect(panel.getByText('First draft')).toBeVisible();
+
+    await panel.getByRole('button', { name: 'Edit' }).click();
+    const editBox = panel.getByRole('textbox', { name: 'Edit comment' });
+    await editBox.fill('Revised draft');
+    await panel.getByRole('button', { name: 'Save' }).click();
+    await expect(panel.getByText('Revised draft')).toBeVisible();
+    await expect(panel.getByText(/Edited/)).toBeVisible();
+
+    await page.reload();
+    await expect(page.getByRole('application', { name: 'Canvas' })).toBeVisible({
+      timeout: 20000,
+    });
+    await page.locator('[data-testid^="canvas-item-"][data-element-type="note"]').click();
+    await page.getByRole('button', { name: 'Comments' }).click();
+    await expect(page.getByTestId('comments-panel').getByText('Revised draft')).toBeVisible({
+      timeout: 20000,
+    });
+    await expect(page.getByTestId('comments-panel').getByText(/Edited/)).toBeVisible();
+  });
 });
