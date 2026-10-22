@@ -14,7 +14,7 @@ import { FakeRealtimePort } from '../fixtures/fake-realtime-port';
 import { PendingAuthPort } from '../fixtures/pending-auth-port';
 import { renderAppRoutes } from './harness';
 
-const CREDENTIALS = { email: 'user@example.com', password: 'secret123' };
+const CREDENTIALS = { email: 'user@example.com', password: 'secret123', displayName: 'Test User' };
 
 function renderApp(
   authPort: AuthPort,
@@ -64,6 +64,13 @@ function renderApp(
 function fillForm(): void {
   fireEvent.change(screen.getByLabelText('Email'), { target: { value: CREDENTIALS.email } });
   fireEvent.change(screen.getByLabelText('Password'), { target: { value: CREDENTIALS.password } });
+}
+
+function fillRegistrationForm(): void {
+  fireEvent.change(screen.getByLabelText('Name'), {
+    target: { value: CREDENTIALS.displayName },
+  });
+  fillForm();
 }
 
 async function registeredUser(authPort: FakeAuthPort): Promise<void> {
@@ -138,7 +145,7 @@ describe('auth routes', () => {
   it('opens /workspaces after registering', async () => {
     renderApp(new FakeAuthPort(), '/register');
 
-    fillForm();
+    fillRegistrationForm();
     fireEvent.click(screen.getByRole('button', { name: 'Create account' }));
 
     expect(

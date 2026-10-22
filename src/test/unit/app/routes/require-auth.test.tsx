@@ -64,7 +64,11 @@ describe('RequireAuth', () => {
 
   it('renders the protected route for an authenticated session', async () => {
     const authPort = new FakeAuthPort();
-    await authPort.signUp({ email: 'user@example.com', password: 'secret123' });
+    await authPort.signUp({
+      email: 'user@example.com',
+      password: 'secret123',
+      displayName: 'Test User',
+    });
     renderGuard(authPort);
 
     expect(await screen.findByText('Protected content')).toBeInTheDocument();

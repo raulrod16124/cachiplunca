@@ -17,10 +17,11 @@ import {
 import { ShieldCheck, Sparkles } from '@raulrod/icons';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import styled from 'styled-components';
-import type {
-  ChangeUserEmailFieldErrors,
-  ChangeUserPasswordFieldErrors,
-  UpdateUserProfileFieldErrors,
+import {
+  DISPLAY_NAME_MAX_LENGTH,
+  type ChangeUserEmailFieldErrors,
+  type ChangeUserPasswordFieldErrors,
+  type UpdateUserProfileFieldErrors,
 } from '../../../application/commands';
 import type { AuthUser } from '../../../application/ports';
 import { toAppError, ERROR_CODES, type AppError } from '../../../shared/errors';
@@ -102,8 +103,6 @@ const FormActions = styled.div`
     }
   }
 `;
-
-const DISPLAY_NAME_MAX_LENGTH = 80;
 
 export interface ProfileViewProps {
   readonly currentUser: AuthUser;

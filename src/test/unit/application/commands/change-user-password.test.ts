@@ -4,7 +4,7 @@ import {
 } from '../../../../application/commands';
 import { FakeAuthPort } from '../../../fixtures/fake-auth-port';
 
-const CREDENTIALS = { email: 'ada@example.com', password: 'secret123' };
+const CREDENTIALS = { email: 'ada@example.com', password: 'secret123', displayName: 'Ada' };
 
 describe('change user password', () => {
   it('changes the password when the current one is valid', async () => {

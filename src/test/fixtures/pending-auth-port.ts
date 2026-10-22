@@ -1,6 +1,7 @@
 import type {
   AuthCredentials,
   AuthPort,
+  AuthSignUpInput,
   AuthUser,
   ChangeEmailInput,
   ChangePasswordInput,
@@ -16,7 +17,7 @@ import type { Unsubscribe } from '../../shared/types';
 export class PendingAuthPort implements AuthPort {
   readonly #listeners = new Set<SessionListener>();
 
-  async signUp(_credentials: AuthCredentials): Promise<AuthUser> {
+  async signUp(_input: AuthSignUpInput): Promise<AuthUser> {
     throw new Error('unexpected signUp call');
   }
 

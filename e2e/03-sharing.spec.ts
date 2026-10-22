@@ -85,6 +85,7 @@ test.describe('Sharing (viewer happy path)', () => {
     ).toBeVisible({ timeout: 20000 });
 
     await viewerPage.getByRole('button', { name: 'Create account' }).click();
+    await viewerPage.getByLabel('Name').fill('Viewer User');
     await viewerPage.getByLabel('Email').fill(viewerEmail);
     await viewerPage.getByLabel('Password', { exact: true }).fill('Secret123');
     await viewerPage.getByRole('button', { name: 'Create account' }).click();

@@ -9,6 +9,7 @@ import {
   signInAnonymously,
   signInWithEmailAndPassword,
   signOut,
+  updateProfile,
   type Auth,
   type User,
   type UserCredential,
@@ -28,6 +29,7 @@ jest.mock('firebase/auth', () => ({
   reload: jest.fn(),
   sendEmailVerification: jest.fn(),
   setPersistence: jest.fn(),
+  updateProfile: jest.fn(),
   browserLocalPersistence: { type: 'LOCAL' },
   browserSessionPersistence: { type: 'SESSION' },
 }));
@@ -73,22 +75,26 @@ describe('createFirebaseAuthAdapter', () => {
 
   describe('signUp', () => {
     it('creates the account on the injected auth instance and maps the authenticated user', async () => {
-      jest
-        .mocked(createUserWithEmailAndPassword)
-        .mockResolvedValue(
-          makeCredential(
-            makeUser({ uid: 'uid-42', email: 'new@example.com', displayName: 'New User' }),
-          ),
-        );
+      const firebaseUser = makeUser({
+        uid: 'uid-42',
+        email: 'new@example.com',
+        displayName: 'New User',
+      });
+      jest.mocked(createUserWithEmailAndPassword).mockResolvedValue(makeCredential(firebaseUser));
       const adapter = createFirebaseAuthAdapter(auth);
 
-      const user = await adapter.signUp({ email: 'new@example.com', password: 'secret-1' });
+      const user = await adapter.signUp({
+        email: 'new@example.com',
+        password: 'secret-1',
+        displayName: 'New User',
+      });
 
       expect(createUserWithEmailAndPassword).toHaveBeenCalledWith(
         auth,
         'new@example.com',
         'secret-1',
       );
+      expect(updateProfile).toHaveBeenCalledWith(firebaseUser, { displayName: 'New User' });
       expect(user).toEqual({
         uid: 'uid-42',
         email: 'new@example.com',
@@ -105,7 +111,11 @@ describe('createFirebaseAuthAdapter', () => {
       const adapter = createFirebaseAuthAdapter(auth);
 
       await expect(
-        adapter.signUp({ email: 'taken@example.com', password: 'secret-1' }),
+        adapter.signUp({
+          email: 'taken@example.com',
+          password: 'secret-1',
+          displayName: 'Taken User',
+        }),
       ).rejects.toMatchObject({
         kind: 'conflict',
         code: ERROR_CODES.AUTH_EMAIL_ALREADY_IN_USE,
@@ -118,7 +128,11 @@ describe('createFirebaseAuthAdapter', () => {
       const adapter = createFirebaseAuthAdapter(auth);
 
       await expect(
-        adapter.signUp({ email: 'user@example.com', password: 'secret-1' }),
+        adapter.signUp({
+          email: 'user@example.com',
+          password: 'secret-1',
+          displayName: 'Test User',
+        }),
       ).rejects.toMatchObject({
         kind: 'unknown',
         code: ERROR_CODES.UNKNOWN_UNEXPECTED,

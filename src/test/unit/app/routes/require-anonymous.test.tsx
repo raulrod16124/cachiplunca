@@ -70,7 +70,11 @@ describe('RequireAnonymous', () => {
 
   it('redirects an authenticated visitor away from the guest route', async () => {
     const authPort = new FakeAuthPort();
-    await authPort.signUp({ email: 'user@example.com', password: 'secret123' });
+    await authPort.signUp({
+      email: 'user@example.com',
+      password: 'secret123',
+      displayName: 'Test User',
+    });
     renderGuard(authPort);
 
     expect(await screen.findByText('Workspaces page')).toBeInTheDocument();
@@ -79,7 +83,11 @@ describe('RequireAnonymous', () => {
 
   it('returns authenticated visitors to a safe redirect target', async () => {
     const authPort = new FakeAuthPort();
-    await authPort.signUp({ email: 'user@example.com', password: 'secret123' });
+    await authPort.signUp({
+      email: 'user@example.com',
+      password: 'secret123',
+      displayName: 'Test User',
+    });
     renderGuard(authPort, '/login?redirect=%2Finvitations%2Ftoken-1');
 
     expect(await screen.findByText('Invitation page')).toBeInTheDocument();

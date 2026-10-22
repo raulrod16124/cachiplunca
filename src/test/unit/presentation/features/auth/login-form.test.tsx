@@ -5,7 +5,7 @@ import { LoginForm } from '../../../../../presentation/features/auth/login-form'
 import { createAppError, ERROR_CODES } from '../../../../../shared/errors';
 import { FakeAuthPort } from '../../../../fixtures/fake-auth-port';
 
-const CREDENTIALS = { email: 'user@example.com', password: 'secret123' };
+const CREDENTIALS = { email: 'user@example.com', password: 'secret123', displayName: 'Test User' };
 
 function fillForm(email: string, password: string): void {
   fireEvent.change(screen.getByLabelText('Email'), { target: { value: email } });

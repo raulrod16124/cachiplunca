@@ -33,6 +33,7 @@ describe('in-app invitation notifications', () => {
     const invitee = await harness.authPort.signUp({
       email: 'invitee@example.com',
       password: 'Secret123',
+      displayName: 'Invitee',
     });
     harness.authPort.setSession({ ...invitee, emailVerified: true });
 
@@ -75,6 +76,7 @@ describe('in-app invitation notifications', () => {
     const invitee = await harness.authPort.signUp({
       email: 'invitee@example.com',
       password: 'Secret123',
+      displayName: 'Invitee',
     });
     harness.authPort.setSession({ ...invitee, emailVerified: true });
 

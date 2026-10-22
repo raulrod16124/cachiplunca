@@ -9,7 +9,7 @@ import { FakeAuthPort } from '../../../fixtures/fake-auth-port';
 describe('update user profile', () => {
   it('trims the display name and updates the session user', async () => {
     const authPort = new FakeAuthPort();
-    await authPort.signUp({ email: 'ada@example.com', password: 'secret123' });
+    await authPort.signUp({ email: 'ada@example.com', password: 'secret123', displayName: 'Ada' });
 
     const result = await createUpdateUserProfile(authPort)({ displayName: '  Ada Lovelace  ' });
 

@@ -67,6 +67,7 @@ describe('accept invitation route', () => {
     const invitee = await harness.authPort.signUp({
       email: 'invited@example.com',
       password: 'Secret123',
+      displayName: 'Invitee',
     });
     harness.authPort.setSession({ ...invitee, emailVerified: true });
 

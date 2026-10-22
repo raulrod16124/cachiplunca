@@ -6,17 +6,30 @@ import {
 import { ERROR_CODES } from '../../../../shared/errors';
 import { FakeAuthPort } from '../../../fixtures/fake-auth-port';
 
-const VALID_INPUT = { email: 'user@example.com', password: 'secret123' };
+const VALID_INPUT = {
+  email: 'user@example.com',
+  password: 'secret123',
+  displayName: 'Test User',
+};
 
 describe('validateRegisterInput', () => {
   it('returns no errors for valid input', () => {
     expect(validateRegisterInput(VALID_INPUT)).toEqual({});
   });
 
-  it('reports both fields when both are empty', () => {
-    const errors = validateRegisterInput({ email: '   ', password: '' });
+  it('reports all fields when they are empty', () => {
+    const errors = validateRegisterInput({ email: '   ', password: '', displayName: '   ' });
     expect(errors.email).toBe('Enter your email address.');
     expect(errors.password).toBe('Choose a password.');
+    expect(errors.displayName).toBe('Enter your display name.');
+  });
+
+  it('rejects display names over the shared maximum length', () => {
+    const errors = validateRegisterInput({
+      ...VALID_INPUT,
+      displayName: 'a'.repeat(81),
+    });
+    expect(errors.displayName).toBe('Display names cannot exceed 80 characters.');
   });
 
   it('rejects malformed emails', () => {
@@ -33,15 +46,20 @@ describe('validateRegisterInput', () => {
 });
 
 describe('createRegisterUser', () => {
-  it('registers a valid user and trims the email', async () => {
+  it('registers a valid user and trims the email and display name', async () => {
     const authPort = new FakeAuthPort();
     const registerUser = createRegisterUser(authPort);
 
-    const result = await registerUser({ email: '  user@example.com  ', password: 'secret123' });
+    const result = await registerUser({
+      email: '  user@example.com  ',
+      password: 'secret123',
+      displayName: '  Test User  ',
+    });
 
     expect(result.status).toBe('ok');
     if (result.status === 'ok') {
       expect(result.user.email).toBe('user@example.com');
+      expect(result.user.displayName).toBe('Test User');
       expect(result.user.uid).not.toBe('');
     }
   });
@@ -51,12 +69,13 @@ describe('createRegisterUser', () => {
     const signUp = jest.spyOn(authPort, 'signUp');
     const registerUser = createRegisterUser(authPort);
 
-    const result = await registerUser({ email: 'bad', password: 'short' });
+    const result = await registerUser({ email: 'bad', password: 'short', displayName: '' });
 
     expect(result.status).toBe('invalid-input');
     if (result.status === 'invalid-input') {
       expect(result.fieldErrors.email).toBeDefined();
       expect(result.fieldErrors.password).toBeDefined();
+      expect(result.fieldErrors.displayName).toBeDefined();
     }
     expect(signUp).not.toHaveBeenCalled();
   });

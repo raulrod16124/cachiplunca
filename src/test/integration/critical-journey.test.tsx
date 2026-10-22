@@ -11,6 +11,9 @@ function boardItems(): HTMLElement[] {
 }
 
 function fillCredentials(): void {
+  fireEvent.change(screen.getByLabelText('Name'), {
+    target: { value: DEFAULT_CREDENTIALS.displayName },
+  });
   fireEvent.change(screen.getByLabelText('Email'), {
     target: { value: DEFAULT_CREDENTIALS.email },
   });

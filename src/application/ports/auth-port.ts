@@ -13,6 +13,10 @@ export interface AuthCredentials {
   readonly password: string;
 }
 
+export interface AuthSignUpInput extends AuthCredentials {
+  readonly displayName: string;
+}
+
 export interface ChangeEmailInput {
   readonly email: string;
   readonly currentPassword: string;
@@ -30,7 +34,7 @@ export type SessionListener = (user: AuthUser | null) => void;
 export type SessionErrorListener = (error: AppError) => void;
 
 export interface AuthPort {
-  signUp(credentials: AuthCredentials): Promise<AuthUser>;
+  signUp(input: AuthSignUpInput): Promise<AuthUser>;
   signIn(credentials: AuthCredentials): Promise<AuthUser>;
   signInAnonymously(): Promise<AuthUser>;
   signOut(): Promise<void>;

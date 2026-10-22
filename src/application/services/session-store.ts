@@ -9,6 +9,7 @@ export type SessionState =
 export interface SessionStore {
   readonly getSnapshot: () => SessionState;
   readonly subscribe: (onChange: () => void) => Unsubscribe;
+  readonly applyUser: (user: AuthUser) => void;
 }
 
 const LOADING_STATE: SessionState = { status: 'loading' };
@@ -77,6 +78,12 @@ export function createSessionStore(authPort: AuthPort): SessionStore {
           disconnect();
         }
       };
+    },
+    applyUser(user) {
+      if (snapshot.status === 'authenticated' && snapshot.user.uid !== user.uid) {
+        return;
+      }
+      publish(toSessionState(user));
     },
   };
 }

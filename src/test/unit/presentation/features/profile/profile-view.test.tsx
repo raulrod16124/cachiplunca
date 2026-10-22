@@ -19,6 +19,12 @@ import {
 } from '../../../../../presentation/features/profile/profile-view';
 import { ProfileServicesProvider } from '../../../../../presentation/features/profile/profile-services-provider';
 import { UserSettingsProvider } from '../../../../../presentation/providers/user-settings-provider';
+import {
+  SessionProvider,
+  useSession,
+} from '../../../../../presentation/providers/session-provider';
+import { createAuthServicesWithPort } from '../../../../../app/config/auth-service-composition';
+import { FakeAuthPort } from '../../../../fixtures/fake-auth-port';
 
 const CURRENT_USER: AuthUser = {
   uid: 'user-1',
@@ -144,5 +150,51 @@ describe('ProfileView', () => {
       'true',
     );
     expect(screen.getByRole('combobox', { name: 'Font size' })).toBeInTheDocument();
+  });
+
+  it('updates session consumers immediately when the display name changes', async () => {
+    const authPort = new FakeAuthPort();
+    await authPort.signUp({
+      email: 'ada@example.com',
+      password: 'secret123',
+      displayName: 'Ada Lovelace',
+    });
+    const services = createAuthServicesWithPort(authPort);
+
+    function SessionProfileHarness(): ReactNode {
+      const session = useSession();
+      const [tab, setTab] = useState<ProfileTab>('profile');
+
+      if (session.status !== 'authenticated') {
+        return null;
+      }
+
+      return <ProfileView currentUser={session.user} tab={tab} onTabChange={setTab} />;
+    }
+
+    render(
+      <UserSettingsProvider store={createSettingsStore()} userId={UserId.create('user-1')}>
+        <ProfileServicesProvider
+          services={{
+            updateUserProfile: services.updateUserProfile,
+            changeUserEmail: services.changeUserEmail,
+            changeUserPassword: services.changeUserPassword,
+          }}
+        >
+          <SessionProvider store={services.sessionStore}>
+            <SessionProfileHarness />
+          </SessionProvider>
+        </ProfileServicesProvider>
+      </UserSettingsProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByText('Ada Lovelace')).toBeInTheDocument());
+
+    fireEvent.change(screen.getByLabelText('Display name'), {
+      target: { value: 'Grace Hopper' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    await waitFor(() => expect(screen.getByText('Grace Hopper')).toBeInTheDocument());
   });
 });

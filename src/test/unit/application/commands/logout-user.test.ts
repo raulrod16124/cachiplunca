@@ -12,7 +12,11 @@ function observeSessions(authPort: FakeAuthPort): Array<AuthUser | null> {
 describe('createLogoutUser', () => {
   it('clears the active session', async () => {
     const authPort = new FakeAuthPort();
-    await authPort.signUp({ email: 'user@example.com', password: 'secret123' });
+    await authPort.signUp({
+      email: 'user@example.com',
+      password: 'secret123',
+      displayName: 'Test User',
+    });
     const sessions = observeSessions(authPort);
     const logoutUser = createLogoutUser(authPort);
 

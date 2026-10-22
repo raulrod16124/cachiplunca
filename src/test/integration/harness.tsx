@@ -49,7 +49,7 @@ import {
   createSessionStore,
   createUserSettingsStore,
 } from '../../application/services';
-import type { AuthCredentials, AuthPort, AuthUser } from '../../application/ports';
+import type { AuthPort, AuthSignUpInput, AuthUser } from '../../application/ports';
 import type { Workspace } from '../../domain/workspace';
 import { ElementId, UserId } from '../../domain/shared';
 import { CommentId } from '../../domain/shared';
@@ -70,9 +70,10 @@ import { hashInvitationToken } from '../../infrastructure/crypto/invitation-toke
 import { hashGuestLinkToken } from '../../infrastructure/crypto/guest-link-token';
 import { InvitationId } from '../../domain/shared';
 
-export const DEFAULT_CREDENTIALS: AuthCredentials = {
+export const DEFAULT_CREDENTIALS: AuthSignUpInput = {
   email: 'user@example.com',
   password: 'secret123',
+  displayName: 'Test User',
 };
 
 export function LocationProbe(): ReactNode {
@@ -134,7 +135,7 @@ export interface AppHarness {
   readonly guestLinkRepository: FakeGuestLinkRepository;
   readonly services: AppRoutesProps;
   readonly currentUser: AuthUser | null;
-  register(credentials?: AuthCredentials): Promise<AuthUser>;
+  register(credentials?: AuthSignUpInput): Promise<AuthUser>;
   createOwnerWorkspace(name: string): Promise<Workspace>;
   render(options?: Omit<RenderAppRoutesOptions, 'authPort' | 'props'>): RenderResult;
 }
@@ -283,7 +284,7 @@ export function createAppHarness(): AppHarness {
     get currentUser(): AuthUser | null {
       return currentUser;
     },
-    async register(credentials: AuthCredentials = DEFAULT_CREDENTIALS): Promise<AuthUser> {
+    async register(credentials: AuthSignUpInput = DEFAULT_CREDENTIALS): Promise<AuthUser> {
       return authPort.signUp(credentials);
     },
     async createOwnerWorkspace(name: string): Promise<Workspace> {
