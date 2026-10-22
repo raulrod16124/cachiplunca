@@ -9,11 +9,7 @@ import type { ElementId, Position } from '../../../../domain/shared';
 import type { MembershipRole } from '../../../../domain/membership';
 import type { Membership } from '../../../../domain/membership';
 import type { Presence } from '../../../../domain/collaboration';
-import type {
-  LogoutUser,
-  UpdateElementInput,
-  UpdateWorkspaceResult,
-} from '../../../../application/commands';
+import type { LogoutUser, UpdateElementInput } from '../../../../application/commands';
 import type { ListWorkspaces } from '../../../../application/queries';
 import { connectorCandidateIds, selectPresentationFrames } from '../../../../application/services';
 import type {
@@ -63,7 +59,7 @@ const CanvasArea = styled.main`
   flex: 1 1 auto;
   display: flex;
   min-height: 0;
-  background: ${({ theme }) => theme.canvas.surface};
+  background: ${({ theme }) => theme.canvas.board};
 `;
 
 const CanvasRegion = styled.div`
@@ -86,6 +82,7 @@ export interface WorkspaceShellLayoutProps {
   readonly commandHistory: CommandHistory<readonly Element[]>;
   readonly onMoveElements: (elements: readonly Element[]) => void;
   readonly onResizeElements: (elements: readonly Element[]) => void;
+  readonly onRotateElements: (elements: readonly Element[]) => void;
   readonly onAlignElements?: (elements: readonly Element[]) => void;
   readonly onDistributeElements?: (elements: readonly Element[]) => void;
   readonly onTransformEnd: () => void;
@@ -118,7 +115,6 @@ export interface WorkspaceShellLayoutProps {
   readonly onExportJson?: () => void;
   readonly onExportPdf?: () => void;
   readonly exportErrorMessage?: string | null;
-  readonly onRename?: (name: string) => Promise<UpdateWorkspaceResult>;
   readonly readOnly?: boolean;
   readonly accessErrorMessage?: string | null;
   readonly onRetryRole?: () => void;
@@ -142,6 +138,7 @@ export function WorkspaceShellLayout({
   commandHistory,
   onMoveElements,
   onResizeElements,
+  onRotateElements,
   onAlignElements,
   onDistributeElements,
   onTransformEnd,
@@ -171,7 +168,6 @@ export function WorkspaceShellLayout({
   onExportJson,
   onExportPdf,
   exportErrorMessage = null,
-  onRename,
   readOnly = false,
   accessErrorMessage = null,
   onRetryRole,
@@ -364,7 +360,6 @@ export function WorkspaceShellLayout({
               onShowShortcuts={() => setShortcutsOpen(true)}
               onExportJson={onExportJson}
               onExportPdf={onExportPdf}
-              onRename={onRename}
               onPresent={startPresentation}
               canPresent={presentationFrames.length > 0}
               persistenceErrorMessage={persistenceErrorMessage}
@@ -380,6 +375,7 @@ export function WorkspaceShellLayout({
             history={commandHistory}
             onMoveElements={onMoveElements}
             onResizeElements={onResizeElements}
+            onRotateElements={onRotateElements}
             onAlignElements={onAlignElements}
             onDistributeElements={onDistributeElements}
             onTransformEnd={onTransformEnd}

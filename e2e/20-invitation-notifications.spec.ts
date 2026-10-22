@@ -16,11 +16,11 @@ test.describe('Invitation notifications', () => {
     await registerUser(inviteePage, inviteeEmail);
     await verifyEmail(inviteeEmail);
 
-    await expect(inviteePage.getByRole('link', { name: 'Invitations' })).toBeVisible();
+    await expect(inviteePage.getByRole('button', { name: 'Notifications' })).toBeVisible();
 
     await ownerPage.getByRole('button', { name: 'Share' }).click();
     const dialog = ownerPage.getByRole('dialog');
-    await expect(dialog.getByRole('heading', { name: 'Share workspace' })).toBeVisible();
+    await expect(dialog.getByRole('heading', { name: 'Share board' })).toBeVisible();
     await dialog.getByLabel('Email').fill(inviteeEmail);
     await dialog.getByRole('button', { name: 'Send invitation' }).click();
     await expect(dialog.getByLabel('Invitation link')).toBeVisible({ timeout: 15000 });
@@ -28,9 +28,17 @@ test.describe('Invitation notifications', () => {
     const notice = inviteePage.getByRole('status', { name: 'New invitation' });
     await expect(notice).toBeVisible({ timeout: 20000 });
     await expect(notice.getByText(/invited you as editor/i)).toBeVisible();
-    await expect(inviteePage.getByRole('link', { name: /Invitations, 1 pending/i })).toBeVisible();
 
-    await notice.getByRole('button', { name: 'Accept invitation' }).click();
+    const notifications = inviteePage.getByRole('button', {
+      name: /Notifications, 1 pending/i,
+    });
+    await expect(notifications).toBeVisible();
+    await notifications.click();
+
+    const invitationsDialog = inviteePage.getByRole('dialog', { name: 'Invitations' });
+    await expect(invitationsDialog).toBeVisible();
+    await expect(invitationsDialog.getByText(/invited you as editor/i)).toBeVisible();
+    await invitationsDialog.getByRole('button', { name: 'Accept invitation' }).click();
 
     await expect(inviteePage.getByRole('application', { name: 'Canvas' })).toBeVisible({
       timeout: 20000,

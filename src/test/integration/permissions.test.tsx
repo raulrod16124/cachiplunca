@@ -107,7 +107,7 @@ describe('permissions', () => {
     expect(await screen.findByRole('heading', { name: 'Members' })).toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'Invite' })).not.toBeInTheDocument();
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Leave workspace' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Leave board' })).toBeInTheDocument();
   });
 
   it('enables write actions for editors and keeps invite available', async () => {
@@ -238,7 +238,7 @@ describe('permissions', () => {
   it('allows viewers and editors to leave a workspace', async () => {
     const harness = createAppHarness();
     await harness.register();
-    const workspace = await harness.createOwnerWorkspace('Leave workspace');
+    const workspace = await harness.createOwnerWorkspace('Leave board');
     const actor = UserId.create('viewer-leave');
     await harness.membershipRepository.create({
       userId: actor,

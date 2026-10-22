@@ -10,9 +10,9 @@ export function describeGetWorkspaceError(error: AppError): string {
     case ERROR_CODES.AUTH_UNAUTHENTICATED:
       return 'Your session has expired. Sign in again to continue.';
     case ERROR_CODES.AUTH_FORBIDDEN:
-      return 'You do not have permission to view this workspace.';
+      return 'You do not have permission to view this board.';
     case ERROR_CODES.NOT_FOUND_RESOURCE:
-      return 'The workspace does not exist.';
+      return 'The board does not exist.';
     default:
       return error.message;
   }

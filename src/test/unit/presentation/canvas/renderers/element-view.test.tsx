@@ -1,19 +1,59 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { createTextElement } from '../../../../../domain/element';
-import type { TextElement } from '../../../../../domain/element';
+import {
+  createConnectorElement,
+  createFrameElement,
+  createImageElement,
+  createLinkElement,
+  createNoteElement,
+  createTaskElement,
+  createTextElement,
+} from '../../../../../domain/element';
+import type { Element, ElementType, TextElement } from '../../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../../domain/shared';
 import { ElementView } from '../../../../../presentation/canvas/renderers';
 
+const BASE_PROPS = {
+  id: ElementId.create('elem-1'),
+  workspaceId: WorkspaceId.create('ws-1'),
+  createdBy: UserId.create('user-1'),
+  position: Position.create(30, 40),
+  size: Size.create(120, 80),
+} as const;
+
+const TYPE_PROPS = {
+  ...BASE_PROPS,
+  id: ElementId.create('label-element'),
+};
+
 function createElement(overrides: Partial<{ rotation: number }> = {}): TextElement {
   return createTextElement({
-    id: ElementId.create('elem-1'),
-    workspaceId: WorkspaceId.create('ws-1'),
-    createdBy: UserId.create('user-1'),
-    position: Position.create(30, 40),
-    size: Size.create(120, 80),
+    ...BASE_PROPS,
     content: 'hello',
     rotation: overrides.rotation,
   });
+}
+
+function createElementOfType(type: ElementType): Element {
+  switch (type) {
+    case 'text':
+      return createTextElement({ ...TYPE_PROPS, content: 'hello' });
+    case 'note':
+      return createNoteElement({ ...TYPE_PROPS, content: 'note' });
+    case 'task':
+      return createTaskElement({ ...TYPE_PROPS, title: 'task', status: 'todo' });
+    case 'frame':
+      return createFrameElement({ ...TYPE_PROPS, title: 'frame' });
+    case 'connector':
+      return createConnectorElement({
+        ...TYPE_PROPS,
+        sourcePoint: Position.create(30, 40),
+        targetPoint: Position.create(150, 120),
+      });
+    case 'link':
+      return createLinkElement({ ...TYPE_PROPS, url: 'https://example.com' });
+    case 'image':
+      return createImageElement({ ...TYPE_PROPS, src: 'https://example.com/image.png' });
+  }
 }
 
 describe('ElementView', () => {
@@ -60,6 +100,66 @@ describe('ElementView', () => {
     render(<ElementView element={createElement()} selected={false} ariaLabel="Custom label" />);
 
     expect(screen.getByRole('group', { name: 'Custom label' })).toBeInTheDocument();
+  });
+
+  it.each([
+    ['text', 'Text'],
+    ['note', 'Note'],
+    ['task', 'Task'],
+    ['frame', 'Frame'],
+    ['connector', 'Connector'],
+    ['link', 'Link'],
+    ['image', 'Image'],
+  ] as const)('renders the type label for %s elements', (type, expected) => {
+    render(<ElementView element={createElementOfType(type)} selected={false} />);
+
+    expect(screen.getByTestId('element-type-label-label-element')).toHaveTextContent(expected);
+  });
+
+  it('keeps the type label hidden while the element is idle', () => {
+    render(<ElementView element={createElement()} selected={false} />);
+
+    expect(screen.getByTestId('element-type-label-elem-1')).toHaveStyle({ opacity: '0' });
+  });
+
+  it('reveals the type label when the element is selected', () => {
+    render(<ElementView element={createElement()} selected />);
+
+    expect(screen.getByTestId('element-type-label-elem-1')).toHaveStyle({ opacity: '1' });
+  });
+
+  it('hides the type label when requested', () => {
+    render(<ElementView element={createElement()} selected={false} showTypeLabel={false} />);
+
+    expect(screen.queryByTestId('element-type-label-elem-1')).not.toBeInTheDocument();
+  });
+
+  it('keeps the type label decorative and outside the accessible name', () => {
+    render(<ElementView element={createElement()} selected={false} />);
+
+    expect(screen.getByTestId('element-type-label-elem-1')).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.getByRole('group', { name: 'Text: hello' })).toBeInTheDocument();
+  });
+
+  it('places the connector type label at the segment midpoint', () => {
+    const connector = createConnectorElement({
+      ...BASE_PROPS,
+      sourcePoint: Position.create(30, 40),
+      targetPoint: Position.create(270, 160),
+    });
+
+    render(
+      <ElementView
+        element={connector}
+        selected={false}
+        connectorStart={Position.create(30, 40)}
+        connectorEnd={Position.create(270, 160)}
+      />,
+    );
+
+    const label = screen.getByTestId('element-type-label-elem-1');
+    expect(label.style.left).toBe('120px');
+    expect(label.style.top).toBe('60px');
   });
 
   it('uses the built-in renderer for a known element type', () => {

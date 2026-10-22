@@ -6,6 +6,7 @@ import {
   createNoteElement,
   createTaskElement,
   createTextElement,
+  isImageElement,
   richTextFromPlain,
   type Element,
 } from '../../../../domain/element';
@@ -14,6 +15,7 @@ import {
   fromElementDocument,
   toElementDocument,
   type ElementDocument,
+  type ImageElementDocument,
 } from '../../../../infrastructure/firebase/firebase-element-mapper';
 
 const WORKSPACE_ID = WorkspaceId.create('ws-1');
@@ -202,6 +204,41 @@ describe('toElementDocument', () => {
       createImageElement({ ...buildBase('el-image'), src: 'https://example.com/image.png' }),
     );
     expect('alt' in withoutAlt).toBe(false);
+  });
+
+  it('maps an ImageElement storage path when present', () => {
+    const storagePath = 'workspaces/ws-1/images/image-1-diagram.png';
+    const element = createImageElement({
+      ...buildBase('el-image'),
+      src: 'https://example.com/image.png',
+      storagePath,
+    });
+
+    const document = toElementDocument(element);
+
+    expect(asRecord(document).storagePath).toBe(storagePath);
+    expectRoundTrip(element);
+
+    const withoutStoragePath = toElementDocument(
+      createImageElement({ ...buildBase('el-image'), src: 'https://example.com/image.png' }),
+    );
+    expect('storagePath' in withoutStoragePath).toBe(false);
+  });
+
+  it('loads legacy ImageElement documents without a storage path', () => {
+    const element = createImageElement({
+      ...buildBase('el-image'),
+      src: 'https://example.com/image.png',
+    });
+    const document = toElementDocument(element) as ImageElementDocument;
+    const { storagePath: _storagePath, ...legacyDocument } = document;
+
+    const fromLegacy = fromElementDocument('el-image', legacyDocument);
+
+    expect(isImageElement(fromLegacy)).toBe(true);
+    if (isImageElement(fromLegacy)) {
+      expect(fromLegacy.storagePath).toBeUndefined();
+    }
   });
 });
 

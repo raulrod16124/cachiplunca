@@ -32,8 +32,8 @@ describe('LoadingState', () => {
   });
 
   it('renders a visually hidden label for assistive technology', () => {
-    render(<LoadingState label="Loading workspaces" />);
-    expect(screen.getByRole('status')).toHaveTextContent('Loading workspaces');
+    render(<LoadingState label="Loading boards" />);
+    expect(screen.getByRole('status')).toHaveTextContent('Loading boards');
   });
 
   it('renders custom indicator content instead of the default dots', () => {

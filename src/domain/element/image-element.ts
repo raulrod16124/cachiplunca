@@ -14,6 +14,7 @@ export interface CreateImageElementProps {
   readonly size: Size;
   readonly src: string;
   readonly alt?: string;
+  readonly storagePath?: string;
   readonly rotation?: number;
   readonly zIndex?: number;
   readonly createdAt?: Date;
@@ -41,6 +42,7 @@ export function createImageElement(props: CreateImageElementProps): ImageElement
     updatedAt,
     src: props.src,
     ...(props.alt === undefined ? {} : { alt: props.alt }),
+    ...(props.storagePath === undefined ? {} : { storagePath: props.storagePath }),
   };
 
   validateImageElement(element);

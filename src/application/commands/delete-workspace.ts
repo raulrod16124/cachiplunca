@@ -72,7 +72,7 @@ function forbiddenError(workspaceId: WorkspaceId, actorUserId: UserId): AppError
   return createAppError(
     'authorization',
     ERROR_CODES.AUTH_FORBIDDEN,
-    'You do not have permission to delete this workspace.',
+    'You do not have permission to delete this board.',
     {
       details: {
         workspaceId: workspaceId.value,

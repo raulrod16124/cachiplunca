@@ -60,6 +60,8 @@ const MineFilter = styled.label`
 const Body = styled.div`
   flex: 1 1 auto;
   min-height: 0;
+  min-width: 0;
+  overflow-x: hidden;
   overflow-y: auto;
   padding: ${({ theme }) => theme.space[4]};
 
@@ -69,6 +71,8 @@ const Body = styled.div`
 `;
 
 const ViewTabs = styled.div`
+  flex: none;
+  min-width: 0;
   padding: ${({ theme }) => `${theme.space[2]} ${theme.space[4]} 0`};
 `;
 
@@ -177,7 +181,7 @@ const BoardMenuTrigger = styled(DropdownMenu.Trigger)`
   cursor: pointer;
 
   &:hover {
-    background: ${({ theme }) => theme.color.background.sunken};
+    background: var(--cach-control-hover);
     color: ${({ theme }) => theme.color.text.primary};
   }
 
@@ -492,7 +496,11 @@ export function TaskPlanPanel({
           <Tabs
             value={view}
             onValueChange={(value) => setView(value as TaskPlanView)}
-            classNames={{ panel: 'task-plan-view-panel' }}
+            classNames={{
+              list: 'task-plan-view-tabs',
+              trigger: 'task-plan-view-trigger',
+              panel: 'task-plan-view-panel',
+            }}
           >
             <ViewTabs>
               <Tabs.List aria-label={t('plan.view.label')}>
@@ -519,70 +527,66 @@ export function TaskPlanPanel({
               ) : (
                 <>
                   <Tabs.Panel value="list">
-                    {view === 'list' ? (
-                      <Groups>
-                        {groups.map((group) => (
-                          <section
-                            key={group.status}
-                            aria-labelledby={`task-plan-group-${group.status}`}
-                          >
+                    <Groups>
+                      {groups.map((group) => (
+                        <section
+                          key={group.status}
+                          aria-labelledby={`task-plan-group-${group.status}`}
+                        >
+                          <GroupHeader>
+                            <Heading as="h3" id={`task-plan-group-${group.status}`}>
+                              {t(TASK_STATUS_LABEL_KEYS[group.status])}
+                            </Heading>
+                            <Badge variant={TASK_STATUS_META[group.status].variant}>
+                              {group.tasks.length}
+                            </Badge>
+                          </GroupHeader>
+                          <TaskList>
+                            {group.tasks.map((task) => (
+                              <li key={task.id.value}>{renderTask(task)}</li>
+                            ))}
+                          </TaskList>
+                        </section>
+                      ))}
+                    </Groups>
+                  </Tabs.Panel>
+                  <Tabs.Panel value="board">
+                    <Board role="group" aria-label={t('plan.board.label')}>
+                      {boardGroups.map((group) => (
+                        <SharedPanel
+                          key={group.status}
+                          as="section"
+                          variant="sunken"
+                          padding="sm"
+                          aria-labelledby={`task-plan-board-group-${group.status}`}
+                        >
+                          <BoardColumnBody>
                             <GroupHeader>
-                              <Heading as="h3" id={`task-plan-group-${group.status}`}>
+                              <BoardColumnHeading
+                                as="h3"
+                                id={`task-plan-board-group-${group.status}`}
+                              >
                                 {t(TASK_STATUS_LABEL_KEYS[group.status])}
-                              </Heading>
+                              </BoardColumnHeading>
                               <Badge variant={TASK_STATUS_META[group.status].variant}>
                                 {group.tasks.length}
                               </Badge>
                             </GroupHeader>
-                            <TaskList>
-                              {group.tasks.map((task) => (
-                                <li key={task.id.value}>{renderTask(task)}</li>
-                              ))}
-                            </TaskList>
-                          </section>
-                        ))}
-                      </Groups>
-                    ) : null}
-                  </Tabs.Panel>
-                  <Tabs.Panel value="board">
-                    {view === 'board' ? (
-                      <Board role="group" aria-label={t('plan.board.label')}>
-                        {boardGroups.map((group) => (
-                          <SharedPanel
-                            key={group.status}
-                            as="section"
-                            variant="sunken"
-                            padding="sm"
-                            aria-labelledby={`task-plan-board-group-${group.status}`}
-                          >
-                            <BoardColumnBody>
-                              <GroupHeader>
-                                <BoardColumnHeading
-                                  as="h3"
-                                  id={`task-plan-board-group-${group.status}`}
-                                >
-                                  {t(TASK_STATUS_LABEL_KEYS[group.status])}
-                                </BoardColumnHeading>
-                                <Badge variant={TASK_STATUS_META[group.status].variant}>
-                                  {group.tasks.length}
-                                </Badge>
-                              </GroupHeader>
-                              {group.tasks.length === 0 ? (
-                                <BoardEmpty color="color.text.muted" size="font.size.xs">
-                                  {t('plan.board.empty')}
-                                </BoardEmpty>
-                              ) : (
-                                <TaskList>
-                                  {group.tasks.map((task) => (
-                                    <Fragment key={task.id.value}>{renderBoardCard(task)}</Fragment>
-                                  ))}
-                                </TaskList>
-                              )}
-                            </BoardColumnBody>
-                          </SharedPanel>
-                        ))}
-                      </Board>
-                    ) : null}
+                            {group.tasks.length === 0 ? (
+                              <BoardEmpty color="color.text.muted" size="font.size.xs">
+                                {t('plan.board.empty')}
+                              </BoardEmpty>
+                            ) : (
+                              <TaskList>
+                                {group.tasks.map((task) => (
+                                  <Fragment key={task.id.value}>{renderBoardCard(task)}</Fragment>
+                                ))}
+                              </TaskList>
+                            )}
+                          </BoardColumnBody>
+                        </SharedPanel>
+                      ))}
+                    </Board>
                   </Tabs.Panel>
                 </>
               )}

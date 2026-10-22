@@ -94,4 +94,38 @@ test.describe('Task plan drawer layout', () => {
     expect(await note.boundingBox()).toEqual(boardBefore);
     expect(await planToggle.boundingBox()).toEqual(topBarBefore);
   });
+
+  test('keeps the view tabs full width and free of horizontal scroll', async ({ page }) => {
+    await registerUser(page);
+    await createWorkspace(page, 'Plan tabs');
+    await addElement(page, 'task');
+
+    await page.getByRole('button', { name: 'Task plan' }).click();
+    const panel = page.getByTestId('task-plan-panel');
+    const tablist = panel.getByRole('tablist', { name: 'Task plan view' });
+    await expect(tablist).toBeVisible();
+
+    const metrics = await tablist.evaluate((element) => ({
+      scrollWidth: element.scrollWidth,
+      clientWidth: element.clientWidth,
+    }));
+    expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.clientWidth + 1);
+
+    const triggerWidths = await tablist
+      .getByRole('tab')
+      .evaluateAll((tabs) => tabs.map((tab) => tab.getBoundingClientRect().width));
+    expect(triggerWidths).toHaveLength(2);
+    expect(Math.abs((triggerWidths[0] ?? 0) - (triggerWidths[1] ?? 0))).toBeLessThanOrEqual(1);
+
+    for (const view of ['List', 'Board'] as const) {
+      await panel.getByRole('tab', { name: view }).click();
+      await expect(panel.getByRole('tab', { name: view })).toHaveAttribute('aria-selected', 'true');
+
+      const viewMetrics = await tablist.evaluate((element) => ({
+        scrollWidth: element.scrollWidth,
+        clientWidth: element.clientWidth,
+      }));
+      expect(viewMetrics.scrollWidth).toBeLessThanOrEqual(viewMetrics.clientWidth + 1);
+    }
+  });
 });

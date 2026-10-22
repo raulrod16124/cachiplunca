@@ -50,7 +50,7 @@ const Root = styled.div<{
         transform ${theme.motion.duration.fast} ease;
 
       &:hover {
-        border-color: ${theme.color.border.strong};
+        border-color: var(--cach-border-accent);
         box-shadow: ${theme.shadow.sm};
         transform: translateY(-1px);
       }

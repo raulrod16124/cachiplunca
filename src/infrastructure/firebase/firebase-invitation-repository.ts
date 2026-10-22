@@ -72,7 +72,7 @@ export function createFirebaseInvitationRepository(db: Firestore): InvitationRep
         if (pending.some((current) => current.isForEmail(invitation.email))) {
           throw conflictError(
             invitation.id,
-            'A pending invitation already exists for this email in the workspace.',
+            'A pending invitation already exists for this email in this board.',
           );
         }
       }

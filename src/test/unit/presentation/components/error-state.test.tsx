@@ -54,9 +54,9 @@ describe('ErrorState', () => {
   });
 
   it('renders the title as a heading at the requested level', () => {
-    render(<ErrorState title="Could not load workspace" titleAs="h1" />);
+    render(<ErrorState title="Could not load board" titleAs="h1" />);
     expect(
-      screen.getByRole('heading', { level: 1, name: 'Could not load workspace' }),
+      screen.getByRole('heading', { level: 1, name: 'Could not load board' }),
     ).toBeInTheDocument();
   });
 

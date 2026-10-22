@@ -40,4 +40,4 @@ El objetivo es permitir subir imágenes, renderizarlas, persistirlas tras recarg
 - Presentation no importa Firebase y el dominio permanece puro.
 - No se añaden dependencias: `firebase/storage` ya forma parte de `firebase` y el icono `Image` existe en `@raulrod/icons`.
 - Los E2E y los tests de rules requieren el emulador de Storage (puerto 9199).
-- Queda como follow-up la limpieza best-effort de objetos huérfanos al borrar elementos.
+- La limpieza best-effort de objetos huérfanos al borrar elementos se resuelve en `docs/adr/0044-image-storage-cleanup.md`.

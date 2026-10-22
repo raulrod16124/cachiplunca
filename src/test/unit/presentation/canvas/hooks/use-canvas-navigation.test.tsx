@@ -170,6 +170,24 @@ describe('useCanvasNavigation', () => {
     expect(onNavigate).not.toHaveBeenCalled();
   });
 
+  it('does nothing when the rotation handle owns the keyboard focus', async () => {
+    const onNavigate = jest.fn();
+    const user = userEvent.setup();
+
+    render(
+      <Testbench selectedIds={['first']} onNavigate={onNavigate}>
+        <button type="button" data-testid="rotate-handle" data-rotate-handle="true">
+          Rotate
+        </button>
+      </Testbench>,
+    );
+
+    screen.getByTestId('rotate-handle').focus();
+    await user.keyboard('{ArrowRight}');
+
+    expect(onNavigate).not.toHaveBeenCalled();
+  });
+
   it('does nothing when disabled', async () => {
     const onNavigate = jest.fn();
     const user = userEvent.setup();

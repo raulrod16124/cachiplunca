@@ -51,6 +51,7 @@ describe('AuthLayout', () => {
     expect(styles).toContain('var(--cach-green-950)');
     expect(styles).toContain('var(--cach-cream-0)');
     expect(styles).toContain('var(--cach-mustard-500)');
+    expect(styles).toContain('var(--cach-surface-page-pattern)');
     expect(styles).not.toContain('var(--rr-color-action-primary-background)');
     expect(styles).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
   });

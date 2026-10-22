@@ -85,7 +85,7 @@ describe('WorkspacesListContainer', () => {
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeInTheDocument();
       expect(
-        screen.getByText('We could not load your workspaces. Please try again.'),
+        screen.getByText('We could not load your boards. Please try again.'),
       ).toBeInTheDocument();
     });
 
@@ -110,7 +110,7 @@ describe('WorkspacesListContainer', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /no workspaces yet/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /no boards yet/i })).toBeInTheDocument();
     });
   });
 
@@ -132,7 +132,7 @@ describe('WorkspacesListContainer', () => {
       expect(screen.getByRole('alert')).toBeInTheDocument();
     });
     expect(
-      screen.getByText('We could not load your workspaces. Please try again.'),
+      screen.getByText('We could not load your boards. Please try again.'),
     ).toBeInTheDocument();
     expect(screen.queryByText(/backend exploded/i)).not.toBeInTheDocument();
 
@@ -204,7 +204,7 @@ describe('WorkspacesListContainer', () => {
     await user.click(screen.getByRole('button', { name: 'Delete Alpha' }));
     expect(screen.getByRole('dialog')).toHaveTextContent('Alpha');
 
-    await user.click(screen.getByRole('button', { name: 'Delete workspace' }));
+    await user.click(screen.getByRole('button', { name: 'Delete board' }));
 
     await waitFor(() => {
       expect(deleteWorkspace).toHaveBeenCalledWith({
@@ -339,7 +339,7 @@ describe('WorkspacesListContainer', () => {
     });
 
     await user.click(screen.getByRole('button', { name: 'Edit Alpha' }));
-    expect(await screen.findByRole('dialog')).toHaveTextContent('Edit workspace');
+    expect(await screen.findByRole('dialog')).toHaveTextContent('Edit board');
     expect(screen.getByLabelText('Name')).toHaveValue('Alpha');
 
     await user.clear(screen.getByLabelText('Name'));

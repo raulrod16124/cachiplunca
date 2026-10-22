@@ -83,6 +83,17 @@ describe('FakeAuthPort', () => {
     expect(listener).toHaveBeenLastCalledWith(null);
   });
 
+  it('starts with local persistence and records the requested mode', async () => {
+    const fake = new FakeAuthPort();
+    expect(fake.sessionPersistence).toBe('local');
+
+    await fake.setSessionPersistence('session');
+    expect(fake.sessionPersistence).toBe('session');
+
+    await fake.setSessionPersistence('local');
+    expect(fake.sessionPersistence).toBe('local');
+  });
+
   it('creates an anonymous guest session with no email', async () => {
     const fake = new FakeAuthPort();
     const listener = jest.fn();

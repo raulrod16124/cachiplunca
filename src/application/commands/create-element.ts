@@ -61,6 +61,7 @@ export type CreateElementInput =
       readonly type: 'image';
       readonly src: string;
       readonly alt?: string;
+      readonly storagePath?: string;
     });
 
 export interface CreateElementDeps {
@@ -126,7 +127,12 @@ function buildElement(input: CreateElementInput, deps: CreateElementDeps): Eleme
     case 'link':
       return createLinkElement({ ...base, url: input.url, title: input.title });
     case 'image':
-      return createImageElement({ ...base, src: input.src, alt: input.alt });
+      return createImageElement({
+        ...base,
+        src: input.src,
+        alt: input.alt,
+        storagePath: input.storagePath,
+      });
     default: {
       const unknownType: never = input;
       throw new Error(`Unknown element type: ${JSON.stringify(unknownType)}`);

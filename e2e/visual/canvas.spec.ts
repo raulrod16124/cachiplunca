@@ -171,6 +171,33 @@ test.describe('visual baseline — canvas', () => {
       });
     });
 
+    test(`rotation theme:${theme}`, async ({ page }) => {
+      await registerUser(page);
+      await createWorkspace(page, 'Rotation canvas');
+      const note = await addElement(page, 'note');
+      await page.keyboard.press('Escape');
+      await expect(page.getByTestId('element-editor-box')).toBeHidden();
+      await note.click();
+
+      const handle = page.getByTestId('rotate-handle');
+      await expect(handle).toBeVisible();
+      await handle.focus();
+      await page.keyboard.press('Shift+ArrowRight');
+      await page.keyboard.press('Shift+ArrowRight');
+      await expect(note).toHaveAttribute('style', /rotate\(30deg\)/);
+      await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+      await setTheme(page, theme);
+      await waitForStable(page);
+      await expect(page).toHaveScreenshot(`canvas-rotation-${theme}.png`, {
+        mask: [
+          page.locator('[data-testid="session-timer-display"]'),
+          page.locator('[data-testid="connected-users"]'),
+          page.locator('[data-testid^="presence-avatar-"]'),
+          page.locator('[data-testid^="comment-indicator-"]'),
+        ],
+      });
+    });
+
     test(`context menu theme:${theme}`, async ({ page }) => {
       await registerUser(page);
       await createWorkspace(page, 'Context menu canvas');
@@ -309,7 +336,7 @@ test.describe('visual baseline — canvas', () => {
       await openCommandPalette(page);
       await page.getByRole('combobox', { name: 'Search commands' }).fill('undo');
       await expect(page.getByTestId('command-palette-item-undo')).toBeVisible();
-      await expect(page.getByText('Loading workspaces…')).toHaveCount(0);
+      await expect(page.getByText('Loading boards…')).toHaveCount(0);
       await page.mouse.move(0, 0);
       await waitForStable(page);
       await expect(page).toHaveScreenshot(`canvas-command-palette-${theme}.png`, {
@@ -322,37 +349,42 @@ test.describe('visual baseline — canvas', () => {
       });
     });
 
-    test(`settings dialog theme:${theme}`, async ({ page }) => {
+    test(`profile preferences page theme:${theme}`, async ({ page }) => {
       await registerUser(page);
       await createWorkspace(page, 'Settings canvas');
       await page.getByRole('button', { name: 'Open account menu' }).click();
       await page.getByRole('menuitem', { name: 'Preferences' }).click();
-      await expect(page.getByRole('dialog')).toBeVisible();
+      await expect(page.getByRole('heading', { level: 1, name: 'Profile' })).toBeVisible();
+      await expect(page.getByRole('tab', { name: 'Preferences' })).toHaveAttribute(
+        'aria-selected',
+        'true',
+      );
       await setTheme(page, theme);
-      const emailText = page.getByText(/@example\.com/);
-      await expect(page).toHaveScreenshot(`canvas-settings-${theme}.png`, {
+      await waitForStable(page);
+      await page.mouse.move(0, 0);
+      await expect(page).toHaveScreenshot(`canvas-profile-preferences-${theme}.png`, {
         mask: [
           ...dynamicMaskLocators(page),
-          emailText.locator('xpath=../..'),
-          page.getByPlaceholder(/@example\.com/),
+          page.getByTestId('profile-identity'),
+          page.getByTestId('profile-email-section'),
         ],
       });
     });
 
-    test(`profile dialog theme:${theme}`, async ({ page }) => {
+    test(`profile page theme:${theme}`, async ({ page }) => {
       await registerUser(page);
       await createWorkspace(page, 'Profile canvas');
       await page.getByRole('button', { name: 'Open account menu' }).click();
       await page.getByRole('menuitem', { name: 'Profile' }).click();
-      await expect(page.getByRole('dialog')).toBeVisible();
+      await expect(page.getByRole('heading', { level: 1, name: 'Profile' })).toBeVisible();
       await setTheme(page, theme);
-      const emails = page.getByText(/@example\.com/);
+      await waitForStable(page);
+      await page.mouse.move(0, 0);
       await expect(page).toHaveScreenshot(`canvas-profile-${theme}.png`, {
         mask: [
           ...dynamicMaskLocators(page),
-          emails.first().locator('xpath=../..'),
-          emails.nth(1).locator('xpath=..'),
-          page.getByPlaceholder(/@example\.com/),
+          page.getByTestId('profile-identity'),
+          page.getByTestId('profile-email-section'),
         ],
       });
     });

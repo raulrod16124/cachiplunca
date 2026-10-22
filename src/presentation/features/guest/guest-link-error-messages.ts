@@ -22,9 +22,9 @@ export function describeCreateGuestLinkError(error: AppError): string {
 
   switch (error.code) {
     case ERROR_CODES.AUTH_FORBIDDEN:
-      return 'Only the workspace owner can create a view link.';
+      return 'Only the board owner can create a view link.';
     case ERROR_CODES.NOT_FOUND_RESOURCE:
-      return 'This workspace no longer exists.';
+      return 'This board no longer exists.';
     default:
       return error.message;
   }
@@ -38,7 +38,7 @@ export function describeRevokeGuestLinkError(error: AppError): string {
 
   switch (error.code) {
     case ERROR_CODES.AUTH_FORBIDDEN:
-      return 'Only the workspace owner can revoke the view link.';
+      return 'Only the board owner can revoke the view link.';
     case ERROR_CODES.NOT_FOUND_RESOURCE:
       return 'This view link no longer exists.';
     default:
@@ -54,7 +54,7 @@ export function describeListGuestLinksError(error: AppError): string {
 
   switch (error.code) {
     case ERROR_CODES.AUTH_FORBIDDEN:
-      return 'Only the workspace owner can manage the view link.';
+      return 'Only the board owner can manage the view link.';
     default:
       return error.message;
   }
@@ -70,7 +70,7 @@ export function describeOpenGuestWorkspaceError(error: AppError): string {
     case ERROR_CODES.AUTH_FORBIDDEN:
       return 'This view link is no longer available. Ask the owner for a new one.';
     case ERROR_CODES.NOT_FOUND_RESOURCE:
-      return 'This workspace no longer exists.';
+      return 'This board no longer exists.';
     default:
       return error.message;
   }

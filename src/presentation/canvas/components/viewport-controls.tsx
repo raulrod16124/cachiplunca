@@ -1,10 +1,11 @@
-import { Button, IconButton, Inline, Popover, Text, Tooltip } from '@raulrod/ui';
+import { Inline, Popover, Text, Tooltip } from '@raulrod/ui';
 import { Maximize, Minus, Plus, Redo2, Undo2 } from '@raulrod/icons';
 import type { ChangeEvent, ReactElement } from 'react';
 import { useSyncExternalStore } from 'react';
 import styled from 'styled-components';
 import type { CanvasViewportStore } from '../../../application/services';
 import { MAX_CANVAS_SCALE, MIN_CANVAS_SCALE } from '../../../application/services';
+import { NeutralButton, NeutralIconButton } from '../../components';
 import { useI18n } from '../../i18n';
 
 const ICON_SIZE = 16;
@@ -68,7 +69,7 @@ const ZoomTrigger = styled(Popover.Trigger)`
   color: ${({ theme }) => theme.color.text.primary};
 
   &:hover {
-    background: ${({ theme }) => theme.color.background.sunken};
+    background: var(--cach-control-hover);
   }
 
   &:focus-visible {
@@ -138,7 +139,7 @@ export function ViewportControls({
     <Controls data-testid="viewport-controls">
       <Group>
         <Tooltip content={t('canvas.undo')} placement="top">
-          <IconButton
+          <NeutralIconButton
             type="button"
             variant="ghost"
             size="sm"
@@ -147,10 +148,10 @@ export function ViewportControls({
             onClick={onUndo}
           >
             <Undo2 aria-hidden="true" size={ICON_SIZE} />
-          </IconButton>
+          </NeutralIconButton>
         </Tooltip>
         <Tooltip content={t('canvas.redo')} placement="top">
-          <IconButton
+          <NeutralIconButton
             type="button"
             variant="ghost"
             size="sm"
@@ -159,13 +160,13 @@ export function ViewportControls({
             onClick={onRedo}
           >
             <Redo2 aria-hidden="true" size={ICON_SIZE} />
-          </IconButton>
+          </NeutralIconButton>
         </Tooltip>
       </Group>
       <Separator aria-hidden="true" />
       <Group>
         <Tooltip content={t('canvas.zoomOut')} placement="top">
-          <IconButton
+          <NeutralIconButton
             type="button"
             variant="ghost"
             size="sm"
@@ -175,7 +176,7 @@ export function ViewportControls({
             data-testid="zoom-out"
           >
             <Minus aria-hidden="true" size={ICON_SIZE} />
-          </IconButton>
+          </NeutralIconButton>
         </Tooltip>
         <Popover>
           <ZoomTrigger
@@ -205,7 +206,7 @@ export function ViewportControls({
           </Popover.Content>
         </Popover>
         <Tooltip content={t('canvas.zoomIn')} placement="top">
-          <IconButton
+          <NeutralIconButton
             type="button"
             variant="ghost"
             size="sm"
@@ -215,11 +216,11 @@ export function ViewportControls({
             data-testid="zoom-in"
           >
             <Plus aria-hidden="true" size={ICON_SIZE} />
-          </IconButton>
+          </NeutralIconButton>
         </Tooltip>
       </Group>
       <Separator aria-hidden="true" />
-      <Button
+      <NeutralButton
         type="button"
         variant="ghost"
         size="sm"
@@ -230,7 +231,7 @@ export function ViewportControls({
           <Maximize aria-hidden="true" size={ICON_SIZE} />
           <Text>{t('canvas.resetView')}</Text>
         </Inline>
-      </Button>
+      </NeutralButton>
     </Controls>
   );
 }

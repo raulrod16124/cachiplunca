@@ -1,11 +1,11 @@
 import { isConnectorElement, type Element } from '../../domain/element';
-import { Bounds } from '../../domain/shared';
-import type { Position } from '../../domain/shared';
+import { Bounds, Position } from '../../domain/shared';
 import {
   connectorGeometryBounds,
   distanceToSegment,
   type ConnectorGeometry,
 } from './connector-geometry';
+import { normalizeRotation, rotatePointAround, rotatedBounds } from './element-rotate';
 
 export const CONNECTOR_HIT_TOLERANCE = 6;
 
@@ -22,6 +22,7 @@ export interface ConnectorEndpointHandle {
 export interface SelectableItem {
   readonly id: string;
   readonly bounds: Bounds;
+  readonly rotation?: number;
   readonly segment?: SelectableSegment;
   readonly connectorEndpoints?: readonly ConnectorEndpointHandle[];
 }
@@ -72,6 +73,7 @@ export function toSelectableItem(element: Element, geometry?: ConnectorGeometry)
       element.size.width,
       element.size.height,
     ),
+    rotation: element.rotation,
   };
 }
 
@@ -84,6 +86,23 @@ export function toSelectableItems(
   );
 }
 
+function containsPoint(item: SelectableItem, worldPoint: Position): boolean {
+  const rotation = item.rotation === undefined ? 0 : normalizeRotation(item.rotation);
+
+  if (rotation === 0) {
+    return item.bounds.contains(worldPoint);
+  }
+
+  const center = Position.create(item.bounds.centerX, item.bounds.centerY);
+  const localPoint = rotatePointAround(worldPoint, center, -rotation);
+
+  return item.bounds.contains(localPoint);
+}
+
+function marqueeBounds(item: SelectableItem): Bounds {
+  return item.rotation === undefined ? item.bounds : rotatedBounds(item.bounds, item.rotation);
+}
+
 export function findSelectableAt(
   items: readonly SelectableItem[],
   worldPoint: Position,
@@ -91,7 +110,7 @@ export function findSelectableAt(
 ): string | null {
   for (let index = items.length - 1; index >= 0; index -= 1) {
     const item = items[index];
-    if (item !== undefined && item.segment === undefined && item.bounds.contains(worldPoint)) {
+    if (item !== undefined && item.segment === undefined && containsPoint(item, worldPoint)) {
       return item.id;
     }
   }
@@ -117,7 +136,7 @@ export function findSelectablesInBounds(
   const matches: string[] = [];
 
   for (const item of items) {
-    if (item.bounds.intersects(worldBounds)) {
+    if (marqueeBounds(item).intersects(worldBounds)) {
       matches.push(item.id);
     }
   }

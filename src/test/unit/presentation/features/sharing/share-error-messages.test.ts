@@ -19,7 +19,7 @@ describe('describeListMembersError', () => {
     const error = createAppError('authorization', ERROR_CODES.AUTH_FORBIDDEN, 'raw');
 
     expect(describeListMembersError(error)).toBe(
-      'You do not have permission to view the members of this workspace.',
+      'You do not have permission to view the members of this board.',
     );
   });
 
@@ -39,7 +39,7 @@ describe('describeChangeMemberRoleError', () => {
     const error = createAppError('authorization', ERROR_CODES.AUTH_FORBIDDEN, 'raw');
 
     expect(describeChangeMemberRoleError(error)).toBe(
-      'You do not have permission to change member roles in this workspace.',
+      'You do not have permission to change member roles in this board.',
     );
   });
 
@@ -47,7 +47,7 @@ describe('describeChangeMemberRoleError', () => {
     const error = createAppError('notFound', ERROR_CODES.NOT_FOUND_RESOURCE, 'raw');
 
     expect(describeChangeMemberRoleError(error)).toBe(
-      'That person is no longer a member of this workspace.',
+      'That person is no longer a member of this board.',
     );
   });
 
@@ -63,7 +63,7 @@ describe('describeRemoveMemberError', () => {
     const error = createAppError('authorization', ERROR_CODES.AUTH_FORBIDDEN, 'raw');
 
     expect(describeRemoveMemberError(error)).toBe(
-      'You do not have permission to remove members from this workspace.',
+      'You do not have permission to remove members from this board.',
     );
   });
 
@@ -81,7 +81,7 @@ describe('describeLeaveWorkspaceError', () => {
     const error = createAppError('authorization', ERROR_CODES.AUTH_FORBIDDEN, 'raw');
 
     expect(describeLeaveWorkspaceError(error)).toBe(
-      'You do not have permission to leave this workspace.',
+      'You do not have permission to leave this board.',
     );
   });
 

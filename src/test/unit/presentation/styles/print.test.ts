@@ -35,9 +35,12 @@ describe('print styles', () => {
     expect(block).toContain(':root[data-theme]');
     expect(block).toContain(':root:not([data-theme])');
     expect(block).toContain('color-scheme: light;');
-    expect(block).toContain('--rr-color-background-surface: var(--cach-cream-0);');
+    expect(block).toContain('--rr-color-background-default: var(--cach-white);');
+    expect(block).toContain('--rr-color-background-surface: var(--cach-white);');
+    expect(block).toContain('--rr-color-background-sunken: var(--cach-neutral-100);');
     expect(block).toContain('--rr-color-text-primary: var(--cach-graphite-900);');
     expect(block).toContain('--rr-color-border-strong: var(--cach-brown-700);');
+    expect(block).toContain('--rr-color-border-default: var(--cach-sand-600);');
     expect(block).toContain('--cach-note-default: #fffdf9;');
     expect(block).toContain('--cach-note-green: #dce8cf;');
     expect(block).toContain('--cach-note-shadow: none;');

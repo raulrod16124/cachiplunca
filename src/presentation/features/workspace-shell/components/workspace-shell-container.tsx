@@ -13,8 +13,6 @@ import {
   type LogoutUser,
   type RemoveMember,
   type UpdateElementInput,
-  type UpdateWorkspace,
-  type UpdateWorkspaceResult,
 } from '../../../../application/commands';
 import type {
   GetWorkspace,
@@ -40,13 +38,17 @@ import {
   createConnectedUsersStore,
   createCursorBroadcaster,
   createElementPersistenceBatcher,
+  createImageCleanupQueue,
   createRealtimeConnectionStore,
   createRemoteCursorsStore,
   createSelectionStore,
   createSharedPresencePort,
+  collectImageStoragePaths,
+  collectOrphanedImages,
   DEFAULT_FREE_CONNECTOR_SIZE,
   defaultElementSize,
   elementContentBounds,
+  isStoragePathInWorkspace,
   imageAltFromFileName,
   EMPTY_CONNECTED_USERS_STORE,
   EMPTY_REMOTE_CURSORS_STORE,
@@ -64,6 +66,7 @@ import type {
   CursorBroadcaster,
   ElementPersistenceBatcher,
   ElementPersistenceOrchestrator,
+  ImageCleanupQueue,
   PersistenceSyncStatus,
   RealtimeConnectionStore,
   RealtimeSubscriptionManager,
@@ -80,7 +83,7 @@ import type {
 import type { CommentServices } from '../../../../application/comment-services';
 import type { GuestLinkServices } from '../../../../application/guest-link-services';
 import type { ImageServices } from '../../../../application/image-services';
-import { isConnectorElement } from '../../../../domain/element';
+import { isConnectorElement, isImageElement } from '../../../../domain/element';
 import type { ConnectorElement, Element, ElementType } from '../../../../domain/element';
 import type { Comment } from '../../../../domain/comment';
 import type { Membership, MembershipRole } from '../../../../domain/membership';
@@ -152,6 +155,8 @@ export interface WorkspaceShellContainerProps {
   readonly selectionStore?: SelectionStore;
   readonly persistenceDebounceMs?: number;
   readonly persistenceScheduler?: Scheduler;
+  readonly imageCleanupDelayMs?: number;
+  readonly imageCleanupScheduler?: Scheduler;
   readonly inviteMember?: InviteMember;
   readonly listPendingInvitations?: ListPendingInvitations;
   readonly getWorkspaceRole?: GetWorkspaceRole;
@@ -159,7 +164,6 @@ export interface WorkspaceShellContainerProps {
   readonly changeMemberRole?: ChangeMemberRole;
   readonly removeMember?: RemoveMember;
   readonly leaveWorkspace?: LeaveWorkspace;
-  readonly updateWorkspace?: UpdateWorkspace;
   readonly fileDownload?: FileDownloadPort;
   readonly listWorkspaces?: ListWorkspaces;
   readonly onOpenWorkspace?: (workspaceId: string) => void;
@@ -188,6 +192,8 @@ export function WorkspaceShellContainer({
   selectionStore,
   persistenceDebounceMs,
   persistenceScheduler,
+  imageCleanupDelayMs,
+  imageCleanupScheduler,
   inviteMember,
   listPendingInvitations,
   getWorkspaceRole,
@@ -195,7 +201,6 @@ export function WorkspaceShellContainer({
   changeMemberRole,
   removeMember,
   leaveWorkspace,
-  updateWorkspace,
   fileDownload,
   listWorkspaces,
   onOpenWorkspace,
@@ -239,6 +244,9 @@ export function WorkspaceShellContainer({
     createCommandHistory<readonly Element[]>({ initial: [] }),
   );
   const persistenceBatcherRef = useRef<ElementPersistenceBatcher | null>(null);
+  const workspaceIdRef = useRef(workspaceId);
+  workspaceIdRef.current = workspaceId;
+  const imageCleanupQueueRef = useRef<ImageCleanupQueue | null>(null);
 
   const sharedPresencePort = useMemo(
     () => (presencePort === undefined ? undefined : createSharedPresencePort(presencePort)),
@@ -350,6 +358,19 @@ export function WorkspaceShellContainer({
           setElements(rolledBack);
         }
       },
+      onPersistedMutation: (mutation) => {
+        const cleanupQueue = imageCleanupQueueRef.current;
+
+        if (cleanupQueue === null) {
+          return;
+        }
+
+        const orphaned = collectOrphanedImages(mutation.previous, mutation.next).filter((image) =>
+          isStoragePathInWorkspace(image.storagePath, workspaceIdRef.current),
+        );
+
+        cleanupQueue.schedule(orphaned);
+      },
       delayMs: persistenceDebounceMs,
       scheduler: persistenceScheduler,
     });
@@ -357,6 +378,27 @@ export function WorkspaceShellContainer({
 
   const persistenceBatcher = persistenceBatcherRef.current;
   const transformGestureRef = useRef<TransformGesture | null>(null);
+
+  useEffect(() => {
+    if (imageServices !== undefined) {
+      imageCleanupQueueRef.current = createImageCleanupQueue({
+        deleteImage: imageServices.deleteImage,
+        delayMs: imageCleanupDelayMs,
+        scheduler: imageCleanupScheduler,
+        isStillReferenced: (image) =>
+          elementsRef.current.some(
+            (element) =>
+              isImageElement(element) &&
+              (element.storagePath === image.storagePath || element.src === image.src),
+          ),
+      });
+    }
+
+    return () => {
+      imageCleanupQueueRef.current?.dispose();
+      imageCleanupQueueRef.current = null;
+    };
+  }, [imageServices, imageCleanupDelayMs, imageCleanupScheduler]);
 
   useEffect(() => {
     function flush(): void {
@@ -530,6 +572,7 @@ export function WorkspaceShellContainer({
         size,
         src: result.image.url,
         alt: imageAltFromFileName(file.name),
+        storagePath: result.image.storagePath,
       });
 
       if (created.status === 'error') {
@@ -770,6 +813,20 @@ export function WorkspaceShellContainer({
     [persistElements],
   );
 
+  const handleRotateElements = useCallback(
+    (next: readonly Element[]) => {
+      const previous = elementsRef.current;
+
+      if (previous === next) {
+        return;
+      }
+
+      transformGestureRef.current ??= { base: previous, label: 'Rotate elements' };
+      persistElements(previous, next);
+    },
+    [persistElements],
+  );
+
   const handleAlignElements = useCallback(
     (next: readonly Element[]) => {
       commitElements(next, 'Align elements');
@@ -834,6 +891,7 @@ export function WorkspaceShellContainer({
   const handleUndoElements = useCallback(
     (restored: readonly Element[]) => {
       const previous = elementsRef.current;
+      imageCleanupQueueRef.current?.cancel(collectImageStoragePaths(restored));
       applyElements(restored);
       persistenceBatcher.schedule(previous, restored);
       void persistenceBatcher.flush();
@@ -862,28 +920,6 @@ export function WorkspaceShellContainer({
       setStatus('error');
     }
   }, [getWorkspace, workspaceId]);
-
-  const handleRenameWorkspace = useCallback(
-    async (name: string): Promise<UpdateWorkspaceResult> => {
-      if (updateWorkspace === undefined) {
-        return {
-          status: 'error',
-          error: toAppError(new Error('Renaming is not available.')),
-        };
-      }
-
-      const result = await updateWorkspace({ id: workspaceId, name });
-      if (result.status === 'ok') {
-        setResult((previous) =>
-          previous === null || previous.status !== 'ok'
-            ? previous
-            : { status: 'ok', workspace: result.workspace },
-        );
-      }
-      return result;
-    },
-    [updateWorkspace, workspaceId],
-  );
 
   const fetchElements = useCallback(async (): Promise<void> => {
     setElementsStatus('loading');
@@ -1210,9 +1246,6 @@ export function WorkspaceShellContainer({
     const canMemberRemove = !permissionsEnforced || permissions.can('member:remove');
     const canMemberLeave = !permissionsEnforced || permissions.can('member:leave');
     const canCreateElement = canElementWrite && localUserId !== undefined;
-    const canRename =
-      updateWorkspace !== undefined &&
-      (!permissionsEnforced || permissions.can('workspace:update'));
 
     const canShare =
       localUserId !== undefined &&
@@ -1237,6 +1270,7 @@ export function WorkspaceShellContainer({
           commandHistory={commandHistoryRef.current}
           onMoveElements={handleMoveElements}
           onResizeElements={handleResizeElements}
+          onRotateElements={handleRotateElements}
           onAlignElements={handleAlignElements}
           onDistributeElements={handleDistributeElements}
           onTransformEnd={handleTransformEnd}
@@ -1278,7 +1312,7 @@ export function WorkspaceShellContainer({
           readOnly={!canElementWrite}
           accessErrorMessage={
             roleStatus === 'failed'
-              ? 'We could not verify your access to this workspace. The board is view-only.'
+              ? 'We could not verify your access to this board. It is view-only.'
               : null
           }
           onRetryRole={roleStatus === 'failed' ? handleRetryRole : undefined}
@@ -1286,7 +1320,6 @@ export function WorkspaceShellContainer({
           onExportJson={fileDownload === undefined ? undefined : handleExportJson}
           onExportPdf={fileDownload === undefined ? undefined : handleExportPdf}
           exportErrorMessage={exportError}
-          onRename={canRename ? handleRenameWorkspace : undefined}
           listWorkspaces={listWorkspaces}
           onOpenWorkspace={onOpenWorkspace}
           commentServices={comments}

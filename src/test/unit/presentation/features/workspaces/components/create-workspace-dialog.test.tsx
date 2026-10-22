@@ -71,7 +71,7 @@ describe('CreateWorkspaceDialog', () => {
       />,
     );
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 2, name: 'Create workspace' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Create board' })).toBeInTheDocument();
     expect(screen.getByLabelText('Name')).toBeInTheDocument();
     expect(screen.getByLabelText('Description')).toBeInTheDocument();
     expect(screen.getByRole('radiogroup', { name: 'Start from' })).toBeInTheDocument();
@@ -88,7 +88,7 @@ describe('CreateWorkspaceDialog', () => {
 
     submit();
 
-    expect(await screen.findByText('Enter a workspace name.')).toBeInTheDocument();
+    expect(await screen.findByText('Enter a board name.')).toBeInTheDocument();
     expect(screen.getByLabelText('Name')).toHaveAttribute('aria-invalid', 'true');
     expect(onOpenChange).not.toHaveBeenCalled();
     expect(onCreated).not.toHaveBeenCalled();

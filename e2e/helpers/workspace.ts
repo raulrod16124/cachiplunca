@@ -1,7 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 
 export async function createWorkspace(page: Page, name = 'Roadmap Q4'): Promise<void> {
-  await page.getByRole('button', { name: 'Create workspace' }).first().click();
+  await page.getByRole('button', { name: 'Create board' }).first().click();
   await page.getByLabel('Name').fill(name);
   await page.getByRole('button', { name: 'Create', exact: true }).click();
   await expect(page.getByRole('heading', { level: 3, name })).toBeVisible({ timeout: 20000 });

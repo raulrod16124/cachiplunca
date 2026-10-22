@@ -7,6 +7,12 @@ import { UserId, WorkspaceId } from '../../../../../../domain/shared';
 
 const CREATED_BY = UserId.create('user-1');
 
+function styleText(): string {
+  return [...document.head.querySelectorAll('style')]
+    .map((style) => style.textContent ?? '')
+    .join('');
+}
+
 function createWorkspace(name: string, updatedAt: Date, description?: string): Workspace {
   const workspace = Workspace.create({
     id: WorkspaceId.create(`ws-${name}`),
@@ -44,7 +50,7 @@ describe('WorkspacesList', () => {
     render(<WorkspacesList status="loading" workspaces={[]} {...baseProps} />);
 
     expect(screen.getByRole('status')).toHaveAttribute('aria-busy', 'true');
-    expect(screen.getByRole('status')).toHaveTextContent('Loading workspaces');
+    expect(screen.getByRole('status')).toHaveTextContent('Loading boards');
   });
 
   it('renders error state with retry', async () => {
@@ -70,13 +76,13 @@ describe('WorkspacesList', () => {
     const user = userEvent.setup();
     render(<WorkspacesList status="success" workspaces={[]} {...baseProps} />);
 
-    expect(screen.getByRole('heading', { name: /no workspaces yet/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /no boards yet/i })).toBeInTheDocument();
     expect(screen.getByTestId('state-illustration')).toBeInTheDocument();
     expect(
-      screen.getByText(/create your first workspace to start organizing ideas together/i),
+      screen.getByText(/create your first board to start organizing ideas together/i),
     ).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /create workspace/i }));
+    await user.click(screen.getByRole('button', { name: /create board/i }));
     expect(baseProps.onCreate).toHaveBeenCalledTimes(1);
   });
 
@@ -92,6 +98,25 @@ describe('WorkspacesList', () => {
     expect(screen.getAllByRole('article')).toHaveLength(2);
   });
 
+  it('tints workspace card icons with brand surface tokens', () => {
+    const workspaces = [
+      createWorkspace('A', new Date()),
+      createWorkspace('B', new Date()),
+      createWorkspace('C', new Date()),
+    ];
+
+    render(<WorkspacesList status="success" workspaces={workspaces} {...baseProps} />);
+
+    const css = styleText();
+    expect(css).toContain('var(--cach-card-icon-green)');
+    expect(css).toContain('var(--cach-card-icon-green-fg)');
+    expect(css).toContain('var(--cach-card-icon-peach)');
+    expect(css).toContain('var(--cach-card-icon-peach-fg)');
+    expect(css).toContain('var(--cach-card-icon-mustard)');
+    expect(css).toContain('var(--cach-card-icon-mustard-fg)');
+    expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+  });
+
   it('filters workspaces by name and description', async () => {
     const user = userEvent.setup();
     const workspaces = [
@@ -101,13 +126,13 @@ describe('WorkspacesList', () => {
 
     render(<WorkspacesList status="success" workspaces={workspaces} {...baseProps} />);
 
-    const search = screen.getByRole('searchbox', { name: /search workspaces/i });
-    expect(search).toHaveAccessibleDescription('2 workspaces');
+    const search = screen.getByRole('searchbox', { name: /search boards/i });
+    expect(search).toHaveAccessibleDescription('2 boards');
 
     await user.type(search, 'launch');
     expect(screen.getByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Beta' })).not.toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('1 workspace');
+    expect(screen.getByRole('status')).toHaveTextContent('1 board');
 
     await user.clear(search);
     await user.type(search, 'beta');
@@ -121,15 +146,15 @@ describe('WorkspacesList', () => {
 
     render(<WorkspacesList status="success" workspaces={workspaces} {...baseProps} />);
 
-    await user.type(screen.getByRole('searchbox', { name: /search workspaces/i }), 'Gamma');
+    await user.type(screen.getByRole('searchbox', { name: /search boards/i }), 'Gamma');
 
-    expect(screen.getByRole('heading', { name: /no matching workspaces/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /no matching boards/i })).toBeInTheDocument();
     expect(screen.getByTestId('state-illustration')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /clear search/i }));
 
     expect(screen.getByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
-    expect(screen.getByRole('searchbox', { name: /search workspaces/i })).toHaveValue('');
+    expect(screen.getByRole('searchbox', { name: /search boards/i })).toHaveValue('');
   });
 
   it('offers delete to owners only', () => {

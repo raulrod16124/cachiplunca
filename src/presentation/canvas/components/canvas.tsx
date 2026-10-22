@@ -60,6 +60,7 @@ import { useElementEdit } from '../hooks/use-element-edit';
 import { useElementMove } from '../hooks/use-element-move';
 import { useElementRedo } from '../hooks/use-element-redo';
 import { useElementResize } from '../hooks/use-element-resize';
+import { useElementRotate } from '../hooks/use-element-rotate';
 import { useElementSize } from '../hooks/use-element-size';
 import { useElementUndo } from '../hooks/use-element-undo';
 import { useElementZOrder } from '../hooks/use-element-z-order';
@@ -99,10 +100,10 @@ const CanvasContainer = styled.div`
   height: 100%;
   overflow: hidden;
   touch-action: none;
-  cursor: default;
+  cursor: grab;
   user-select: none;
   outline: none;
-  background: ${({ theme }) => theme.canvas.surface};
+  background: ${({ theme }) => theme.canvas.board};
 
   &:focus-visible {
     outline: 2px solid ${({ theme }) => theme.color.focusRing};
@@ -127,6 +128,10 @@ const CanvasContainer = styled.div`
 
   &[data-resizing='true'] {
     cursor: nwse-resize;
+  }
+
+  &[data-rotating='true'] {
+    cursor: grabbing;
   }
 `;
 
@@ -188,7 +193,7 @@ export const CULLING_MARGIN = 64;
 const BOARD_SUMMARY_ID = 'canvas-board-summary';
 
 const CANVAS_SHORTCUTS =
-  'Arrow keys to move selection · Shift + Arrow to extend selection · Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo · Ctrl/Cmd + ] to bring to front · Ctrl/Cmd + [ to send to back · Right-click an object for more options';
+  'Arrow keys to move selection · Shift + Arrow to extend selection · Drag on empty canvas to pan · Shift + drag to select · Space + drag or middle-drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo · Ctrl/Cmd + ] to bring to front · Ctrl/Cmd + [ to send to back · Right-click an object for more options';
 
 const EDITABLE_ELEMENT_TYPES: ReadonlySet<ElementType> = new Set<ElementType>([
   'text',
@@ -208,6 +213,7 @@ export interface CanvasProps {
   readonly renderers?: ElementRendererRegistry;
   readonly onMoveElements?: (elements: readonly Element[]) => void;
   readonly onResizeElements?: (elements: readonly Element[]) => void;
+  readonly onRotateElements?: (elements: readonly Element[]) => void;
   readonly onAlignElements?: (elements: readonly Element[]) => void;
   readonly onDistributeElements?: (elements: readonly Element[]) => void;
   readonly onTransformEnd?: () => void;
@@ -255,6 +261,7 @@ export function Canvas({
   renderers,
   onMoveElements,
   onResizeElements,
+  onRotateElements,
   onAlignElements,
   onDistributeElements,
   onTransformEnd,
@@ -287,7 +294,9 @@ export function Canvas({
   const viewport = useSyncExternalStore(store.subscribe, store.getSnapshot);
   const selection = useSyncExternalStore(selectionStore.subscribe, selectionStore.getSnapshot);
   const spacePressed = useSpacePressed();
-  const { isPanning, ref: panRef } = usePan({ onPan: store.pan, spacePressed });
+  const handleClear = useCallback(() => {
+    selectionStore.clear();
+  }, [selectionStore]);
   const { ref: zoomRef } = useZoom({ onZoom: store.zoom });
   const { ref: canvasFocusRef } = useCanvasFocus();
   const { size: measuredSize, ref: elementSizeRef } = useElementSize();
@@ -370,6 +379,13 @@ export function Canvas({
     return [...connectors, ...others];
   }, [elements]);
   const boardSummary = useMemo(() => describeBoard(elements), [elements]);
+  const { isPanning, ref: panRef } = usePan({
+    onPan: store.pan,
+    onEmptyClick: handleClear,
+    items,
+    viewport,
+    spacePressed,
+  });
 
   const handleSelect = useCallback(
     (id: string, additive: boolean) => {
@@ -413,10 +429,6 @@ export function Canvas({
     [selectionStore],
   );
 
-  const handleClear = useCallback(() => {
-    selectionStore.clear();
-  }, [selectionStore]);
-
   const handleNavigate = useCallback(
     (id: string, additive: boolean) => {
       if (additive) {
@@ -454,6 +466,16 @@ export function Canvas({
     onTransformEnd,
     spacePressed,
     disabled: readOnly,
+  });
+
+  const { isRotating, ref: elementRotateRef } = useElementRotate({
+    elements,
+    viewport,
+    selectedIds: selection.selectedIds,
+    onRotateElements,
+    onTransformEnd,
+    spacePressed,
+    disabled: readOnly || onRotateElements === undefined,
   });
 
   const handleUpdateConnectorEndpoint = useCallback(
@@ -1101,6 +1123,7 @@ export function Canvas({
       canvasNavigationRef.current = node;
       elementMoveRef.current = node;
       elementResizeRef.current = node;
+      elementRotateRef.current = node;
       connectorEndpointRef.current = node;
       elementDeleteRef.current = node;
       elementDuplicateRef.current = node;
@@ -1122,6 +1145,7 @@ export function Canvas({
       canvasNavigationRef,
       elementMoveRef,
       elementResizeRef,
+      elementRotateRef,
       connectorEndpointRef,
       elementDeleteRef,
       elementDuplicateRef,
@@ -1219,6 +1243,7 @@ export function Canvas({
       data-selecting={marqueeRect !== null}
       data-moving={isMoving}
       data-resizing={isResizing}
+      data-rotating={isRotating}
       data-scale={transform.scale}
     >
       <VisuallyHidden id={BOARD_SUMMARY_ID} data-testid="canvas-board-summary">
@@ -1256,6 +1281,7 @@ export function Canvas({
               selected={selectedIdSet.has(element.id.value)}
               renderers={renderers}
               ariaLabel={ariaLabels.get(element.id.value)}
+              showTypeLabel={!presentation}
               connectorStart={geometry?.start}
               connectorEnd={geometry?.end}
               assigneeLabel={
@@ -1272,7 +1298,10 @@ export function Canvas({
           );
         })}
         {editingElementId === null && !presentation ? (
-          <SelectionOverlay items={selectedItems} />
+          <SelectionOverlay
+            items={selectedItems}
+            canRotate={!readOnly && onRotateElements !== undefined}
+          />
         ) : null}
         {editingElement === null ? null : (
           <ElementEditorOverlay

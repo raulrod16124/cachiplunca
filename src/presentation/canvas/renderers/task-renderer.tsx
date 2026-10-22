@@ -1,5 +1,5 @@
 import { CalendarDays, UserRound } from '@raulrod/icons';
-import { Badge, Button, DropdownMenu } from '@raulrod/ui';
+import { Badge, DropdownMenu } from '@raulrod/ui';
 import { useId, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ReactElement } from 'react';
 import styled from 'styled-components';
@@ -8,6 +8,7 @@ import { defaultElementSize, isTaskOverdue } from '../../../application/services
 import { isEmptyRichText, isTaskElement, TASK_STATUSES } from '../../../domain/element';
 import type { RichTextDocument, TaskElement, TaskStatus } from '../../../domain/element';
 import { Size } from '../../../domain/shared';
+import { NeutralButton } from '../../components';
 import { shortUserId } from '../../collaboration';
 import { formatCalendarDate, useI18n } from '../../i18n';
 import type { ElementRendererProps } from './element-renderer';
@@ -108,7 +109,7 @@ const NotesRegion = styled.div`
   margin-top: auto;
 `;
 
-const NotesToggle = styled(Button)`
+const NotesToggle = styled(NeutralButton)`
   align-self: flex-start;
   gap: 4px;
   margin-top: auto;

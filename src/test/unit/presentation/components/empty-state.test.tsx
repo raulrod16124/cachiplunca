@@ -87,8 +87,9 @@ describe('EmptyState', () => {
 
     expect(displayStyle).toContain('font-family: var(--cach-font-display)');
     expect(displayStyle).toContain('font-weight: var(--rr-font-weight-regular)');
-    expect(css).toContain('var(--rr-color-background-sunken)');
-    expect(css).toContain('var(--rr-color-action-secondary-background)');
+    expect(css).toContain('var(--cach-surface-empty)');
+    expect(css).toContain('var(--cach-border-accent)');
+    expect(css).toContain('var(--cach-icon-accent)');
     expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
   });
 });

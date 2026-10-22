@@ -101,7 +101,7 @@ export function createDuplicateWorkspace(deps: DuplicateWorkspaceDeps): Duplicat
           error: createAppError(
             'validation',
             ERROR_CODES.VALIDATION_INVALID_INPUT,
-            'The duplicated workspace name is not valid.',
+            'The duplicated board name is not valid.',
           ),
         };
       }
@@ -195,7 +195,7 @@ function forbiddenError(workspaceId: WorkspaceId, actorUserId: UserId): AppError
   return createAppError(
     'authorization',
     ERROR_CODES.AUTH_FORBIDDEN,
-    'You do not have permission to duplicate this workspace.',
+    'You do not have permission to duplicate this board.',
     {
       details: {
         workspaceId: workspaceId.value,
@@ -206,12 +206,7 @@ function forbiddenError(workspaceId: WorkspaceId, actorUserId: UserId): AppError
 }
 
 function notFoundError(workspaceId: WorkspaceId): AppError {
-  return createAppError(
-    'notFound',
-    ERROR_CODES.NOT_FOUND_RESOURCE,
-    'The workspace does not exist.',
-    {
-      details: { workspaceId: workspaceId.value },
-    },
-  );
+  return createAppError('notFound', ERROR_CODES.NOT_FOUND_RESOURCE, 'The board does not exist.', {
+    details: { workspaceId: workspaceId.value },
+  });
 }

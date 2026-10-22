@@ -1,5 +1,5 @@
 import { Button, Dialog, DialogContent, Text } from '@raulrod/ui';
-import { LogOut, Menu, Plus } from '@raulrod/icons';
+import { LogOut, Menu } from '@raulrod/icons';
 import { useState, type ReactNode } from 'react';
 import styled, { keyframes } from 'styled-components';
 import type { LogoutUser } from '../../../application/commands';
@@ -40,7 +40,7 @@ const MenuTrigger = styled(Dialog.Trigger)`
       ${({ theme }) => theme.motion.easing.standard};
 
   &:hover {
-    background: ${({ theme }) => theme.color.background.sunken};
+    background: var(--cach-control-hover);
   }
 
   &:focus-visible {
@@ -111,26 +111,14 @@ const Identity = styled.div`
 export interface NarrowNavMenuProps {
   readonly currentUser: AuthUser | null;
   readonly logoutUser: LogoutUser;
-  readonly onCreateWorkspace: () => void;
-  readonly pendingInvitationCount?: number;
 }
 
-export function NarrowNavMenu({
-  currentUser,
-  logoutUser,
-  onCreateWorkspace,
-  pendingInvitationCount = 0,
-}: NarrowNavMenuProps): ReactNode {
+export function NarrowNavMenu({ currentUser, logoutUser }: NarrowNavMenuProps): ReactNode {
   const { t } = useI18n();
   const isNarrow = useMediaQuery('(max-width: 900px)');
   const { signingOut, signOutError, signOut } = useSignOut(logoutUser);
   const [open, setOpen] = useState(false);
   const name = currentUser?.displayName ?? t('shell.account.identity');
-
-  const handleCreateWorkspace = () => {
-    setOpen(false);
-    onCreateWorkspace();
-  };
 
   if (!isNarrow) {
     return null;
@@ -152,16 +140,11 @@ export function NarrowNavMenu({
         <Body>
           <DrawerNav aria-label={t('shell.nav.label')}>
             <NavLinks
-              pendingInvitationCount={pendingInvitationCount}
               onNavigate={() => {
                 setOpen(false);
               }}
             />
           </DrawerNav>
-          <Button type="button" variant="primary" onClick={handleCreateWorkspace}>
-            <Plus aria-hidden="true" size={16} />
-            {t('shell.newWorkspace')}
-          </Button>
         </Body>
         <Footer>
           {signOutError === null ? null : (

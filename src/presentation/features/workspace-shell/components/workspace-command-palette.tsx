@@ -159,7 +159,7 @@ export function WorkspaceCommandPalette({
     navigationItems.push({
       id: 'back-to-workspaces',
       label: t('canvas.topbar.back'),
-      keywords: 'leave exit workspaces',
+      keywords: 'leave exit boards',
       onSelect: onBack,
     });
 

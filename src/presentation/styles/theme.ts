@@ -43,6 +43,7 @@ export const appTheme = {
   color: {
     background: {
       default: token('color.background.default'),
+      page: 'var(--cach-surface-page)',
       surface: token('color.background.surface'),
       sunken: token('color.background.sunken'),
       success: token('color.background.success'),
@@ -165,8 +166,9 @@ export const appTheme = {
     grid: token('color.border.default'),
     selection: token('color.border.primary'),
     selectionFill: `color-mix(in srgb, ${token('color.action.primary.background')} 8%, transparent)`,
-    surface: token('color.background.default'),
-    surfaceMuted: token('color.background.surface'),
+    board: 'var(--cach-canvas-surface)',
+    surface: 'var(--cach-floating-surface)',
+    surfaceMuted: 'var(--cach-floating-surface-muted)',
     elementBorder: token('color.border.default'),
     elementBorderSoft: `color-mix(in srgb, ${token('color.border.default')} 55%, transparent)`,
     elementBorderStrong: token('color.border.strong'),

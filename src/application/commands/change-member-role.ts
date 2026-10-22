@@ -69,7 +69,7 @@ function forbiddenError(input: ChangeMemberRoleInput): AppError {
   return createAppError(
     'authorization',
     ERROR_CODES.AUTH_FORBIDDEN,
-    'You do not have permission to change member roles in this workspace.',
+    'You do not have permission to change member roles in this board.',
     {
       details: {
         workspaceId: input.workspaceId.value,

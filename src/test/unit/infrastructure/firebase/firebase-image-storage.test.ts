@@ -1,5 +1,5 @@
 import type { FirebaseStorage } from 'firebase/storage';
-import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import { deleteObject, getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { createFirebaseImageStorage } from '../../../../infrastructure/firebase/firebase-image-storage';
 import { ERROR_CODES } from '../../../../shared/errors';
 
@@ -7,11 +7,13 @@ jest.mock('firebase/storage', () => ({
   ref: jest.fn((_storage: unknown, path: string) => ({ path })),
   uploadBytes: jest.fn(),
   getDownloadURL: jest.fn(),
+  deleteObject: jest.fn(),
 }));
 
 const refMock = ref as jest.MockedFunction<typeof ref>;
 const uploadBytesMock = uploadBytes as jest.MockedFunction<typeof uploadBytes>;
 const getDownloadURLMock = getDownloadURL as jest.MockedFunction<typeof getDownloadURL>;
+const deleteObjectMock = deleteObject as jest.MockedFunction<typeof deleteObject>;
 
 const storage = {} as FirebaseStorage;
 
@@ -55,6 +57,44 @@ describe('createFirebaseImageStorage', () => {
       port.uploadImage({
         storagePath: 'workspaces/ws-1/images/image-1-diagram.png',
         file: file(),
+      }),
+    ).rejects.toMatchObject({ code: ERROR_CODES.AUTH_FORBIDDEN });
+  });
+
+  it('deletes an object from storage', async () => {
+    deleteObjectMock.mockResolvedValue();
+    const port = createFirebaseImageStorage(storage);
+
+    await expect(
+      port.deleteImage({
+        storagePath: 'workspaces/ws-1/images/image-1-diagram.png',
+      }),
+    ).resolves.toBeUndefined();
+
+    expect(refMock).toHaveBeenCalledWith(storage, 'workspaces/ws-1/images/image-1-diagram.png');
+    expect(deleteObjectMock).toHaveBeenCalledWith({
+      path: 'workspaces/ws-1/images/image-1-diagram.png',
+    });
+  });
+
+  it('treats an object-not-found error as success', async () => {
+    deleteObjectMock.mockRejectedValue({ code: 'storage/object-not-found' });
+    const port = createFirebaseImageStorage(storage);
+
+    await expect(
+      port.deleteImage({
+        storagePath: 'workspaces/ws-1/images/image-1-diagram.png',
+      }),
+    ).resolves.toBeUndefined();
+  });
+
+  it('maps delete failures through the Firebase error mapper', async () => {
+    deleteObjectMock.mockRejectedValue({ code: 'storage/unauthorized' });
+    const port = createFirebaseImageStorage(storage);
+
+    await expect(
+      port.deleteImage({
+        storagePath: 'workspaces/ws-1/images/image-1-diagram.png',
       }),
     ).rejects.toMatchObject({ code: ERROR_CODES.AUTH_FORBIDDEN });
   });

@@ -114,4 +114,58 @@ describe('createLoginUser', () => {
       expect(result.error.code).toBe(ERROR_CODES.UNKNOWN_UNEXPECTED);
     }
   });
+
+  it('uses local persistence by default and configures it before signing in', async () => {
+    const authPort = new FakeAuthPort();
+    const setSessionPersistence = jest.spyOn(authPort, 'setSessionPersistence');
+    const signIn = jest.spyOn(authPort, 'signIn');
+    const loginUser = createLoginUser(authPort);
+
+    await loginUser(CREDENTIALS);
+
+    expect(setSessionPersistence).toHaveBeenCalledWith('local');
+    expect(setSessionPersistence.mock.invocationCallOrder[0]).toBeLessThan(
+      signIn.mock.invocationCallOrder[0] ?? Number.POSITIVE_INFINITY,
+    );
+  });
+
+  it('keeps the existing local persistence when remember is true', async () => {
+    const authPort = new FakeAuthPort();
+    const setSessionPersistence = jest.spyOn(authPort, 'setSessionPersistence');
+    const loginUser = createLoginUser(authPort);
+
+    await loginUser({ ...CREDENTIALS, remember: true });
+
+    expect(setSessionPersistence).toHaveBeenCalledWith('local');
+  });
+
+  it('uses session persistence when remember is false', async () => {
+    const authPort = new FakeAuthPort();
+    const setSessionPersistence = jest.spyOn(authPort, 'setSessionPersistence');
+    const loginUser = createLoginUser(authPort);
+
+    await loginUser({ ...CREDENTIALS, remember: false });
+
+    expect(setSessionPersistence).toHaveBeenCalledWith('session');
+  });
+
+  it('does not sign in when the persistence cannot be configured', async () => {
+    const authPort = new FakeAuthPort();
+    const signIn = jest.spyOn(authPort, 'signIn');
+    jest.spyOn(authPort, 'setSessionPersistence').mockRejectedValue({
+      kind: 'persistence',
+      code: ERROR_CODES.PERSISTENCE_UNAVAILABLE,
+      message: 'Session storage is unavailable.',
+    });
+    const loginUser = createLoginUser(authPort);
+
+    const result = await loginUser(CREDENTIALS);
+
+    expect(result.status).toBe('error');
+    if (result.status === 'error') {
+      expect(result.error.kind).toBe('persistence');
+      expect(result.error.code).toBe(ERROR_CODES.PERSISTENCE_UNAVAILABLE);
+    }
+    expect(signIn).not.toHaveBeenCalled();
+  });
 });

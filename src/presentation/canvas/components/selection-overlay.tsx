@@ -1,7 +1,9 @@
 import type { ReactElement } from 'react';
 import styled from 'styled-components';
 import type { ResizeHandleAnchor, SelectableItem } from '../../../application/services';
+import { normalizeRotation } from '../../../application/services';
 import type { Bounds } from '../../../domain/shared';
+import { useI18n } from '../../i18n';
 
 const Overlay = styled.div`
   position: absolute;
@@ -21,6 +23,32 @@ const Handle = styled.span`
   background: ${({ theme }) => theme.canvas.handleFill};
   box-shadow: ${({ theme }) => theme.shadow.sm};
   pointer-events: auto;
+`;
+
+const RotateHandle = styled.button`
+  position: absolute;
+  top: calc(-1 * ${({ theme }) => theme.space[4]} - 5px);
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  box-sizing: border-box;
+  padding: 0;
+  transform: translate(-50%, -50%);
+  border: 1.5px solid ${({ theme }) => theme.canvas.selection};
+  border-radius: 50%;
+  background: ${({ theme }) => theme.canvas.handleFill};
+  box-shadow: ${({ theme }) => theme.shadow.sm};
+  cursor: grab;
+  pointer-events: auto;
+
+  &[data-dragging='true'] {
+    cursor: grabbing;
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.focusRing};
+    outline-offset: 2px;
+  }
 `;
 
 const ConnectorHandle = styled(Handle)`
@@ -69,6 +97,7 @@ function handleStyle(anchor: ResizeHandleAnchor): { readonly left: string; reado
 
 export interface SelectionOverlayProps {
   readonly items: readonly SelectableItem[];
+  readonly canRotate?: boolean;
 }
 
 function unionBounds(items: readonly SelectableItem[]): Bounds {
@@ -77,7 +106,12 @@ function unionBounds(items: readonly SelectableItem[]): Bounds {
     .reduce((accumulator, bounds) => accumulator.union(bounds));
 }
 
-export function SelectionOverlay({ items }: SelectionOverlayProps): ReactElement | null {
+export function SelectionOverlay({
+  items,
+  canRotate = false,
+}: SelectionOverlayProps): ReactElement | null {
+  const { t } = useI18n();
+
   if (items.length === 0) {
     return null;
   }
@@ -86,6 +120,10 @@ export function SelectionOverlay({ items }: SelectionOverlayProps): ReactElement
   const isSingle = items.length === 1;
   const connectorEndpoints = isSingle ? items[0]?.connectorEndpoints : undefined;
   const isConnector = isSingle && items[0]?.segment !== undefined;
+  const rotation = isSingle && !isConnector ? (items[0]?.rotation ?? 0) : 0;
+  const displayRotation = normalizeRotation(rotation);
+  const showRotateHandle = canRotate && isSingle && !isConnector;
+  const rotateLabel = t('canvas.rotateHandle');
 
   return (
     <Overlay
@@ -93,12 +131,13 @@ export function SelectionOverlay({ items }: SelectionOverlayProps): ReactElement
       data-selection-count={items.length}
       data-selected-ids={items.map((item) => item.id).join(',')}
       data-selected-id={isSingle ? items[0]?.id : undefined}
-      aria-hidden="true"
+      data-rotation={displayRotation}
       style={{
         left: bounds.x,
         top: bounds.y,
         width: bounds.width,
         height: bounds.height,
+        transform: displayRotation === 0 ? undefined : `rotate(${displayRotation}deg)`,
       }}
     >
       {connectorEndpoints !== undefined
@@ -121,10 +160,23 @@ export function SelectionOverlay({ items }: SelectionOverlayProps): ReactElement
               key={anchor}
               data-resize-handle="true"
               data-resize-anchor={anchor}
+              aria-hidden="true"
               style={{ ...handleStyle(anchor), cursor: HANDLE_CURSORS[anchor] }}
             />
           ))
         : null}
+      {showRotateHandle ? (
+        <RotateHandle
+          type="button"
+          data-rotate-handle="true"
+          data-testid="rotate-handle"
+          aria-label={rotateLabel}
+          title={rotateLabel}
+          style={{
+            transform: `translate(-50%, -50%) rotate(${-displayRotation}deg)`,
+          }}
+        />
+      ) : null}
     </Overlay>
   );
 }

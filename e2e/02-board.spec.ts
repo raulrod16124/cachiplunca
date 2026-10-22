@@ -23,6 +23,48 @@ test.describe('Board (MVP happy path)', () => {
     await expect(page.locator('[data-testid^="canvas-item-"]')).toHaveCount(3);
   });
 
+  test('pans by dragging empty space and reserves shift-drag for marquee selection', async ({
+    page,
+  }) => {
+    await registerUser(page);
+    await createWorkspace(page, 'Pan board');
+
+    const canvas = page.getByRole('application', { name: 'Canvas' });
+    const world = page.getByTestId('canvas-world');
+    const box = await canvas.boundingBox();
+
+    if (box === null) {
+      throw new Error('Canvas has no bounding box');
+    }
+
+    const startX = box.x + box.width * 0.8;
+    const startY = box.y + box.height * 0.7;
+
+    const initialTransform = await world.evaluate((element) => getComputedStyle(element).transform);
+
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await page.mouse.move(startX + 60, startY + 40, { steps: 8 });
+    await page.mouse.up();
+
+    await expect
+      .poll(() => world.evaluate((element) => getComputedStyle(element).transform))
+      .not.toBe(initialTransform);
+
+    const pannedTransform = await world.evaluate((element) => getComputedStyle(element).transform);
+
+    await page.keyboard.down('Shift');
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await page.mouse.move(startX + 60, startY + 40, { steps: 8 });
+    await page.mouse.up();
+    await page.keyboard.up('Shift');
+
+    await expect
+      .poll(() => world.evaluate((element) => getComputedStyle(element).transform))
+      .toBe(pannedTransform);
+  });
+
   test('creates and edits a task through the task form', async ({ page }) => {
     await registerUser(page);
     await createWorkspace(page, 'Task board');
@@ -161,6 +203,62 @@ test.describe('Board (MVP happy path)', () => {
         timeout: 20000,
       },
     );
+  });
+
+  test('rotates an element, undoes the gesture and persists the rotation', async ({ page }) => {
+    await registerUser(page);
+    await createWorkspace(page, 'Rotation board');
+
+    const canvas = page.getByRole('application', { name: 'Canvas' });
+    const item = await addElement(page, 'text');
+
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('element-editor-box')).toBeHidden();
+    await item.click();
+
+    const handle = page.getByTestId('rotate-handle');
+    await expect(handle).toBeVisible();
+
+    const itemBox = await item.boundingBox();
+    const handleBox = await handle.boundingBox();
+
+    if (itemBox === null || handleBox === null) {
+      throw new Error('Rotation geometry is unavailable');
+    }
+
+    const centerX = itemBox.x + itemBox.width / 2;
+    const centerY = itemBox.y + itemBox.height / 2;
+
+    await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(centerX + itemBox.width / 2, centerY, { steps: 10 });
+    await page.mouse.up();
+
+    const rotatedTransform = await item.evaluate((element) => getComputedStyle(element).transform);
+
+    expect(rotatedTransform).not.toBe('matrix(1, 0, 0, 1, 0, 0)');
+
+    await canvas.focus();
+    await page.keyboard.press('Control+z');
+    await expect
+      .poll(() => item.evaluate((element) => getComputedStyle(element).transform))
+      .toBe('matrix(1, 0, 0, 1, 0, 0)');
+
+    await page.keyboard.press('Control+Shift+z');
+    await expect
+      .poll(() => item.evaluate((element) => getComputedStyle(element).transform))
+      .toBe(rotatedTransform);
+
+    await waitForBoardSaved(page);
+    await page.reload();
+    await expect(canvas).toBeVisible({ timeout: 20000 });
+
+    const reloaded = page.locator('[data-testid^="canvas-item-"]').first();
+    await expect
+      .poll(() => reloaded.evaluate((element) => getComputedStyle(element).transform), {
+        timeout: 20000,
+      })
+      .not.toBe('matrix(1, 0, 0, 1, 0, 0)');
   });
 
   test('creates new elements centered in the visible canvas', async ({ page }) => {

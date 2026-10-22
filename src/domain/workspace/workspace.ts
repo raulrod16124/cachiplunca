@@ -78,10 +78,10 @@ export class Workspace {
   private static validateName(name: string): string {
     const trimmed = name.trim();
     if (trimmed.length === 0) {
-      throw new Error('Workspace name cannot be empty');
+      throw new Error('Board name cannot be empty');
     }
     if (trimmed.length > WORKSPACE_NAME_MAX_LENGTH) {
-      throw new Error('Workspace name cannot exceed 100 characters');
+      throw new Error('Board name cannot exceed 100 characters');
     }
     return trimmed;
   }

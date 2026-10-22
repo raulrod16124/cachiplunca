@@ -56,6 +56,37 @@ test.describe('Images', () => {
     await expect(page.locator('[data-element-type="image"]')).toHaveCount(0, { timeout: 20000 });
   });
 
+  test('restores a deleted image with undo before the cleanup window closes', async ({ page }) => {
+    await registerUser(page);
+    await createWorkspace(page, 'Undo image board');
+
+    await page.getByTestId('image-file-input').setInputFiles({
+      name: 'diagram.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(PNG_BASE64, 'base64'),
+    });
+
+    const image = page.locator('[data-element-type="image"]').first();
+    await expect(image).toBeVisible({ timeout: 20000 });
+    await waitForBoardSaved(page);
+
+    const imageItems = page.locator('[data-testid^="canvas-item-"][data-element-type="image"]');
+
+    await image.click();
+    await page.keyboard.press('Delete');
+    await expect(imageItems).toHaveCount(0);
+    await waitForBoardSaved(page);
+
+    await page.keyboard.press('Control+z');
+    await expect(imageItems).toHaveCount(1);
+    await waitForBoardSaved(page);
+
+    await page.reload();
+    await expect(
+      page.locator('[data-element-type="image"]').getByRole('img', { name: 'diagram' }),
+    ).toBeVisible({ timeout: 20000 });
+  });
+
   test('rejects an unsupported file with a clear error', async ({ page }) => {
     await registerUser(page);
     await createWorkspace(page, 'Invalid image board');

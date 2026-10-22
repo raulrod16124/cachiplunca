@@ -1,3 +1,4 @@
+import '@testing-library/jest-dom';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from '../../../../../setup/render-with-theme';
@@ -40,6 +41,10 @@ function styleText(): string {
     .join('');
 }
 
+function activePanel(): HTMLElement {
+  return screen.getByRole('tabpanel');
+}
+
 function renderPanel(overrides: Partial<TaskPlanPanelProps> = {}): TaskPlanPanelProps {
   const props: TaskPlanPanelProps = {
     open: true,
@@ -78,12 +83,25 @@ describe('TaskPlanPanel', () => {
     expect(screen.getByRole('heading', { level: 2, name: 'Task plan' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 3, name: 'Todo' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 3, name: 'In progress' })).toBeInTheDocument();
-    expect(screen.getByText('Plan launch')).toBeInTheDocument();
-    expect(screen.getByText('Write docs')).toBeInTheDocument();
-    expect(screen.getByText('Assigned to user-1')).toBeInTheDocument();
-    expect(screen.getByText(`Due ${formatCalendarDate(dueDate, 'en')}`)).toBeInTheDocument();
-    expect(screen.getByText('Unassigned')).toBeInTheDocument();
-    expect(screen.getByText('No due date')).toBeInTheDocument();
+    const panel = within(activePanel());
+    expect(panel.getByText('Plan launch')).toBeInTheDocument();
+    expect(panel.getByText('Write docs')).toBeInTheDocument();
+    expect(panel.getByText('Assigned to user-1')).toBeInTheDocument();
+    expect(panel.getByText(`Due ${formatCalendarDate(dueDate, 'en')}`)).toBeInTheDocument();
+    expect(panel.getByText('Unassigned')).toBeInTheDocument();
+    expect(panel.getByText('No due date')).toBeInTheDocument();
+  });
+
+  it('renders the tabs as a full-width scoped rail', () => {
+    renderPanel({ elements: [task('Todo task')] });
+
+    const tablist = screen.getByRole('tablist', { name: 'Task plan view' });
+    expect(tablist).toHaveClass('task-plan-view-tabs');
+    expect(within(tablist).getAllByRole('tab')).toHaveLength(2);
+    for (const tab of within(tablist).getAllByRole('tab')) {
+      expect(tab).toHaveClass('task-plan-view-trigger');
+    }
+    expect(activePanel()).toHaveClass('task-plan-view-panel');
   });
 
   it('uses semantic status badges and accents in the list view', () => {
@@ -152,7 +170,7 @@ describe('TaskPlanPanel', () => {
     expect(card).toHaveAttribute('data-task-status', 'in_progress');
 
     const css = styleText();
-    expect(css).toContain('var(--rr-color-background-sunken)');
+    expect(css).toContain('var(--cach-control-hover)');
     expect(css).toContain('var(--rr-radius-lg)');
   });
 
@@ -167,7 +185,7 @@ describe('TaskPlanPanel', () => {
       ],
     });
 
-    expect(screen.getByText('Assigned to Ada Lovelace')).toBeInTheDocument();
+    expect(within(activePanel()).getByText('Assigned to Ada Lovelace')).toBeInTheDocument();
     const dueDate = document.querySelector('[data-task-overdue="true"]');
     expect(dueDate).not.toBeNull();
     expect(dueDate).toHaveTextContent('Overdue');
@@ -184,7 +202,7 @@ describe('TaskPlanPanel', () => {
     await user.click(screen.getByRole('option', { name: 'In progress' }));
 
     await waitFor(() => expect(screen.queryByText('Todo task')).not.toBeInTheDocument());
-    expect(screen.getByText('Progress task')).toBeInTheDocument();
+    expect(within(activePanel()).getByText('Progress task')).toBeInTheDocument();
   });
 
   it('filters to the current user tasks', async () => {
@@ -201,7 +219,7 @@ describe('TaskPlanPanel', () => {
     await user.click(screen.getByLabelText('My tasks'));
 
     await waitFor(() => expect(screen.queryByText('Theirs')).not.toBeInTheDocument());
-    expect(screen.getByText('Mine')).toBeInTheDocument();
+    expect(within(activePanel()).getByText('Mine')).toBeInTheDocument();
     expect(screen.queryByText('Unassigned')).not.toBeInTheDocument();
   });
 
@@ -257,7 +275,7 @@ describe('TaskPlanPanel', () => {
 
     await user.click(screen.getByRole('button', { name: 'Clear filters' }));
 
-    expect(await screen.findByText('Todo task')).toBeInTheDocument();
+    expect(await within(activePanel()).findByText('Todo task')).toBeInTheDocument();
   });
 
   it('switches to the board view with one column per status and counters', async () => {

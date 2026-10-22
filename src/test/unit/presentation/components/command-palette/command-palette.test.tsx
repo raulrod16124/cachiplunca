@@ -201,12 +201,12 @@ describe('CommandPalette', () => {
 
   it('shows the empty state and status message', async () => {
     const user = userEvent.setup();
-    renderPalette({ statusMessage: 'Loading workspaces…' });
+    renderPalette({ statusMessage: 'Loading boards…' });
 
     await user.type(screen.getByRole('combobox', { name: 'Search commands' }), 'missing');
 
-    expect(screen.getByText('No matching actions, workspaces or elements.')).toBeInTheDocument();
-    expect(screen.getByText('Loading workspaces…')).toBeInTheDocument();
+    expect(screen.getByText('No matching actions, boards or elements.')).toBeInTheDocument();
+    expect(screen.getByText('Loading boards…')).toBeInTheDocument();
   });
 
   it('uses brand tokens for the panel, active option and shortcut keys', async () => {

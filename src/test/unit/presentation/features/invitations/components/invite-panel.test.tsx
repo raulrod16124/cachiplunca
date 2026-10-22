@@ -113,7 +113,7 @@ describe('InvitePanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Send invitation' }));
 
     expect(
-      await screen.findByText('You do not have permission to invite members to this workspace.'),
+      await screen.findByText('You do not have permission to invite members to this board.'),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Send invitation' })).toBeInTheDocument();
   });

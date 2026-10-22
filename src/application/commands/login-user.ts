@@ -5,6 +5,7 @@ import type { AuthPort, AuthUser } from '../ports';
 export interface LoginUserInput {
   readonly email: string;
   readonly password: string;
+  readonly remember?: boolean;
 }
 
 export type LoginFieldName = 'email' | 'password';
@@ -43,6 +44,7 @@ export function createLoginUser(authPort: AuthPort): LoginUser {
     }
 
     try {
+      await authPort.setSessionPersistence(input.remember === false ? 'session' : 'local');
       const user = await authPort.signIn({
         email: input.email.trim(),
         password: input.password,

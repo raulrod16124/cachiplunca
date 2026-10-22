@@ -47,8 +47,8 @@ test.describe('Command palette', () => {
     await expect(page.getByRole('heading', { level: 2, name: 'Keyboard shortcuts' })).toBeVisible();
     await page.keyboard.press('Escape');
 
-    await page.getByRole('button', { name: 'Back to workspaces' }).click();
-    await expect(page.getByRole('heading', { name: 'Your workspaces' })).toBeVisible();
+    await page.getByRole('button', { name: 'Back to boards' }).click();
+    await expect(page.getByRole('heading', { name: 'Your boards' })).toBeVisible();
 
     await page.keyboard.press('Control+k');
     await page.getByRole('combobox', { name: 'Search commands' }).fill('palette board');

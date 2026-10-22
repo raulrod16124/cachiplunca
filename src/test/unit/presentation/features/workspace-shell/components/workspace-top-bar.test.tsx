@@ -1,11 +1,17 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
-import { render } from '../../../../../setup/render-with-theme';
+import type { ReactElement } from 'react';
+import { MemoryRouter } from 'react-router-dom';
+import { render as renderWithTheme } from '../../../../../setup/render-with-theme';
 import type { LogoutUser } from '../../../../../../application/commands';
 import type { AuthUser } from '../../../../../../application/ports';
 import { Presence } from '../../../../../../domain/collaboration';
 import { UserId, WorkspaceId } from '../../../../../../domain/shared';
 import { Workspace } from '../../../../../../domain/workspace';
 import { WorkspaceTopBar } from '../../../../../../presentation/features/workspace-shell/components/workspace-top-bar';
+
+function render(ui: ReactElement): ReturnType<typeof renderWithTheme> {
+  return renderWithTheme(<MemoryRouter initialEntries={['/workspaces/ws-1']}>{ui}</MemoryRouter>);
+}
 
 const CREATED_BY = UserId.create('user-1');
 
@@ -55,7 +61,7 @@ describe('WorkspaceTopBar', () => {
     );
 
     expect(screen.getByRole('heading', { level: 1, name: 'Roadmap Q4' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Back to workspaces' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Back to boards' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Session timer' })).toBeInTheDocument();
     expect(screen.getByText('Editor')).toBeInTheDocument();
   });
@@ -214,7 +220,9 @@ describe('WorkspaceTopBar', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Share' }));
+    const share = screen.getByRole('button', { name: 'Share' });
+    expect(share).toHaveClass('rr-icon-button--ghost');
+    fireEvent.click(share);
     expect(onShare).toHaveBeenCalledTimes(1);
     unmount();
 
@@ -462,27 +470,26 @@ describe('WorkspaceTopBar', () => {
     expect(alerts[0]).toHaveTextContent('Out of sync.');
   });
 
-  it('opens a localised title field when renaming', () => {
+  it('does not offer inline renaming in the top bar', () => {
     render(
       <WorkspaceTopBar
         workspace={WORKSPACE}
-        role="editor"
+        role="owner"
         onBack={jest.fn()}
         syncStatus="idle"
         connectionStatus="connected"
         connectedUsers={[]}
         currentUser={CURRENT_USER}
         logoutUser={LOGOUT_USER}
-        onRename={jest.fn(async () => ({ status: 'ok' as const, workspace: WORKSPACE }))}
         persistenceErrorMessage={null}
         collaborationErrorMessage={null}
         creationErrorMessage={null}
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Rename workspace' }));
-
-    expect(screen.getByRole('textbox', { name: 'Workspace name' })).toHaveValue('Roadmap Q4');
+    expect(screen.getByRole('heading', { level: 1, name: 'Roadmap Q4' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Rename workspace' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'Workspace name' })).not.toBeInTheDocument();
   });
 
   it('exposes the account menu that signs out', async () => {

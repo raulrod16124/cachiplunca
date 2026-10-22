@@ -78,6 +78,21 @@ const FIREBASE_ERROR_MAP: Readonly<Record<string, MappedError>> = {
     code: ERROR_CODES.AUTH_TOO_MANY_REQUESTS,
     message: 'Too many sign-in attempts. Please wait a few minutes and try again.',
   },
+  'auth/web-storage-unsupported': {
+    kind: 'persistence',
+    code: ERROR_CODES.PERSISTENCE_UNAVAILABLE,
+    message: 'This browser does not allow saving the session.',
+  },
+  'auth/invalid-persistence-type': {
+    kind: 'unknown',
+    code: ERROR_CODES.AUTH_APP_MISCONFIGURED,
+    message: 'Sign-in is not configured correctly for this deployment.',
+  },
+  'auth/unsupported-persistence-type': {
+    kind: 'unknown',
+    code: ERROR_CODES.AUTH_APP_MISCONFIGURED,
+    message: 'Sign-in is not configured correctly for this deployment.',
+  },
   'auth/user-disabled': {
     kind: 'authorization',
     code: ERROR_CODES.AUTH_ACCOUNT_DISABLED,

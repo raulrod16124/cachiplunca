@@ -7,7 +7,7 @@ test.describe('Workspaces (owner edits a workspace)', () => {
     await registerUser(page);
     await createWorkspace(page, 'Editable board');
 
-    await page.getByRole('button', { name: 'Back to workspaces' }).click();
+    await page.getByRole('button', { name: 'Back to boards' }).click();
     const card = page.getByRole('article').filter({ hasText: 'Editable board' });
     await expect(card).toBeVisible();
 
@@ -32,5 +32,7 @@ test.describe('Workspaces (owner edits a workspace)', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Renamed board' })).toBeVisible({
       timeout: 20000,
     });
+    await expect(page.getByRole('button', { name: 'Rename workspace' })).toHaveCount(0);
+    await expect(page.getByRole('textbox', { name: 'Workspace name' })).toHaveCount(0);
   });
 });

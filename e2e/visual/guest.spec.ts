@@ -34,6 +34,9 @@ test.describe('visual baseline — guest view', () => {
       await guestPage.goto(guestLink);
       await setTheme(guestPage, theme);
       await waitForStable(guestPage);
+      await expect(guestPage.getByRole('application', { name: 'Canvas' })).toBeVisible({
+        timeout: 30000,
+      });
 
       await expect(guestPage).toHaveScreenshot(`guest-view-${theme}.png`, {
         mask: [guestPage.locator('[data-testid^="canvas-item-"]')],

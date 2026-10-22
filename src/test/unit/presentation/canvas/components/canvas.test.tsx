@@ -71,6 +71,7 @@ function renderCanvas(
   onUpdateElement?: (input: UpdateElementInput) => void,
   onAlignElements?: (next: readonly Element[]) => void,
   onDistributeElements?: (next: readonly Element[]) => void,
+  onRotateElements?: (next: readonly Element[]) => void,
 ) {
   const store = createCanvasViewportStore(Size.create(800, 600));
   const selectionStore = createSelectionStore();
@@ -82,6 +83,7 @@ function renderCanvas(
       elements={elements}
       onMoveElements={onMoveElements}
       onResizeElements={onResizeElements}
+      onRotateElements={onRotateElements}
       onDeleteElements={onDeleteElements}
       onDuplicateElements={onDuplicateElements}
       generateId={generateId}
@@ -98,6 +100,36 @@ function renderCanvas(
   );
 
   return { store, selectionStore, container };
+}
+
+interface RotationCanvasOptions {
+  readonly elements: readonly Element[];
+  readonly onRotateElements?: (next: readonly Element[]) => void;
+  readonly onTransformEnd?: () => void;
+  readonly readOnly?: boolean;
+}
+
+function renderRotationCanvas({
+  elements,
+  onRotateElements,
+  onTransformEnd,
+  readOnly = false,
+}: RotationCanvasOptions) {
+  const store = createCanvasViewportStore(Size.create(800, 600));
+  const selectionStore = createSelectionStore();
+
+  render(
+    <Canvas
+      store={store}
+      selectionStore={selectionStore}
+      elements={elements}
+      onRotateElements={onRotateElements}
+      onTransformEnd={onTransformEnd}
+      readOnly={readOnly}
+    />,
+  );
+
+  return { store, selectionStore };
 }
 
 interface ArrangeCanvasOptions {
@@ -219,7 +251,7 @@ describe('Canvas', () => {
     expect(screen.getByRole('application', { name: 'Canvas' })).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Arrow keys to move selection · Shift + Arrow to extend selection · Drag to select · Space + drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo · Ctrl/Cmd + ] to bring to front · Ctrl/Cmd + [ to send to back · Right-click an object for more options',
+        'Arrow keys to move selection · Shift + Arrow to extend selection · Drag on empty canvas to pan · Shift + drag to select · Space + drag or middle-drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo · Ctrl/Cmd + ] to bring to front · Ctrl/Cmd + [ to send to back · Right-click an object for more options',
       ),
     ).toBeInTheDocument();
   });
@@ -234,6 +266,23 @@ describe('Canvas', () => {
     renderCanvas([FIRST_ITEM]);
 
     expect(screen.queryByRole('heading', { name: 'This board is empty' })).not.toBeInTheDocument();
+  });
+
+  it('hides element type labels in presentation mode', () => {
+    const store = createCanvasViewportStore(Size.create(800, 600));
+    const selectionStore = createSelectionStore();
+
+    render(
+      <Canvas store={store} selectionStore={selectionStore} elements={[FIRST_ITEM]} presentation />,
+    );
+
+    expect(screen.queryByTestId('element-type-label-first')).not.toBeInTheDocument();
+  });
+
+  it('renders element type labels in the normal editor', () => {
+    renderCanvas([FIRST_ITEM]);
+
+    expect(screen.getByTestId('element-type-label-first')).toHaveTextContent('Text');
   });
 
   it('renders an inert paper texture behind the canvas content', () => {
@@ -371,6 +420,39 @@ describe('Canvas', () => {
     const world = screen.getByTestId('canvas-world');
     expect(world.style.transform).toContain('translate(50px, 25px)');
     expect(world.style.transform).toContain('scale(1)');
+  });
+
+  it('pans the viewport when dragging empty space with the left button', async () => {
+    renderCanvas();
+    const canvas = screen.getByRole('application', { name: 'Canvas' });
+    const user = userEvent.setup();
+
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: canvas, coords: { x: 600, y: 450 } },
+      { coords: { x: 650, y: 475 } },
+    ]);
+
+    expect(canvas).toHaveAttribute('data-panning', 'true');
+    expect(screen.getByTestId('canvas-world').style.transform).toContain('translate(50px, 25px)');
+
+    await user.pointer({ keys: '[/MouseLeft]' });
+
+    expect(canvas).toHaveAttribute('data-panning', 'false');
+  });
+
+  it('does not pan when dragging an element', async () => {
+    renderCanvas([FIRST_ITEM]);
+    const canvas = screen.getByRole('application', { name: 'Canvas' });
+    const item = screen.getByTestId('canvas-item-first');
+    const user = userEvent.setup();
+
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: item, coords: { x: 150, y: 130 } },
+      { coords: { x: 250, y: 230 } },
+    ]);
+
+    expect(canvas).toHaveAttribute('data-panning', 'false');
+    expect(screen.getByTestId('canvas-world').style.transform).toContain('translate(0px, 0px)');
   });
 
   it('pans the viewport with a plain wheel scroll', () => {
@@ -596,11 +678,13 @@ describe('Canvas', () => {
       const canvas = screen.getByRole('application', { name: 'Canvas' });
       const user = userEvent.setup();
 
+      await user.keyboard('{Shift>}');
       await user.pointer([
         { keys: '[MouseLeft>]', target: canvas, coords: { x: 0, y: 0 } },
         { coords: { x: 450, y: 350 } },
         { keys: '[/MouseLeft]' },
       ]);
+      await user.keyboard('{/Shift}');
 
       expect(selectionStore.getSnapshot().selectedIds).toEqual(['first', 'second']);
       expect(screen.getByTestId('canvas-item-first')).toHaveAttribute('data-selected', 'true');
@@ -613,6 +697,7 @@ describe('Canvas', () => {
       const canvas = screen.getByRole('application', { name: 'Canvas' });
       const user = userEvent.setup();
 
+      await user.keyboard('{Shift>}');
       await user.pointer([
         { keys: '[MouseLeft>]', target: canvas, coords: { x: 10, y: 20 } },
         { coords: { x: 210, y: 170 } },
@@ -626,6 +711,7 @@ describe('Canvas', () => {
       expect(marquee.style.height).toBe('150px');
 
       await user.pointer({ keys: '[/MouseLeft]' });
+      await user.keyboard('{/Shift}');
 
       expect(canvas).toHaveAttribute('data-selecting', 'false');
       expect(screen.queryByTestId('drag-selection-rect')).not.toBeInTheDocument();
@@ -1021,6 +1107,101 @@ describe('Canvas', () => {
       const overlay = screen.getByTestId('selection-overlay');
 
       expect(overlay.querySelectorAll('[data-resize-handle]')).toHaveLength(0);
+    });
+  });
+
+  describe('rotating', () => {
+    it('rotates the single selected item when dragging the rotation handle', async () => {
+      const calls: (readonly Element[])[] = [];
+      const onRotateElements = jest.fn((next: readonly Element[]) => {
+        calls.push(next);
+      });
+      const onTransformEnd = jest.fn();
+      const { selectionStore } = renderRotationCanvas({
+        elements: [FIRST_ITEM],
+        onRotateElements,
+        onTransformEnd,
+      });
+      const canvas = screen.getByRole('application', { name: 'Canvas' });
+
+      act(() => {
+        selectionStore.select('first');
+      });
+
+      const handle = screen.getByTestId('rotate-handle');
+      const user = userEvent.setup();
+
+      await user.pointer([
+        { keys: '[MouseLeft>]', target: handle, coords: { x: 160, y: 100 } },
+        { coords: { x: 200, y: 140 } },
+      ]);
+
+      expect(canvas).toHaveAttribute('data-rotating', 'true');
+      expect(calls.at(-1)?.[0]?.rotation).toBeCloseTo(90);
+
+      await user.pointer({ keys: '[/MouseLeft]' });
+
+      expect(canvas).toHaveAttribute('data-rotating', 'false');
+      expect(onTransformEnd).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not offer the rotation handle when rotation is not wired', () => {
+      const { selectionStore } = renderRotationCanvas({ elements: [FIRST_ITEM] });
+
+      act(() => {
+        selectionStore.select('first');
+      });
+
+      expect(screen.queryByTestId('rotate-handle')).not.toBeInTheDocument();
+    });
+
+    it('does not offer the rotation handle in read-only mode', () => {
+      const { selectionStore } = renderRotationCanvas({
+        elements: [FIRST_ITEM],
+        onRotateElements: jest.fn(),
+        readOnly: true,
+      });
+
+      act(() => {
+        selectionStore.select('first');
+      });
+
+      expect(screen.queryByTestId('rotate-handle')).not.toBeInTheDocument();
+    });
+
+    it('does not offer the rotation handle for a connector', () => {
+      const connector = createConnectorElement({
+        id: ElementId.create('connector'),
+        workspaceId: WorkspaceId.create('ws-1'),
+        createdBy: UserId.create('user-1'),
+        position: Position.create(100, 100),
+        size: Size.create(100, 40),
+        sourcePoint: Position.create(0, 0),
+        targetPoint: Position.create(100, 40),
+      });
+      const { selectionStore } = renderRotationCanvas({
+        elements: [connector],
+        onRotateElements: jest.fn(),
+      });
+
+      act(() => {
+        selectionStore.select('connector');
+      });
+
+      expect(screen.queryByTestId('rotate-handle')).not.toBeInTheDocument();
+    });
+
+    it('does not offer the rotation handle for a multi selection', () => {
+      const { selectionStore } = renderRotationCanvas({
+        elements: [FIRST_ITEM, SECOND_ITEM],
+        onRotateElements: jest.fn(),
+      });
+
+      act(() => {
+        selectionStore.selectMany(['first', 'second']);
+      });
+
+      expect(screen.queryByTestId('rotate-handle')).not.toBeInTheDocument();
     });
   });
 

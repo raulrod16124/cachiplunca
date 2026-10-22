@@ -1,10 +1,16 @@
 import { fireEvent, screen } from '@testing-library/react';
-import { render } from '../../../../../setup/render-with-theme';
+import type { ReactElement } from 'react';
+import { MemoryRouter } from 'react-router-dom';
+import { render as renderWithTheme } from '../../../../../setup/render-with-theme';
 import type { LogoutUser } from '../../../../../../application/commands';
 import type { AuthUser } from '../../../../../../application/ports';
 import { UserId, WorkspaceId } from '../../../../../../domain/shared';
 import { Workspace } from '../../../../../../domain/workspace';
 import { WorkspaceTopBar } from '../../../../../../presentation/features/workspace-shell/components/workspace-top-bar';
+
+function render(ui: ReactElement): ReturnType<typeof renderWithTheme> {
+  return renderWithTheme(<MemoryRouter initialEntries={['/workspaces/ws-1']}>{ui}</MemoryRouter>);
+}
 
 const WORKSPACE = Workspace.create({
   id: WorkspaceId.create('ws-1'),

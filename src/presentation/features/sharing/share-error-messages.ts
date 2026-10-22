@@ -22,9 +22,9 @@ export function describeListMembersError(error: AppError): string {
 
   switch (error.code) {
     case ERROR_CODES.AUTH_FORBIDDEN:
-      return 'You do not have permission to view the members of this workspace.';
+      return 'You do not have permission to view the members of this board.';
     case ERROR_CODES.NOT_FOUND_RESOURCE:
-      return 'This workspace does not exist or you no longer have access to it.';
+      return 'This board does not exist or you no longer have access to it.';
     default:
       return error.message;
   }
@@ -38,9 +38,9 @@ export function describeChangeMemberRoleError(error: AppError): string {
 
   switch (error.code) {
     case ERROR_CODES.AUTH_FORBIDDEN:
-      return 'You do not have permission to change member roles in this workspace.';
+      return 'You do not have permission to change member roles in this board.';
     case ERROR_CODES.NOT_FOUND_RESOURCE:
-      return 'That person is no longer a member of this workspace.';
+      return 'That person is no longer a member of this board.';
     case ERROR_CODES.VALIDATION_INVALID_INPUT:
       return 'Choose a valid role.';
     default:
@@ -56,9 +56,9 @@ export function describeRemoveMemberError(error: AppError): string {
 
   switch (error.code) {
     case ERROR_CODES.AUTH_FORBIDDEN:
-      return 'You do not have permission to remove members from this workspace.';
+      return 'You do not have permission to remove members from this board.';
     case ERROR_CODES.NOT_FOUND_RESOURCE:
-      return 'That person is no longer a member of this workspace.';
+      return 'That person is no longer a member of this board.';
     default:
       return error.message;
   }
@@ -72,9 +72,9 @@ export function describeLeaveWorkspaceError(error: AppError): string {
 
   switch (error.code) {
     case ERROR_CODES.AUTH_FORBIDDEN:
-      return 'You do not have permission to leave this workspace.';
+      return 'You do not have permission to leave this board.';
     case ERROR_CODES.NOT_FOUND_RESOURCE:
-      return 'You are no longer a member of this workspace.';
+      return 'You are no longer a member of this board.';
     default:
       return error.message;
   }

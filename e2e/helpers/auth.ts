@@ -16,7 +16,7 @@ export async function registerUser(
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Create account' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Your workspaces' })).toBeVisible({
+  await expect(page.getByRole('heading', { level: 1, name: 'Your boards' })).toBeVisible({
     timeout: 30000,
   });
   return email;
@@ -27,7 +27,7 @@ export async function loginUser(page: Page, email: string, password = 'Secret123
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Your workspaces' })).toBeVisible({
+  await expect(page.getByRole('heading', { level: 1, name: 'Your boards' })).toBeVisible({
     timeout: 30000,
   });
 }

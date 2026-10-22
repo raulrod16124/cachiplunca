@@ -11,13 +11,9 @@ const Screen = styled.main`
   align-items: center;
   justify-content: center;
   padding: ${({ theme }) => theme.space[6]};
-  background:
-    radial-gradient(
-      circle at 12% 0%,
-      color-mix(in srgb, ${brandVar('orange-500')} 14%, transparent),
-      transparent 42%
-    ),
-    ${({ theme }) => theme.color.background.default};
+  background: ${({ theme }) => theme.color.background.default};
+  background-image: var(--cach-surface-page-pattern);
+  background-size: var(--cach-surface-page-pattern-size);
 `;
 
 const Shell = styled.div`
@@ -92,8 +88,8 @@ const PanelContent = styled.div`
   padding: ${({ theme }) => theme.space[10]};
 
   @media (max-width: 860px) {
-    padding: ${({ theme }) => theme.space[6]};
-    gap: ${({ theme }) => theme.space[4]};
+    padding: ${({ theme }) => theme.space[4]};
+    gap: ${({ theme }) => theme.space[3]};
   }
 `;
 
@@ -153,7 +149,7 @@ const FormPanel = styled.section`
   padding: ${({ theme }) => theme.space[10]};
 
   @media (max-width: 860px) {
-    padding: ${({ theme }) => theme.space[6]};
+    padding: ${({ theme }) => theme.space[4]};
   }
 `;
 

@@ -1,8 +1,11 @@
 import {
+  browserLocalPersistence,
+  browserSessionPersistence,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
   reload,
   sendEmailVerification,
+  setPersistence,
   signInAnonymously,
   signInWithEmailAndPassword,
   signOut,
@@ -24,6 +27,9 @@ jest.mock('firebase/auth', () => ({
   onAuthStateChanged: jest.fn(),
   reload: jest.fn(),
   sendEmailVerification: jest.fn(),
+  setPersistence: jest.fn(),
+  browserLocalPersistence: { type: 'LOCAL' },
+  browserSessionPersistence: { type: 'SESSION' },
 }));
 
 type AuthCallback = (user: User | null) => void;
@@ -187,6 +193,50 @@ describe('createFirebaseAuthAdapter', () => {
       await expect(adapter.signOut()).rejects.toMatchObject({
         kind: 'network',
         code: ERROR_CODES.NETWORK_REQUEST_FAILED,
+      });
+    });
+  });
+
+  describe('setSessionPersistence', () => {
+    it('uses local persistence when requested', async () => {
+      jest.mocked(setPersistence).mockResolvedValue();
+      const adapter = createFirebaseAuthAdapter(auth);
+
+      await adapter.setSessionPersistence('local');
+
+      expect(setPersistence).toHaveBeenCalledWith(auth, browserLocalPersistence);
+    });
+
+    it('uses session persistence when requested', async () => {
+      jest.mocked(setPersistence).mockResolvedValue();
+      const adapter = createFirebaseAuthAdapter(auth);
+
+      await adapter.setSessionPersistence('session');
+
+      expect(setPersistence).toHaveBeenCalledWith(auth, browserSessionPersistence);
+    });
+
+    it('maps persistence failures into AppError', async () => {
+      jest.mocked(setPersistence).mockRejectedValue({
+        code: 'auth/web-storage-unsupported',
+      });
+      const adapter = createFirebaseAuthAdapter(auth);
+
+      await expect(adapter.setSessionPersistence('local')).rejects.toMatchObject({
+        kind: 'persistence',
+        code: ERROR_CODES.PERSISTENCE_UNAVAILABLE,
+      });
+    });
+
+    it('maps unsupported persistence into AppError', async () => {
+      jest.mocked(setPersistence).mockRejectedValue({
+        code: 'auth/unsupported-persistence-type',
+      });
+      const adapter = createFirebaseAuthAdapter(auth);
+
+      await expect(adapter.setSessionPersistence('session')).rejects.toMatchObject({
+        kind: 'unknown',
+        code: ERROR_CODES.AUTH_APP_MISCONFIGURED,
       });
     });
   });

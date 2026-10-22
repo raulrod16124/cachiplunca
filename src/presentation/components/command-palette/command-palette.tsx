@@ -132,7 +132,7 @@ const Option = styled.li<{ $disabled: boolean }>`
   }
 
   &:not([aria-disabled='true']):hover {
-    background: ${({ theme }) => theme.color.background.sunken};
+    background: var(--cach-control-hover);
   }
 
   &[aria-selected='true'],

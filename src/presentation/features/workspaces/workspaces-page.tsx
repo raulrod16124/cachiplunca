@@ -19,9 +19,8 @@ import { UserId } from '../../../domain/shared';
 import { createAppError, ERROR_CODES } from '../../../shared/errors';
 import { useI18n } from '../../i18n';
 import { AppShell } from '../app-shell/app-shell';
-import { usePendingInvitations } from '../invitations';
+import { InvitationsButton } from '../invitations';
 import { CreateWorkspaceDialog } from './components/create-workspace-dialog';
-import { PendingInvitationsPanel } from './components/pending-invitations-panel';
 import { WorkspacesCommandPalette } from './components/workspaces-command-palette';
 import { WorkspacesListContainer } from './components/workspaces-list-container';
 
@@ -42,7 +41,27 @@ const Header = styled.header`
   justify-content: space-between;
   gap: ${({ theme }) => theme.space[4]};
   flex-wrap: wrap;
-  margin-bottom: ${({ theme }) => theme.space[8]};
+  margin-bottom: ${({ theme }) => theme.space[6]};
+`;
+
+const HeaderTitle = styled.div`
+  position: relative;
+  display: inline-flex;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: calc(-1 * ${({ theme }) => theme.space[1]});
+    left: 0;
+    width: min(88px, 70%);
+    height: 3px;
+    border-radius: var(--rr-radius-full);
+    background: var(--cach-header-accent);
+  }
+`;
+
+const PageTitle = styled(Heading)`
+  font-size: ${({ theme }) => theme.font.size['2xl']};
 `;
 
 const Section = styled.section`
@@ -71,7 +90,6 @@ export function WorkspacesPage({
   const session = useSession();
   const navigate = useNavigate();
   const { t } = useI18n();
-  const pendingInvitations = usePendingInvitations();
   const [createOpen, setCreateOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [refreshToken, setRefreshToken] = useState(0);
@@ -108,12 +126,13 @@ export function WorkspacesPage({
     <AppShell
       currentUser={currentUser}
       logoutUser={logoutUser}
-      onCreateWorkspace={handleCreateWorkspace}
-      pendingInvitationCount={pendingInvitations.unreadCount}
+      notifications={<InvitationsButton />}
     >
       <Main id="main-content" tabIndex={-1}>
         <Header>
-          <Heading as="h1">{t('workspaces.title')}</Heading>
+          <HeaderTitle>
+            <PageTitle as="h1">{t('workspaces.title')}</PageTitle>
+          </HeaderTitle>
           <Button type="button" variant="primary" onClick={handleCreateWorkspace}>
             <Plus aria-hidden="true" size={16} />
             {t('workspaces.create')}
@@ -121,20 +140,6 @@ export function WorkspacesPage({
         </Header>
 
         <Stack gap="space-8">
-          <Section id="pending-invitations">
-            <PendingInvitationsPanel
-              status={pendingInvitations.status}
-              invitations={pendingInvitations.invitations}
-              loadError={pendingInvitations.loadError}
-              actionError={pendingInvitations.actionError}
-              needsVerification={pendingInvitations.needsVerification}
-              verificationSent={pendingInvitations.verificationSent}
-              acceptingId={pendingInvitations.acceptingId}
-              onAccept={pendingInvitations.accept}
-              onRetry={pendingInvitations.retry}
-              onSendVerification={pendingInvitations.sendVerification}
-            />
-          </Section>
           <Section id="workspaces">
             {session.status === 'authenticated' && (
               <WorkspacesListContainer

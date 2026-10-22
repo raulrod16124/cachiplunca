@@ -1,5 +1,4 @@
-import { Button, Text } from '@raulrod/ui';
-import { Plus } from '@raulrod/icons';
+import { Text } from '@raulrod/ui';
 import type { ReactNode } from 'react';
 import styled from 'styled-components';
 import type { LogoutUser } from '../../../application/commands';
@@ -13,7 +12,9 @@ import { NarrowNavMenu } from './narrow-nav-menu';
 const Layout = styled.div`
   display: flex;
   min-height: 100dvh;
-  background: ${({ theme }) => theme.color.background.default};
+  background: ${({ theme }) => theme.color.background.page};
+  background-image: var(--cach-surface-page-pattern);
+  background-size: var(--cach-surface-page-pattern-size);
 
   @media (max-width: 900px) {
     flex-direction: column;
@@ -21,6 +22,8 @@ const Layout = styled.div`
 `;
 
 const Sidebar = styled.aside`
+  position: sticky;
+  top: 0;
   display: flex;
   flex: none;
   flex-direction: column;
@@ -28,18 +31,18 @@ const Sidebar = styled.aside`
   width: 264px;
   height: 100dvh;
   padding: ${({ theme }) => theme.space[5]};
-  border-right: 1px solid ${({ theme }) => theme.color.border.default};
-  background: ${({ theme }) => theme.color.background.surface};
-  position: sticky;
-  top: 0;
+  border-right: 1px solid var(--cach-shell-border);
+  background: var(--cach-surface-sidebar);
+  background-image: var(--cach-surface-sidebar-pattern);
+  background-size: var(--cach-surface-sidebar-pattern-size);
 
   @media (max-width: 900px) {
     width: 100%;
     height: auto;
-    position: static;
+    position: relative;
     padding: ${({ theme }) => `${theme.space[3]} ${theme.space[4]}`};
     border-right: none;
-    border-bottom: 1px solid ${({ theme }) => theme.color.border.default};
+    border-bottom: 1px solid var(--cach-shell-border);
     gap: ${({ theme }) => theme.space[3]};
   }
 `;
@@ -56,6 +59,12 @@ const Brand = styled.div`
   align-items: center;
   gap: ${({ theme }) => theme.space[2]};
   min-width: 0;
+`;
+
+const BrandActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.space[1]};
 `;
 
 const Nav = styled.nav`
@@ -100,27 +109,17 @@ const Content = styled.div`
   min-width: 0;
 `;
 
-const CreateButton = styled(Button)`
-  width: 100%;
-
-  @media (max-width: 900px) {
-    width: auto;
-  }
-`;
-
 export interface AppShellProps {
   readonly currentUser: AuthUser | null;
   readonly logoutUser: LogoutUser;
-  readonly onCreateWorkspace: () => void;
-  readonly pendingInvitationCount?: number;
+  readonly notifications?: ReactNode;
   readonly children: ReactNode;
 }
 
 export function AppShell({
   currentUser,
   logoutUser,
-  onCreateWorkspace,
-  pendingInvitationCount = 0,
+  notifications,
   children,
 }: AppShellProps): ReactNode {
   const { t } = useI18n();
@@ -133,21 +132,14 @@ export function AppShell({
           <Brand>
             <BrandLogo variant="wordmark" responsive size="md" />
           </Brand>
-          <NarrowNavMenu
-            currentUser={currentUser}
-            logoutUser={logoutUser}
-            onCreateWorkspace={onCreateWorkspace}
-            pendingInvitationCount={pendingInvitationCount}
-          />
+          <BrandActions>
+            {notifications}
+            <NarrowNavMenu currentUser={currentUser} logoutUser={logoutUser} />
+          </BrandActions>
         </BrandRow>
 
-        <CreateButton type="button" variant="primary" onClick={onCreateWorkspace}>
-          <Plus aria-hidden="true" size={16} />
-          {t('shell.newWorkspace')}
-        </CreateButton>
-
         <Nav id="app-nav" aria-label={t('shell.nav.label')}>
-          <NavLinks pendingInvitationCount={pendingInvitationCount} />
+          <NavLinks />
         </Nav>
 
         <SidebarFooter>

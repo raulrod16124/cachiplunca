@@ -1,10 +1,11 @@
-import { IconButton, Text, Tooltip } from '@raulrod/ui';
+import { Text, Tooltip } from '@raulrod/ui';
 import { ChevronLeft, ChevronRight, X } from '@raulrod/icons';
 import { useEffect, useMemo, useRef, useSyncExternalStore, type ReactNode } from 'react';
 import styled from 'styled-components';
 import type { CanvasViewportStore } from '../../../../application/services';
 import type { FrameElement } from '../../../../domain/element';
 import { Bounds } from '../../../../domain/shared';
+import { NeutralIconButton } from '../../../components';
 import { useI18n } from '../../../i18n';
 
 export const PRESENTATION_FIT_PADDING = 64;
@@ -158,7 +159,7 @@ export function BoardPresentation({
     >
       <Bar>
         <Tooltip content={t('presentation.previous')} placement="top">
-          <IconButton
+          <NeutralIconButton
             type="button"
             variant="outline"
             size="sm"
@@ -167,13 +168,13 @@ export function BoardPresentation({
             onClick={onPrevious}
           >
             <ChevronLeft aria-hidden="true" size={16} />
-          </IconButton>
+          </NeutralIconButton>
         </Tooltip>
         <Counter role="status" aria-live="polite" size="font.size.sm" weight="font.weight.medium">
           {t('presentation.counter', { current: index + 1, total })}
         </Counter>
         <Tooltip content={t('presentation.next')} placement="top">
-          <IconButton
+          <NeutralIconButton
             type="button"
             variant="outline"
             size="sm"
@@ -182,10 +183,10 @@ export function BoardPresentation({
             onClick={onNext}
           >
             <ChevronRight aria-hidden="true" size={16} />
-          </IconButton>
+          </NeutralIconButton>
         </Tooltip>
         <Tooltip content={t('presentation.exit')} placement="top">
-          <IconButton
+          <NeutralIconButton
             type="button"
             variant="ghost"
             size="sm"
@@ -193,7 +194,7 @@ export function BoardPresentation({
             onClick={onExit}
           >
             <X aria-hidden="true" size={16} />
-          </IconButton>
+          </NeutralIconButton>
         </Tooltip>
       </Bar>
     </Overlay>

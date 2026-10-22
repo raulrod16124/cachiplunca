@@ -2,6 +2,7 @@ import { render, type RenderResult } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { SessionProvider } from '../../presentation/providers/session-provider';
+import { UserSettingsProvider } from '../../presentation/providers/user-settings-provider';
 import { AppRoutes, type AppRoutesProps } from '../../app/routes/app-routes';
 import {
   createAcceptInvitation,
@@ -16,6 +17,7 @@ import {
   createCreateGuestLink,
   createOpenGuestWorkspace,
   createRevokeGuestLink,
+  createDeleteImage,
   createDeleteWorkspace,
   createDuplicateWorkspace,
   createInviteMember,
@@ -45,6 +47,7 @@ import {
   createElementPersistenceOrchestrator,
   createRealtimeSubscriptionManager,
   createSessionStore,
+  createUserSettingsStore,
 } from '../../application/services';
 import type { AuthCredentials, AuthPort, AuthUser } from '../../application/ports';
 import type { Workspace } from '../../domain/workspace';
@@ -74,7 +77,7 @@ export const DEFAULT_CREDENTIALS: AuthCredentials = {
 
 export function LocationProbe(): ReactNode {
   const location = useLocation();
-  return <div data-testid="location">{location.pathname}</div>;
+  return <div data-testid="location">{`${location.pathname}${location.search}`}</div>;
 }
 
 export interface RenderAppRoutesOptions {
@@ -95,12 +98,25 @@ export function renderAppRoutes({
   initialPath = '/workspaces',
   showLocation = true,
 }: RenderAppRoutesOptions): RenderResult {
+  const userSettingsStore = createUserSettingsStore(
+    {
+      getByUserId: async () => null,
+      upsert: async (settings) => settings,
+    },
+    {
+      getReducedMotionPref: () => false,
+      getLanguages: () => ['en-US'],
+    },
+  );
+
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
-      <SessionProvider store={createSessionStore(authPort)}>
-        <AppRoutes {...props} />
-      </SessionProvider>
-      {showLocation ? <LocationProbe /> : null}
+      <UserSettingsProvider store={userSettingsStore} userId={null}>
+        <SessionProvider store={createSessionStore(authPort)}>
+          <AppRoutes {...props} />
+        </SessionProvider>
+        {showLocation ? <LocationProbe /> : null}
+      </UserSettingsProvider>
     </MemoryRouter>,
   );
 }
@@ -226,6 +242,7 @@ export function createAppHarness(): AppHarness {
         storage: imageStoragePort,
         generateImageId: () => `image-${++elementSequence}`,
       }),
+      deleteImage: createDeleteImage({ storage: imageStoragePort }),
     },
     guestLinks: {
       createGuestLink: createCreateGuestLink({

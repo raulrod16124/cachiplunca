@@ -46,7 +46,7 @@ function forbiddenError(workspaceId: WorkspaceId, userId: UserId): AppError {
   return createAppError(
     'authorization',
     ERROR_CODES.AUTH_FORBIDDEN,
-    'You do not have permission to view the links of this workspace.',
+    'You do not have permission to view the links of this board.',
     {
       details: {
         workspaceId: workspaceId.value,

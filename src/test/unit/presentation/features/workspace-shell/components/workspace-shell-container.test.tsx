@@ -25,7 +25,6 @@ import {
   type InviteMember,
   type LeaveWorkspace,
   type RemoveMember,
-  type UpdateWorkspace,
 } from '../../../../../../application/commands';
 import {
   createElementPersistence,
@@ -44,9 +43,11 @@ import type {
 } from '../../../../../../application/ports';
 import {
   createFrameElement,
+  createImageElement,
   createTextElement,
   richTextFromPlain,
 } from '../../../../../../domain/element';
+import type { ImageServices } from '../../../../../../application/image-services';
 import { Presence } from '../../../../../../domain/collaboration';
 import {
   ElementId,
@@ -85,6 +86,20 @@ const TEXT_ELEMENT = createTextElement({
   position: Position.create(30, 40),
   size: Size.create(120, 80),
   content: 'Hello',
+  createdAt: new Date('2024-01-01T00:00:00.000Z'),
+});
+
+const IMAGE_STORAGE_PATH = 'workspaces/ws-test/images/image-1-diagram.png';
+
+const IMAGE_ELEMENT = createImageElement({
+  id: ElementId.create('image-1'),
+  workspaceId: WorkspaceId.create('ws-test'),
+  createdBy: UserId.create('user-1'),
+  position: Position.create(30, 40),
+  size: Size.create(240, 160),
+  src: `https://storage.test/${IMAGE_STORAGE_PATH}`,
+  alt: 'Diagram',
+  storagePath: IMAGE_STORAGE_PATH,
   createdAt: new Date('2024-01-01T00:00:00.000Z'),
 });
 
@@ -181,6 +196,9 @@ interface RenderOptions {
   readonly elementPersistenceOrchestrator?: ElementPersistenceOrchestrator;
   readonly persistenceScheduler?: ManualScheduler;
   readonly persistenceDebounceMs?: number;
+  readonly imageCleanupScheduler?: ManualScheduler;
+  readonly imageCleanupDelayMs?: number;
+  readonly imageServices?: ImageServices;
   readonly realtimePort?: FakeRealtimePort;
   readonly realtimeSubscriptionManager?: RealtimeSubscriptionManager;
   readonly presencePort?: FakePresencePort;
@@ -195,7 +213,6 @@ interface RenderOptions {
   readonly changeMemberRole?: ChangeMemberRole;
   readonly removeMember?: RemoveMember;
   readonly leaveWorkspace?: LeaveWorkspace;
-  readonly updateWorkspace?: UpdateWorkspace;
   readonly fileDownload?: FileDownloadPort;
 }
 
@@ -220,6 +237,9 @@ function renderContainer(getWorkspace: GetWorkspace, options: RenderOptions = {}
         onBack={ON_BACK}
         persistenceScheduler={options.persistenceScheduler}
         persistenceDebounceMs={options.persistenceDebounceMs}
+        imageCleanupScheduler={options.imageCleanupScheduler}
+        imageCleanupDelayMs={options.imageCleanupDelayMs}
+        imageServices={options.imageServices}
         presencePort={options.presencePort}
         localUserId={options.localUserId}
         currentUser={options.currentUser}
@@ -231,7 +251,6 @@ function renderContainer(getWorkspace: GetWorkspace, options: RenderOptions = {}
         changeMemberRole={options.changeMemberRole}
         removeMember={options.removeMember}
         leaveWorkspace={options.leaveWorkspace}
-        updateWorkspace={options.updateWorkspace}
         fileDownload={options.fileDownload}
       />
     </MemoryRouter>,
@@ -272,7 +291,7 @@ describe('WorkspaceShellContainer', () => {
 
     renderContainer(getWorkspace);
 
-    expect(screen.getByRole('status')).toHaveTextContent('Loading workspace');
+    expect(screen.getByRole('status')).toHaveTextContent('Loading board');
   });
 
   it('renders the workspace shell when the workspace is found', async () => {
@@ -281,7 +300,7 @@ describe('WorkspaceShellContainer', () => {
     renderContainer(getWorkspace);
 
     expect(await screen.findByRole('heading', { name: 'Roadmap Q4' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Back to workspaces' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Back to boards' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Open account menu' })).toBeInTheDocument();
     expect(screen.getByRole('application', { name: 'Canvas' })).toBeInTheDocument();
     expect(getWorkspace).toHaveBeenCalledWith('ws-test');
@@ -442,8 +461,8 @@ describe('WorkspaceShellContainer', () => {
 
     renderContainer(getWorkspace, { id: 'ws-missing' });
 
-    expect(await screen.findByRole('heading', { name: 'Workspace not found' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Back to workspaces' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Board not found' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Back to boards' })).toBeInTheDocument();
     expect(getWorkspace).toHaveBeenCalledWith('ws-missing');
   });
 
@@ -457,7 +476,7 @@ describe('WorkspaceShellContainer', () => {
     renderContainer(getWorkspace);
 
     expect(
-      await screen.findByRole('heading', { name: 'Could not load workspace' }),
+      await screen.findByRole('heading', { name: 'Could not load board' }),
     ).toBeInTheDocument();
     expect(screen.getByText('Network failure')).toBeInTheDocument();
 
@@ -480,7 +499,7 @@ describe('WorkspaceShellContainer', () => {
     renderContainer(getWorkspace);
 
     expect(
-      await screen.findByRole('heading', { name: 'Could not load workspace' }),
+      await screen.findByRole('heading', { name: 'Could not load board' }),
     ).toBeInTheDocument();
     expect(
       screen.getByText('We could not reach the server. Check your connection and try again.'),
@@ -515,6 +534,131 @@ describe('WorkspaceShellContainer', () => {
       const restored = await repository.listByWorkspace(WorkspaceId.create('ws-test'));
       expect(restored).toHaveLength(1);
     });
+  });
+
+  it('deletes the storage object after Firestore confirms an image removal', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const repository = new FakeElementRepository();
+    await repository.save(IMAGE_ELEMENT);
+    const orchestrator = createElementPersistenceOrchestrator(createElementPersistence(repository));
+    const imageCleanupScheduler = new ManualScheduler();
+    const deleteImage = jest.fn(async () => ({ status: 'ok' as const }));
+
+    renderContainer(getWorkspace, {
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [IMAGE_ELEMENT],
+      }),
+      elementPersistenceOrchestrator: orchestrator,
+      imageCleanupScheduler,
+      imageServices: {
+        uploadImage: jest.fn(),
+        deleteImage,
+      },
+    });
+
+    const canvas = await screen.findByRole('application', { name: 'Canvas' });
+    await screen.findByTestId('canvas-item-image-1');
+    fireEvent.keyDown(canvas, { key: 'a', ctrlKey: true });
+    fireEvent.keyDown(canvas, { key: 'Delete' });
+
+    await waitFor(async () => {
+      await expect(repository.listByWorkspace(WorkspaceId.create('ws-test'))).resolves.toEqual([]);
+    });
+    await waitFor(() => expect(imageCleanupScheduler.pending).toBe(1));
+
+    act(() => imageCleanupScheduler.run());
+    await flushMicrotasks();
+
+    expect(deleteImage).toHaveBeenCalledWith({ storagePath: IMAGE_STORAGE_PATH });
+  });
+
+  it('cancels the storage cleanup when the image deletion is undone', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const repository = new FakeElementRepository();
+    await repository.save(IMAGE_ELEMENT);
+    const orchestrator = createElementPersistenceOrchestrator(createElementPersistence(repository));
+    const imageCleanupScheduler = new ManualScheduler();
+    const deleteImage = jest.fn(async () => ({ status: 'ok' as const }));
+
+    renderContainer(getWorkspace, {
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [IMAGE_ELEMENT],
+      }),
+      elementPersistenceOrchestrator: orchestrator,
+      imageCleanupScheduler,
+      imageServices: {
+        uploadImage: jest.fn(),
+        deleteImage,
+      },
+    });
+
+    const canvas = await screen.findByRole('application', { name: 'Canvas' });
+    await screen.findByTestId('canvas-item-image-1');
+    fireEvent.keyDown(canvas, { key: 'a', ctrlKey: true });
+    fireEvent.keyDown(canvas, { key: 'Delete' });
+
+    await waitFor(() => expect(imageCleanupScheduler.pending).toBe(1));
+
+    fireEvent.keyDown(canvas, { key: 'z', ctrlKey: true });
+
+    await waitFor(async () => {
+      const restored = await repository.listByWorkspace(WorkspaceId.create('ws-test'));
+      expect(restored).toHaveLength(1);
+    });
+
+    act(() => imageCleanupScheduler.run());
+    await flushMicrotasks();
+
+    expect(deleteImage).not.toHaveBeenCalled();
+  });
+
+  it('does not delete a storage object still referenced by another image', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const repository = new FakeElementRepository();
+    const copy = createImageElement({
+      id: ElementId.create('image-2'),
+      workspaceId: WorkspaceId.create('ws-test'),
+      createdBy: UserId.create('user-1'),
+      position: Position.create(60, 80),
+      size: Size.create(240, 160),
+      src: IMAGE_ELEMENT.src,
+      storagePath: IMAGE_STORAGE_PATH,
+      createdAt: new Date('2024-01-01T00:00:00.000Z'),
+    });
+    await repository.saveMany([IMAGE_ELEMENT, copy]);
+    const orchestrator = createElementPersistenceOrchestrator(createElementPersistence(repository));
+    const imageCleanupScheduler = new ManualScheduler();
+    const deleteImage = jest.fn(async () => ({ status: 'ok' as const }));
+
+    renderContainer(getWorkspace, {
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [IMAGE_ELEMENT, copy],
+      }),
+      elementPersistenceOrchestrator: orchestrator,
+      imageCleanupScheduler,
+      selectionStore: createSelectionStore(['image-1']),
+      imageServices: {
+        uploadImage: jest.fn(),
+        deleteImage,
+      },
+    });
+
+    const canvas = await screen.findByRole('application', { name: 'Canvas' });
+    await screen.findByTestId('canvas-item-image-1');
+    fireEvent.keyDown(canvas, { key: 'Delete' });
+
+    await waitFor(async () => {
+      const remaining = await repository.listByWorkspace(WorkspaceId.create('ws-test'));
+      expect(remaining.map((element) => element.id.value)).toEqual(['image-2']);
+    });
+
+    act(() => imageCleanupScheduler.run());
+    await flushMicrotasks();
+
+    expect(deleteImage).not.toHaveBeenCalled();
   });
 
   it('persists alignment and restores the previous positions on undo', async () => {
@@ -748,6 +892,53 @@ describe('WorkspaceShellContainer', () => {
 
     const stored = await repository.findById(ElementId.create('el-1'));
     expect(stored?.position.equals(Position.create(30, 40))).toBe(true);
+  });
+
+  it('collapses a rotation into a single history entry and persists it', async () => {
+    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
+    const repository = new FakeElementRepository();
+    await repository.save(TEXT_ELEMENT);
+    const orchestrator = createElementPersistenceOrchestrator(createElementPersistence(repository));
+
+    renderContainer(getWorkspace, {
+      loadWorkspaceElements: createLoadWorkspaceElements({
+        status: 'ok',
+        elements: [TEXT_ELEMENT],
+      }),
+      elementPersistenceOrchestrator: orchestrator,
+    });
+
+    const canvas = await screen.findByRole('application', { name: 'Canvas' });
+    const item = await screen.findByTestId('canvas-item-el-1');
+    const user = userEvent.setup();
+
+    await user.click(item);
+
+    const handle = await screen.findByTestId('rotate-handle');
+
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: handle, coords: { x: 90, y: 40 } },
+      { coords: { x: 130, y: 80 } },
+      { keys: '[/MouseLeft]' },
+    ]);
+
+    await waitFor(async () => {
+      const stored = await repository.findById(ElementId.create('el-1'));
+      expect(stored?.rotation).toBeCloseTo(90);
+    });
+
+    fireEvent.keyDown(canvas, { key: 'z', ctrlKey: true });
+
+    await waitFor(async () => {
+      const stored = await repository.findById(ElementId.create('el-1'));
+      expect(stored?.rotation).toBe(0);
+    });
+
+    fireEvent.keyDown(canvas, { key: 'z', ctrlKey: true });
+    await flushMicrotasks();
+
+    const stored = await repository.findById(ElementId.create('el-1'));
+    expect(stored?.rotation).toBe(0);
   });
 
   it('debounces drag persistence until the injected scheduler fires', async () => {
@@ -1489,7 +1680,7 @@ describe('WorkspaceShellContainer', () => {
 
     renderContainer(getWorkspace, { presencePort, localUserId: userId.value });
 
-    expect(screen.getByRole('status')).toHaveTextContent('Loading workspace');
+    expect(screen.getByRole('status')).toHaveTextContent('Loading board');
     await flushMicrotasks();
 
     expect(presencePort.presenceOf(WorkspaceId.create('ws-test'), userId)).toBeUndefined();
@@ -2016,47 +2207,19 @@ describe('WorkspaceShellContainer', () => {
     expect(screen.getByRole('button', { name: 'Add text' })).toBeDisabled();
   });
 
-  it('renames the workspace inline when the user is the owner', async () => {
+  it('does not offer inline renaming to workspace owners', async () => {
     const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
-    const updateWorkspace = jest.fn().mockImplementation(async (input: { name?: string }) => ({
-      status: 'ok' as const,
-      workspace: WORKSPACE.update({ name: input.name ?? '' }),
-    }));
-    const user = userEvent.setup();
 
     renderContainer(getWorkspace, {
       role: 'owner',
       localUserId: 'user-1',
-      updateWorkspace,
     });
 
-    await user.click(await screen.findByRole('button', { name: 'Rename workspace' }));
-    const input = screen.getByRole('textbox', { name: 'Workspace name' });
-    await user.clear(input);
-    await user.type(input, 'Roadmap 2027{Enter}');
-
-    await waitFor(() =>
-      expect(updateWorkspace).toHaveBeenCalledWith({
-        id: 'ws-test',
-        name: 'Roadmap 2027',
-      }),
-    );
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Roadmap 2027' }),
+      await screen.findByRole('heading', { level: 1, name: 'Roadmap Q4' }),
     ).toBeInTheDocument();
-  });
-
-  it('does not offer renaming to editors', async () => {
-    const getWorkspace = createGetWorkspace({ status: 'ok', workspace: WORKSPACE });
-
-    renderContainer(getWorkspace, {
-      role: 'editor',
-      localUserId: 'user-1',
-      updateWorkspace: jest.fn(),
-    });
-
-    await screen.findByRole('heading', { level: 1, name: 'Roadmap Q4' });
     expect(screen.queryByRole('button', { name: 'Rename workspace' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'Workspace name' })).not.toBeInTheDocument();
   });
 });
 

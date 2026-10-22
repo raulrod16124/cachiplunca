@@ -19,6 +19,7 @@ export { ActionRow } from './action-row';
 export type { ActionRowProps } from './action-row';
 export { ToolbarButton } from './toolbar-button';
 export type { ToolbarButtonProps } from './toolbar-button';
+export { NeutralButton, NeutralIconButton } from './neutral-controls';
 export { Spinner } from './spinner';
 export type { SpinnerProps } from './spinner';
 export { FieldError } from './field-error';

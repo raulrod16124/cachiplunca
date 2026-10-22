@@ -10,7 +10,7 @@ test.describe('Negative paths', () => {
     await expect(
       page.getByRole('heading', { level: 1, name: 'We could not accept the invitation' }),
     ).toBeVisible({ timeout: 20000 });
-    await expect(page.getByRole('button', { name: 'Back to your workspaces' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Back to your boards' })).toBeVisible();
   });
 
   test('invalid invitation link while signed out offers sign in or account creation', async ({
@@ -26,10 +26,10 @@ test.describe('Negative paths', () => {
 
   test('creating a workspace with an empty name shows validation feedback', async ({ page }) => {
     await registerUser(page);
-    await page.getByRole('button', { name: 'Create workspace' }).first().click();
+    await page.getByRole('button', { name: 'Create board' }).first().click();
     await page.getByLabel('Name').fill('');
     await page.getByRole('button', { name: 'Create', exact: true }).click();
-    await expect(page.getByText('Enter a workspace name.')).toBeVisible();
+    await expect(page.getByText('Enter a board name.')).toBeVisible();
     await expect(page.getByRole('heading', { level: 3, name: 'Name' })).toHaveCount(0);
   });
 

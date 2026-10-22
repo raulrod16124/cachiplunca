@@ -10,9 +10,9 @@ const toneStyles = css<{ $tone: StateTone }>`
   ${({ theme, $tone }) => {
     if ($tone === 'brand') {
       return css`
-        background: ${theme.color.background.sunken};
-        border-color: ${theme.color.border.strong};
-        color: ${theme.color.action.secondary.background};
+        background: var(--cach-surface-empty);
+        border-color: var(--cach-border-accent);
+        color: var(--cach-icon-accent);
       `;
     }
 

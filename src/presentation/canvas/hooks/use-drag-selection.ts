@@ -34,7 +34,7 @@ function isInteractiveTarget(target: EventTarget | null): boolean {
 
   return (
     target.closest(
-      'button, a, input, textarea, select, [contenteditable="true"], [role="button"], [data-selectable], [data-resize-handle], [data-connector-endpoint]',
+      'button, a, input, textarea, select, [contenteditable="true"], [role="button"], [data-selectable], [data-resize-handle], [data-rotate-handle], [data-connector-endpoint]',
     ) !== null
   );
 }
@@ -93,7 +93,7 @@ export function useDragSelection({
     }
 
     function handlePointerDown(event: PointerEvent): void {
-      if (event.button !== 0 || latestRef.current.spacePressed) {
+      if (event.button !== 0 || latestRef.current.spacePressed || !event.shiftKey) {
         return;
       }
 
