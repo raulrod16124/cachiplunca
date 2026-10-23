@@ -1,0 +1,463 @@
+/*
+ * CACHIPLUNCA "Stitch" surface layer.
+ *
+ * A scoped visual language for the boards experience. It is intentionally
+ * isolated behind `[data-surface='stitch']` so profile, settings and the canvas
+ * keep the brand shell. Both themes are expressed here:
+ *   - light: warm paper, burnt orange primary, muted green secondary.
+ *   - dark: deep forest surfaces, amber primary, emerald navigation.
+ *
+ * The layer also overrides `--rr-*` semantic tokens for its subtree, which lets
+ * `@raulrod/ui` components (Button, Input, Dialog…) adopt the palette without
+ * forking the package.
+ */
+
+[data-surface='stitch'] {
+  /* Typography */
+  --stitch-font-body: 'Outfit', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --stitch-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Surfaces */
+  --stitch-bg: #faf9f6;
+  --stitch-surface: #ffffff;
+  --stitch-surface-low: #f4f3f0;
+  --stitch-surface-container: #efeeeb;
+  --stitch-surface-high: #e9e8e5;
+  --stitch-border: #e5e3dd;
+  --stitch-border-soft: #f0eee9;
+  --stitch-border-strong: #d9d5ce;
+  --stitch-card-border-hover: #dbdad7;
+
+  /* Text */
+  --stitch-text: #1a1c1a;
+  --stitch-text-muted: #5a4138;
+  --stitch-text-subtle: #8f7066;
+
+  /* Accents */
+  --stitch-primary: #a43700;
+  --stitch-primary-hover: #cd4700;
+  --stitch-primary-active: #8f3000;
+  --stitch-on-primary: #ffffff;
+  --stitch-primary-soft: #ffdbcf;
+  --stitch-secondary: #486555;
+  --stitch-secondary-hover: #3b5447;
+  --stitch-secondary-soft: #c7e7d3;
+  --stitch-tertiary: #825100;
+  --stitch-error: #ba1a1a;
+  --stitch-error-hover: #93000a;
+  --stitch-error-soft: #ffdad666;
+  --stitch-error-border: #ffb4ab99;
+  --stitch-favorite: #f59e0b;
+  --stitch-favorite-ink: #b45309;
+
+  /* Decorative canvas */
+  --stitch-pattern-color: #8f7066;
+  --stitch-pattern-opacity: 0.4;
+
+  /* Cover variants */
+  --stitch-cover-warm-from: #fbf5ed;
+  --stitch-cover-warm-via: #f7eee2;
+  --stitch-cover-warm-to: #f2e4d0;
+  --stitch-cover-warm-border: #ebdccd;
+  --stitch-cover-warm-dot: #d97706;
+  --stitch-cover-green-from: #f5fbf7;
+  --stitch-cover-green-via: #ebf6ee;
+  --stitch-cover-green-to: #dfeee3;
+  --stitch-cover-green-border: #d2e4d7;
+  --stitch-cover-green-dot: #059669;
+  --stitch-cover-amber-from: #fef8f0;
+  --stitch-cover-amber-via: #faede0;
+  --stitch-cover-amber-to: #f4dfc7;
+  --stitch-cover-amber-border: #ebd7be;
+  --stitch-cover-amber-dot: #b45309;
+
+  /* Badge accents */
+  --stitch-badge-warm-from: #e65100;
+  --stitch-badge-warm-to: #c73e00;
+  --stitch-badge-green-from: #10b981;
+  --stitch-badge-green-to: #047857;
+  --stitch-badge-amber-from: #d97706;
+  --stitch-badge-amber-to: #b45309;
+  --stitch-badge-text: #ffffff;
+  --stitch-badge-shadow: 0 8px 20px -4px rgba(20, 20, 15, 0.28);
+
+  /* Depth and geometry */
+  --stitch-card-shadow: 0 12px 32px rgba(20, 20, 15, 0.06), 0 2px 8px rgba(20, 20, 15, 0.03);
+  --stitch-card-shadow-hover: 0 20px 45px rgba(20, 20, 15, 0.1), 0 8px 24px rgba(230, 81, 0, 0.07);
+  --stitch-radius-card: 28px;
+  --stitch-radius-icon: 18px;
+  --stitch-radius-control: 12px;
+
+  /* Card actions */
+  --stitch-open-bg: #1a1c1a;
+  --stitch-open-hover: #a43700;
+  --stitch-open-border: transparent;
+  --stitch-open-text: #ffffff;
+  --stitch-open-icon: #ffb59a;
+  --stitch-action-bg: #f4f3f0;
+  --stitch-action-hover: #eae8e3;
+  --stitch-action-border: #e5e3dd;
+  --stitch-action-text: #5a4138;
+
+  /* New board tile */
+  --stitch-new-bg: #ffffffb3;
+  --stitch-new-hover: #ffffff;
+  --stitch-new-border: #d9d5ce;
+  --stitch-new-border-hover: #a43700;
+  --stitch-new-icon-from: #fff2ec;
+  --stitch-new-icon-to: #ffe5d9;
+  --stitch-new-icon-border: #ffcfbe;
+  --stitch-new-icon-text: #a43700;
+  --stitch-new-icon-hover-bg: #a43700;
+  --stitch-new-icon-hover-text: #ffffff;
+  --stitch-new-button-bg: #f4f3f0;
+  --stitch-new-button-text: #1a1c1a;
+  --stitch-new-button-hover-bg: #a43700;
+  --stitch-new-button-hover-text: #ffffff;
+  --stitch-new-shadow-hover: 0 16px 36px rgba(164, 55, 0, 0.08);
+
+  /* Shell */
+  --stitch-sidebar: #ffffff;
+  --stitch-sidebar-border: #ebdccdcc;
+  --stitch-sidebar-shadow: 0 4px 24px rgba(20, 25, 20, 0.04);
+  --stitch-nav-active-bg: #0e2319;
+  --stitch-nav-active-border: transparent;
+  --stitch-nav-active-shadow: 0 1px 2px rgba(20, 25, 20, 0.08);
+  --stitch-nav-active-text: #ffffff;
+  --stitch-nav-active-icon: #ffffff;
+  --stitch-nav-dot: #ea580c;
+  --stitch-avatar-bg: #e7e5e4;
+  --stitch-avatar-border: #d6d3d1cc;
+  --stitch-avatar-text: #44403c;
+  --stitch-online: #10b981;
+
+  /* Search */
+  --stitch-input-bg: #ffffff;
+  --stitch-input-placeholder: #5a4138b3;
+  --stitch-kbd-bg: #efeeeb;
+  --stitch-kbd-border: transparent;
+  --stitch-kbd-text: #5a4138;
+
+  /* Footer */
+  --stitch-footer-text: #5a4138;
+
+  /* @raulrod/ui semantic overrides for this subtree */
+  --rr-font-family-sans: var(--stitch-font-body);
+  --rr-font-family-mono: var(--stitch-font-mono);
+  --rr-color-background-default: #ffffff;
+  --rr-color-background-surface: #ffffff;
+  --rr-color-background-sunken: #f4f3f0;
+  --rr-color-text-primary: #1a1c1a;
+  --rr-color-text-muted: #5a4138;
+  --rr-color-text-inverse: #ffffff;
+  --rr-color-text-danger: #ba1a1a;
+  --rr-color-text-destructive: #ba1a1a;
+  --rr-color-border-default: #e5e3dd;
+  --rr-color-border-strong: #d9d5ce;
+  --rr-color-border-danger: #ba1a1a;
+  --rr-color-action-primary-background: #a43700;
+  --rr-color-action-primary-background-hover: #cd4700;
+  --rr-color-action-primary-background-active: #8f3000;
+  --rr-color-action-primary-text: #ffffff;
+  --rr-color-action-secondary-background: #486555;
+  --rr-color-action-secondary-background-hover: #3b5447;
+  --rr-color-action-secondary-text: #ffffff;
+  --rr-color-action-destructive-background: #ba1a1a;
+  --rr-color-action-destructive-background-hover: #93000a;
+  --rr-color-action-destructive-text: #ffffff;
+  --rr-color-action-disabled-background: #f4f3f0;
+  --rr-color-action-disabled-text: #5a4138;
+  --rr-color-focus-ring: #a43700;
+  --rr-color-link-text: #a43700;
+  --rr-color-link-text-hover: #cd4700;
+  --rr-color-background-destructive: #ffdad666;
+}
+
+[data-theme='dark'] [data-surface='stitch'] {
+  --stitch-bg: #07130d;
+  --stitch-surface: #0e2319;
+  --stitch-surface-low: #0e2319;
+  --stitch-surface-container: #0e2319;
+  --stitch-surface-high: #132f22;
+  --stitch-border: #064e3b66;
+  --stitch-border-soft: #ffffff0d;
+  --stitch-border-strong: #ffffff1a;
+  --stitch-card-border-hover: #10b98166;
+
+  --stitch-text: #ffffff;
+  --stitch-text-muted: #a1a1aa;
+  --stitch-text-subtle: #71717a;
+
+  --stitch-primary: #f59e0b;
+  --stitch-primary-hover: #d97706;
+  --stitch-primary-active: #b45309;
+  --stitch-on-primary: #2a1700;
+  --stitch-primary-soft: #15291e;
+  --stitch-secondary: #34d399;
+  --stitch-secondary-hover: #10b981;
+  --stitch-secondary-soft: #1c382b;
+  --stitch-tertiary: #f59e0b;
+  --stitch-error: #f87171;
+  --stitch-error-hover: #fca5a5;
+  --stitch-error-soft: #450a0a33;
+  --stitch-error-border: #f8717133;
+  --stitch-favorite: #f59e0b;
+  --stitch-favorite-ink: #f59e0b;
+
+  --stitch-pattern-color: rgba(255, 255, 255, 0.4);
+  --stitch-pattern-opacity: 0.2;
+
+  --stitch-cover-warm-from: #132f22;
+  --stitch-cover-warm-via: #132f22;
+  --stitch-cover-warm-to: #132f22;
+  --stitch-cover-warm-border: #064e3b4d;
+  --stitch-cover-warm-dot: #f59e0b;
+  --stitch-cover-green-from: #132f22;
+  --stitch-cover-green-via: #132f22;
+  --stitch-cover-green-to: #132f22;
+  --stitch-cover-green-border: #064e3b4d;
+  --stitch-cover-green-dot: #10b981;
+  --stitch-cover-amber-from: #132f22;
+  --stitch-cover-amber-via: #132f22;
+  --stitch-cover-amber-to: #132f22;
+  --stitch-cover-amber-border: #064e3b4d;
+  --stitch-cover-amber-dot: #f59e0b;
+
+  --stitch-badge-warm-from: #e65100;
+  --stitch-badge-warm-to: #c73e00;
+  --stitch-badge-green-from: #10b981;
+  --stitch-badge-green-to: #047857;
+  --stitch-badge-amber-from: #d97706;
+  --stitch-badge-amber-to: #b45309;
+  --stitch-badge-text: #ffffff;
+  --stitch-badge-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.45);
+  --stitch-card-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+  --stitch-card-shadow-hover: 0 20px 45px rgba(0, 0, 0, 0.5);
+
+  --stitch-open-bg: #071911;
+  --stitch-open-hover: #0d281e;
+  --stitch-open-border: #10b9814d;
+  --stitch-open-text: #6ee7b7;
+  --stitch-open-icon: #34d399;
+  --stitch-action-bg: #ffffff0d;
+  --stitch-action-hover: #ffffff1a;
+  --stitch-action-border: #ffffff0d;
+  --stitch-action-text: #a1a1aa;
+
+  --stitch-new-bg: #0e231966;
+  --stitch-new-hover: #0e2319cc;
+  --stitch-new-border: #3f3f46cc;
+  --stitch-new-border-hover: #10b98180;
+  --stitch-new-icon-from: #15291e;
+  --stitch-new-icon-to: #15291e;
+  --stitch-new-icon-border: #10b9814d;
+  --stitch-new-icon-text: #34d399;
+  --stitch-new-icon-hover-bg: #f59e0b;
+  --stitch-new-icon-hover-text: #2a1700;
+  --stitch-new-button-bg: #ffffff0d;
+  --stitch-new-button-text: #e4e4e7;
+  --stitch-new-button-hover-bg: #f59e0b;
+  --stitch-new-button-hover-text: #2a1700;
+  --stitch-new-shadow-hover: 0 16px 36px rgba(0, 0, 0, 0.4);
+
+  --stitch-sidebar: #091610;
+  --stitch-sidebar-border: #ffffff1a;
+  --stitch-sidebar-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+  --stitch-nav-active-bg: #0d281e;
+  --stitch-nav-active-border: #10b98166;
+  --stitch-nav-active-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --stitch-nav-active-text: #6ee7b7;
+  --stitch-nav-active-icon: #34d399;
+  --stitch-nav-dot: #f59e0b;
+  --stitch-avatar-bg: #15291e;
+  --stitch-avatar-border: #10b9814d;
+  --stitch-avatar-text: #6ee7b7;
+  --stitch-online: #10b981;
+
+  --stitch-input-bg: #0e2319;
+  --stitch-input-placeholder: #a1a1aa;
+  --stitch-kbd-bg: #ffffff0d;
+  --stitch-kbd-border: #ffffff1a;
+  --stitch-kbd-text: #a1a1aa;
+
+  --stitch-footer-text: #a1a1aa;
+
+  --rr-color-background-default: #0e2319;
+  --rr-color-background-surface: #0e2319;
+  --rr-color-background-sunken: #0d281e;
+  --rr-color-text-primary: #ffffff;
+  --rr-color-text-muted: #a1a1aa;
+  --rr-color-text-inverse: #07130d;
+  --rr-color-text-danger: #f87171;
+  --rr-color-text-destructive: #f87171;
+  --rr-color-border-default: #ffffff1a;
+  --rr-color-border-strong: #ffffff1a;
+  --rr-color-border-danger: #f87171;
+  --rr-color-action-primary-background: #f59e0b;
+  --rr-color-action-primary-background-hover: #d97706;
+  --rr-color-action-primary-background-active: #b45309;
+  --rr-color-action-primary-text: #2a1700;
+  --rr-color-action-secondary-background: #0d281e;
+  --rr-color-action-secondary-background-hover: #133526;
+  --rr-color-action-secondary-text: #6ee7b7;
+  --rr-color-action-destructive-background: #f87171;
+  --rr-color-action-destructive-background-hover: #fca5a5;
+  --rr-color-action-destructive-text: #2a0a0a;
+  --rr-color-action-disabled-background: #15291e;
+  --rr-color-action-disabled-text: #71717a;
+  --rr-color-focus-ring: #f59e0b;
+  --rr-color-link-text: #f59e0b;
+  --rr-color-link-text-hover: #d97706;
+  --rr-color-background-destructive: #450a0a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) [data-surface='stitch'] {
+    --stitch-bg: #07130d;
+    --stitch-surface: #0e2319;
+    --stitch-surface-low: #0e2319;
+    --stitch-surface-container: #0e2319;
+    --stitch-surface-high: #132f22;
+    --stitch-border: #064e3b66;
+    --stitch-border-soft: #ffffff0d;
+    --stitch-border-strong: #ffffff1a;
+    --stitch-card-border-hover: #10b98166;
+
+    --stitch-text: #ffffff;
+    --stitch-text-muted: #a1a1aa;
+    --stitch-text-subtle: #71717a;
+
+    --stitch-primary: #f59e0b;
+    --stitch-primary-hover: #d97706;
+    --stitch-primary-active: #b45309;
+    --stitch-on-primary: #2a1700;
+    --stitch-primary-soft: #15291e;
+    --stitch-secondary: #34d399;
+    --stitch-secondary-hover: #10b981;
+    --stitch-secondary-soft: #1c382b;
+    --stitch-tertiary: #f59e0b;
+    --stitch-error: #f87171;
+    --stitch-error-hover: #fca5a5;
+    --stitch-error-soft: #450a0a33;
+    --stitch-error-border: #f8717133;
+    --stitch-favorite: #f59e0b;
+    --stitch-favorite-ink: #f59e0b;
+
+    --stitch-pattern-color: rgba(255, 255, 255, 0.4);
+    --stitch-pattern-opacity: 0.2;
+
+    --stitch-cover-warm-from: #132f22;
+    --stitch-cover-warm-via: #132f22;
+    --stitch-cover-warm-to: #132f22;
+    --stitch-cover-warm-border: #064e3b4d;
+    --stitch-cover-warm-dot: #f59e0b;
+    --stitch-cover-green-from: #132f22;
+    --stitch-cover-green-via: #132f22;
+    --stitch-cover-green-to: #132f22;
+    --stitch-cover-green-border: #064e3b4d;
+    --stitch-cover-green-dot: #10b981;
+    --stitch-cover-amber-from: #132f22;
+    --stitch-cover-amber-via: #132f22;
+    --stitch-cover-amber-to: #132f22;
+    --stitch-cover-amber-border: #064e3b4d;
+    --stitch-cover-amber-dot: #f59e0b;
+
+    --stitch-badge-warm-from: #e65100;
+    --stitch-badge-warm-to: #c73e00;
+    --stitch-badge-green-from: #10b981;
+    --stitch-badge-green-to: #047857;
+    --stitch-badge-amber-from: #d97706;
+    --stitch-badge-amber-to: #b45309;
+    --stitch-badge-text: #ffffff;
+    --stitch-badge-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.45);
+    --stitch-card-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+    --stitch-card-shadow-hover: 0 20px 45px rgba(0, 0, 0, 0.5);
+
+    --stitch-open-bg: #071911;
+    --stitch-open-hover: #0d281e;
+    --stitch-open-border: #10b9814d;
+    --stitch-open-text: #6ee7b7;
+    --stitch-open-icon: #34d399;
+    --stitch-action-bg: #ffffff0d;
+    --stitch-action-hover: #ffffff1a;
+    --stitch-action-border: #ffffff0d;
+    --stitch-action-text: #a1a1aa;
+
+    --stitch-new-bg: #0e231966;
+    --stitch-new-hover: #0e2319cc;
+    --stitch-new-border: #3f3f46cc;
+    --stitch-new-border-hover: #10b98180;
+    --stitch-new-icon-from: #15291e;
+    --stitch-new-icon-to: #15291e;
+    --stitch-new-icon-border: #10b9814d;
+    --stitch-new-icon-text: #34d399;
+    --stitch-new-icon-hover-bg: #f59e0b;
+    --stitch-new-icon-hover-text: #2a1700;
+    --stitch-new-button-bg: #ffffff0d;
+    --stitch-new-button-text: #e4e4e7;
+    --stitch-new-button-hover-bg: #f59e0b;
+    --stitch-new-button-hover-text: #2a1700;
+    --stitch-new-shadow-hover: 0 16px 36px rgba(0, 0, 0, 0.4);
+
+    --stitch-sidebar: #091610;
+    --stitch-sidebar-border: #ffffff1a;
+    --stitch-sidebar-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+    --stitch-nav-active-bg: #0d281e;
+    --stitch-nav-active-border: #10b98166;
+    --stitch-nav-active-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --stitch-nav-active-text: #6ee7b7;
+    --stitch-nav-active-icon: #34d399;
+    --stitch-nav-dot: #f59e0b;
+    --stitch-avatar-bg: #15291e;
+    --stitch-avatar-border: #10b9814d;
+    --stitch-avatar-text: #6ee7b7;
+    --stitch-online: #10b981;
+
+    --stitch-input-bg: #0e2319;
+    --stitch-input-placeholder: #a1a1aa;
+    --stitch-kbd-bg: #ffffff0d;
+    --stitch-kbd-border: #ffffff1a;
+    --stitch-kbd-text: #a1a1aa;
+
+    --stitch-footer-text: #a1a1aa;
+
+    --rr-color-background-default: #0e2319;
+    --rr-color-background-surface: #0e2319;
+    --rr-color-background-sunken: #0d281e;
+    --rr-color-text-primary: #ffffff;
+    --rr-color-text-muted: #a1a1aa;
+    --rr-color-text-inverse: #07130d;
+    --rr-color-text-danger: #f87171;
+    --rr-color-text-destructive: #f87171;
+    --rr-color-border-default: #ffffff1a;
+    --rr-color-border-strong: #ffffff1a;
+    --rr-color-border-danger: #f87171;
+    --rr-color-action-primary-background: #f59e0b;
+    --rr-color-action-primary-background-hover: #d97706;
+    --rr-color-action-primary-background-active: #b45309;
+    --rr-color-action-primary-text: #2a1700;
+    --rr-color-action-secondary-background: #0d281e;
+    --rr-color-action-secondary-background-hover: #133526;
+    --rr-color-action-secondary-text: #6ee7b7;
+    --rr-color-action-destructive-background: #f87171;
+    --rr-color-action-destructive-background-hover: #fca5a5;
+    --rr-color-action-destructive-text: #2a0a0a;
+    --rr-color-action-disabled-background: #15291e;
+    --rr-color-action-disabled-text: #71717a;
+    --rr-color-focus-ring: #f59e0b;
+    --rr-color-link-text: #f59e0b;
+    --rr-color-link-text-hover: #d97706;
+    --rr-color-background-destructive: #450a0a;
+  }
+}
+
+[data-surface='stitch'] {
+  color: var(--stitch-text);
+  font-family: var(--stitch-font-body);
+}
+
+[data-surface='stitch'] .stitch-dot-grid {
+  background-image: radial-gradient(var(--stitch-pattern-color) 1px, transparent 1px);
+  background-size: 20px 20px;
+  opacity: var(--stitch-pattern-opacity);
+}

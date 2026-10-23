@@ -60,6 +60,26 @@ describe('AppShell', () => {
     expect(css).toContain('var(--cach-surface-sidebar-pattern)');
   });
 
+  it('renders the Stitch surface with the workspace section and profile account', () => {
+    render(
+      <AppShell currentUser={CURRENT_USER} logoutUser={logoutUser} variant="stitch">
+        <p>Content</p>
+      </AppShell>,
+    );
+
+    const surface = document.querySelector('[data-surface="stitch"]');
+    expect(surface).not.toBeNull();
+    expect(screen.getByText('Workspace')).toBeInTheDocument();
+    expect(screen.getByText('Ada Lovelace')).toBeInTheDocument();
+    expect(screen.getAllByText('Online').length).toBeGreaterThan(0);
+
+    const css = [...document.head.querySelectorAll('style')]
+      .map((style) => style.textContent ?? '')
+      .join('');
+    expect(css).toContain('var(--stitch-sidebar)');
+    expect(css).toContain('var(--stitch-nav-active-bg)');
+  });
+
   it('renders the notifications slot in the shell header', () => {
     render(
       <AppShell

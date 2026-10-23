@@ -43,6 +43,78 @@ const itemStyles = css<{ $active: boolean }>`
     outline: 2px solid ${({ theme }) => theme.color.focusRing};
     outline-offset: 2px;
   }
+
+  [data-surface='stitch'] & {
+    gap: ${({ theme }) => theme.space[3]};
+    padding: ${({ theme }) => `${theme.space[2]} ${theme.space[3]}`};
+    border: 1px solid transparent;
+    border-radius: ${({ theme }) => theme.radius.md};
+    color: var(--stitch-text-muted);
+    background: transparent;
+    font-weight: ${({ theme }) => theme.font.weight.medium};
+
+    &::before {
+      display: none;
+    }
+
+    &::after {
+      content: '';
+      display: none;
+      flex: none;
+      margin-left: auto;
+      width: 8px;
+      height: 8px;
+      border-radius: ${({ theme }) => theme.radius.full};
+      background: var(--stitch-nav-dot);
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--stitch-nav-dot) 20%, transparent);
+    }
+
+    &[aria-current='page'] {
+      border-color: var(--stitch-nav-active-border);
+      color: var(--stitch-nav-active-text);
+      background: var(--stitch-nav-active-bg);
+      box-shadow: var(--stitch-nav-active-shadow);
+    }
+
+    &[aria-current='page']::after {
+      display: block;
+    }
+
+    &[aria-current='page'] svg {
+      color: var(--stitch-nav-active-icon);
+    }
+
+    svg {
+      color: var(--stitch-text-subtle);
+      transition: color ${({ theme }) => theme.motion.duration.fast} ease;
+    }
+
+    &:hover {
+      color: var(--stitch-text);
+      background: color-mix(in srgb, var(--stitch-text) 7%, transparent);
+    }
+
+    &:hover svg {
+      color: var(--stitch-text-muted);
+    }
+
+    &[aria-current='page']:hover {
+      color: var(--stitch-nav-active-text);
+      background: var(--stitch-nav-active-bg);
+    }
+
+    &[aria-current='page']:hover svg {
+      color: var(--stitch-nav-active-icon);
+    }
+
+    &:focus-visible {
+      outline-color: var(--rr-color-focus-ring);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
+  }
 `;
 
 const AnchorRoot = styled.a<{ $active: boolean }>`

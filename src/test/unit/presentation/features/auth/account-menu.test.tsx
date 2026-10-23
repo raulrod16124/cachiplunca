@@ -15,8 +15,11 @@ const CURRENT_USER: AuthUser = {
 function renderMenu(
   currentUser: AuthUser | null,
   logoutUser: LogoutUser,
+  variant?: 'compact' | 'profile',
 ): ReturnType<typeof render> {
-  return render(<AccountMenu currentUser={currentUser} logoutUser={logoutUser} />);
+  return render(
+    <AccountMenu currentUser={currentUser} logoutUser={logoutUser} variant={variant} />,
+  );
 }
 
 describe('AccountMenu', () => {
@@ -71,6 +74,17 @@ describe('AccountMenu', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'We could not reach the server. Check your connection and try again.',
     );
+  });
+
+  it('renders the profile trigger with the online status', async () => {
+    const logoutUser: LogoutUser = jest.fn(async () => ({ status: 'ok' as const }));
+    renderMenu(CURRENT_USER, logoutUser, 'profile');
+
+    expect(screen.getByText('Ada Lovelace')).toBeInTheDocument();
+    expect(screen.getAllByText('Online').length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open account menu' }));
+    expect(await screen.findByRole('menuitem', { name: 'Sign out' })).toBeInTheDocument();
   });
 
   it('only exposes identity and sign out in the account menu', async () => {

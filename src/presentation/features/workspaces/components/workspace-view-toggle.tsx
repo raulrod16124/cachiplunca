@@ -8,10 +8,44 @@ export type WorkspaceViewMode = 'grid' | 'list';
 
 const Group = styled.div`
   display: inline-flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.space[1]};
   flex: none;
+  align-items: center;
+  gap: 0;
   margin-left: auto;
+  padding: ${({ theme }) => theme.space[1]};
+  border: 1px solid var(--stitch-border);
+  border-radius: var(--stitch-radius-control);
+  background: var(--stitch-surface-container);
+  box-shadow: inset 0 1px 2px color-mix(in srgb, var(--stitch-text) 6%, transparent);
+`;
+
+const ToggleButton = styled(ToolbarButton)`
+  &.rr-icon-button {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--stitch-text-subtle);
+    box-shadow: none;
+  }
+
+  &.rr-icon-button:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--stitch-text) 6%, transparent);
+    color: var(--stitch-text);
+  }
+
+  &.rr-icon-button.rr-icon-button--primary {
+    background: var(--stitch-surface);
+    color: var(--stitch-secondary);
+    box-shadow: ${({ theme }) => theme.shadow.sm};
+  }
+
+  &.rr-icon-button.rr-icon-button--primary:hover:not(:disabled) {
+    background: var(--stitch-surface);
+    color: var(--stitch-secondary);
+  }
 `;
 
 export interface WorkspaceViewToggleProps {
@@ -24,7 +58,7 @@ export function WorkspaceViewToggle({ value, onChange }: WorkspaceViewToggleProp
 
   return (
     <Group role="group" aria-label={t('workspaces.view.label')}>
-      <ToolbarButton
+      <ToggleButton
         type="button"
         size="md"
         label={t('workspaces.view.grid')}
@@ -34,8 +68,8 @@ export function WorkspaceViewToggle({ value, onChange }: WorkspaceViewToggleProp
         onClick={() => onChange('grid')}
       >
         <LayoutGrid aria-hidden="true" size={16} />
-      </ToolbarButton>
-      <ToolbarButton
+      </ToggleButton>
+      <ToggleButton
         type="button"
         size="md"
         label={t('workspaces.view.list')}
@@ -45,7 +79,7 @@ export function WorkspaceViewToggle({ value, onChange }: WorkspaceViewToggleProp
         onClick={() => onChange('list')}
       >
         <List aria-hidden="true" size={16} />
-      </ToolbarButton>
+      </ToggleButton>
     </Group>
   );
 }

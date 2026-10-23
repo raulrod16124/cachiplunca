@@ -3,7 +3,10 @@ import { useCallback, useMemo } from 'react';
 import type { ListWorkspaces } from '../../../../application/queries';
 import type { Workspace } from '../../../../domain/workspace';
 import { CommandPalette } from '../../../components/command-palette';
-import type { CommandPaletteGroup } from '../../../components/command-palette';
+import type {
+  CommandPaletteGroup,
+  CommandPaletteSurface,
+} from '../../../components/command-palette';
 import { useWorkspaceSearch, searchWorkspacesByName } from '../../../hooks';
 import { useI18n } from '../../../i18n';
 
@@ -14,6 +17,7 @@ export interface WorkspacesCommandPaletteProps {
   readonly listWorkspaces: ListWorkspaces | undefined;
   readonly onCreateWorkspace: () => void;
   readonly onOpenWorkspace: (workspace: Workspace) => void;
+  readonly surface?: CommandPaletteSurface;
 }
 
 export function WorkspacesCommandPalette({
@@ -23,6 +27,7 @@ export function WorkspacesCommandPalette({
   listWorkspaces,
   onCreateWorkspace,
   onOpenWorkspace,
+  surface = 'brand',
 }: WorkspacesCommandPaletteProps): ReactNode {
   const { t } = useI18n();
   const { workspaces, status } = useWorkspaceSearch({ enabled: open, userId, listWorkspaces });
@@ -82,6 +87,7 @@ export function WorkspacesCommandPalette({
       groups={groups}
       searchGroups={searchGroups}
       statusMessage={statusMessage}
+      surface={surface}
     />
   );
 }

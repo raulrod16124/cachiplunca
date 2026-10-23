@@ -23,6 +23,8 @@ const en = {
   'common.back': 'Back',
   'common.somethingWentWrong': 'Something went wrong.',
 
+  'app.copyright': '© 2026 Cachiplunca. All rights reserved.',
+
   'auth.signIn.title': 'Sign in',
   'auth.signIn.subtitle': 'Turn scattered ideas into a shared plan.',
   'auth.email': 'Email',
@@ -74,8 +76,13 @@ const en = {
 
   'workspaces.title': 'Your boards',
   'workspaces.create': 'Create board',
+  'workspaces.createCard.title': 'New blank board',
+  'workspaces.createCard.description':
+    'Start an infinite canvas with sticky notes, connectors and collaborative frames.',
+  'workspaces.createCard.action': 'Start now',
   'workspaces.searchLabel': 'Search boards',
   'workspaces.searchPlaceholder': 'Search by name or description',
+  'workspaces.searchShortcut': 'Open command palette',
   'workspaces.results.one': '1 board',
   'workspaces.results.other': '{count} boards',
   'workspaces.noResults.title': 'No matching boards',
@@ -165,6 +172,7 @@ const en = {
   'workspaces.errors.coverPair': 'Provide both cover image URL and storage path.',
 
   'shell.nav.label': 'Primary navigation',
+  'shell.nav.section': 'Workspace',
   'shell.nav.workspaces': 'Boards',
   'shell.nav.favorites': 'Favorites',
   'shell.nav.profile': 'Profile',
@@ -176,6 +184,7 @@ const en = {
   'shell.account.signOut': 'Sign out',
   'shell.account.signingOut': 'Signing out…',
   'shell.account.identity': 'Your account',
+  'shell.account.online': 'Online',
   'shell.notifications.label': 'Notifications',
   'shell.notifications.labelWithCount': 'Notifications, {count} unread',
   'shell.notifications.title': 'Notifications',
@@ -694,6 +703,8 @@ const es: Record<TranslationKey, string> = {
   'common.back': 'Volver',
   'common.somethingWentWrong': 'Algo salió mal.',
 
+  'app.copyright': '© 2026 Cachiplunca. Todos los derechos reservados.',
+
   'auth.signIn.title': 'Iniciar sesión',
   'auth.signIn.subtitle': 'Convierte ideas dispersas en un plan compartido.',
   'auth.email': 'Email',
@@ -746,8 +757,13 @@ const es: Record<TranslationKey, string> = {
 
   'workspaces.title': 'Tus tableros',
   'workspaces.create': 'Crear tablero',
+  'workspaces.createCard.title': 'Nuevo tablero en blanco',
+  'workspaces.createCard.description':
+    'Comienza un lienzo infinito con notas adhesivas, conectores y marcos colaborativos.',
+  'workspaces.createCard.action': 'Empezar ahora',
   'workspaces.searchLabel': 'Buscar tableros',
   'workspaces.searchPlaceholder': 'Busca por nombre o descripción',
+  'workspaces.searchShortcut': 'Abrir paleta de comandos',
   'workspaces.results.one': '1 tablero',
   'workspaces.results.other': '{count} tableros',
   'workspaces.noResults.title': 'No hay tableros que coincidan',
@@ -838,6 +854,7 @@ const es: Record<TranslationKey, string> = {
   'workspaces.errors.coverPair': 'Indica la URL y la ruta de almacenamiento de la portada.',
 
   'shell.nav.label': 'Navegación principal',
+  'shell.nav.section': 'Espacio de trabajo',
   'shell.nav.workspaces': 'Tableros',
   'shell.nav.favorites': 'Favoritos',
   'shell.nav.profile': 'Perfil',
@@ -849,6 +866,7 @@ const es: Record<TranslationKey, string> = {
   'shell.account.signOut': 'Cerrar sesión',
   'shell.account.signingOut': 'Cerrando sesión…',
   'shell.account.identity': 'Tu cuenta',
+  'shell.account.online': 'En línea',
   'shell.notifications.label': 'Notificaciones',
   'shell.notifications.labelWithCount': 'Notificaciones, {count} sin leer',
   'shell.notifications.title': 'Notificaciones',

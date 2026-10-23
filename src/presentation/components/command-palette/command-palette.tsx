@@ -18,7 +18,7 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from 'react';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import { useI18n } from '../../i18n';
 import { useCommandPaletteShortcut } from '../../hooks/use-command-palette-shortcut';
 import {
@@ -29,7 +29,7 @@ import {
 } from './command-palette-filter';
 import type { CommandPaletteGroup } from './command-palette.types';
 
-const PaletteContent = styled(DialogContent)`
+const PaletteContent = styled(DialogContent)<{ $surface: CommandPaletteSurface }>`
   && {
     gap: ${({ theme }) => theme.space[4]};
     max-width: 40rem;
@@ -37,6 +37,18 @@ const PaletteContent = styled(DialogContent)`
     padding: ${({ theme }) => theme.space[5]};
     border: 1px solid ${({ theme }) => theme.color.border.default};
   }
+
+  ${({ $surface }) =>
+    $surface === 'stitch' &&
+    css`
+      && {
+        border-color: var(--stitch-border);
+        border-radius: 16px;
+        background: var(--stitch-surface);
+        color: var(--stitch-text);
+        box-shadow: var(--stitch-card-shadow);
+      }
+    `}
 
   @media (max-width: 700px) {
     && {
@@ -208,12 +220,15 @@ const Hint = styled.div`
   padding-top: ${({ theme }) => theme.space[3]};
 `;
 
+export type CommandPaletteSurface = 'brand' | 'stitch';
+
 export interface CommandPaletteProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
   readonly groups: readonly CommandPaletteGroup[];
   readonly searchGroups?: (query: string) => readonly CommandPaletteGroup[];
   readonly statusMessage?: string | null;
+  readonly surface?: CommandPaletteSurface;
 }
 
 export function CommandPalette({
@@ -222,6 +237,7 @@ export function CommandPalette({
   groups,
   searchGroups,
   statusMessage = null,
+  surface = 'brand',
 }: CommandPaletteProps): ReactNode {
   const { t } = useI18n();
   const listboxId = useId();
@@ -334,7 +350,10 @@ export function CommandPalette({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <PaletteContent>
+      <PaletteContent
+        $surface={surface}
+        {...(surface === 'stitch' ? { 'data-surface': 'stitch' } : {})}
+      >
         <DialogHeader>
           <DialogTitle>{t('commandPalette.title')}</DialogTitle>
           <DialogDescription>{t('commandPalette.description')}</DialogDescription>

@@ -1,7 +1,7 @@
 import { Button, Dialog, DialogContent, Text } from '@raulrod/ui';
 import { LogOut, Menu } from '@raulrod/icons';
 import { useState, type ReactNode } from 'react';
-import styled, { keyframes } from 'styled-components';
+import styled, { css, keyframes } from 'styled-components';
 import type { LogoutUser } from '../../../application/commands';
 import type { AuthUser } from '../../../application/ports';
 import { PanelHeader } from '../../components/panel-header';
@@ -9,6 +9,7 @@ import { useI18n } from '../../i18n';
 import { useMediaQuery } from '../../hooks/use-media-query';
 import { useSignOut } from '../auth/use-sign-out';
 import { NavLinks } from './nav-links';
+import type { AppShellVariant } from './app-shell';
 
 export const NARROW_NAV_DRAWER_CLASS = 'app-nav-drawer';
 
@@ -47,9 +48,18 @@ const MenuTrigger = styled(Dialog.Trigger)`
     outline: 2px solid ${({ theme }) => theme.color.focusRing};
     outline-offset: 2px;
   }
+
+  [data-surface='stitch'] & {
+    color: var(--stitch-text-muted);
+
+    &:hover {
+      background: color-mix(in srgb, var(--stitch-text) 7%, transparent);
+      color: var(--stitch-text);
+    }
+  }
 `;
 
-const Sheet = styled(DialogContent)`
+const Sheet = styled(DialogContent)<{ $variant?: AppShellVariant }>`
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -65,6 +75,15 @@ const Sheet = styled(DialogContent)`
   border-radius: 0;
   background: ${({ theme }) => theme.color.background.surface};
   box-shadow: ${({ theme }) => theme.shadow.md};
+
+  ${({ $variant }) =>
+    $variant === 'stitch' &&
+    css`
+      border-right-color: var(--stitch-sidebar-border);
+      background: var(--stitch-sidebar);
+      color: var(--stitch-text);
+    `}
+
   animation: ${slideIn} ${({ theme }) => theme.motion.duration.base}
     ${({ theme }) => theme.motion.easing.enter};
 
@@ -111,9 +130,14 @@ const Identity = styled.div`
 export interface NarrowNavMenuProps {
   readonly currentUser: AuthUser | null;
   readonly logoutUser: LogoutUser;
+  readonly variant?: AppShellVariant;
 }
 
-export function NarrowNavMenu({ currentUser, logoutUser }: NarrowNavMenuProps): ReactNode {
+export function NarrowNavMenu({
+  currentUser,
+  logoutUser,
+  variant = 'brand',
+}: NarrowNavMenuProps): ReactNode {
   const { t } = useI18n();
   const isNarrow = useMediaQuery('(max-width: 900px)');
   const { signingOut, signOutError, signOut } = useSignOut(logoutUser);
@@ -129,7 +153,11 @@ export function NarrowNavMenu({ currentUser, logoutUser }: NarrowNavMenuProps): 
       <MenuTrigger aria-label={t('shell.nav.openMenu')}>
         <Menu aria-hidden="true" size={20} />
       </MenuTrigger>
-      <Sheet aria-label={t('shell.nav.title')}>
+      <Sheet
+        aria-label={t('shell.nav.title')}
+        $variant={variant}
+        {...(variant === 'stitch' ? { 'data-surface': 'stitch' } : {})}
+      >
         <PanelHeader
           title={t('shell.nav.title')}
           onClose={() => {
