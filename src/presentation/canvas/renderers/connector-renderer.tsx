@@ -4,19 +4,22 @@ import { isConnectorElement } from '../../../domain/element';
 import { Position } from '../../../domain/shared';
 import type { ElementRendererProps } from './element-renderer';
 
-const STROKE_WIDTH = 2;
-const SELECTED_STROKE_WIDTH = 3;
+const STROKE_WIDTH = 2.5;
+const SELECTED_STROKE_WIDTH = 3.5;
 const HIT_STROKE_WIDTH = 14;
 const ARROW_SIZE = 8;
 
-const Content = styled.svg`
+const Content = styled.svg<{ readonly $bound: boolean; readonly $selected: boolean }>`
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   overflow: visible;
   pointer-events: none;
-  color: ${({ theme }) => theme.canvas.elementBorderStrong};
+  color: ${({ theme, $bound, $selected }) =>
+    $selected || !$bound
+      ? `var(--stitch-primary, ${theme.color.border.primary})`
+      : `var(--stitch-secondary, ${theme.canvas.elementBorderStrong})`};
 `;
 
 const HitLine = styled.line`
@@ -53,6 +56,7 @@ export function ConnectorRenderer({
       ),
     origin,
   );
+  const bound = element.sourceElementId !== undefined || element.targetElementId !== undefined;
 
   return (
     <Content
@@ -67,6 +71,8 @@ export function ConnectorRenderer({
       width="100%"
       height="100%"
       aria-hidden="true"
+      $bound={bound}
+      $selected={selected}
     >
       <defs>
         <marker
@@ -101,6 +107,7 @@ export function ConnectorRenderer({
         y2={end.y}
         stroke="currentColor"
         strokeWidth={selected ? SELECTED_STROKE_WIDTH : STROKE_WIDTH}
+        strokeDasharray={bound ? undefined : '6 4'}
         strokeLinecap="round"
         markerEnd={`url(#${markerId})`}
       />

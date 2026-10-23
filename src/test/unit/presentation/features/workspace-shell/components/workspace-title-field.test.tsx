@@ -18,7 +18,7 @@ describe('WorkspaceTitleField', () => {
     );
 
     const heading = screen.getByRole('heading', { level: 1 });
-    expect(heading).toHaveStyle({ fontSize: appTheme.font.size.lg });
+    expect(heading).toHaveStyle({ fontSize: appTheme.font.size.sm });
     expect(heading).toHaveStyle({ overflow: 'hidden' });
     expect(heading).not.toHaveStyle({ whiteSpace: 'nowrap' });
   });

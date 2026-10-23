@@ -44,6 +44,7 @@ const Shell = styled.div`
   display: flex;
   flex-direction: column;
   height: 100dvh;
+  background: var(--stitch-canvas-bg);
 `;
 
 const AccessBanner = styled.div`
@@ -358,7 +359,7 @@ export function WorkspaceShellLayout({
   };
 
   return (
-    <Shell>
+    <Shell data-surface="stitch" data-board="true">
       {accessErrorMessage === null ? null : (
         <AccessBanner role="alert">
           <Text color="color.text.primary">{accessErrorMessage}</Text>

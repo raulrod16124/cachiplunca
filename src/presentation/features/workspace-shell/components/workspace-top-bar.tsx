@@ -1,6 +1,7 @@
 import {
   Avatar,
   Badge,
+  Button,
   DropdownMenu,
   Inline,
   Popover,
@@ -62,7 +63,7 @@ const Overlay = styled.header`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.space[2]};
-  padding: ${({ theme }) => `${theme.space[3]} ${theme.space[4]}`};
+  padding: ${({ theme }) => theme.space[4]};
   pointer-events: none;
 
   @media (max-width: 900px) {
@@ -89,11 +90,12 @@ const Cluster = styled.div`
   gap: ${({ theme }) => theme.space[2]};
   min-width: 0;
   max-width: max(200px, calc(50% - 200px));
-  padding: ${({ theme }) => `${theme.space[1]} ${theme.space[2]}`};
-  border-radius: ${({ theme }) => theme.radius.md};
-  background: ${({ theme }) => theme.canvas.surface};
-  border: 1px solid ${({ theme }) => theme.canvas.elementBorder};
-  box-shadow: ${({ theme }) => theme.shadow.sm};
+  padding: ${({ theme }) => `${theme.space[2]} ${theme.space[3]}`};
+  border-radius: var(--stitch-radius-panel, var(--rr-radius-lg));
+  background: var(--stitch-panel-bg, ${({ theme }) => theme.canvas.surface});
+  border: 1px solid var(--stitch-panel-border, ${({ theme }) => theme.canvas.elementBorder});
+  box-shadow: var(--stitch-panel-shadow, ${({ theme }) => theme.shadow.md});
+  backdrop-filter: blur(var(--stitch-panel-blur));
   pointer-events: auto;
 
   @media (max-width: 900px) {
@@ -103,6 +105,59 @@ const Cluster = styled.div`
     overscroll-behavior-x: contain;
     scrollbar-width: thin;
   }
+`;
+
+const Divider = styled.span`
+  flex: none;
+  width: 1px;
+  height: ${({ theme }) => theme.space[6]};
+  background: var(--stitch-panel-border, ${({ theme }) => theme.canvas.elementBorder});
+`;
+
+const TitleBlock = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+`;
+
+const TitleRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.space[2]};
+  min-width: 0;
+`;
+
+const MetaRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.space[2]};
+  min-width: 0;
+  color: var(--stitch-text-muted, ${({ theme }) => theme.color.text.muted});
+  font-size: ${({ theme }) => theme.font.size['2xs']};
+`;
+
+const ShareButton = styled(Button)`
+  flex: none;
+`;
+
+const RolePill = styled.span`
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--stitch-primary, ${({ theme }) => theme.color.text.warning}) 22%,
+      transparent
+    );
+  border-radius: 6px;
+  background: var(--stitch-primary-soft, ${({ theme }) => theme.color.background.warning});
+  color: var(--stitch-primary, ${({ theme }) => theme.color.text.warning});
+  font-size: 11px;
+  font-weight: ${({ theme }) => theme.font.weight.semibold};
+  line-height: ${({ theme }) => theme.font.leading.none};
+  white-space: nowrap;
 `;
 
 const ErrorBanner = styled.div`
@@ -206,11 +261,11 @@ const BackButton = styled(NeutralButton)`
 const TopbarCover = styled.span`
   display: block;
   flex: none;
-  width: ${({ theme }) => theme.space[8]};
-  height: ${({ theme }) => theme.space[8]};
+  width: calc(${({ theme }) => theme.space[8]} + 4px);
+  height: calc(${({ theme }) => theme.space[8]} + 4px);
   overflow: hidden;
-  border: 1px solid ${({ theme }) => theme.color.border.default};
-  border-radius: ${({ theme }) => theme.radius.md};
+  border: 1px solid var(--stitch-panel-border, ${({ theme }) => theme.color.border.default});
+  border-radius: var(--stitch-radius-control, var(--rr-radius-md));
 `;
 
 const TopbarButton = styled(NeutralIconButton)`
@@ -360,25 +415,36 @@ export function WorkspaceTopBar({
           >
             <ArrowLeft aria-hidden="true" size={16} />
           </BackButton>
+          <Divider aria-hidden="true" />
           <TopbarCover data-testid="workspace-cover-topbar">
             <WorkspaceCover url={workspace.coverImageUrl} loading="eager" iconSize={16} />
           </TopbarCover>
-          <WorkspaceTitleField name={workspace.name} />
-          {role === undefined ? (
-            readOnly ? (
-              <Badge variant="warning">{t('canvas.topbar.viewOnly')}</Badge>
-            ) : null
-          ) : (
-            <Badge variant="neutral">{t(ROLE_KEYS[role])}</Badge>
-          )}
-          {localizedSyncBadge === null ? null : <SyncStatusIndicator status={localizedSyncBadge} />}
-          {localizedConnectionBadge === null ? null : (
-            <span role="status" aria-live="polite">
-              <Badge variant={localizedConnectionBadge.variant}>
-                {localizedConnectionBadge.label}
-              </Badge>
-            </span>
-          )}
+          <TitleBlock>
+            <TitleRow>
+              <WorkspaceTitleField name={workspace.name} />
+              {role === undefined ? (
+                readOnly ? (
+                  <Badge variant="warning">{t('canvas.topbar.viewOnly')}</Badge>
+                ) : null
+              ) : (
+                <RolePill>{t(ROLE_KEYS[role])}</RolePill>
+              )}
+            </TitleRow>
+            {localizedSyncBadge === null && localizedConnectionBadge === null ? null : (
+              <MetaRow>
+                {localizedSyncBadge === null ? null : (
+                  <SyncStatusIndicator status={localizedSyncBadge} />
+                )}
+                {localizedConnectionBadge === null ? null : (
+                  <span role="status" aria-live="polite">
+                    <Badge variant={localizedConnectionBadge.variant}>
+                      {localizedConnectionBadge.label}
+                    </Badge>
+                  </span>
+                )}
+              </MetaRow>
+            )}
+          </TitleBlock>
         </Cluster>
         <Cluster>
           {connectedUsers.length === 0 ? null : (
@@ -430,6 +496,7 @@ export function WorkspaceTopBar({
               </VisuallyHidden>
             </Inline>
           )}
+          <Divider aria-hidden="true" />
           {onTogglePlan === undefined ? null : (
             <Tooltip content={t('plan.title')} placement="bottom">
               <TopbarButton
@@ -480,15 +547,15 @@ export function WorkspaceTopBar({
           <SessionTimer />
           {onShare === undefined ? null : (
             <Tooltip content={t('canvas.topbar.share')} placement="bottom">
-              <TopbarButton
+              <ShareButton
                 type="button"
-                variant="ghost"
+                variant="primary"
                 size="sm"
-                label={t('canvas.topbar.share')}
+                startIcon={<Share2 aria-hidden="true" size={16} />}
                 onClick={onShare}
               >
-                <Share2 aria-hidden="true" size={16} />
-              </TopbarButton>
+                {t('canvas.topbar.share')}
+              </ShareButton>
             </Tooltip>
           )}
           {canExport && !isNarrow ? (
@@ -581,6 +648,7 @@ export function WorkspaceTopBar({
               </DropdownMenu.Content>
             </DropdownMenu>
           ) : null}
+          <Divider aria-hidden="true" />
           <AccountMenu currentUser={currentUser} logoutUser={logoutUser} />
         </Cluster>
       </Row>

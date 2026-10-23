@@ -24,19 +24,37 @@ const Content = styled.div<{ readonly $overdue: boolean }>`
   gap: 6px;
   padding: 12px;
   overflow: hidden;
-  border-radius: ${({ theme }) => theme.radius.md};
+  border-radius: var(--stitch-radius-control, ${({ theme }) => theme.radius.md});
   border-width: 1px;
   border-style: solid;
   border-color: ${({ $overdue, theme }) =>
-    $overdue ? theme.color.border.danger : theme.canvas.elementBorderSoft};
+    $overdue
+      ? theme.color.border.danger
+      : 'var(--stitch-card-border, ' + theme.canvas.elementBorderSoft + ')'};
   box-shadow: ${({ $overdue, theme }) =>
-    $overdue ? `inset 3px 0 0 ${theme.color.border.danger}` : 'none'};
-  background-color: ${({ theme }) => theme.canvas.surface};
-  color: ${({ theme }) => theme.color.text.primary};
-  font-family: ${({ theme }) => theme.font.family.sans};
+    $overdue ? `inset 3px 0 0 ${theme.color.border.danger}` : 'var(--stitch-card-shadow, none)'};
+  background-color: var(--stitch-surface, ${({ theme }) => theme.canvas.surface});
+  color: var(--stitch-text, ${({ theme }) => theme.color.text.primary});
+  font-family: var(--stitch-font-body, ${({ theme }) => theme.font.family.sans});
   font-size: ${({ theme }) => theme.font.size.sm};
   line-height: 1.4;
   cursor: pointer;
+  transition:
+    border-color ${({ theme }) => theme.motion.duration.base}
+      ${({ theme }) => theme.motion.easing.standard},
+    box-shadow ${({ theme }) => theme.motion.duration.base}
+      ${({ theme }) => theme.motion.easing.standard};
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+
+  &:hover {
+    border-color: ${({ $overdue, theme }) =>
+      $overdue
+        ? theme.color.border.danger
+        : 'var(--stitch-card-border-hover, ' + theme.color.border.default + ')'};
+  }
 `;
 
 const HeaderRow = styled.div`
@@ -129,8 +147,8 @@ const NotesPanel = styled.div`
   overflow: auto;
   padding: 6px 8px;
   border-radius: ${({ theme }) => theme.radius.sm};
-  background-color: ${({ theme }) => theme.color.background.sunken};
-  color: ${({ theme }) => theme.color.text.primary};
+  background-color: var(--stitch-surface-low, ${({ theme }) => theme.color.background.sunken});
+  color: var(--stitch-text, ${({ theme }) => theme.color.text.primary});
   font-size: ${({ theme }) => theme.font.size['2xs']};
 `;
 

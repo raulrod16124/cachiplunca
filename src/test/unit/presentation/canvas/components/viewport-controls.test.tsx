@@ -44,7 +44,7 @@ describe('ViewportControls', () => {
 
     const controls = screen.getByTestId('viewport-controls');
     expect(controls).toHaveStyle({ left: '50%' });
-    expect(styleText()).toContain('bottom:var(--rr-space-4)');
+    expect(styleText()).toContain('bottom:var(--rr-space-5)');
   });
 
   it('uses brand spacing and focus tokens', () => {

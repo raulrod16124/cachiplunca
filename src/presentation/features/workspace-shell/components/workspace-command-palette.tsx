@@ -253,6 +253,7 @@ export function WorkspaceCommandPalette({
       groups={groups}
       searchGroups={searchGroups}
       statusMessage={statusMessage}
+      surface="stitch"
     />
   );
 }

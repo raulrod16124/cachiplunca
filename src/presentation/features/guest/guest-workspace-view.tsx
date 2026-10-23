@@ -17,7 +17,7 @@ const Shell = styled.div`
   display: flex;
   flex-direction: column;
   height: 100dvh;
-  background: ${({ theme }) => theme.canvas.surface};
+  background: var(--stitch-canvas-bg, ${({ theme }) => theme.canvas.surface});
 `;
 
 const Header = styled.header`
@@ -79,7 +79,7 @@ export function GuestWorkspaceView({
   );
 
   return (
-    <Shell>
+    <Shell data-surface="stitch" data-board="true">
       <Header>
         <Identity>
           <Brand>{t('brand.name')}</Brand>

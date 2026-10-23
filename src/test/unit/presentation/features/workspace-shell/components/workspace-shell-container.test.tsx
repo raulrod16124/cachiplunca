@@ -303,6 +303,7 @@ describe('WorkspaceShellContainer', () => {
     expect(screen.getByRole('button', { name: 'Back to boards' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Open account menu' })).toBeInTheDocument();
     expect(screen.getByRole('application', { name: 'Canvas' })).toBeInTheDocument();
+    expect(document.querySelector('[data-surface="stitch"]')).toBeInTheDocument();
     expect(getWorkspace).toHaveBeenCalledWith('ws-test');
   });
 

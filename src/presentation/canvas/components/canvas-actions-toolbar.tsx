@@ -75,19 +75,20 @@ const ArrangeTrigger = styled(DropdownMenu.Trigger)`
 const Bar = styled.div`
   position: absolute;
   top: 50%;
-  left: ${({ theme }) => theme.space[4]};
+  left: ${({ theme }) => theme.space[6]};
   transform: translateY(-50%);
   z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: ${({ theme }) => theme.space[2]};
+  gap: ${({ theme }) => theme.space[1]};
   max-height: calc(100% - var(--rr-space-4) * 2);
-  padding: ${({ theme }) => `${theme.space[2]} ${theme.space[1]}`};
-  border-radius: ${({ theme }) => theme.radius.md};
-  background: ${({ theme }) => theme.color.background.surface};
-  border: 1px solid ${({ theme }) => theme.color.border.default};
-  box-shadow: ${({ theme }) => theme.shadow.md};
+  padding: ${({ theme }) => theme.space[1]};
+  border-radius: var(--stitch-radius-panel, var(--rr-radius-md));
+  background: var(--stitch-panel-bg, var(--cach-floating-surface));
+  border: 1px solid var(--stitch-panel-border, ${({ theme }) => theme.color.border.default});
+  box-shadow: var(--stitch-panel-shadow, ${({ theme }) => theme.shadow.md});
+  backdrop-filter: blur(var(--stitch-panel-blur));
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior-y: contain;
@@ -125,7 +126,7 @@ const Separator = styled.span`
   flex: none;
   width: ${({ theme }) => theme.space[5]};
   height: 1px;
-  background: ${({ theme }) => theme.color.border.default};
+  background: var(--stitch-panel-border, ${({ theme }) => theme.color.border.default});
 
   @media (max-width: 900px) {
     width: 1px;

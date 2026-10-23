@@ -54,6 +54,41 @@
   --stitch-pattern-color: #8f7066;
   --stitch-pattern-opacity: 0.4;
 
+  /* Board canvas (workspace shell) */
+  --stitch-canvas-bg: #faf9f6;
+  --stitch-canvas-dot: #d6d1c6;
+  --stitch-canvas-dot-size: 1.4px;
+  --stitch-canvas-grid-size: 26px;
+
+  /* Floating board chrome */
+  --stitch-panel-bg: #ffffffeb;
+  --stitch-panel-border: #0e23191a;
+  --stitch-panel-shadow: 0 20px 40px -15px rgba(14, 35, 25, 0.14), 0 0 0 1px rgba(14, 35, 25, 0.06);
+  --stitch-panel-blur: 12px;
+  --stitch-radius-panel: 18px;
+  --stitch-radius-frame: 26px;
+
+  /* Board content */
+  --stitch-note-default: #fef9c3;
+  --stitch-note-green: #bbf7d0;
+  --stitch-note-amber: #fef08a;
+  --stitch-note-blue: #e9d5ff;
+  --stitch-note-red: #fed7aa;
+  --stitch-note-gray: #f5f5f4;
+  --stitch-note-border: #0e23191a;
+  --stitch-note-shadow:
+    0 8px 18px -4px rgba(230, 81, 0, 0.12), 0 3px 6px -2px rgba(14, 35, 25, 0.06);
+  --stitch-note-shadow-hover: 0 16px 30px -8px rgba(14, 35, 25, 0.16);
+
+  --stitch-frame-bg: #ffffff66;
+  --stitch-frame-border: #0e231940;
+
+  --stitch-card-border: #e7e5e4;
+  --stitch-card-border-hover: #e65100;
+  --stitch-card-shadow: 0 1px 2px rgba(14, 35, 25, 0.06), 0 4px 10px -2px rgba(14, 35, 25, 0.04);
+
+  --stitch-cursor-shadow: drop-shadow(0 2px 3px rgba(14, 35, 25, 0.28));
+
   /* Cover variants */
   --stitch-cover-warm-from: #fbf5ed;
   --stitch-cover-warm-via: #f7eee2;
@@ -173,6 +208,46 @@
   --rr-color-background-destructive: #ffdad666;
 }
 
+/*
+ * Board-only aliases. The workspace shell opts into these with
+ * `data-board='true'` so the canvas palette does not alter the boards list,
+ * favorites, profile or settings pages that also use the Stitch surface.
+ */
+[data-surface='stitch'][data-board='true'] {
+  --cach-canvas-surface: var(--stitch-canvas-bg);
+  --cach-control-hover: var(--stitch-surface-low);
+  --cach-control-active: var(--stitch-surface-container);
+  --cach-note-default: var(--stitch-note-default);
+  --cach-note-green: var(--stitch-note-green);
+  --cach-note-amber: var(--stitch-note-amber);
+  --cach-note-blue: var(--stitch-note-blue);
+  --cach-note-red: var(--stitch-note-red);
+  --cach-note-gray: var(--stitch-note-gray);
+  --rr-radius-md: 12px;
+  --rr-radius-lg: 18px;
+  --rr-color-border-primary: var(--stitch-primary);
+  --rr-color-border-primary-hover: var(--stitch-primary-hover);
+  --rr-button-primary-background: var(--stitch-primary);
+  --rr-button-primary-background-hover: var(--stitch-primary-hover);
+  --rr-button-primary-background-active: var(--stitch-primary-active);
+  --rr-button-primary-text: var(--stitch-on-primary);
+  --rr-button-secondary-background: var(--stitch-secondary);
+  --rr-button-secondary-background-hover: var(--stitch-secondary-hover);
+  --rr-button-secondary-text: var(--stitch-on-primary);
+  --rr-button-destructive-background: var(--stitch-error);
+  --rr-button-destructive-background-hover: var(--stitch-error-hover);
+  --rr-button-destructive-text: var(--stitch-on-primary);
+}
+
+@media (prefers-contrast: more) {
+  [data-surface='stitch'][data-board='true'] {
+    --stitch-panel-border: var(--rr-color-border-strong);
+    --stitch-frame-border: var(--rr-color-border-strong);
+    --stitch-card-border: var(--rr-color-border-strong);
+    --stitch-note-border: var(--rr-color-border-strong);
+  }
+}
+
 [data-theme='dark'] [data-surface='stitch'] {
   --stitch-bg: #07130d;
   --stitch-surface: #0e2319;
@@ -206,6 +281,35 @@
 
   --stitch-pattern-color: rgba(255, 255, 255, 0.4);
   --stitch-pattern-opacity: 0.2;
+
+  --stitch-canvas-bg: #07130d;
+  --stitch-canvas-dot: #ffffff66;
+  --stitch-canvas-dot-size: 1.4px;
+  --stitch-canvas-grid-size: 26px;
+
+  --stitch-panel-bg: #0e2319eb;
+  --stitch-panel-border: #ffffff1a;
+  --stitch-panel-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --stitch-panel-blur: 12px;
+
+  --stitch-note-default: #443c1f;
+  --stitch-note-green: #1f3d2a;
+  --stitch-note-amber: #4a3d1f;
+  --stitch-note-blue: #2e2a45;
+  --stitch-note-red: #4a2c25;
+  --stitch-note-gray: #3a3428;
+  --stitch-note-border: #ffffff1a;
+  --stitch-note-shadow: 0 10px 22px -6px rgba(0, 0, 0, 0.55), 0 3px 8px -2px rgba(0, 0, 0, 0.35);
+  --stitch-note-shadow-hover: 0 18px 34px -8px rgba(0, 0, 0, 0.65);
+
+  --stitch-frame-bg: #ffffff08;
+  --stitch-frame-border: #ffffff26;
+
+  --stitch-card-border: #ffffff1a;
+  --stitch-card-border-hover: #f59e0b;
+  --stitch-card-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+
+  --stitch-cursor-shadow: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.55));
 
   --stitch-cover-warm-from: #132f22;
   --stitch-cover-warm-via: #132f22;
@@ -345,6 +449,36 @@
 
     --stitch-pattern-color: rgba(255, 255, 255, 0.4);
     --stitch-pattern-opacity: 0.2;
+
+    --stitch-canvas-bg: #07130d;
+    --stitch-canvas-dot: #ffffff66;
+    --stitch-canvas-dot-size: 1.4px;
+    --stitch-canvas-grid-size: 26px;
+
+    --stitch-panel-bg: #0e2319eb;
+    --stitch-panel-border: #ffffff1a;
+    --stitch-panel-shadow:
+      0 20px 40px -15px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.06);
+    --stitch-panel-blur: 12px;
+
+    --stitch-note-default: #443c1f;
+    --stitch-note-green: #1f3d2a;
+    --stitch-note-amber: #4a3d1f;
+    --stitch-note-blue: #2e2a45;
+    --stitch-note-red: #4a2c25;
+    --stitch-note-gray: #3a3428;
+    --stitch-note-border: #ffffff1a;
+    --stitch-note-shadow: 0 10px 22px -6px rgba(0, 0, 0, 0.55), 0 3px 8px -2px rgba(0, 0, 0, 0.35);
+    --stitch-note-shadow-hover: 0 18px 34px -8px rgba(0, 0, 0, 0.65);
+
+    --stitch-frame-bg: #ffffff08;
+    --stitch-frame-border: #ffffff26;
+
+    --stitch-card-border: #ffffff1a;
+    --stitch-card-border-hover: #f59e0b;
+    --stitch-card-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+
+    --stitch-cursor-shadow: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.55));
 
     --stitch-cover-warm-from: #132f22;
     --stitch-cover-warm-via: #132f22;

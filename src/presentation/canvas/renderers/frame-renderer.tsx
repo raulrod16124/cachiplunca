@@ -11,21 +11,26 @@ const Content = styled.div`
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border: 1px dashed ${({ theme }) => theme.canvas.elementBorder};
-  border-radius: ${({ theme }) => theme.radius.md};
-  background-color: ${({ theme }) => theme.canvas.surfaceMuted};
-  color: ${({ theme }) => theme.color.text.primary};
-  font-family: ${({ theme }) => theme.font.family.sans};
+  border: 2px dashed var(--stitch-frame-border, ${({ theme }) => theme.canvas.elementBorder});
+  border-radius: var(--stitch-radius-frame, ${({ theme }) => theme.radius.lg});
+  background-color: var(--stitch-frame-bg, ${({ theme }) => theme.canvas.surfaceMuted});
+  color: var(--stitch-text, ${({ theme }) => theme.color.text.primary});
+  font-family: var(--stitch-font-body, ${({ theme }) => theme.font.family.sans});
   font-size: ${({ theme }) => theme.font.size.sm};
   line-height: ${({ theme }) => theme.font.leading.normal};
   cursor: pointer;
 `;
 
 const Header = styled.div`
-  padding: 8px 12px;
-  border-bottom: 1px solid ${({ theme }) => theme.canvas.elementBorder};
-  background-color: ${({ theme }) => theme.canvas.surface};
+  padding: ${({ theme }) => `${theme.space[2]} ${theme.space[3]}`};
+  border-bottom: 1px dashed var(--stitch-frame-border, ${({ theme }) => theme.canvas.elementBorder});
+  background-color: color-mix(
+    in srgb,
+    var(--stitch-surface, ${({ theme }) => theme.canvas.surface}) 60%,
+    transparent
+  );
   font-weight: ${({ theme }) => theme.font.weight.semibold};
+  letter-spacing: ${({ theme }) => theme.font.tracking.tight};
   word-break: break-word;
 `;
 

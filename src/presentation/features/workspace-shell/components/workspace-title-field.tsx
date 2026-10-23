@@ -11,7 +11,7 @@ const TruncatedHeading = styled(Heading)`
     -webkit-box-orient: vertical;
     min-width: 0;
     max-width: min(36vw, 420px);
-    font-size: ${({ theme }) => theme.font.size.lg};
+    font-size: ${({ theme }) => theme.font.size.sm};
     line-height: ${({ theme }) => theme.font.leading.tight};
   }
 `;
