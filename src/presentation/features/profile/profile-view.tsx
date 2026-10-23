@@ -14,7 +14,7 @@ import {
   Tabs,
   Text,
 } from '@raulrod/ui';
-import { ShieldCheck, Sparkles } from '@raulrod/icons';
+import { Mail, ShieldCheck, Sparkles } from '@raulrod/icons';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import styled from 'styled-components';
 import {
@@ -27,7 +27,13 @@ import type { AuthUser } from '../../../application/ports';
 import { toAppError, ERROR_CODES, type AppError } from '../../../shared/errors';
 import { localizeFieldError, useI18n, type I18nContextValue } from '../../i18n';
 import { PasswordInput } from '../auth/password-input';
-import { Card } from '../../components/card';
+import {
+  StitchPanel,
+  StitchSection,
+  StitchSectionHeading,
+  StitchSectionIcon,
+  StitchSectionTitle,
+} from '../../components/stitch-page-shell';
 import { useProfileServices } from './profile-services-provider';
 
 export const PROFILE_TAB = 'profile';
@@ -39,14 +45,36 @@ export function isProfileTab(value: string | null): value is ProfileTab {
   return value === PROFILE_TAB || value === SECURITY_TAB;
 }
 
-const IdentityCard = styled(Card)`
+const IdentityPanel = styled(StitchPanel)`
   flex-direction: row;
   align-items: center;
   gap: ${({ theme }) => theme.space[4]};
+  background: linear-gradient(
+    135deg,
+    var(--stitch-surface),
+    color-mix(in srgb, var(--stitch-secondary) 7%, var(--stitch-surface))
+  );
+
+  @media (max-width: 560px) {
+    align-items: flex-start;
+  }
+`;
+
+const AvatarFrame = styled.span`
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  border: 1px solid color-mix(in srgb, var(--stitch-secondary) 30%, transparent);
+  border-radius: ${({ theme }) => theme.radius.full};
+  background: var(--stitch-surface);
+  box-shadow: ${({ theme }) => theme.shadow.sm};
 `;
 
 const IdentityText = styled.div`
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: ${({ theme }) => theme.space[1]};
   min-width: 0;
@@ -58,36 +86,61 @@ const IdentityText = styled.div`
   }
 `;
 
-const Section = styled.section`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.space[4]};
-  padding-top: ${({ theme }) => theme.space[5]};
-  border-top: 1px solid ${({ theme }) => theme.color.border.default};
-
-  &:first-of-type {
-    padding-top: 0;
-    border-top: none;
-  }
+const IdentityName = styled.span`
+  color: var(--stitch-text);
+  font-size: ${({ theme }) => theme.font.size.xl};
+  font-weight: ${({ theme }) => theme.font.weight.bold};
+  letter-spacing: -0.015em;
+  line-height: 1.2;
 `;
 
-const SectionTitle = styled(Heading)`
-  && {
-    margin: 0;
-    font-size: ${({ theme }) => theme.font.size.lg};
-    line-height: ${({ theme }) => theme.font.leading.tight};
-  }
-`;
-
-const SectionHeading = styled.div`
-  display: flex;
-  align-items: flex-start;
-  gap: ${({ theme }) => theme.space[2]};
+const IdentityEmail = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.space[1]};
+  color: var(--stitch-text-muted);
+  font-size: ${({ theme }) => theme.font.size.sm};
+  min-width: 0;
 
   svg {
     flex: none;
-    margin-top: 2px;
-    color: ${({ theme }) => theme.color.text.muted};
+    color: var(--stitch-text-subtle);
+  }
+`;
+
+const VerifiedBadge = styled.span`
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid color-mix(in srgb, var(--stitch-secondary) 30%, transparent);
+  border-radius: ${({ theme }) => theme.radius.full};
+  background: color-mix(in srgb, var(--stitch-secondary) 12%, transparent);
+  color: var(--stitch-secondary);
+  font-size: ${({ theme }) => theme.font.size['2xs']};
+  font-weight: ${({ theme }) => theme.font.weight.semibold};
+  white-space: nowrap;
+
+  @media (max-width: 560px) {
+    display: none;
+  }
+`;
+
+const TabPanel = styled(StitchPanel)`
+  gap: ${({ theme }) => theme.space[2]};
+
+  @media (max-width: 700px) {
+    padding: ${({ theme }) => theme.space[4]};
+  }
+`;
+
+const FormTitle = styled(Heading)`
+  && {
+    margin: 0;
+    color: var(--stitch-text);
+    font-size: ${({ theme }) => theme.font.size.lg};
+    line-height: ${({ theme }) => theme.font.leading.tight};
   }
 `;
 
@@ -118,90 +171,105 @@ export function ProfileView({ currentUser, tab, onTabChange }: ProfileViewProps)
 
   return (
     <Stack gap="space-5">
-      <IdentityCard variant="surface" padding="md" data-testid="profile-identity">
-        <Avatar name={avatarName} size="lg" />
+      <IdentityPanel data-testid="profile-identity">
+        <AvatarFrame>
+          <Avatar name={avatarName} size="lg" />
+        </AvatarFrame>
         <IdentityText>
-          <Text weight="font.weight.semibold" size="font.size.lg">
-            {identityName}
-          </Text>
+          <IdentityName>{identityName}</IdentityName>
           {currentUser.email === null ? null : (
-            <Text color="color.text.muted" size="font.size.sm">
+            <IdentityEmail>
+              <Mail aria-hidden="true" size={14} />
               {currentUser.email}
-            </Text>
+            </IdentityEmail>
           )}
         </IdentityText>
-      </IdentityCard>
+        {currentUser.emailVerified ? (
+          <VerifiedBadge>
+            <ShieldCheck aria-hidden="true" size={14} />
+            {t('profile.email.verified')}
+          </VerifiedBadge>
+        ) : null}
+      </IdentityPanel>
 
-      <Tabs
-        value={tab}
-        onValueChange={(value) => {
-          if (isProfileTab(value)) {
-            onTabChange(value);
-          }
-        }}
-        classNames={{
-          list: 'profile-tabs-list',
-          trigger: 'profile-tabs-trigger',
-        }}
-      >
-        <Tabs.List>
-          <Tabs.Trigger value={PROFILE_TAB}>{t('profile.tabs.profile')}</Tabs.Trigger>
-          <Tabs.Trigger value={SECURITY_TAB}>{t('profile.tabs.security')}</Tabs.Trigger>
-        </Tabs.List>
+      <TabPanel>
+        <Tabs
+          value={tab}
+          onValueChange={(value) => {
+            if (isProfileTab(value)) {
+              onTabChange(value);
+            }
+          }}
+          classNames={{
+            list: 'profile-tabs-list',
+            trigger: 'profile-tabs-trigger',
+          }}
+        >
+          <Tabs.List>
+            <Tabs.Trigger value={PROFILE_TAB}>{t('profile.tabs.profile')}</Tabs.Trigger>
+            <Tabs.Trigger value={SECURITY_TAB}>{t('profile.tabs.security')}</Tabs.Trigger>
+          </Tabs.List>
 
-        <Tabs.Panel value={PROFILE_TAB}>
-          <Stack gap="space-4">
-            <Section>
-              <SectionHeading>
-                <Sparkles aria-hidden="true" size={16} />
-                <SectionTitle as="h2">{t('profile.displayName.label')}</SectionTitle>
-              </SectionHeading>
-              <DisplayNameForm currentUser={currentUser} available={services !== null} />
-            </Section>
-            <Section data-testid="profile-email-section">
-              <SectionHeading>
-                <ShieldCheck aria-hidden="true" size={16} />
-                <Stack gap="space-1">
-                  <SectionTitle as="h2">{t('profile.email.label')}</SectionTitle>
-                  <Text color="color.text.muted" size="font.size.sm">
-                    {t('profile.email.hint')}
-                  </Text>
-                </Stack>
-              </SectionHeading>
-              <Inline gap="space-2" align="center" wrap>
-                <Text>{currentUser.email ?? '—'}</Text>
-                <Badge variant={currentUser.emailVerified ? 'success' : 'warning'}>
-                  {currentUser.emailVerified
-                    ? t('profile.email.verified')
-                    : t('profile.email.notVerified')}
-                </Badge>
-              </Inline>
-              {services === null ? null : <ChangeEmailForm currentEmail={currentUser.email} />}
-            </Section>
-          </Stack>
-        </Tabs.Panel>
+          <Tabs.Panel value={PROFILE_TAB}>
+            <Stack gap="space-4">
+              <StitchSection>
+                <StitchSectionHeading>
+                  <StitchSectionIcon>
+                    <Sparkles aria-hidden="true" size={16} />
+                  </StitchSectionIcon>
+                  <StitchSectionTitle as="h2">{t('profile.displayName.label')}</StitchSectionTitle>
+                </StitchSectionHeading>
+                <DisplayNameForm currentUser={currentUser} available={services !== null} />
+              </StitchSection>
+              <StitchSection data-testid="profile-email-section">
+                <StitchSectionHeading>
+                  <StitchSectionIcon>
+                    <ShieldCheck aria-hidden="true" size={16} />
+                  </StitchSectionIcon>
+                  <Stack gap="space-1">
+                    <StitchSectionTitle as="h2">{t('profile.email.label')}</StitchSectionTitle>
+                    <Text color="color.text.muted" size="font.size.sm">
+                      {t('profile.email.hint')}
+                    </Text>
+                  </Stack>
+                </StitchSectionHeading>
+                <Inline gap="space-2" align="center" wrap>
+                  <Text>{currentUser.email ?? '—'}</Text>
+                  <Badge variant={currentUser.emailVerified ? 'success' : 'warning'}>
+                    {currentUser.emailVerified
+                      ? t('profile.email.verified')
+                      : t('profile.email.notVerified')}
+                  </Badge>
+                </Inline>
+                {services === null ? null : <ChangeEmailForm currentEmail={currentUser.email} />}
+              </StitchSection>
+            </Stack>
+          </Tabs.Panel>
 
-        <Tabs.Panel value={SECURITY_TAB}>
-          <Stack gap="space-4">
-            <Section>
-              <SectionHeading>
-                <ShieldCheck aria-hidden="true" size={16} />
-                <Stack gap="space-1">
-                  <SectionTitle as="h2">{t('profile.password.title')}</SectionTitle>
-                  <Text color="color.text.muted" size="font.size.sm">
-                    {t('profile.password.description')}
-                  </Text>
-                </Stack>
-              </SectionHeading>
-              {services === null ? (
-                <Text color="color.text.muted">{t('profile.error.generic')}</Text>
-              ) : (
-                <ChangePasswordForm />
-              )}
-            </Section>
-          </Stack>
-        </Tabs.Panel>
-      </Tabs>
+          <Tabs.Panel value={SECURITY_TAB}>
+            <Stack gap="space-4">
+              <StitchSection>
+                <StitchSectionHeading>
+                  <StitchSectionIcon>
+                    <ShieldCheck aria-hidden="true" size={16} />
+                  </StitchSectionIcon>
+                  <Stack gap="space-1">
+                    <StitchSectionTitle as="h2">{t('profile.password.title')}</StitchSectionTitle>
+                    <Text color="color.text.muted" size="font.size.sm">
+                      {t('profile.password.description')}
+                    </Text>
+                  </Stack>
+                </StitchSectionHeading>
+                {services === null ? (
+                  <Text color="color.text.muted">{t('profile.error.generic')}</Text>
+                ) : (
+                  <ChangePasswordForm />
+                )}
+              </StitchSection>
+            </Stack>
+          </Tabs.Panel>
+        </Tabs>
+      </TabPanel>
     </Stack>
   );
 }
@@ -356,7 +424,7 @@ function ChangeEmailForm({ currentEmail }: { readonly currentEmail: string | nul
     <form onSubmit={handleSubmit} noValidate>
       <Stack gap="space-3">
         <Stack gap="space-1">
-          <Heading as="h3">{t('profile.email.changeTitle')}</Heading>
+          <FormTitle as="h3">{t('profile.email.changeTitle')}</FormTitle>
           <Text color="color.text.muted" size="font.size.sm">
             {t('profile.email.changeDescription')}
           </Text>

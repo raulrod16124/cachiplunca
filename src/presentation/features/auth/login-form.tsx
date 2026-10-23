@@ -1,11 +1,10 @@
+import { ArrowRight, Check } from '@raulrod/icons';
 import {
-  Button,
   Checkbox,
   FormField,
   FormFieldControl,
   FormFieldError,
   FormFieldLabel,
-  Heading,
   Input,
   Stack,
   Text,
@@ -17,6 +16,7 @@ import { toAppError } from '../../../shared/errors';
 import { localizeFieldError, localizeMessage, useI18n } from '../../i18n';
 import { PasswordInput } from './password-input';
 import { describeLoginError } from './auth-error-messages';
+import { AuthFormRoot, AuthSubmit, AuthSubtitle, AuthTitle } from './auth-form-styles';
 
 export interface LoginFormProps {
   readonly loginUser: LoginUser;
@@ -25,14 +25,30 @@ export interface LoginFormProps {
 const RememberMe = styled.label`
   display: inline-flex;
   align-items: center;
-  gap: ${({ theme }) => theme.space[2]};
+  gap: ${({ theme }) => theme.space[3]};
+  width: fit-content;
   cursor: pointer;
 `;
 
-const FormLayout = styled(Stack)`
-  @media (max-width: 860px) {
-    gap: ${({ theme }) => theme.space[3]};
-  }
+const RememberBox = styled.span`
+  position: relative;
+  display: inline-flex;
+  flex: none;
+`;
+
+const RememberGlyph = styled(Check)<{ $visible: boolean }>`
+  position: absolute;
+  top: 50%;
+  left: 3px;
+  color: var(--stitch-on-primary);
+  opacity: ${({ $visible }) => ($visible ? 1 : 0)};
+  pointer-events: none;
+  transform: translateY(-50%) scale(${({ $visible }) => ($visible ? 1 : 0.6)});
+  transition:
+    opacity ${({ theme }) => theme.motion.duration.fast}
+      ${({ theme }) => theme.motion.easing.standard},
+    transform ${({ theme }) => theme.motion.duration.fast}
+      ${({ theme }) => theme.motion.easing.standard};
 `;
 
 export function LoginForm({ loginUser }: LoginFormProps): ReactNode {
@@ -74,13 +90,13 @@ export function LoginForm({ loginUser }: LoginFormProps): ReactNode {
   }
 
   return (
-    <FormLayout gap="space-5">
+    <AuthFormRoot>
       <Stack gap="space-2">
-        <Heading as="h1">{t('auth.signIn.title')}</Heading>
-        <Text color="color.text.muted">{t('auth.signIn.subtitle')}</Text>
+        <AuthTitle as="h1">{t('auth.signIn.title')}</AuthTitle>
+        <AuthSubtitle>{t('auth.signIn.subtitle')}</AuthSubtitle>
       </Stack>
       <form onSubmit={handleSubmit} noValidate>
-        <FormLayout gap="space-4">
+        <Stack gap="space-4">
           <FormField>
             <FormFieldLabel>{t('auth.email')}</FormFieldLabel>
             <FormFieldControl>
@@ -91,6 +107,7 @@ export function LoginForm({ loginUser }: LoginFormProps): ReactNode {
                   name="email"
                   autoComplete="email"
                   inputMode="email"
+                  placeholder={t('auth.emailPlaceholder')}
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                 />
@@ -108,6 +125,7 @@ export function LoginForm({ loginUser }: LoginFormProps): ReactNode {
                   {...field}
                   name="password"
                   autoComplete="current-password"
+                  placeholder={t('auth.passwordPlaceholder')}
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                 />
@@ -118,11 +136,14 @@ export function LoginForm({ loginUser }: LoginFormProps): ReactNode {
             )}
           </FormField>
           <RememberMe>
-            <Checkbox
-              name="rememberMe"
-              checked={rememberMe}
-              onChange={(event) => setRememberMe(event.target.checked)}
-            />
+            <RememberBox>
+              <Checkbox
+                name="rememberMe"
+                checked={rememberMe}
+                onChange={(event) => setRememberMe(event.target.checked)}
+              />
+              <RememberGlyph aria-hidden="true" $visible={rememberMe} size={14} strokeWidth={3} />
+            </RememberBox>
             <Text size="font.size.sm">{t('auth.rememberMe')}</Text>
           </RememberMe>
           {formError !== null && (
@@ -130,11 +151,16 @@ export function LoginForm({ loginUser }: LoginFormProps): ReactNode {
               {formError}
             </Text>
           )}
-          <Button type="submit" loading={submitting}>
+          <AuthSubmit
+            type="submit"
+            variant="secondary"
+            loading={submitting}
+            endIcon={<ArrowRight aria-hidden="true" size={18} />}
+          >
             {t('auth.signIn.submit')}
-          </Button>
-        </FormLayout>
+          </AuthSubmit>
+        </Stack>
       </form>
-    </FormLayout>
+    </AuthFormRoot>
   );
 }

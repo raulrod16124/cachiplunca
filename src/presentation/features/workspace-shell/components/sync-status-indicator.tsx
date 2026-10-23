@@ -1,4 +1,4 @@
-import { Tooltip, VisuallyHidden } from '@raulrod/ui';
+import { Tooltip } from '@raulrod/ui';
 import { CloudCheck, LoaderCircle, TriangleAlert } from '@raulrod/icons';
 import styled, { keyframes } from 'styled-components';
 import type { ReactNode } from 'react';
@@ -18,14 +18,23 @@ const ICON_TONE: Record<SyncStatusIcon, IconTone> = {
   alert: 'danger',
 };
 
+const Status = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.space[1]};
+  color: var(--stitch-text-muted);
+  font-size: ${({ theme }) => theme.font.size['2xs']};
+  white-space: nowrap;
+`;
+
 const StyledIcon = styled.span<{ $icon: SyncStatusIcon }>`
   display: inline-flex;
   align-items: center;
   color: ${({ theme, $icon }) => theme.color.text[ICON_TONE[$icon]]};
 
   svg {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
   }
 `;
 
@@ -37,11 +46,11 @@ const SpinnerIcon = styled(StyledIcon)`
 function renderIcon(icon: SyncStatusIcon): ReactNode {
   switch (icon) {
     case 'cloud-check':
-      return <CloudCheck aria-hidden="true" size={16} />;
+      return <CloudCheck aria-hidden="true" size={14} />;
     case 'spinner':
-      return <LoaderCircle aria-hidden="true" size={16} />;
+      return <LoaderCircle aria-hidden="true" size={14} />;
     case 'alert':
-      return <TriangleAlert aria-hidden="true" size={16} />;
+      return <TriangleAlert aria-hidden="true" size={14} />;
   }
 }
 
@@ -54,9 +63,11 @@ export function SyncStatusIndicator({ status }: SyncStatusIndicatorProps): React
   return (
     <span role="status" aria-live="polite" data-testid="sync-status">
       <Tooltip content={status.label} placement="bottom">
-        <Icon $icon={status.icon}>{renderIcon(status.icon)}</Icon>
+        <Status>
+          <Icon $icon={status.icon}>{renderIcon(status.icon)}</Icon>
+          {status.label}
+        </Status>
       </Tooltip>
-      <VisuallyHidden>{status.label}</VisuallyHidden>
     </span>
   );
 }

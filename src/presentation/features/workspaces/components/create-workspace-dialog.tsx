@@ -78,6 +78,7 @@ export interface CreateWorkspaceDialogProps {
   readonly onCreated: () => void;
   readonly imageServices?: ImageServices;
   readonly updateWorkspace?: UpdateWorkspace;
+  readonly surface?: 'brand' | 'stitch';
 }
 
 export function CreateWorkspaceDialog({
@@ -88,6 +89,7 @@ export function CreateWorkspaceDialog({
   onCreated,
   imageServices,
   updateWorkspace,
+  surface = 'brand',
 }: CreateWorkspaceDialogProps): ReactNode {
   const { t } = useI18n();
   const templateLabelId = useId();
@@ -243,7 +245,7 @@ export function CreateWorkspaceDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent {...(surface === 'stitch' ? { 'data-surface': 'stitch' } : {})}>
         <DialogHeader>
           <DialogTitle>{t('workspaces.createDialog.title')}</DialogTitle>
           <DialogDescription>{t('workspaces.createDialog.description')}</DialogDescription>

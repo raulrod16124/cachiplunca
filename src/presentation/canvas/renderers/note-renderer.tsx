@@ -10,19 +10,30 @@ const Content = styled.div`
   box-sizing: border-box;
   padding: ${({ theme }) => theme.space[3]};
   overflow: hidden;
-  border-radius: ${({ theme }) => theme.radius.md};
+  border-radius: var(--stitch-radius-icon, ${({ theme }) => theme.radius.md});
   border-width: 1px;
   border-style: solid;
-  border-color: var(--cach-note-border);
+  border-color: var(--stitch-note-border, var(--cach-note-border));
+  border-top-width: 2px;
   background-color: var(--cach-note-default);
-  box-shadow: var(--cach-note-shadow);
-  color: ${({ theme }) => theme.color.text.primary};
-  font-family: ${({ theme }) => theme.font.family.sans};
+  box-shadow: var(--stitch-note-shadow, var(--cach-note-shadow));
+  color: var(--stitch-text, ${({ theme }) => theme.color.text.primary});
+  font-family: var(--stitch-font-body, ${({ theme }) => theme.font.family.sans});
   font-size: ${({ theme }) => theme.font.size.sm};
   line-height: ${({ theme }) => theme.font.leading.relaxed};
   white-space: pre-wrap;
   word-break: break-word;
   cursor: pointer;
+  transition: box-shadow ${({ theme }) => theme.motion.duration.base}
+    ${({ theme }) => theme.motion.easing.standard};
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+
+  &:hover {
+    box-shadow: var(--stitch-note-shadow-hover, var(--cach-note-shadow));
+  }
 `;
 
 export function NoteRenderer({ element }: ElementRendererProps): ReactElement | null {

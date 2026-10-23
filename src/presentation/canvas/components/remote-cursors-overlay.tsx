@@ -20,19 +20,26 @@ const Cursor = styled.div`
 
 const Pointer = styled.svg`
   display: block;
-  width: 16px;
-  height: 16px;
-  filter: drop-shadow(
-    0 1px 1px color-mix(in srgb, ${({ theme }) => theme.color.text.primary} 35%, transparent)
+  width: 20px;
+  height: 20px;
+  filter: var(
+    --stitch-cursor-shadow,
+    drop-shadow(
+      0 1px 1px color-mix(in srgb, ${({ theme }) => theme.color.text.primary} 35%, transparent)
+    )
   );
 `;
 
 const Label = styled.span`
   display: inline-block;
   margin-top: 2px;
-  padding: 1px 6px;
-  border-radius: 6px;
+  padding: 2px 9px;
+  border-radius: ${({ theme }) => theme.radius.full};
+  border-top-left-radius: 2px;
+  background-color: inherit;
+  box-shadow: ${({ theme }) => theme.shadow.sm};
   font-size: 11px;
+  font-weight: ${({ theme }) => theme.font.weight.semibold};
   line-height: 16px;
   white-space: nowrap;
   color: ${PRESENCE_TEXT_COLOR};

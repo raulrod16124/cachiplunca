@@ -38,6 +38,8 @@ export interface WorkspacesListContainerProps {
   readonly favoritesOnly?: boolean;
   readonly loadingLabel?: string;
   readonly emptyState?: WorkspacesListEmptyState;
+  readonly onOpenCommandPalette?: () => void;
+  readonly surface?: 'brand' | 'stitch';
 }
 
 export function WorkspacesListContainer({
@@ -52,6 +54,8 @@ export function WorkspacesListContainer({
   favoritesOnly = false,
   loadingLabel,
   emptyState,
+  onOpenCommandPalette,
+  surface = 'brand',
 }: WorkspacesListContainerProps): ReactNode {
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -238,6 +242,8 @@ export function WorkspacesListContainer({
           emptyState={emptyState}
           onRetry={handleRetry}
           onCreate={onCreateWorkspace}
+          onCreateCard={!favoritesOnly}
+          onOpenCommandPalette={onOpenCommandPalette}
           onSelect={handleSelectWorkspace}
           onRequestDelete={deleteWorkspace === undefined ? undefined : handleRequestDelete}
           onDuplicate={duplicateWorkspace === undefined ? undefined : handleDuplicate}
@@ -260,6 +266,7 @@ export function WorkspacesListContainer({
           deleteWorkspace={deleteWorkspace}
           actorUserId={userId}
           onDeleted={handleDeleted}
+          surface={surface}
         />
       )}
       {workspaceToEdit !== null && updateWorkspace !== undefined && (
@@ -274,6 +281,7 @@ export function WorkspacesListContainer({
           updateWorkspace={updateWorkspace}
           onUpdated={handleEdited}
           imageServices={imageServices}
+          surface={surface}
         />
       )}
     </>

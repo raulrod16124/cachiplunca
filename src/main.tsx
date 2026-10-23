@@ -4,6 +4,7 @@ import '@raulrod/tokens/styles.css';
 import '@raulrod/ui/styles.css';
 import './presentation/styles/brand/fonts.css';
 import './presentation/styles/brand/brand-theme.css';
+import './presentation/styles/stitch/stitch-theme.css';
 import './index.css';
 import App from './App.tsx';
 import { setPublicBasePath } from './presentation/config/public-base';

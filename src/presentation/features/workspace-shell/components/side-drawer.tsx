@@ -86,7 +86,7 @@ export function SideDrawer({
       }}
       classNames={{ content: SIDE_DRAWER_CLASS }}
     >
-      <Sheet $size={size} aria-label={label}>
+      <Sheet $size={size} aria-label={label} data-surface="stitch" data-board="true">
         {children}
       </Sheet>
     </Dialog>

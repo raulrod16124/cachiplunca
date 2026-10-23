@@ -34,6 +34,7 @@ export interface EditWorkspaceDialogProps {
   readonly updateWorkspace: UpdateWorkspace;
   readonly onUpdated: (workspace: Workspace) => void;
   readonly imageServices?: ImageServices;
+  readonly surface?: 'brand' | 'stitch';
 }
 
 export function EditWorkspaceDialog({
@@ -43,6 +44,7 @@ export function EditWorkspaceDialog({
   updateWorkspace,
   onUpdated,
   imageServices,
+  surface = 'brand',
 }: EditWorkspaceDialogProps): ReactNode {
   const { t } = useI18n();
   const [name, setName] = useState(workspace.name);
@@ -211,7 +213,7 @@ export function EditWorkspaceDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent {...(surface === 'stitch' ? { 'data-surface': 'stitch' } : {})}>
         <DialogHeader>
           <DialogTitle>{t('workspaces.editDialog.title')}</DialogTitle>
           <DialogDescription>{t('workspaces.editDialog.description')}</DialogDescription>

@@ -23,6 +23,7 @@ export interface DeleteWorkspaceDialogProps {
   readonly deleteWorkspace: DeleteWorkspace;
   readonly actorUserId: string;
   readonly onDeleted: () => void;
+  readonly surface?: 'brand' | 'stitch';
 }
 
 export function DeleteWorkspaceDialog({
@@ -32,6 +33,7 @@ export function DeleteWorkspaceDialog({
   deleteWorkspace,
   actorUserId,
   onDeleted,
+  surface = 'brand',
 }: DeleteWorkspaceDialogProps): ReactNode {
   const { t } = useI18n();
   const [submitting, setSubmitting] = useState(false);
@@ -78,7 +80,7 @@ export function DeleteWorkspaceDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent {...(surface === 'stitch' ? { 'data-surface': 'stitch' } : {})}>
         <DialogHeader>
           <DialogTitle>{t('workspaces.deleteDialog.title')}</DialogTitle>
           <DialogDescription>

@@ -26,18 +26,19 @@ export function sliderValueToScale(value: number): number {
 
 const Controls = styled.div`
   position: absolute;
-  bottom: ${({ theme }) => theme.space[4]};
+  bottom: ${({ theme }) => theme.space[5]};
   left: 50%;
   transform: translateX(-50%);
   z-index: 1;
   display: flex;
   gap: ${({ theme }) => theme.space[2]};
   align-items: center;
-  padding: ${({ theme }) => `${theme.space[1]} ${theme.space[2]}`};
-  border-radius: ${({ theme }) => theme.radius.md};
-  background: ${({ theme }) => theme.canvas.surface};
-  border: 1px solid ${({ theme }) => theme.canvas.elementBorder};
-  box-shadow: ${({ theme }) => theme.shadow.sm};
+  padding: ${({ theme }) => theme.space[1]};
+  border-radius: var(--stitch-radius-panel, var(--rr-radius-md));
+  background: var(--stitch-panel-bg, var(--cach-floating-surface));
+  border: 1px solid var(--stitch-panel-border, ${({ theme }) => theme.color.border.default});
+  box-shadow: var(--stitch-panel-shadow, ${({ theme }) => theme.shadow.md});
+  backdrop-filter: blur(var(--stitch-panel-blur));
 
   @media (max-width: 900px) {
     width: max-content;
@@ -54,7 +55,7 @@ const Group = styled.div`
 const Separator = styled.span`
   width: 1px;
   height: 20px;
-  background: ${({ theme }) => theme.canvas.elementBorder};
+  background: var(--stitch-panel-border, ${({ theme }) => theme.canvas.elementBorder});
 `;
 
 const ZoomTrigger = styled(Popover.Trigger)`

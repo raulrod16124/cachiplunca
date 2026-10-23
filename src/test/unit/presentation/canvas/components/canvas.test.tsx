@@ -374,7 +374,7 @@ describe('Canvas', () => {
     renderCanvas();
 
     const grid = screen.getByTestId('canvas-grid');
-    expect(grid.style.backgroundSize).toBe('40px 40px');
+    expect(grid.style.backgroundSize).toBe('26px 26px');
     expect(grid.style.backgroundPosition).toBe('0px 0px');
   });
 
@@ -391,8 +391,8 @@ describe('Canvas', () => {
     fireEvent.keyUp(window, { code: 'Space' });
 
     const grid = screen.getByTestId('canvas-grid');
-    expect(grid.style.backgroundPosition).toBe('10px 25px');
-    expect(grid.style.backgroundSize).toBe('40px 40px');
+    expect(grid.style.backgroundPosition).toBe('24px 25px');
+    expect(grid.style.backgroundSize).toBe('26px 26px');
   });
 
   it('scales the grid step with the zoom level', () => {
@@ -403,7 +403,7 @@ describe('Canvas', () => {
 
     const grid = screen.getByTestId('canvas-grid');
     const scale = Number(canvas.getAttribute('data-scale'));
-    expect(grid.style.backgroundSize).toBe(`${40 * scale}px ${40 * scale}px`);
+    expect(grid.style.backgroundSize).toBe(`${26 * scale}px ${26 * scale}px`);
   });
 
   it('pans the viewport when dragging with space held', async () => {

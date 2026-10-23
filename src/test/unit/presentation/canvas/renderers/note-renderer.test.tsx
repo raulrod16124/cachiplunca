@@ -84,7 +84,7 @@ describe('NoteRenderer', () => {
     render(<NoteRenderer element={createElement('hello')} selected={false} />);
 
     const content = document.querySelector('[data-element-content]');
-    expect(content).toHaveStyle({ borderTopWidth: '1px', borderTopStyle: 'solid' });
+    expect(content).toHaveStyle({ borderTopWidth: '2px', borderTopStyle: 'solid' });
   });
 
   it('returns null for a non-note element', () => {

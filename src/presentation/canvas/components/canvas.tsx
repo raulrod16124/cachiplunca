@@ -159,25 +159,23 @@ const World = styled.div`
 `;
 
 const CanvasTexture = styled(PaperTexture)`
-  opacity: 0.12;
+  opacity: 0.04;
 `;
 
 const GridLayer = styled.div`
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background-image:
-    linear-gradient(
-      to right,
-      ${({ theme }) => `color-mix(in srgb, ${theme.canvas.grid} 60%, transparent)`} 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      to bottom,
-      ${({ theme }) => `color-mix(in srgb, ${theme.canvas.grid} 60%, transparent)`} 1px,
-      transparent 1px
-    );
-  opacity: 0.4;
+  background-image: radial-gradient(
+    circle,
+    var(
+        --stitch-canvas-dot,
+        color-mix(in srgb, ${({ theme }) => theme.canvas.grid} 60%, transparent)
+      )
+      var(--stitch-canvas-dot-size, 1.4px),
+    transparent calc(var(--stitch-canvas-dot-size, 1.4px) + 0.4px)
+  );
+  opacity: 1;
 `;
 
 const Hint = styled.div`
@@ -216,7 +214,7 @@ const DropOverlayLabel = styled.span`
   font-weight: ${({ theme }) => theme.font.weight.medium};
 `;
 
-const CANVAS_GRID = Grid.default();
+const CANVAS_GRID = Grid.of(26);
 
 const resizeElement = createResizeElement();
 
