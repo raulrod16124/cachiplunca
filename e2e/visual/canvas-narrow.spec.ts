@@ -6,6 +6,7 @@ import {
   dynamicMaskLocators,
   openCommentsPanel,
   openPlanPanel,
+  openShareDialog,
   setLanguage,
   setTheme,
   waitForStable,
@@ -54,6 +55,37 @@ test.describe('visual baseline — narrow workspace', () => {
       await expect(page).toHaveScreenshot(`canvas-narrow-actions-menu-${theme}.png`, {
         mask: dynamicMaskLocators(page),
       });
+    });
+  }
+
+  for (const theme of ['light', 'dark'] as const) {
+    test(`share dialog at 390 theme:${theme}`, async ({ page }) => {
+      await registerUser(page);
+      await createWorkspace(page, 'Narrow share');
+      await page.setViewportSize({ width: 390, height: 800 });
+      await setTheme(page, theme);
+      await openShareDialog(page);
+      await waitForStable(page);
+
+      const mask = [
+        ...dynamicMaskLocators(page),
+        page.locator('[data-testid="member-avatar"]'),
+        page.locator('[data-testid="member-identity"]'),
+        page.locator('[aria-label="Read-only link"]'),
+        page.locator('[aria-label="Invitation link"]'),
+      ];
+
+      await expect(page).toHaveScreenshot(`canvas-narrow-share-invite-390-${theme}.png`, { mask });
+
+      await page.getByRole('tab', { name: 'People' }).click();
+      await expect(page.getByText(/People with access to this board/)).toBeVisible();
+      await waitForStable(page);
+      await expect(page).toHaveScreenshot(`canvas-narrow-share-people-390-${theme}.png`, { mask });
+
+      await page.getByRole('tab', { name: 'View link' }).click();
+      await expect(page.getByRole('heading', { name: 'Read-only link' })).toBeVisible();
+      await waitForStable(page);
+      await expect(page).toHaveScreenshot(`canvas-narrow-share-guest-390-${theme}.png`, { mask });
     });
   }
 

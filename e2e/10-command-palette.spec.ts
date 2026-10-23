@@ -45,6 +45,12 @@ test.describe('Command palette', () => {
     await page.getByRole('combobox', { name: 'Search commands' }).fill('keyboard shortcuts');
     await page.getByRole('option', { name: 'Keyboard shortcuts' }).click();
     await expect(page.getByRole('heading', { level: 2, name: 'Keyboard shortcuts' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 3, name: 'General' })).toBeVisible();
+    await expect(page.getByText('Ctrl/Cmd + K', { exact: true })).toBeVisible();
+    await expect(page.getByText('Show keyboard shortcuts')).toBeVisible();
+    await expect(page.getByRole('heading', { level: 3, name: 'Presentation' })).toBeVisible();
+    await expect(page.getByText('Move between frames')).toBeVisible();
+    await expect(page.getByText('← → ↑ ↓ or PageUp/PageDown')).toBeVisible();
     await page.keyboard.press('Escape');
 
     await page.getByRole('button', { name: 'Back to boards' }).click();

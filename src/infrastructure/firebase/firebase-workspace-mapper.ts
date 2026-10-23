@@ -6,7 +6,10 @@ export interface WorkspaceDocument {
   readonly createdBy: string;
   readonly createdAt: Date;
   readonly updatedAt: Date;
+  readonly lastActivityAt: Date;
   readonly description: string | null;
+  readonly coverImageUrl: string | null;
+  readonly coverImageStoragePath: string | null;
 }
 
 export function toWorkspaceDocument(workspace: Workspace): WorkspaceDocument {
@@ -15,7 +18,10 @@ export function toWorkspaceDocument(workspace: Workspace): WorkspaceDocument {
     createdBy: workspace.createdBy.value,
     createdAt: workspace.createdAt,
     updatedAt: workspace.updatedAt,
+    lastActivityAt: workspace.lastActivityAt,
     description: workspace.description,
+    coverImageUrl: workspace.coverImageUrl,
+    coverImageStoragePath: workspace.coverImageStoragePath,
   };
 }
 
@@ -27,13 +33,19 @@ export function fromWorkspaceDocument(id: string, data: unknown): Workspace {
     throw new Error('Workspace document field "name" must be a string');
   }
 
+  const createdAt = readDate(data.createdAt, 'createdAt');
+  const updatedAt = readDate(data.updatedAt, 'updatedAt');
+
   return Workspace.create({
     id: WorkspaceId.create(id),
     name: data.name,
     createdBy: UserId.create(readString(data.createdBy, 'createdBy')),
     description: readDescription(data.description),
-    createdAt: readDate(data.createdAt, 'createdAt'),
-    updatedAt: readDate(data.updatedAt, 'updatedAt'),
+    coverImageUrl: readNullableString(data.coverImageUrl, 'coverImageUrl'),
+    coverImageStoragePath: readNullableString(data.coverImageStoragePath, 'coverImageStoragePath'),
+    createdAt,
+    updatedAt,
+    lastActivityAt: readOptionalDate(data.lastActivityAt, 'lastActivityAt') ?? updatedAt,
   });
 }
 
@@ -42,6 +54,13 @@ function readString(value: unknown, field: string): string {
     throw new Error(`Workspace document field "${field}" must be a string`);
   }
   return value;
+}
+
+function readOptionalDate(value: unknown, field: string): Date | undefined {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+  return readDate(value, field);
 }
 
 function readDate(value: unknown, field: string): Date {
@@ -76,6 +95,16 @@ function readDescription(value: unknown): string | null {
     return value;
   }
   throw new Error('Workspace document field "description" must be a string or null');
+}
+
+function readNullableString(value: unknown, field: string): string | null {
+  if (value === undefined || value === null) {
+    return null;
+  }
+  if (typeof value === 'string') {
+    return value;
+  }
+  throw new Error(`Workspace document field "${field}" must be a string or null`);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

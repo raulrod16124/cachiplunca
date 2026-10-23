@@ -64,7 +64,11 @@ describe('AcceptInvitationPage', () => {
 
   it('accepts the invitation for the authenticated user', async () => {
     const authPort = new FakeAuthPort();
-    const user = await authPort.signUp({ email: 'invitee@example.com', password: 'secret123' });
+    const user = await authPort.signUp({
+      email: 'invitee@example.com',
+      password: 'secret123',
+      displayName: 'Invitee',
+    });
     authPort.setSession({ ...user, emailVerified: true });
     const acceptInvitation = jest
       .fn<ReturnType<AcceptInvitation>, Parameters<AcceptInvitation>>()
@@ -85,7 +89,11 @@ describe('AcceptInvitationPage', () => {
 
   it('shows a friendly message when the invitation cannot be accepted', async () => {
     const authPort = new FakeAuthPort();
-    const user = await authPort.signUp({ email: 'invitee@example.com', password: 'secret123' });
+    const user = await authPort.signUp({
+      email: 'invitee@example.com',
+      password: 'secret123',
+      displayName: 'Invitee',
+    });
     authPort.setSession({ ...user, emailVerified: true });
     const acceptInvitation = jest
       .fn<ReturnType<AcceptInvitation>, Parameters<AcceptInvitation>>()
@@ -103,7 +111,11 @@ describe('AcceptInvitationPage', () => {
 
   it('asks the user to verify their email before accepting', async () => {
     const authPort = new FakeAuthPort();
-    await authPort.signUp({ email: 'invitee@example.com', password: 'secret123' });
+    await authPort.signUp({
+      email: 'invitee@example.com',
+      password: 'secret123',
+      displayName: 'Invitee',
+    });
     const acceptInvitation = jest.fn<ReturnType<AcceptInvitation>, Parameters<AcceptInvitation>>();
     const sendEmailVerification = jest
       .fn<ReturnType<SendEmailVerification>, Parameters<SendEmailVerification>>()

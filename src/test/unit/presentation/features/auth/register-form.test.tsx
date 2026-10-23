@@ -12,7 +12,8 @@ const REGISTERED_USER: AuthUser = {
   displayName: null,
 };
 
-function fillForm(email: string, password: string): void {
+function fillForm(displayName: string, email: string, password: string): void {
+  fireEvent.change(screen.getByLabelText('Name'), { target: { value: displayName } });
   fireEvent.change(screen.getByLabelText('Email'), { target: { value: email } });
   fireEvent.change(screen.getByLabelText('Password'), { target: { value: password } });
 }
@@ -28,6 +29,7 @@ describe('RegisterForm', () => {
     expect(
       screen.getByRole('heading', { level: 1, name: 'Create your account' }),
     ).toBeInTheDocument();
+    expect(screen.getByLabelText('Name')).toBeInTheDocument();
     expect(screen.getByLabelText('Email')).toBeInTheDocument();
     expect(screen.getByLabelText('Password')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Create account' })).toBeInTheDocument();
@@ -42,14 +44,16 @@ describe('RegisterForm', () => {
 
     expect(await screen.findByText('Enter your email address.')).toBeInTheDocument();
     expect(screen.getByText('Choose a password.')).toBeInTheDocument();
+    expect(screen.getByText('Enter your display name.')).toBeInTheDocument();
     expect(screen.getByLabelText('Email')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText('Name')).toHaveAttribute('aria-invalid', 'true');
     expect(signUp).not.toHaveBeenCalled();
   });
 
   it('registers a valid user and reports success', async () => {
     render(<RegisterForm registerUser={createRegisterUser(new FakeAuthPort())} />);
 
-    fillForm('new@example.com', 'secret123');
+    fillForm('New User', 'new@example.com', 'secret123');
     submit();
 
     expect(await screen.findByRole('heading', { name: 'Account created' })).toBeInTheDocument();
@@ -58,10 +62,14 @@ describe('RegisterForm', () => {
 
   it('shows a friendly message when the email is already registered', async () => {
     const authPort = new FakeAuthPort();
-    await createRegisterUser(authPort)({ email: 'taken@example.com', password: 'secret123' });
+    await createRegisterUser(authPort)({
+      email: 'taken@example.com',
+      password: 'secret123',
+      displayName: 'Taken User',
+    });
     render(<RegisterForm registerUser={createRegisterUser(authPort)} />);
 
-    fillForm('taken@example.com', 'secret123');
+    fillForm('Taken User', 'taken@example.com', 'secret123');
     submit();
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
@@ -81,7 +89,7 @@ describe('RegisterForm', () => {
     }));
     render(<RegisterForm registerUser={registerUser} />);
 
-    fillForm('new@example.com', 'secret123');
+    fillForm('New User', 'new@example.com', 'secret123');
     submit();
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
@@ -97,7 +105,7 @@ describe('RegisterForm', () => {
     const registerUser = jest.fn(() => pending);
     render(<RegisterForm registerUser={registerUser} />);
 
-    fillForm('new@example.com', 'secret123');
+    fillForm('New User', 'new@example.com', 'secret123');
     submit();
 
     const button = screen.getByRole('button', { name: 'Create account' });
@@ -108,5 +116,10 @@ describe('RegisterForm', () => {
 
     expect(await screen.findByRole('heading', { name: 'Account created' })).toBeInTheDocument();
     expect(registerUser).toHaveBeenCalledTimes(1);
+    expect(registerUser).toHaveBeenCalledWith({
+      displayName: 'New User',
+      email: 'new@example.com',
+      password: 'secret123',
+    });
   });
 });

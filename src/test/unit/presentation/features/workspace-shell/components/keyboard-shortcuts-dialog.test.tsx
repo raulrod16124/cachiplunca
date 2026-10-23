@@ -86,6 +86,30 @@ describe('KeyboardShortcutsDialog', () => {
     }
   });
 
+  it('renders the general and presentation shortcuts', () => {
+    renderDialog({ open: true });
+
+    const general = screen.getByTestId('shortcuts-group-general');
+    expect(
+      within(general).getByText(MESSAGES.en['shortcuts.general.commandPalette']),
+    ).toBeVisible();
+    expect(within(general).getByText(MESSAGES.en['shortcuts.keys.commandPalette'])).toBeVisible();
+    expect(within(general).getByText(MESSAGES.en['shortcuts.general.shortcuts'])).toBeVisible();
+    expect(within(general).getByText(MESSAGES.en['shortcuts.keys.shortcuts'])).toBeVisible();
+
+    const presentation = screen.getByTestId('shortcuts-group-presentation');
+    expect(
+      within(presentation).getByText(MESSAGES.en['shortcuts.presentation.navigate']),
+    ).toBeVisible();
+    expect(
+      within(presentation).getByText(MESSAGES.en['shortcuts.keys.presentationNavigate']),
+    ).toBeVisible();
+    expect(
+      within(presentation).getByText(MESSAGES.en['shortcuts.presentation.exit']),
+    ).toBeVisible();
+    expect(within(presentation).getByText(MESSAGES.en['shortcuts.keys.escape'])).toBeVisible();
+  });
+
   it('moves focus into the dialog and traps it', async () => {
     const user = userEvent.setup();
     renderDialog({ open: true });

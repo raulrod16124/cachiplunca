@@ -35,6 +35,7 @@ describe('comment Firestore mapper', () => {
     expect(document.authorId).toBe('user-1');
     expect(document.body).toBe('Looks good to me');
     expect(document.createdAt).toEqual(CREATED_AT);
+    expect('editedAt' in document).toBe(false);
     expect('resolvedAt' in document).toBe(false);
   });
 
@@ -45,8 +46,19 @@ describe('comment Firestore mapper', () => {
     expect(asRecord(document).resolvedAt).toEqual(RESOLVED_AT);
   });
 
+  it('maps an edited comment including editedAt', () => {
+    const editedAt = new Date('2026-10-20T10:10:00.000Z');
+    const edited = makeComment().editBody('Updated', editedAt);
+    const document = toCommentDocument(edited);
+
+    expect(document.editedAt).toEqual(editedAt);
+    expect(asRecord(document).editedAt).toEqual(editedAt);
+  });
+
   it('round-trips open and resolved comments', () => {
-    for (const comment of [makeComment(), makeComment(RESOLVED_AT)]) {
+    const editedAt = new Date('2026-10-20T10:10:00.000Z');
+    const edited = makeComment().editBody('Updated', editedAt);
+    for (const comment of [makeComment(), makeComment(RESOLVED_AT), edited]) {
       const restored = fromCommentDocument(toCommentDocument(comment));
 
       expect(restored.id.equals(comment.id)).toBe(true);
@@ -55,6 +67,7 @@ describe('comment Firestore mapper', () => {
       expect(restored.authorId.equals(comment.authorId)).toBe(true);
       expect(restored.body).toBe(comment.body);
       expect(restored.createdAt).toEqual(comment.createdAt);
+      expect(restored.editedAt).toEqual(comment.editedAt);
       expect(restored.resolvedAt).toEqual(comment.resolvedAt);
     }
   });
@@ -67,10 +80,12 @@ describe('comment Firestore mapper', () => {
       authorId: 'user-1',
       body: 'Timestamped',
       createdAt: { toDate: () => CREATED_AT },
+      editedAt: { toDate: () => new Date('2026-10-20T10:10:00.000Z') },
       resolvedAt: { toDate: () => RESOLVED_AT },
     });
 
     expect(restored.createdAt).toEqual(CREATED_AT);
+    expect(restored.editedAt).toEqual(new Date('2026-10-20T10:10:00.000Z'));
     expect(restored.resolvedAt).toEqual(RESOLVED_AT);
   });
 

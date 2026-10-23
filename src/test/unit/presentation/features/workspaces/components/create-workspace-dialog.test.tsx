@@ -2,13 +2,19 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
   createCreateWorkspace,
+  createDeleteImage,
+  createUpdateWorkspace,
+  createUploadImage,
   type CreateWorkspace,
   type CreateWorkspaceResult,
+  type UpdateWorkspace,
 } from '../../../../../../application/commands';
+import type { ImageServices } from '../../../../../../application/image-services';
 import { CreateWorkspaceDialog } from '../../../../../../presentation/features/workspaces/components/create-workspace-dialog';
 import { createAppError, ERROR_CODES } from '../../../../../../shared/errors';
 import { UserId } from '../../../../../../domain/shared';
 import { FakeWorkspaceRepository } from '../../../../../fixtures/fake-workspace-repository';
+import { createFakeImageStoragePort } from '../../../../../fixtures/fake-image-storage-port';
 
 const CREATED_BY = UserId.create('user-1');
 
@@ -18,9 +24,16 @@ interface HarnessProps {
   readonly onOpenChange: jest.Mock;
   readonly onCreated: jest.Mock;
   readonly createdBy: UserId;
+  readonly imageServices?: ImageServices;
+  readonly updateWorkspace?: UpdateWorkspace;
 }
 
-function renderDialog(createWorkspace: CreateWorkspace) {
+interface RenderDialogOptions {
+  readonly imageServices?: ImageServices;
+  readonly updateWorkspace?: UpdateWorkspace;
+}
+
+function renderDialog(createWorkspace: CreateWorkspace, options: RenderDialogOptions = {}) {
   const onOpenChange = jest.fn();
   const onCreated = jest.fn();
   const props: HarnessProps = {
@@ -29,6 +42,7 @@ function renderDialog(createWorkspace: CreateWorkspace) {
     onOpenChange,
     onCreated,
     createdBy: CREATED_BY,
+    ...options,
   };
 
   const { rerender } = render(<CreateWorkspaceDialog {...props} />);
@@ -134,6 +148,75 @@ describe('CreateWorkspaceDialog', () => {
         templateId: 'retrospective',
       }),
     );
+  });
+
+  it('creates the board and attaches the selected cover image', async () => {
+    const repository = new FakeWorkspaceRepository();
+    const imageStorage = createFakeImageStoragePort();
+    const imageServices: ImageServices = {
+      uploadImage: createUploadImage({
+        storage: imageStorage,
+        generateImageId: () => 'cover-1',
+      }),
+      deleteImage: createDeleteImage({ storage: imageStorage }),
+    };
+    const createWorkspace = jest.fn(createCreateWorkspace(repository));
+    const { onCreated, onOpenChange } = renderDialog(createWorkspace, {
+      imageServices,
+      updateWorkspace: createUpdateWorkspace(repository),
+    });
+
+    fillName('Covered board');
+    const file = new File(['image-bytes'], 'cover.png', { type: 'image/png' });
+    fireEvent.change(screen.getByTestId('workspace-cover-input'), {
+      target: { files: [file] },
+    });
+
+    expect(await screen.findByAltText('Cover image preview')).toBeInTheDocument();
+    submit();
+
+    await waitFor(() => expect(onCreated).toHaveBeenCalledTimes(1));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(imageStorage.uploads).toHaveLength(1);
+    const [workspace] = await repository.list();
+    expect(workspace.coverImageUrl).toBe(
+      `https://storage.test/${imageStorage.uploads[0].storagePath}`,
+    );
+    expect(workspace.coverImageStoragePath).toBe(imageStorage.uploads[0].storagePath);
+  });
+
+  it('keeps the board created without a cover when the upload fails', async () => {
+    const repository = new FakeWorkspaceRepository();
+    const imageServices: ImageServices = {
+      uploadImage: jest.fn().mockResolvedValue({
+        status: 'error',
+        error: createAppError(
+          'validation',
+          ERROR_CODES.IMAGE_INVALID_TYPE,
+          'Choose a PNG, JPEG, WebP or GIF image.',
+        ),
+      }),
+      deleteImage: jest.fn(),
+    };
+    const createWorkspace = jest.fn(createCreateWorkspace(repository));
+    const { onCreated, onOpenChange } = renderDialog(createWorkspace, {
+      imageServices,
+      updateWorkspace: createUpdateWorkspace(repository),
+    });
+
+    fillName('Covered board');
+    const file = new File(['image-bytes'], 'cover.png', { type: 'image/png' });
+    fireEvent.change(screen.getByTestId('workspace-cover-input'), {
+      target: { files: [file] },
+    });
+    await screen.findByAltText('Cover image preview');
+    submit();
+
+    expect(await screen.findByText(/Board created without a cover image/)).toBeInTheDocument();
+    expect(onCreated).toHaveBeenCalledTimes(1);
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+    const [workspace] = await repository.list();
+    expect(workspace.coverImageUrl).toBeNull();
   });
 
   it('shows a friendly message when creation fails and stays open', async () => {

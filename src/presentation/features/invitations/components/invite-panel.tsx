@@ -1,10 +1,12 @@
-import { Heading, Stack } from '@raulrod/ui';
+import { Stack } from '@raulrod/ui';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import type { InviteMember } from '../../../../application/commands';
 import type { ListPendingInvitations } from '../../../../application/queries';
 import type { Invitation } from '../../../../domain/invitation';
+import type { MembershipRole } from '../../../../domain/membership';
 import type { UserId } from '../../../../domain/shared';
 import { toAppError } from '../../../../shared/errors';
+import { SectionHeader } from '../../../components/section-header';
 import { describePendingInvitationsError } from '../invitation-error-messages';
 import { InvitationLink } from './invitation-link';
 import { InviteMemberForm, type InvitedMemberResult } from './invite-member-form';
@@ -15,6 +17,7 @@ export interface InvitePanelProps {
   readonly active: boolean;
   readonly workspaceId: string;
   readonly invitedBy: UserId;
+  readonly availableRoles: readonly MembershipRole[];
   readonly inviteMember: InviteMember;
   readonly listPendingInvitations: ListPendingInvitations;
 }
@@ -23,6 +26,7 @@ export function InvitePanel({
   active,
   workspaceId,
   invitedBy,
+  availableRoles,
   inviteMember,
   listPendingInvitations,
 }: InvitePanelProps): ReactNode {
@@ -67,15 +71,21 @@ export function InvitePanel({
 
   return (
     <Stack gap="space-6">
+      <SectionHeader title={t('share.invite.title')} description={t('share.invite.description')} />
       <InviteMemberForm
         workspaceId={workspaceId}
         invitedBy={invitedBy}
+        availableRoles={availableRoles}
         inviteMember={inviteMember}
         onInvited={handleInvited}
       />
       {token !== null && <InvitationLink token={token} />}
       <Stack gap="space-3">
-        <Heading as="h3">{t('share.invite.pendingTitle')}</Heading>
+        <SectionHeader
+          title={t('share.invite.pendingTitle')}
+          description={t('share.invite.pendingDescription')}
+          titleAs="h4"
+        />
         <PendingInvitationsList
           status={status}
           invitations={invitations}

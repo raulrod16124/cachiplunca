@@ -317,13 +317,27 @@ test.describe('visual baseline — canvas', () => {
       await createWorkspace(page, 'Share canvas');
       await openShareDialog(page);
       await setTheme(page, theme);
-      await expect(page).toHaveScreenshot(`canvas-share-${theme}.png`, {
-        mask: [
-          ...dynamicMaskLocators(page),
-          page.locator('[aria-label="Read-only link"]'),
-          page.locator('[aria-label="Invitation link"]'),
-        ],
-      });
+      await waitForStable(page);
+
+      const mask = [
+        ...dynamicMaskLocators(page),
+        page.locator('[data-testid="member-avatar"]'),
+        page.locator('[data-testid="member-identity"]'),
+        page.locator('[aria-label="Read-only link"]'),
+        page.locator('[aria-label="Invitation link"]'),
+      ];
+
+      await expect(page).toHaveScreenshot(`canvas-share-${theme}.png`, { mask });
+
+      await page.getByRole('tab', { name: 'People' }).click();
+      await expect(page.getByText(/People with access to this board/)).toBeVisible();
+      await waitForStable(page);
+      await expect(page).toHaveScreenshot(`canvas-share-people-${theme}.png`, { mask });
+
+      await page.getByRole('tab', { name: 'View link' }).click();
+      await expect(page.getByRole('heading', { name: 'Read-only link' })).toBeVisible();
+      await waitForStable(page);
+      await expect(page).toHaveScreenshot(`canvas-share-guest-${theme}.png`, { mask });
     });
 
     test(`command palette theme:${theme}`, async ({ page }) => {
@@ -349,33 +363,27 @@ test.describe('visual baseline — canvas', () => {
       });
     });
 
-    test(`profile preferences page theme:${theme}`, async ({ page }) => {
+    test(`settings page theme:${theme}`, async ({ page }) => {
       await registerUser(page);
-      await createWorkspace(page, 'Settings canvas');
-      await page.getByRole('button', { name: 'Open account menu' }).click();
-      await page.getByRole('menuitem', { name: 'Preferences' }).click();
-      await expect(page.getByRole('heading', { level: 1, name: 'Profile' })).toBeVisible();
-      await expect(page.getByRole('tab', { name: 'Preferences' })).toHaveAttribute(
-        'aria-selected',
-        'true',
+      await page.getByRole('link', { name: 'Settings' }).click();
+      await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible();
+      await expect(page.getByRole('link', { name: 'Settings' })).toHaveAttribute(
+        'aria-current',
+        'page',
       );
       await setTheme(page, theme);
       await waitForStable(page);
       await page.mouse.move(0, 0);
-      await expect(page).toHaveScreenshot(`canvas-profile-preferences-${theme}.png`, {
-        mask: [
-          ...dynamicMaskLocators(page),
-          page.getByTestId('profile-identity'),
-          page.getByTestId('profile-email-section'),
-        ],
+      await expect(page).toHaveScreenshot(`canvas-settings-${theme}.png`, {
+        mask: dynamicMaskLocators(page),
       });
     });
 
     test(`profile page theme:${theme}`, async ({ page }) => {
       await registerUser(page);
-      await createWorkspace(page, 'Profile canvas');
-      await page.getByRole('button', { name: 'Open account menu' }).click();
-      await page.getByRole('menuitem', { name: 'Profile' }).click();
+      await expect(page.getByText('Test User', { exact: true }).first()).toBeVisible();
+      await page.getByRole('link', { name: 'Profile' }).click();
+      await expect(page.getByLabel('Display name')).toHaveValue('Test User');
       await expect(page.getByRole('heading', { level: 1, name: 'Profile' })).toBeVisible();
       await setTheme(page, theme);
       await waitForStable(page);
@@ -389,4 +397,17 @@ test.describe('visual baseline — canvas', () => {
       });
     });
   }
+
+  test('settings page narrow 390', async ({ page }) => {
+    await registerUser(page);
+    await page.getByRole('link', { name: 'Settings' }).click();
+    await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible();
+    await page.setViewportSize({ width: 390, height: 800 });
+    await setTheme(page, 'light');
+    await waitForStable(page);
+    await page.mouse.move(0, 0);
+    await expect(page).toHaveScreenshot('canvas-settings-narrow-390.png', {
+      mask: dynamicMaskLocators(page),
+    });
+  });
 });

@@ -160,6 +160,26 @@ describe('useElementRotate', () => {
     expect(onTransformEnd).toHaveBeenCalledTimes(1);
   });
 
+  it('marks the active handle as dragging until the gesture ends', async () => {
+    const onRotateElements = jest.fn();
+    renderSurface({ onRotateElements });
+    const handle = screen.getByTestId('rotate-handle');
+    const user = userEvent.setup();
+
+    expect(handle).not.toHaveAttribute('data-dragging');
+
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: handle, coords: { x: 60, y: 20 } },
+      { coords: { x: 90, y: 40 } },
+    ]);
+
+    expect(handle).toHaveAttribute('data-dragging', 'true');
+
+    await user.pointer({ keys: '[/MouseLeft]' });
+
+    expect(handle).not.toHaveAttribute('data-dragging');
+  });
+
   it('snaps to 15 degree steps while shift is pressed', async () => {
     const onRotateElements = jest.fn();
     renderSurface({ onRotateElements });
@@ -304,11 +324,13 @@ describe('useElementRotate', () => {
     });
 
     expect(onRotateElements).toHaveBeenCalled();
+    expect(handle).toHaveAttribute('data-dragging', 'true');
 
     act(() => {
       dispatchPointer('pointercancel', handle, { pointerId: 1 });
     });
 
+    expect(handle).not.toHaveAttribute('data-dragging');
     expect(onTransformEnd).toHaveBeenCalledTimes(1);
   });
 });

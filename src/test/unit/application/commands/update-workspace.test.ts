@@ -45,6 +45,35 @@ describe('validateUpdateWorkspaceInput', () => {
     expect(validateUpdateWorkspaceInput({ id: VALID_ID, name: 'x'.repeat(100) })).toEqual({});
   });
 
+  it('accepts a complete cover image update and rejects half a pair', () => {
+    expect(
+      validateUpdateWorkspaceInput({
+        id: VALID_ID,
+        coverImageUrl: 'https://storage.test/cover.png',
+        coverImageStoragePath: 'workspaces/ws-1/images/cover.png',
+      }),
+    ).toEqual({});
+    expect(
+      validateUpdateWorkspaceInput({
+        id: VALID_ID,
+        coverImageUrl: null,
+        coverImageStoragePath: null,
+      }),
+    ).toEqual({});
+    expect(
+      validateUpdateWorkspaceInput({
+        id: VALID_ID,
+        coverImageUrl: 'https://storage.test/cover.png',
+      }).cover,
+    ).toBe('Provide both cover image URL and storage path.');
+    expect(
+      validateUpdateWorkspaceInput({
+        id: VALID_ID,
+        coverImageStoragePath: 'workspaces/ws-1/images/cover.png',
+      }).cover,
+    ).toBe('Provide both cover image URL and storage path.');
+  });
+
   it('rejects an update without any updatable field', () => {
     const errors = validateUpdateWorkspaceInput({ id: VALID_ID });
     expect(errors.form).toBe('Provide at least one field to update.');
@@ -112,6 +141,33 @@ describe('createUpdateWorkspace', () => {
     if (result.status === 'ok') {
       expect(result.workspace.name).toBe('Renamed');
       expect(result.workspace.description).toBe('Keep me');
+    }
+  });
+
+  it('updates and clears the cover image', async () => {
+    const repository = new FakeWorkspaceRepository();
+    const created = await repository.create({ createdBy: CREATED_BY, name: 'Original' });
+    const updateWorkspace = createUpdateWorkspace(repository);
+
+    const withCover = await updateWorkspace({
+      id: created.id.value,
+      coverImageUrl: 'https://storage.test/cover.png',
+      coverImageStoragePath: `workspaces/${created.id.value}/images/cover.png`,
+    });
+    expect(withCover.status).toBe('ok');
+    if (withCover.status === 'ok') {
+      expect(withCover.workspace.coverImageUrl).toBe('https://storage.test/cover.png');
+    }
+
+    const cleared = await updateWorkspace({
+      id: created.id.value,
+      coverImageUrl: null,
+      coverImageStoragePath: null,
+    });
+    expect(cleared.status).toBe('ok');
+    if (cleared.status === 'ok') {
+      expect(cleared.workspace.coverImageUrl).toBeNull();
+      expect(cleared.workspace.coverImageStoragePath).toBeNull();
     }
   });
 

@@ -19,7 +19,7 @@ test.describe('Sharing (editor accepts from the pending list)', () => {
     await expect(dialog.getByRole('heading', { name: 'Share board' })).toBeVisible();
 
     await dialog.getByLabel('Email').fill(editorEmail);
-    await expect(dialog.getByLabel('Role')).toHaveText(/Editor/);
+    await expect(dialog.getByRole('radio', { name: /^Editor/ })).toBeChecked();
     await dialog.getByRole('button', { name: 'Send invitation' }).click();
     await expect(dialog.getByLabel('Invitation link')).toBeVisible({ timeout: 15000 });
 
@@ -29,12 +29,12 @@ test.describe('Sharing (editor accepts from the pending list)', () => {
     await verifyEmail(editorEmail);
 
     const notifications = editorPage.getByRole('button', {
-      name: /Notifications, 1 pending/i,
+      name: /Notifications, 1 unread/i,
     });
     await expect(notifications).toBeVisible({ timeout: 20000 });
     await notifications.click();
 
-    const invitationsDialog = editorPage.getByRole('dialog', { name: 'Invitations' });
+    const invitationsDialog = editorPage.getByRole('dialog', { name: 'Notifications' });
     await expect(invitationsDialog.getByText(/A board/)).toBeVisible();
     await invitationsDialog.getByRole('button', { name: 'Accept invitation' }).click();
 
@@ -48,6 +48,36 @@ test.describe('Sharing (editor accepts from the pending list)', () => {
 
     await ownerContext.close();
     await editorContext.close();
+  });
+});
+
+test.describe('Sharing (copy invitation link)', () => {
+  test('owner copies the complete one-time invitation link', async ({ browser }) => {
+    const context = await browser.newContext({
+      permissions: ['clipboard-read', 'clipboard-write'],
+    });
+    const page = await context.newPage();
+
+    await registerUser(page);
+    await createWorkspace(page, 'Copy link board');
+
+    await page.getByRole('button', { name: 'Share' }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog.getByRole('heading', { name: 'Share board' })).toBeVisible();
+
+    await dialog.getByLabel('Email').fill(uniqueEmail('copy-link'));
+    await dialog.getByRole('button', { name: 'Send invitation' }).click();
+
+    const linkInput = dialog.getByLabel('Invitation link');
+    await expect(linkInput).toBeVisible({ timeout: 15000 });
+    const link = await linkInput.inputValue();
+    expect(link).toContain('/invitations/');
+
+    await dialog.getByRole('button', { name: 'Copy link' }).click();
+    await expect(dialog.getByText('Link copied to clipboard.')).toBeVisible();
+    await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(link);
+
+    await context.close();
   });
 });
 
@@ -66,10 +96,8 @@ test.describe('Sharing (viewer happy path)', () => {
     await expect(dialog.getByRole('heading', { name: 'Share board' })).toBeVisible();
 
     await dialog.getByLabel('Email').fill(viewerEmail);
-    await dialog.getByLabel('Role').click();
-    await ownerPage.keyboard.press('ArrowDown');
-    await ownerPage.keyboard.press('Enter');
-    await expect(dialog.getByLabel('Role')).toHaveText(/Viewer/);
+    await dialog.getByRole('radio', { name: /^Viewer/ }).check();
+    await expect(dialog.getByRole('radio', { name: /^Viewer/ })).toBeChecked();
     await dialog.getByRole('button', { name: 'Send invitation' }).click();
 
     const invitationLink = dialog.getByLabel('Invitation link');
@@ -85,6 +113,7 @@ test.describe('Sharing (viewer happy path)', () => {
     ).toBeVisible({ timeout: 20000 });
 
     await viewerPage.getByRole('button', { name: 'Create account' }).click();
+    await viewerPage.getByLabel('Name').fill('Viewer User');
     await viewerPage.getByLabel('Email').fill(viewerEmail);
     await viewerPage.getByLabel('Password', { exact: true }).fill('Secret123');
     await viewerPage.getByRole('button', { name: 'Create account' }).click();

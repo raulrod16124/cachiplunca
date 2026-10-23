@@ -18,17 +18,22 @@ export type UpdateUserProfileResult =
 
 export type UpdateUserProfile = (input: UpdateUserProfileInput) => Promise<UpdateUserProfileResult>;
 
+export function validateDisplayName(value: string): string | undefined {
+  const displayName = value.trim();
+  if (displayName.length === 0) {
+    return 'Enter your display name.';
+  }
+  if (displayName.length > DISPLAY_NAME_MAX_LENGTH) {
+    return 'Display names cannot exceed 80 characters.';
+  }
+  return undefined;
+}
+
 export function validateUpdateUserProfileInput(
   input: UpdateUserProfileInput,
 ): UpdateUserProfileFieldErrors {
-  const displayName = input.displayName.trim();
-  if (displayName.length === 0) {
-    return { displayName: 'Enter your display name.' };
-  }
-  if (displayName.length > DISPLAY_NAME_MAX_LENGTH) {
-    return { displayName: 'Display names cannot exceed 80 characters.' };
-  }
-  return {};
+  const error = validateDisplayName(input.displayName);
+  return error === undefined ? {} : { displayName: error };
 }
 
 export function createUpdateUserProfile(authPort: AuthPort): UpdateUserProfile {

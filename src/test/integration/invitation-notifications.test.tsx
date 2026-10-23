@@ -33,6 +33,7 @@ describe('in-app invitation notifications', () => {
     const invitee = await harness.authPort.signUp({
       email: 'invitee@example.com',
       password: 'Secret123',
+      displayName: 'Invitee',
     });
     harness.authPort.setSession({ ...invitee, emailVerified: true });
 
@@ -45,7 +46,7 @@ describe('in-app invitation notifications', () => {
 
     const notice = await screen.findByRole('status', { name: 'New invitation' });
     expect(within(notice).getByText(/invited you as editor/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Notifications, 1 pending/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Notifications, 1 unread/i })).toBeInTheDocument();
 
     const user = userEvent.setup();
     await user.click(screen.getByRole('button', { name: 'Dismiss' }));
@@ -53,11 +54,11 @@ describe('in-app invitation notifications', () => {
     await waitFor(() => {
       expect(screen.queryByRole('status', { name: 'New invitation' })).not.toBeInTheDocument();
     });
-    expect(screen.getByRole('button', { name: /Notifications, 1 pending/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Notifications' })).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /Notifications, 1 pending/i }));
+    await user.click(screen.getByRole('button', { name: 'Notifications' }));
 
-    const dialog = await screen.findByRole('dialog', { name: 'Invitations' });
+    const dialog = await screen.findByRole('dialog', { name: 'Notifications' });
     expect(within(dialog).getByText(/invited you as editor/i)).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Accept invitation' }));
 
@@ -75,6 +76,7 @@ describe('in-app invitation notifications', () => {
     const invitee = await harness.authPort.signUp({
       email: 'invitee@example.com',
       password: 'Secret123',
+      displayName: 'Invitee',
     });
     harness.authPort.setSession({ ...invitee, emailVerified: true });
 
@@ -91,7 +93,7 @@ describe('in-app invitation notifications', () => {
     const user = userEvent.setup();
     await user.click(screen.getByRole('button', { name: 'Notifications' }));
 
-    const dialog = await screen.findByRole('dialog', { name: 'Invitations' });
+    const dialog = await screen.findByRole('dialog', { name: 'Notifications' });
     expect(within(dialog).getByText('No pending invitations.')).toBeInTheDocument();
   });
 });

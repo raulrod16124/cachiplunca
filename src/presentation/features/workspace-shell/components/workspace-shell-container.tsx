@@ -140,6 +140,11 @@ const Container = styled.div`
   padding: 24px;
 `;
 
+export interface CommentTarget {
+  readonly elementId: string;
+  readonly commentId: string;
+}
+
 export interface WorkspaceShellContainerProps {
   readonly workspaceId: string;
   readonly getWorkspace: GetWorkspace;
@@ -168,6 +173,8 @@ export interface WorkspaceShellContainerProps {
   readonly listWorkspaces?: ListWorkspaces;
   readonly onOpenWorkspace?: (workspaceId: string) => void;
   readonly comments?: CommentServices;
+  readonly commentTarget?: CommentTarget | null;
+  readonly onCommentTargetHandled?: () => void;
   readonly imageServices?: ImageServices;
   readonly guestLinks?: GuestLinkServices;
 }
@@ -205,6 +212,8 @@ export function WorkspaceShellContainer({
   listWorkspaces,
   onOpenWorkspace,
   comments,
+  commentTarget,
+  onCommentTargetHandled,
   imageServices,
   guestLinks,
 }: WorkspaceShellContainerProps): ReactNode {
@@ -343,6 +352,7 @@ export function WorkspaceShellContainer({
   if (persistenceBatcherRef.current === null) {
     persistenceBatcherRef.current = createElementPersistenceBatcher({
       orchestrator: elementPersistenceOrchestrator,
+      workspaceId: WorkspaceId.create(workspaceId),
       onResult: (result) => {
         setPersistenceError(result.status === 'error' ? result.error : null);
       },
@@ -532,7 +542,7 @@ export function WorkspaceShellContainer({
   );
 
   const handleUploadImage = useCallback(
-    async (file: File): Promise<ElementId | void> => {
+    async (file: File, position?: Position): Promise<ElementId | void> => {
       if (imageServices === undefined || localUserId === undefined) {
         return;
       }
@@ -560,15 +570,14 @@ export function WorkspaceShellContainer({
       }
 
       const size = defaultElementSize('image');
-      const position = resolveElementCreatePosition(
-        canvasViewportStoreRef.current.getSnapshot(),
-        size,
-      );
+      const createPosition =
+        position ??
+        resolveElementCreatePosition(canvasViewportStoreRef.current.getSnapshot(), size);
       const created = createElement({
         type: 'image',
         workspaceId: WorkspaceId.create(workspaceId),
         createdBy: UserId.create(localUserId),
-        position,
+        position: createPosition,
         size,
         src: result.image.url,
         alt: imageAltFromFileName(file.name),
@@ -587,6 +596,40 @@ export function WorkspaceShellContainer({
       return created.element.id;
     },
     [imageServices, localUserId, workspaceId, createElement, commitElements],
+  );
+
+  const handlePasteText = useCallback(
+    (text: string, position?: Position): ElementId | void => {
+      if (localUserId === undefined) {
+        return;
+      }
+
+      const size = defaultElementSize('text');
+      const createPosition =
+        position ??
+        resolveElementCreatePosition(canvasViewportStoreRef.current.getSnapshot(), size);
+
+      const created = createElement({
+        type: 'text',
+        workspaceId: WorkspaceId.create(workspaceId),
+        createdBy: UserId.create(localUserId),
+        position: createPosition,
+        size,
+        content: text,
+      });
+
+      if (created.status === 'error') {
+        setCreationError(created.error);
+        return;
+      }
+
+      setCreationError(null);
+      commitElements([...elementsRef.current, created.element], 'Create text');
+      selectionStoreRef.current.select(created.element.id.value);
+
+      return created.element.id;
+    },
+    [localUserId, workspaceId, createElement, commitElements],
   );
 
   const handleCreateConnector = useCallback(
@@ -1284,6 +1327,7 @@ export function WorkspaceShellContainer({
           onUploadImage={
             canCreateElement && imageServices !== undefined ? handleUploadImage : undefined
           }
+          onPasteText={canCreateElement ? handlePasteText : undefined}
           onCreateConnector={canCreateElement ? handleCreateConnector : undefined}
           onCreateTask={canCreateElement ? handleCreateTask : undefined}
           onCreateTaskFromElement={canCreateElement ? handleCreateTaskFromElement : undefined}
@@ -1323,6 +1367,10 @@ export function WorkspaceShellContainer({
           listWorkspaces={listWorkspaces}
           onOpenWorkspace={onOpenWorkspace}
           commentServices={comments}
+          currentUserName={localDisplayName ?? t('notifications.actorFallback')}
+          commentTarget={commentTarget}
+          onCommentTargetHandled={onCommentTargetHandled}
+          elementsReady={elementsStatus === 'success'}
           unresolvedCommentCounts={unresolvedCommentCounts}
           onCommentSaved={handleCommentSaved}
         />

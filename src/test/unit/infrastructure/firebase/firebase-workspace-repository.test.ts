@@ -47,6 +47,7 @@ describe('createFirebaseWorkspaceRepository', () => {
     expect(stored.updatedAt).toBeInstanceOf(Date);
     expect(stored.createdAt).toEqual(created.createdAt);
     expect(stored.updatedAt).toEqual(created.updatedAt);
+    expect(stored.lastActivityAt).toEqual(created.lastActivityAt);
   });
 
   it('does not write any document when input validation fails', async () => {
@@ -104,6 +105,66 @@ describe('createFirebaseWorkspaceRepository', () => {
     expect(stored?.name).toBe('Renamed');
     expect(stored?.description).toBe('keep me');
     expect(stored?.updatedAt).toBeInstanceOf(Date);
+  });
+
+  it('persists cover image fields and clears them explicitly', async () => {
+    const repository = createFirebaseWorkspaceRepository(makeFirestore());
+    const created = await repository.create({
+      name: 'Covered',
+      createdBy: UserId.create('user-1'),
+    });
+
+    const withCover = await repository.update(created.id, {
+      coverImageUrl: 'https://storage.test/cover.png',
+      coverImageStoragePath: `workspaces/${created.id.value}/images/cover.png`,
+    });
+    const stored = firestoreMock.__read(`workspaces/${created.id.value}`);
+    expect(stored?.coverImageUrl).toBe(withCover.coverImageUrl);
+    expect(stored?.coverImageStoragePath).toBe(withCover.coverImageStoragePath);
+
+    await repository.update(created.id, {
+      coverImageUrl: null,
+      coverImageStoragePath: null,
+    });
+    const cleared = firestoreMock.__read(`workspaces/${created.id.value}`);
+    expect(cleared?.coverImageUrl).toBeNull();
+    expect(cleared?.coverImageStoragePath).toBeNull();
+  });
+
+  it('writes only lastActivityAt when touching activity', async () => {
+    const repository = createFirebaseWorkspaceRepository(makeFirestore());
+    const created = await repository.create({
+      name: 'Keeper',
+      description: 'keep me',
+      createdBy: UserId.create('user-1'),
+    });
+    const activityAt = new Date(created.updatedAt.getTime() + 60_000);
+
+    const touched = await repository.touchActivity(created.id, activityAt);
+
+    const stored = firestoreMock.__read(`workspaces/${created.id.value}`);
+    expect(stored?.lastActivityAt).toEqual(activityAt);
+    expect(stored?.name).toBe('Keeper');
+    expect(stored?.description).toBe('keep me');
+    expect(stored?.updatedAt).toEqual(created.updatedAt);
+    expect(touched.lastActivityAt).toEqual(activityAt);
+  });
+
+  it('reads legacy documents without lastActivityAt using updatedAt', async () => {
+    const createdAt = new Date('2026-01-01T00:00:00.000Z');
+    const updatedAt = new Date('2026-01-02T00:00:00.000Z');
+    firestoreMock.__seed('workspaces/legacy', {
+      name: 'Legacy',
+      createdBy: 'user-1',
+      description: null,
+      createdAt,
+      updatedAt,
+    });
+    const repository = createFirebaseWorkspaceRepository(makeFirestore());
+
+    const workspace = await repository.findById(WorkspaceId.create('legacy'));
+
+    expect(workspace?.lastActivityAt.getTime()).toBe(updatedAt.getTime());
   });
 
   it('rejects list with a validation AppError when a stored document breaks domain invariants', async () => {

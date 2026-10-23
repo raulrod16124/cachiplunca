@@ -76,6 +76,47 @@ describe('createResolveComment', () => {
     }
   });
 
+  it('records workspace activity with the resolution time', async () => {
+    const repository = new FakeCommentRepository();
+    await repository.save(makeComment());
+    const recordActivity = jest.fn().mockResolvedValue(undefined);
+    const resolveComment = createResolveComment({
+      repository,
+      recordActivity,
+      now: () => RESOLVED_AT,
+    });
+
+    await resolveComment({ workspaceId: 'ws-1', commentId: 'comment-1' });
+
+    expect(recordActivity).toHaveBeenCalledWith(WorkspaceId.create('ws-1'), RESOLVED_AT);
+  });
+
+  it('does not record activity when the comment is not resolved', async () => {
+    const repository = new FakeCommentRepository();
+    await repository.save(makeComment().resolve(RESOLVED_AT));
+    const recordActivity = jest.fn().mockResolvedValue(undefined);
+    const resolveComment = createResolveComment({ repository, recordActivity });
+
+    await resolveComment({ workspaceId: 'ws-1', commentId: 'comment-1' });
+
+    expect(recordActivity).not.toHaveBeenCalled();
+  });
+
+  it('treats a failed activity record as best-effort', async () => {
+    const repository = new FakeCommentRepository();
+    await repository.save(makeComment());
+    const recordActivity = jest.fn().mockRejectedValue(new Error('Activity failed'));
+    const resolveComment = createResolveComment({
+      repository,
+      recordActivity,
+      now: () => RESOLVED_AT,
+    });
+
+    const result = await resolveComment({ workspaceId: 'ws-1', commentId: 'comment-1' });
+
+    expect(result.status).toBe('ok');
+  });
+
   it('propagates repository errors', async () => {
     const failure: AppError = createAppError(
       'persistence',

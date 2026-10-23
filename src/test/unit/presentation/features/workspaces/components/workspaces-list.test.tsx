@@ -13,20 +13,21 @@ function styleText(): string {
     .join('');
 }
 
-function createWorkspace(name: string, updatedAt: Date, description?: string): Workspace {
-  const workspace = Workspace.create({
+function createWorkspace(
+  name: string,
+  activityAt: Date,
+  description?: string,
+  createdAt: Date = activityAt,
+): Workspace {
+  return Workspace.create({
     id: WorkspaceId.create(`ws-${name}`),
     name,
     description,
     createdBy: CREATED_BY,
+    createdAt,
+    updatedAt: createdAt,
+    lastActivityAt: activityAt,
   });
-  // Override updatedAt for deterministic tests
-  Object.defineProperty(workspace, 'updatedAt', {
-    value: updatedAt,
-    writable: false,
-    configurable: true,
-  });
-  return workspace;
 }
 
 describe('WorkspacesList', () => {
@@ -86,6 +87,44 @@ describe('WorkspacesList', () => {
     expect(baseProps.onCreate).toHaveBeenCalledTimes(1);
   });
 
+  it('renders a custom empty state when provided', async () => {
+    const user = userEvent.setup();
+    const onAction = jest.fn();
+    render(
+      <WorkspacesList
+        status="success"
+        workspaces={[]}
+        emptyState={{
+          title: 'No favorite boards yet',
+          description: 'Mark a board with the star icon to see it here.',
+          actionLabel: 'Browse boards',
+          onAction,
+        }}
+        {...baseProps}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'No favorite boards yet' })).toBeInTheDocument();
+    expect(screen.getByText('Mark a board with the star icon to see it here.')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Browse boards' }));
+    expect(onAction).toHaveBeenCalledTimes(1);
+    expect(baseProps.onCreate).not.toHaveBeenCalled();
+  });
+
+  it('uses the custom loading label', () => {
+    render(
+      <WorkspacesList
+        status="loading"
+        workspaces={[]}
+        loadingLabel="Loading favorites"
+        {...baseProps}
+      />,
+    );
+
+    expect(screen.getByRole('status')).toHaveTextContent('Loading favorites');
+  });
+
   it('renders data state with workspace cards', () => {
     const now = new Date('2025-10-08T12:30:00Z');
     const earlier = new Date('2025-10-07T09:00:00Z');
@@ -98,23 +137,166 @@ describe('WorkspacesList', () => {
     expect(screen.getAllByRole('article')).toHaveLength(2);
   });
 
-  it('tints workspace card icons with brand surface tokens', () => {
+  it('renders both view controls with grid active by default', () => {
+    const workspaces = [createWorkspace('Alpha', new Date())];
+
+    render(<WorkspacesList status="success" workspaces={workspaces} {...baseProps} />);
+
+    const grid = screen.getByRole('button', { name: 'Grid view' });
+    const list = screen.getByRole('button', { name: 'List view' });
+
+    expect(screen.getByRole('group', { name: 'Board layout' })).toContainElement(grid);
+    expect(grid).toHaveAttribute('aria-pressed', 'true');
+    expect(list).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('switches to list view and keeps the same workspaces', async () => {
+    const user = userEvent.setup();
+    const workspaces = [createWorkspace('Alpha', new Date()), createWorkspace('Beta', new Date())];
+
+    render(<WorkspacesList status="success" workspaces={workspaces} {...baseProps} />);
+
+    await user.click(screen.getByRole('button', { name: 'List view' }));
+
+    expect(screen.getByRole('list')).toBeInTheDocument();
+    expect(screen.getAllByRole('listitem')).toHaveLength(2);
+    expect(screen.getByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Beta' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Grid view' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+    expect(screen.getByRole('button', { name: 'List view' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+  });
+
+  it('filters workspaces and keeps the selected list view', async () => {
+    const user = userEvent.setup();
     const workspaces = [
-      createWorkspace('A', new Date()),
-      createWorkspace('B', new Date()),
-      createWorkspace('C', new Date()),
+      createWorkspace('Alpha', new Date(), 'Product launch'),
+      createWorkspace('Beta', new Date(), 'Research notes'),
     ];
 
     render(<WorkspacesList status="success" workspaces={workspaces} {...baseProps} />);
 
-    const css = styleText();
-    expect(css).toContain('var(--cach-card-icon-green)');
-    expect(css).toContain('var(--cach-card-icon-green-fg)');
-    expect(css).toContain('var(--cach-card-icon-peach)');
-    expect(css).toContain('var(--cach-card-icon-peach-fg)');
-    expect(css).toContain('var(--cach-card-icon-mustard)');
-    expect(css).toContain('var(--cach-card-icon-mustard-fg)');
-    expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+    await user.click(screen.getByRole('button', { name: 'List view' }));
+    const search = screen.getByRole('searchbox', { name: /search boards/i });
+
+    await user.type(search, 'launch');
+
+    expect(screen.getByRole('list')).toBeInTheDocument();
+    expect(screen.getAllByRole('listitem')).toHaveLength(1);
+    expect(screen.getByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Beta' })).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('1 board');
+    expect(screen.getByRole('button', { name: 'List view' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+  });
+
+  it('keeps permission-based actions available in list view', async () => {
+    const user = userEvent.setup();
+    const workspace = createWorkspace('Alpha', new Date());
+    const onEdit = jest.fn();
+    const onDuplicate = jest.fn();
+    const onRequestDelete = jest.fn();
+
+    render(
+      <WorkspacesList
+        {...baseProps}
+        status="success"
+        workspaces={[workspace]}
+        rolesByWorkspaceId={new Map<string, MembershipRole>([['ws-Alpha', 'owner']])}
+        onEdit={onEdit}
+        onDuplicate={onDuplicate}
+        onRequestDelete={onRequestDelete}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'List view' }));
+
+    expect(screen.getByRole('button', { name: 'Edit Alpha' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Duplicate Alpha' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Delete Alpha' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Edit Alpha' }));
+    expect(onEdit).toHaveBeenCalledWith(workspace);
+  });
+
+  it('hides all workspace actions for editors in list view', async () => {
+    const user = userEvent.setup();
+    const workspace = createWorkspace('Alpha', new Date());
+
+    render(
+      <WorkspacesList
+        {...baseProps}
+        status="success"
+        workspaces={[workspace]}
+        rolesByWorkspaceId={new Map<string, MembershipRole>([['ws-Alpha', 'editor']])}
+        onEdit={jest.fn()}
+        onDuplicate={jest.fn()}
+        onRequestDelete={jest.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'List view' }));
+
+    expect(screen.queryByRole('button', { name: /edit/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /duplicate/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+  });
+
+  it('shows last activity and creation dates on each card', () => {
+    const createdAt = new Date('2025-01-02T00:00:00Z');
+    const activityAt = new Date('2025-03-04T00:00:00Z');
+    const workspaces = [createWorkspace('Alpha', activityAt, undefined, createdAt)];
+
+    render(<WorkspacesList status="success" workspaces={workspaces} {...baseProps} />);
+
+    expect(screen.getByText(/^Updated/)).toBeInTheDocument();
+    expect(screen.getByText(/^Created/)).toBeInTheDocument();
+  });
+
+  it('renders uploaded covers and a themed default background when missing', () => {
+    const withCover = createWorkspace('Alpha', new Date()).update({
+      coverImageUrl: 'https://storage.test/workspaces/ws-Alpha/images/cover.png',
+      coverImageStoragePath: 'workspaces/ws-Alpha/images/cover.png',
+    });
+    const withoutCover = createWorkspace('Beta', new Date());
+
+    render(
+      <WorkspacesList status="success" workspaces={[withCover, withoutCover]} {...baseProps} />,
+    );
+
+    expect(screen.getAllByTestId('workspace-cover-card')).toHaveLength(2);
+    expect(
+      document.querySelector(
+        'img[src="https://storage.test/workspaces/ws-Alpha/images/cover.png"]',
+      ),
+    ).toBeInTheDocument();
+    expect(styleText()).toContain('linear-gradient');
+  });
+
+  it('renders covers as thumbnails in list view', async () => {
+    const user = userEvent.setup();
+
+    const workspace = createWorkspace('Alpha', new Date()).update({
+      coverImageUrl: 'https://storage.test/workspaces/ws-Alpha/images/cover.png',
+      coverImageStoragePath: 'workspaces/ws-Alpha/images/cover.png',
+    });
+
+    render(<WorkspacesList status="success" workspaces={[workspace]} {...baseProps} />);
+    await user.click(screen.getByRole('button', { name: 'List view' }));
+
+    expect(screen.getByTestId('workspace-cover-list')).toBeInTheDocument();
+    expect(
+      document.querySelector(
+        'img[src="https://storage.test/workspaces/ws-Alpha/images/cover.png"]',
+      ),
+    ).toBeInTheDocument();
   });
 
   it('filters workspaces by name and description', async () => {
@@ -317,5 +499,74 @@ describe('WorkspacesList', () => {
     );
 
     expect(screen.getByRole('button', { name: 'Duplicate Alpha' })).toBeDisabled();
+  });
+
+  it('renders an accessible favorite action in grid view without selecting the board', async () => {
+    const user = userEvent.setup();
+    const workspace = createWorkspace('Alpha', new Date());
+    const onToggleFavorite = jest.fn();
+    const onSelect = jest.fn();
+
+    render(
+      <WorkspacesList
+        {...baseProps}
+        status="success"
+        workspaces={[workspace]}
+        rolesByWorkspaceId={new Map<string, MembershipRole>([['ws-Alpha', 'owner']])}
+        onSelect={onSelect}
+        onToggleFavorite={onToggleFavorite}
+      />,
+    );
+
+    const favorite = screen.getByRole('button', { name: 'Add to favorites Alpha' });
+    expect(favorite).toHaveAttribute('aria-pressed', 'false');
+
+    await user.click(favorite);
+
+    expect(onToggleFavorite).toHaveBeenCalledWith(workspace);
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it('marks an existing favorite as pressed in list view', async () => {
+    const user = userEvent.setup();
+    const workspace = createWorkspace('Alpha', new Date());
+    const onToggleFavorite = jest.fn();
+
+    render(
+      <WorkspacesList
+        {...baseProps}
+        status="success"
+        workspaces={[workspace]}
+        rolesByWorkspaceId={new Map<string, MembershipRole>([['ws-Alpha', 'owner']])}
+        onToggleFavorite={onToggleFavorite}
+        favoriteWorkspaceIds={new Set(['ws-Alpha'])}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'List view' }));
+
+    const favorite = screen.getByRole('button', { name: 'Remove from favorites Alpha' });
+    expect(favorite).toHaveAttribute('aria-pressed', 'true');
+
+    await user.click(favorite);
+
+    expect(onToggleFavorite).toHaveBeenCalledWith(workspace);
+  });
+
+  it('disables the favorite action while the toggle is pending', () => {
+    const workspace = createWorkspace('Alpha', new Date());
+
+    render(
+      <WorkspacesList
+        {...baseProps}
+        status="success"
+        workspaces={[workspace]}
+        rolesByWorkspaceId={new Map<string, MembershipRole>([['ws-Alpha', 'owner']])}
+        onToggleFavorite={jest.fn()}
+        pendingFavoriteWorkspaceIds={new Set(['ws-Alpha'])}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Add to favorites Alpha' })).toBeDisabled();
   });
 });

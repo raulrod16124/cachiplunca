@@ -1,6 +1,11 @@
 import { VisuallyHidden } from '@raulrod/ui';
 import type { Editor } from '@tiptap/core';
-import type { MouseEvent as ReactMouseEvent, ReactElement, Ref } from 'react';
+import type {
+  DragEvent as ReactDragEvent,
+  MouseEvent as ReactMouseEvent,
+  ReactElement,
+  Ref,
+} from 'react';
 import {
   useCallback,
   useEffect,
@@ -36,13 +41,17 @@ import {
   alignElements,
   bringElementsToFront,
   connectorCandidateIds,
+  defaultElementSize,
   deleteElements,
   distributeElements,
   findSelectableAt,
   getVisibleElementIds,
   IMAGE_ALLOWED_CONTENT_TYPES,
+  isImageFileLike,
   parseTaskDueDateInput,
   resolveConnectorGeometry,
+  resolveDropCreatePosition,
+  resolveElementCreatePosition,
   sendElementsToBack,
   taskDraftFromElement,
   taskDueDateInputValue,
@@ -183,6 +192,30 @@ const Hint = styled.div`
   font-size: ${({ theme }) => theme.font.size.sm};
 `;
 
+const DropOverlay = styled.div`
+  position: absolute;
+  inset: ${({ theme }) => theme.space[3]};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  border: 2px dashed ${({ theme }) => theme.canvas.selection};
+  border-radius: ${({ theme }) => theme.radius.lg};
+  background: ${({ theme }) => theme.canvas.selectionFill};
+`;
+
+const DropOverlayLabel = styled.span`
+  padding: ${({ theme }) => `${theme.space[3]} ${theme.space[5]}`};
+  border-radius: ${({ theme }) => theme.radius.md};
+  background: ${({ theme }) => theme.color.background.surface};
+  border: 1px solid ${({ theme }) => theme.color.border.default};
+  box-shadow: ${({ theme }) => theme.shadow.md};
+  color: ${({ theme }) => theme.color.text.primary};
+  font-family: ${({ theme }) => theme.font.family.sans};
+  font-size: ${({ theme }) => theme.font.size.base};
+  font-weight: ${({ theme }) => theme.font.weight.medium};
+`;
+
 const CANVAS_GRID = Grid.default();
 
 const resizeElement = createResizeElement();
@@ -194,6 +227,28 @@ const BOARD_SUMMARY_ID = 'canvas-board-summary';
 
 const CANVAS_SHORTCUTS =
   'Arrow keys to move selection · Shift + Arrow to extend selection · Drag on empty canvas to pan · Shift + drag to select · Space + drag or middle-drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo · Ctrl/Cmd + ] to bring to front · Ctrl/Cmd + [ to send to back · Right-click an object for more options';
+
+function hasFilePayload(dataTransfer: DataTransfer | null): boolean {
+  return (
+    dataTransfer !== null &&
+    (Array.from(dataTransfer.types).includes('Files') || dataTransfer.files.length > 0)
+  );
+}
+
+function transferContainsImage(dataTransfer: DataTransfer | null): boolean {
+  if (dataTransfer === null) {
+    return false;
+  }
+
+  if (Array.from(dataTransfer.files).some(isImageFileLike)) {
+    return true;
+  }
+
+  return Array.from(dataTransfer.items ?? []).some(
+    (item) =>
+      item.kind === 'file' && (item.type === '' || isImageFileLike({ name: '', type: item.type })),
+  );
+}
 
 const EDITABLE_ELEMENT_TYPES: ReadonlySet<ElementType> = new Set<ElementType>([
   'text',
@@ -229,7 +284,11 @@ export interface CanvasProps {
   readonly onUndoElements?: (elements: readonly Element[]) => void;
   readonly onRedoElements?: (elements: readonly Element[]) => void;
   readonly onCreateElement?: (type: ElementType) => ElementId | void;
-  readonly onUploadImage?: (file: File) => Promise<ElementId | void> | ElementId | void;
+  readonly onUploadImage?: (
+    file: File,
+    position?: Position,
+  ) => Promise<ElementId | void> | ElementId | void;
+  readonly onPasteText?: (text: string, position?: Position) => ElementId | void;
   readonly onCreateConnector?: (mode: 'free' | 'bound') => ElementId | void;
   readonly onCreateTask?: (values: TaskFormValues) => ElementId | void;
   readonly onCreateTaskFromElement?: (element: Element) => ElementId | void;
@@ -275,6 +334,7 @@ export function Canvas({
   onRedoElements,
   onCreateElement,
   onUploadImage,
+  onPasteText,
   onCreateConnector,
   onCreateTask,
   onCreateTaskFromElement,
@@ -308,6 +368,113 @@ export function Canvas({
 
     store.resize(Size.create(measuredSize.width, measuredSize.height));
   }, [store, measuredSize]);
+
+  const canDropImage = !readOnly && onUploadImage !== undefined;
+  const [isDropActive, setIsDropActive] = useState(false);
+
+  const resetDropState = useCallback((): void => {
+    setIsDropActive(false);
+  }, []);
+
+  useEffect(() => {
+    if (!canDropImage) {
+      resetDropState();
+    }
+  }, [canDropImage, resetDropState]);
+
+  const handleDragEnter = useCallback(
+    (event: ReactDragEvent<HTMLDivElement>): void => {
+      if (!canDropImage || !hasFilePayload(event.dataTransfer)) {
+        return;
+      }
+
+      event.preventDefault();
+
+      if (transferContainsImage(event.dataTransfer)) {
+        setIsDropActive(true);
+      }
+    },
+    [canDropImage],
+  );
+
+  const handleDragOver = useCallback(
+    (event: ReactDragEvent<HTMLDivElement>): void => {
+      if (!canDropImage || !hasFilePayload(event.dataTransfer)) {
+        return;
+      }
+
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'copy';
+      setIsDropActive(transferContainsImage(event.dataTransfer));
+    },
+    [canDropImage],
+  );
+
+  const handleDragLeave = useCallback((event: ReactDragEvent<HTMLDivElement>): void => {
+    if (!hasFilePayload(event.dataTransfer)) {
+      return;
+    }
+
+    const relatedTarget = event.relatedTarget;
+
+    if (relatedTarget instanceof Node && event.currentTarget.contains(relatedTarget)) {
+      return;
+    }
+
+    setIsDropActive(false);
+  }, []);
+
+  const handleDrop = useCallback(
+    (event: ReactDragEvent<HTMLDivElement>): void => {
+      if (!canDropImage || !hasFilePayload(event.dataTransfer)) {
+        return;
+      }
+
+      event.preventDefault();
+      resetDropState();
+
+      const file = event.dataTransfer.files[0];
+
+      if (file === undefined || onUploadImage === undefined) {
+        return;
+      }
+
+      const rect = event.currentTarget.getBoundingClientRect();
+      const screenPoint = Position.create(event.clientX - rect.left, event.clientY - rect.top);
+      const position = resolveDropCreatePosition({
+        screenPoint,
+        viewport,
+        size: defaultElementSize('image'),
+      });
+
+      void onUploadImage(file, position);
+    },
+    [canDropImage, onUploadImage, resetDropState, viewport],
+  );
+
+  const handlePasteImage = useCallback(
+    (file: File): void => {
+      if (onUploadImage === undefined) {
+        return;
+      }
+
+      const position = resolveElementCreatePosition(viewport, defaultElementSize('image'));
+      void onUploadImage(file, position);
+    },
+    [onUploadImage, viewport],
+  );
+
+  const handlePasteText = useCallback(
+    (text: string): void => {
+      if (onPasteText === undefined) {
+        return;
+      }
+
+      const position = resolveElementCreatePosition(viewport, defaultElementSize('text'));
+      onPasteText(text, position);
+    },
+    [onPasteText, viewport],
+  );
 
   const handleCursorMove = useCallback(
     (position: Position) => {
@@ -561,6 +728,8 @@ export function Canvas({
     selectedIds: selection.selectedIds,
     generateId,
     onPasteElements: handlePasteElements,
+    onPasteText: onPasteText === undefined ? undefined : handlePasteText,
+    onPasteImage: onUploadImage === undefined ? undefined : handlePasteImage,
     disabled: readOnly,
   });
 
@@ -1237,6 +1406,10 @@ export function Canvas({
       aria-grabbed={isPanning}
       tabIndex={0}
       onContextMenu={handleContextMenu}
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
       data-active-id={activeId ?? undefined}
       data-panning={isPanning}
       data-pan-key={spacePressed}
@@ -1244,6 +1417,7 @@ export function Canvas({
       data-moving={isMoving}
       data-resizing={isResizing}
       data-rotating={isRotating}
+      data-drop-active={isDropActive}
       data-scale={transform.scale}
     >
       <VisuallyHidden id={BOARD_SUMMARY_ID} data-testid="canvas-board-summary">
@@ -1314,6 +1488,11 @@ export function Canvas({
           />
         )}
       </World>
+      {isDropActive ? (
+        <DropOverlay data-testid="canvas-drop-overlay" aria-hidden="true">
+          <DropOverlayLabel>{t('canvas.dropImage')}</DropOverlayLabel>
+        </DropOverlay>
+      ) : null}
       {elements.length === 0 ? (
         <Hint onPointerDown={(event) => event.stopPropagation()}>
           <EmptyState

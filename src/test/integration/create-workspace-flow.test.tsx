@@ -24,7 +24,7 @@ import { FakeRealtimePort } from '../fixtures/fake-realtime-port';
 import { FakeWorkspaceRepository } from '../fixtures/fake-workspace-repository';
 import { renderAppRoutes } from './harness';
 
-const CREDENTIALS = { email: 'user@example.com', password: 'secret123' };
+const CREDENTIALS = { email: 'user@example.com', password: 'secret123', displayName: 'Test User' };
 
 async function renderAuthenticatedApp() {
   const authPort = new FakeAuthPort();

@@ -39,7 +39,11 @@ describe('task assignment and due dates', () => {
       target: { value: 'Ship the MVP' },
     });
     fireEvent.click(screen.getByRole('combobox', { name: 'Assignee' }));
-    fireEvent.click(await screen.findByRole('option', { name: shortUserId(owner.uid) }));
+    fireEvent.click(
+      await screen.findByRole('option', {
+        name: owner.displayName ?? shortUserId(owner.uid),
+      }),
+    );
     fireEvent.change(screen.getByLabelText('Due date'), {
       target: { value: '2020-03-15' },
     });
@@ -67,7 +71,7 @@ describe('task assignment and due dates', () => {
 
     fireEvent.doubleClick(item);
     expect(screen.getByRole('combobox', { name: 'Assignee' })).toHaveTextContent(
-      shortUserId(owner.uid),
+      owner.displayName ?? shortUserId(owner.uid),
     );
     expect(screen.getByLabelText('Due date')).toHaveValue('2020-03-15');
 

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import type { Element } from '../../../domain/element';
 import type { ElementId, Position } from '../../../domain/shared';
 import {
+  classifyClipboardPayload,
   copyElements,
   pasteElements,
   resolveSelectionKeyCommand,
@@ -14,6 +15,8 @@ export interface UseElementCopyPasteOptions {
   readonly selectedIds: readonly string[];
   readonly generateId?: () => ElementId;
   readonly onPasteElements?: (elements: readonly Element[], pastedIds: readonly string[]) => void;
+  readonly onPasteText?: (text: string) => void;
+  readonly onPasteImage?: (file: File) => void;
   readonly now?: () => Date;
   readonly offset?: Position;
   readonly disabled?: boolean;
@@ -36,6 +39,8 @@ export function useElementCopyPaste({
   selectedIds,
   generateId,
   onPasteElements,
+  onPasteText,
+  onPasteImage,
   now,
   offset,
   disabled = false,
@@ -47,15 +52,53 @@ export function useElementCopyPaste({
     selectedIds,
     generateId,
     onPasteElements,
+    onPasteText,
+    onPasteImage,
     now,
     offset,
   });
-  latestRef.current = { elements, selectedIds, generateId, onPasteElements, now, offset };
+  latestRef.current = {
+    elements,
+    selectedIds,
+    generateId,
+    onPasteElements,
+    onPasteText,
+    onPasteImage,
+    now,
+    offset,
+  };
 
   useEffect(() => {
     const element = elementRef.current;
     if (element === null || disabled) {
       return;
+    }
+
+    let active = true;
+    let internalPastePending = false;
+
+    function performInternalPaste(): void {
+      const { generateId, onPasteElements } = latestRef.current;
+
+      if (generateId === undefined || onPasteElements === undefined) {
+        return;
+      }
+
+      if (clipboardRef.current.length === 0) {
+        return;
+      }
+
+      const result = pasteElements(latestRef.current.elements, clipboardRef.current, {
+        generateId,
+        now: latestRef.current.now,
+        offset: latestRef.current.offset,
+      });
+
+      if (result.status === 'error') {
+        return;
+      }
+
+      onPasteElements(result.elements, result.pastedIds);
     }
 
     function handleKeyDown(event: KeyboardEvent): void {
@@ -91,10 +134,63 @@ export function useElementCopyPaste({
         return;
       }
 
-      const generateId = latestRef.current.generateId;
-      const onPaste = latestRef.current.onPasteElements;
+      const { generateId, onPasteElements } = latestRef.current;
 
-      if (generateId === undefined || onPaste === undefined) {
+      if (generateId === undefined || onPasteElements === undefined) {
+        return;
+      }
+
+      if (clipboardRef.current.length === 0) {
+        return;
+      }
+
+      internalPastePending = true;
+      queueMicrotask(() => {
+        if (!active || !internalPastePending) {
+          return;
+        }
+
+        internalPastePending = false;
+        performInternalPaste();
+      });
+    }
+
+    function handlePaste(event: ClipboardEvent): void {
+      internalPastePending = false;
+
+      if (isEditableTarget(event.target)) {
+        return;
+      }
+
+      const payload = classifyClipboardPayload(event.clipboardData);
+
+      if (payload.kind === 'image') {
+        const onPasteImage = latestRef.current.onPasteImage;
+
+        if (onPasteImage === undefined) {
+          return;
+        }
+
+        event.preventDefault();
+        onPasteImage(payload.file);
+        return;
+      }
+
+      if (payload.kind === 'text') {
+        const onPasteText = latestRef.current.onPasteText;
+
+        if (onPasteText === undefined) {
+          return;
+        }
+
+        event.preventDefault();
+        onPasteText(payload.text);
+        return;
+      }
+
+      const { generateId, onPasteElements } = latestRef.current;
+
+      if (generateId === undefined || onPasteElements === undefined) {
         return;
       }
 
@@ -103,24 +199,17 @@ export function useElementCopyPaste({
       }
 
       event.preventDefault();
-
-      const result = pasteElements(latestRef.current.elements, clipboardRef.current, {
-        generateId,
-        now: latestRef.current.now,
-        offset: latestRef.current.offset,
-      });
-
-      if (result.status === 'error') {
-        return;
-      }
-
-      onPaste(result.elements, result.pastedIds);
+      performInternalPaste();
     }
 
     element.addEventListener('keydown', handleKeyDown);
+    element.addEventListener('paste', handlePaste);
 
     return () => {
+      active = false;
+      internalPastePending = false;
       element.removeEventListener('keydown', handleKeyDown);
+      element.removeEventListener('paste', handlePaste);
     };
   }, [disabled]);
 

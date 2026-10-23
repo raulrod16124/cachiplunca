@@ -2,7 +2,7 @@ import { createLoginUser, validateLoginInput } from '../../../../application/com
 import { ERROR_CODES } from '../../../../shared/errors';
 import { FakeAuthPort } from '../../../fixtures/fake-auth-port';
 
-const CREDENTIALS = { email: 'user@example.com', password: 'secret123' };
+const CREDENTIALS = { email: 'user@example.com', password: 'secret123', displayName: 'Test User' };
 
 describe('validateLoginInput', () => {
   it('returns no errors for valid input', () => {

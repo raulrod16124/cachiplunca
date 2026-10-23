@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import type { FileDownloadPort, PresencePort } from '../../../application/ports';
 import type { CommentServices } from '../../../application/comment-services';
 import type { GuestLinkServices } from '../../../application/guest-link-services';
@@ -25,7 +25,10 @@ import type {
 } from '../../../application/services';
 import type { ElementId } from '../../../domain/shared';
 import { useSession } from '../../providers/session-provider';
-import { WorkspaceShellContainer } from './components/workspace-shell-container';
+import {
+  WorkspaceShellContainer,
+  type CommentTarget,
+} from './components/workspace-shell-container';
 
 export interface WorkspaceShellPageProps {
   readonly getWorkspace: GetWorkspace;
@@ -73,6 +76,29 @@ export function WorkspaceShellPage({
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const navigate = useNavigate();
   const session = useSession();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [commentTarget, setCommentTarget] = useState<CommentTarget | null>(null);
+
+  useEffect(() => {
+    const elementId = searchParams.get('elementId');
+    const commentId = searchParams.get('commentId');
+
+    if (elementId !== null && elementId.length > 0 && commentId !== null && commentId.length > 0) {
+      setCommentTarget({ elementId, commentId });
+    }
+  }, [searchParams]);
+
+  const handleCommentTargetHandled = useCallback((): void => {
+    setSearchParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        next.delete('elementId');
+        next.delete('commentId');
+        return next;
+      },
+      { replace: true },
+    );
+  }, [setSearchParams]);
 
   if (workspaceId === undefined || workspaceId.length === 0) {
     return null;
@@ -103,6 +129,8 @@ export function WorkspaceShellPage({
       fileDownload={fileDownload}
       listWorkspaces={listWorkspaces}
       comments={comments}
+      commentTarget={commentTarget}
+      onCommentTargetHandled={handleCommentTargetHandled}
       imageServices={imageServices}
       guestLinks={guestLinks}
       onOpenWorkspace={(nextWorkspaceId) => navigate(`/workspaces/${nextWorkspaceId}`)}

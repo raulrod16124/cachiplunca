@@ -5,7 +5,11 @@ import { FakeAuthPort } from '../../../fixtures/fake-auth-port';
 describe('createSendEmailVerification', () => {
   it('delegates to the auth port', async () => {
     const authPort = new FakeAuthPort();
-    await authPort.signUp({ email: 'user@example.com', password: 'secret123' });
+    await authPort.signUp({
+      email: 'user@example.com',
+      password: 'secret123',
+      displayName: 'Test User',
+    });
     const spy = jest.spyOn(authPort, 'sendEmailVerification');
     const sendEmailVerification = createSendEmailVerification(authPort);
 
@@ -15,7 +19,11 @@ describe('createSendEmailVerification', () => {
 
   it('maps failures into an AppError result', async () => {
     const authPort = new FakeAuthPort();
-    await authPort.signUp({ email: 'user@example.com', password: 'secret123' });
+    await authPort.signUp({
+      email: 'user@example.com',
+      password: 'secret123',
+      displayName: 'Test User',
+    });
     jest
       .spyOn(authPort, 'sendEmailVerification')
       .mockRejectedValue(createAppError('network', ERROR_CODES.NETWORK_REQUEST_FAILED, 'offline'));

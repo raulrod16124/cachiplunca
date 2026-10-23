@@ -1,13 +1,15 @@
 import { toAppError, type AppError } from '../../shared/errors';
 import { isValidEmail, PASSWORD_MIN_LENGTH } from '../../shared/utils';
 import type { AuthPort, AuthUser } from '../ports';
+import { validateDisplayName } from './update-user-profile';
 
 export interface RegisterUserInput {
   readonly email: string;
   readonly password: string;
+  readonly displayName: string;
 }
 
-export type RegisterFieldName = 'email' | 'password';
+export type RegisterFieldName = 'email' | 'password' | 'displayName';
 
 export type RegisterFieldErrors = Partial<Record<RegisterFieldName, string>>;
 
@@ -20,6 +22,11 @@ export type RegisterUser = (input: RegisterUserInput) => Promise<RegisterUserRes
 
 export function validateRegisterInput(input: RegisterUserInput): RegisterFieldErrors {
   const fieldErrors: RegisterFieldErrors = {};
+
+  const displayNameError = validateDisplayName(input.displayName);
+  if (displayNameError !== undefined) {
+    fieldErrors.displayName = displayNameError;
+  }
 
   const email = input.email.trim();
   if (email.length === 0) {
@@ -48,6 +55,7 @@ export function createRegisterUser(authPort: AuthPort): RegisterUser {
       const user = await authPort.signUp({
         email: input.email.trim(),
         password: input.password,
+        displayName: input.displayName.trim(),
       });
       return { status: 'ok', user };
     } catch (error) {

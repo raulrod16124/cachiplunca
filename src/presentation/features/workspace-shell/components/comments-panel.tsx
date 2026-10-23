@@ -1,6 +1,14 @@
 import { Badge, Button, Heading, Text, Textarea } from '@raulrod/ui';
 import { Check, MessageSquare } from '@raulrod/icons';
-import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from 'react';
 import styled from 'styled-components';
 import type { CommentServices } from '../../../../application/comment-services';
 import type { Comment } from '../../../../domain/comment';
@@ -50,6 +58,13 @@ const Body = styled.div`
   padding: ${({ theme }) => theme.space[4]};
 `;
 
+const CommentCard = styled(Card)`
+  &[data-highlighted='true'] {
+    outline: 2px solid ${({ theme }) => theme.color.focusRing};
+    outline-offset: 2px;
+  }
+`;
+
 const CommentList = styled.ul`
   display: flex;
   flex-direction: column;
@@ -77,6 +92,13 @@ const CommentAuthor = styled.span`
   white-space: nowrap;
 `;
 
+const CommentTimestamps = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: ${({ theme }) => theme.space[1]};
+`;
+
 const CommentText = styled.p`
   margin: 0;
   color: ${({ theme }) => theme.color.text.primary};
@@ -84,6 +106,12 @@ const CommentText = styled.p`
   line-height: ${({ theme }) => theme.font.leading.normal};
   overflow-wrap: anywhere;
   white-space: pre-wrap;
+`;
+
+const InlineEditForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.space[2]};
 `;
 
 const CommentActions = styled.div`
@@ -117,6 +145,8 @@ export interface CommentsPanelProps {
   readonly element: Element | undefined;
   readonly currentUserId: string | undefined;
   readonly authorLabels?: ReadonlyMap<string, string>;
+  readonly currentUserName?: string;
+  readonly highlightCommentId?: string;
   readonly services?: CommentServices;
   readonly onCommentSaved?: (comment: Comment) => void;
   readonly onClose: () => void;
@@ -128,17 +158,24 @@ export function CommentsPanel({
   element,
   currentUserId,
   authorLabels,
+  currentUserName,
+  highlightCommentId,
   services,
   onCommentSaved,
   onClose,
 }: CommentsPanelProps): ReactNode {
   const { t, locale } = useI18n();
+  const bodyRef = useRef<HTMLDivElement | null>(null);
   const elementId = element?.id.value;
   const [comments, setComments] = useState<readonly Comment[]>([]);
   const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [draft, setDraft] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
@@ -155,6 +192,9 @@ export function CommentsPanel({
 
   useEffect(() => {
     setDraft('');
+    setEditingId(null);
+    setEditDraft('');
+    setStatusMessage(null);
 
     if (!open || services === undefined || elementId === undefined) {
       setComments([]);
@@ -196,6 +236,36 @@ export function CommentsPanel({
     };
   }, [elementId, open, reloadKey, services, t, workspaceId]);
 
+  useEffect(() => {
+    if (!open || status !== 'ready' || highlightCommentId === undefined) {
+      return;
+    }
+
+    const container = bodyRef.current;
+    if (container === null) {
+      return;
+    }
+
+    const target = Array.from(
+      container.querySelectorAll<HTMLElement>('[data-testid^="comment-card-"]'),
+    ).find((card) => card.getAttribute('data-testid') === `comment-card-${highlightCommentId}`);
+
+    if (target === undefined) {
+      return;
+    }
+
+    target.setAttribute('data-highlighted', 'true');
+    target.tabIndex = -1;
+    if (typeof target.scrollIntoView === 'function') {
+      target.scrollIntoView({ block: 'nearest' });
+    }
+    target.focus({ preventScroll: true });
+
+    return () => {
+      target.removeAttribute('data-highlighted');
+    };
+  }, [comments, highlightCommentId, open, status]);
+
   const handleSubmit = useCallback(
     async (event: FormEvent<HTMLFormElement>): Promise<void> => {
       event.preventDefault();
@@ -211,6 +281,7 @@ export function CommentsPanel({
 
       setSubmitting(true);
       setErrorMessage(null);
+      setStatusMessage(null);
 
       try {
         const result = await services.createComment({
@@ -218,6 +289,7 @@ export function CommentsPanel({
           elementId: ElementId.create(elementId),
           authorId: UserId.create(currentUserId),
           body,
+          actorName: currentUserName,
         });
 
         if (result.status === 'ok') {
@@ -234,7 +306,7 @@ export function CommentsPanel({
         setSubmitting(false);
       }
     },
-    [currentUserId, draft, elementId, onCommentSaved, services, t, workspaceId],
+    [currentUserId, currentUserName, draft, elementId, onCommentSaved, services, t, workspaceId],
   );
 
   const handleResolve = useCallback(
@@ -245,6 +317,7 @@ export function CommentsPanel({
 
       setResolvingId(comment.id.value);
       setErrorMessage(null);
+      setStatusMessage(null);
 
       try {
         const result = await services.resolveComment({
@@ -271,12 +344,71 @@ export function CommentsPanel({
     [onCommentSaved, services, t, workspaceId],
   );
 
+  const handleStartEdit = useCallback((comment: Comment): void => {
+    setEditingId(comment.id.value);
+    setEditDraft(comment.body);
+    setErrorMessage(null);
+    setStatusMessage(null);
+  }, []);
+
+  const handleCancelEdit = useCallback((): void => {
+    setEditingId(null);
+    setEditDraft('');
+  }, []);
+
+  const handleSaveEdit = useCallback(
+    async (event: FormEvent<HTMLFormElement>): Promise<void> => {
+      event.preventDefault();
+
+      if (services === undefined || currentUserId === undefined || editingId === null) {
+        return;
+      }
+
+      const body = editDraft.trim();
+      if (body.length === 0) {
+        return;
+      }
+
+      setSavingEdit(true);
+      setErrorMessage(null);
+      setStatusMessage(null);
+
+      try {
+        const result = await services.editComment({
+          workspaceId,
+          commentId: editingId,
+          actorId: currentUserId,
+          body,
+        });
+
+        if (result.status === 'ok') {
+          setComments((current) =>
+            current.map((entry) =>
+              entry.id.value === result.comment.id.value ? result.comment : entry,
+            ),
+          );
+          setEditingId(null);
+          setEditDraft('');
+          setStatusMessage(t('comments.edit.saved'));
+          onCommentSaved?.(result.comment);
+        } else {
+          setErrorMessage(t(describeCommentError('edit', result.error)));
+        }
+      } catch (error) {
+        setErrorMessage(t(describeCommentError('edit', toAppError(error))));
+      } finally {
+        setSavingEdit(false);
+      }
+    },
+    [currentUserId, editDraft, editingId, onCommentSaved, services, t, workspaceId],
+  );
+
   if (!open || services === undefined) {
     return null;
   }
 
   const canComment = currentUserId !== undefined && elementId !== undefined;
-  const busy = submitting || resolvingId !== null;
+  const busy = submitting || resolvingId !== null || savingEdit;
   const authoredLabel = (comment: Comment): string =>
     authorLabels?.get(comment.authorId.value) ?? shortUserId(comment.authorId.value);
 
@@ -323,9 +455,14 @@ export function CommentsPanel({
         {comments.map((comment) => {
           const resolved = comment.isResolved();
           const resolving = resolvingId === comment.id.value;
+          const editing = editingId === comment.id.value;
+          const editable =
+            currentUserId !== undefined &&
+            comment.authorId.value === currentUserId &&
+            comment.canEdit();
 
           return (
-            <Card
+            <CommentCard
               key={comment.id.value}
               as="li"
               variant={resolved ? 'sunken' : 'surface'}
@@ -339,31 +476,92 @@ export function CommentsPanel({
                     {authoredLabel(comment)}
                   </Text>
                 </CommentAuthor>
-                <Text color="color.text.muted" size="font.size.xs">
-                  {t('comments.created', {
-                    when: formatRelativeDate(comment.createdAt, locale),
-                  })}
-                </Text>
+                <CommentTimestamps>
+                  <Text color="color.text.muted" size="font.size.xs">
+                    {t('comments.created', {
+                      when: formatRelativeDate(comment.createdAt, locale),
+                    })}
+                  </Text>
+                  {comment.editedAt === undefined ? null : (
+                    <Text color="color.text.muted" size="font.size.xs">
+                      {t('comments.edited', {
+                        when: formatRelativeDate(comment.editedAt, locale),
+                      })}
+                    </Text>
+                  )}
+                </CommentTimestamps>
               </CommentMeta>
-              <CommentText>{comment.body}</CommentText>
-              <CommentActions>
-                {resolved ? (
-                  <Badge variant="success">
-                    <Check aria-hidden="true" size={12} /> {t('comments.resolved')}
-                  </Badge>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={busy}
-                    onClick={() => void handleResolve(comment)}
-                  >
-                    {resolving ? t('comments.resolving') : t('comments.resolve')}
-                  </Button>
-                )}
-              </CommentActions>
-            </Card>
+              {editing ? (
+                <InlineEditForm onSubmit={(event) => void handleSaveEdit(event)}>
+                  <Textarea
+                    aria-label={t('comments.editBodyLabel')}
+                    rows={3}
+                    maxLength={COMMENT_BODY_MAX_LENGTH}
+                    value={editDraft}
+                    disabled={savingEdit}
+                    autoFocus
+                    onChange={(event) => setEditDraft(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Escape') {
+                        event.preventDefault();
+                        handleCancelEdit();
+                      }
+                    }}
+                  />
+                  <CommentActions>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={savingEdit}
+                      onClick={handleCancelEdit}
+                    >
+                      {t('common.cancel')}
+                    </Button>
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      size="sm"
+                      disabled={savingEdit || editDraft.trim().length === 0}
+                    >
+                      {savingEdit ? t('comments.edit.saving') : t('comments.edit.save')}
+                    </Button>
+                  </CommentActions>
+                </InlineEditForm>
+              ) : (
+                <>
+                  <CommentText>{comment.body}</CommentText>
+                  <CommentActions>
+                    {editable ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={busy}
+                        onClick={() => handleStartEdit(comment)}
+                      >
+                        {t('comments.edit')}
+                      </Button>
+                    ) : null}
+                    {resolved ? (
+                      <Badge variant="success">
+                        <Check aria-hidden="true" size={12} /> {t('comments.resolved')}
+                      </Badge>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={busy}
+                        onClick={() => void handleResolve(comment)}
+                      >
+                        {resolving ? t('comments.resolving') : t('comments.resolve')}
+                      </Button>
+                    )}
+                  </CommentActions>
+                </>
+              )}
+            </CommentCard>
           );
         })}
       </CommentList>
@@ -387,7 +585,12 @@ export function CommentsPanel({
             onClose={onClose}
             closeLabel={t('comments.close')}
           />
-          <Body>
+          <Body ref={bodyRef}>
+            {statusMessage === null ? null : (
+              <StatusMessage role="status" color="color.text.muted">
+                {statusMessage}
+              </StatusMessage>
+            )}
             {errorMessage !== null && status !== 'error' ? (
               <Text role="alert" color="color.text.danger" size="font.size.sm">
                 {errorMessage}

@@ -59,8 +59,11 @@ describe('TaskFormDialog', () => {
   it('renders the create-mode form with a todo default', () => {
     renderDialog({});
 
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    const dialog = screen.getByRole('dialog');
+    const description = screen.getByText('Set a title, status, assignee and due date.');
+    expect(dialog).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2, name: 'New task' })).toBeInTheDocument();
+    expect(dialog).toHaveAttribute('aria-describedby', description.id);
     expect(screen.getByLabelText('Title')).toHaveValue('');
     expect(screen.getByRole('combobox', { name: 'Status' })).toHaveTextContent('Todo');
     expect(screen.getByRole('combobox', { name: 'Assignee' })).toHaveTextContent('Unassigned');
@@ -174,7 +177,12 @@ describe('TaskFormDialog', () => {
       },
     });
 
+    const dialog = screen.getByRole('dialog');
     expect(screen.getByRole('heading', { level: 2, name: 'Edit task' })).toBeInTheDocument();
+    expect(
+      screen.queryByText('Update the title, status, assignee, due date or notes.'),
+    ).not.toBeInTheDocument();
+    expect(dialog).not.toHaveAttribute('aria-describedby');
     expect(screen.getByLabelText('Title')).toHaveValue('Draft spec');
     expect(screen.getByRole('combobox', { name: 'Status' })).toHaveTextContent('Blocked');
     expect(screen.getByLabelText('Notes')).toHaveValue('Waiting on API');

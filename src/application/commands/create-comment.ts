@@ -2,6 +2,11 @@ import { Comment } from '../../domain/comment';
 import type { CommentId, ElementId, UserId, WorkspaceId } from '../../domain/shared';
 import { isAppError, type AppError } from '../../shared/errors';
 import type { CommentRepository } from '../ports';
+import {
+  recordActivityBestEffort,
+  type RecordWorkspaceActivity,
+} from '../services/record-activity';
+import type { NotifyComment } from '../services/notify-comment';
 import { toValidationAppError } from './to-validation-app-error';
 
 export interface CreateCommentInput {
@@ -9,11 +14,14 @@ export interface CreateCommentInput {
   readonly elementId: ElementId;
   readonly authorId: UserId;
   readonly body: string;
+  readonly actorName?: string;
 }
 
 export interface CreateCommentDeps {
   readonly repository: CommentRepository;
   readonly generateId: () => CommentId;
+  readonly recordActivity?: RecordWorkspaceActivity;
+  readonly notifyComment?: NotifyComment;
   readonly now?: () => Date;
 }
 
@@ -35,9 +43,27 @@ export function createCreateComment(deps: CreateCommentDeps): CreateComment {
         createdAt: deps.now === undefined ? undefined : deps.now(),
       });
       const saved = await deps.repository.save(comment);
+      await recordActivityBestEffort(deps.recordActivity, saved.workspaceId, saved.createdAt);
+      await notifyCommentBestEffort(deps.notifyComment, saved, input.actorName);
       return { status: 'ok', comment: saved };
     } catch (error) {
       return { status: 'error', error: isAppError(error) ? error : toValidationAppError(error) };
     }
   };
+}
+
+async function notifyCommentBestEffort(
+  notifyComment: NotifyComment | undefined,
+  comment: Comment,
+  actorName: string | undefined,
+): Promise<void> {
+  if (notifyComment === undefined) {
+    return;
+  }
+
+  try {
+    await notifyComment({ comment, actorName });
+  } catch {
+    return;
+  }
 }

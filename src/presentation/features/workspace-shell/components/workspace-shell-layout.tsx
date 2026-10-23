@@ -38,6 +38,7 @@ import { BoardPresentation } from './board-presentation';
 import { TaskPlanPanel } from './task-plan-panel';
 import { WorkspaceCommandPalette } from './workspace-command-palette';
 import { WorkspaceTopBar } from './workspace-top-bar';
+import type { CommentTarget } from './workspace-shell-container';
 
 const Shell = styled.div`
   display: flex;
@@ -96,7 +97,11 @@ export interface WorkspaceShellLayoutProps {
   readonly onUndoElements: (elements: readonly Element[]) => void;
   readonly onRedoElements: (elements: readonly Element[]) => void;
   readonly onCreateElement?: (type: ElementType) => ElementId | void;
-  readonly onUploadImage?: (file: File) => Promise<ElementId | void> | ElementId | void;
+  readonly onUploadImage?: (
+    file: File,
+    position?: Position,
+  ) => Promise<ElementId | void> | ElementId | void;
+  readonly onPasteText?: (text: string, position?: Position) => ElementId | void;
   readonly onCreateConnector?: (mode: 'free' | 'bound') => ElementId | void;
   readonly onCreateTask?: (values: TaskFormValues) => ElementId | void;
   readonly onCreateTaskFromElement?: (element: Element) => ElementId | void;
@@ -121,6 +126,10 @@ export interface WorkspaceShellLayoutProps {
   readonly listWorkspaces?: ListWorkspaces;
   readonly onOpenWorkspace?: (workspaceId: string) => void;
   readonly commentServices?: CommentServices;
+  readonly currentUserName?: string;
+  readonly commentTarget?: CommentTarget | null;
+  readonly onCommentTargetHandled?: () => void;
+  readonly elementsReady?: boolean;
   readonly unresolvedCommentCounts?: ReadonlyMap<string, number>;
   readonly onCommentSaved?: (comment: Comment) => void;
 }
@@ -150,6 +159,7 @@ export function WorkspaceShellLayout({
   onRedoElements,
   onCreateElement,
   onUploadImage,
+  onPasteText,
   onCreateConnector,
   onCreateTask,
   onCreateTaskFromElement,
@@ -174,6 +184,10 @@ export function WorkspaceShellLayout({
   listWorkspaces,
   onOpenWorkspace,
   commentServices,
+  currentUserName,
+  commentTarget = null,
+  onCommentTargetHandled,
+  elementsReady = false,
   unresolvedCommentCounts,
   onCommentSaved,
 }: WorkspaceShellLayoutProps): ReactNode {
@@ -279,6 +293,23 @@ export function WorkspaceShellLayout({
       setPresentedFrameId(null);
     }
   }, [presentedFrameId, presentedIndex]);
+
+  useEffect(() => {
+    if (commentTarget === null || !elementsReady || presenting) {
+      return;
+    }
+
+    const element = elements.find((entry) => entry.id.value === commentTarget.elementId);
+    if (element === undefined) {
+      onCommentTargetHandled?.();
+      return;
+    }
+
+    selectionStore.select(element.id.value);
+    setPlanOpen(false);
+    setCommentsOpen(true);
+    onCommentTargetHandled?.();
+  }, [commentTarget, elements, elementsReady, onCommentTargetHandled, presenting, selectionStore]);
 
   useEffect(() => {
     const wasPresenting = wasPresentingRef.current;
@@ -387,6 +418,7 @@ export function WorkspaceShellLayout({
             onRedoElements={onRedoElements}
             onCreateElement={onCreateElement}
             onUploadImage={onUploadImage}
+            onPasteText={onPasteText}
             onCreateConnector={onCreateConnector}
             onCreateTask={onCreateTask}
             onCreateTaskFromElement={onCreateTaskFromElement}
@@ -444,6 +476,8 @@ export function WorkspaceShellLayout({
         currentUserId={currentUser?.uid}
         authorLabels={authorLabels}
         services={commentServices}
+        currentUserName={currentUserName}
+        highlightCommentId={commentTarget?.commentId}
         onCommentSaved={onCommentSaved}
         onClose={() => setCommentsOpen(false)}
       />

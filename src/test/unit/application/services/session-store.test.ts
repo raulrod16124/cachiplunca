@@ -1,9 +1,14 @@
 import { createSessionStore } from '../../../../application/services';
+import type { AuthUser } from '../../../../application/ports';
 import { createAppError, ERROR_CODES } from '../../../../shared/errors';
 import { FakeAuthPort } from '../../../fixtures/fake-auth-port';
 
-const CREDENTIALS = { email: 'user@example.com', password: 'secret123' };
-const OTHER_CREDENTIALS = { email: 'other@example.com', password: 'secret123' };
+const CREDENTIALS = { email: 'user@example.com', password: 'secret123', displayName: 'Test User' };
+const OTHER_CREDENTIALS = {
+  email: 'other@example.com',
+  password: 'secret123',
+  displayName: 'Other User',
+};
 
 describe('createSessionStore', () => {
   it('starts in the loading state before anyone subscribes', () => {
@@ -161,5 +166,49 @@ describe('createSessionStore', () => {
 
     expect(store.getSnapshot()).toEqual({ status: 'anonymous' });
     expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('applies an updated user and notifies subscribers only when it changes', async () => {
+    const authPort = new FakeAuthPort();
+    const store = createSessionStore(authPort);
+    const onChange = jest.fn();
+
+    store.subscribe(onChange);
+    const user = await authPort.signUp(CREDENTIALS);
+    onChange.mockClear();
+    const updated: AuthUser = { ...user, displayName: 'Updated Name' };
+
+    store.applyUser(updated);
+    store.applyUser(updated);
+
+    expect(store.getSnapshot()).toEqual({ status: 'authenticated', user: updated });
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('applies a user while the session is still loading', () => {
+    const store = createSessionStore(new FakeAuthPort());
+    const user: AuthUser = {
+      uid: 'uid-1',
+      email: 'user@example.com',
+      emailVerified: false,
+      displayName: 'Test User',
+    };
+
+    store.applyUser(user);
+
+    expect(store.getSnapshot()).toEqual({ status: 'authenticated', user });
+  });
+
+  it('ignores a different user while another session is active', async () => {
+    const authPort = new FakeAuthPort();
+    const store = createSessionStore(authPort);
+
+    store.subscribe(() => undefined);
+    const user = await authPort.signUp(CREDENTIALS);
+    const snapshot = store.getSnapshot();
+
+    store.applyUser({ ...user, uid: 'other-uid', displayName: 'Other User' });
+
+    expect(store.getSnapshot()).toBe(snapshot);
   });
 });

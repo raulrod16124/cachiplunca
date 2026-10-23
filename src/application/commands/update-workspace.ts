@@ -8,9 +8,11 @@ export interface UpdateWorkspaceInput {
   readonly id: string;
   readonly name?: string;
   readonly description?: string | null;
+  readonly coverImageUrl?: string | null;
+  readonly coverImageStoragePath?: string | null;
 }
 
-export type UpdateWorkspaceFieldName = 'id' | 'name' | 'form';
+export type UpdateWorkspaceFieldName = 'id' | 'name' | 'cover' | 'form';
 
 export type UpdateWorkspaceFieldErrors = Partial<Record<UpdateWorkspaceFieldName, string>>;
 
@@ -37,7 +39,19 @@ export function validateUpdateWorkspaceInput(
     }
   }
 
-  if (input.name === undefined && input.description === undefined) {
+  const hasCoverUrl = input.coverImageUrl !== undefined;
+  const hasCoverPath = input.coverImageStoragePath !== undefined;
+
+  if (hasCoverUrl !== hasCoverPath) {
+    fieldErrors.cover = 'Provide both cover image URL and storage path.';
+  }
+
+  if (
+    input.name === undefined &&
+    input.description === undefined &&
+    !hasCoverUrl &&
+    !hasCoverPath
+  ) {
     fieldErrors.form = 'Provide at least one field to update.';
   }
 
@@ -55,6 +69,10 @@ export function createUpdateWorkspace(workspaceRepository: WorkspaceRepository):
       const updates: WorkspaceUpdateInput = {
         ...(input.name !== undefined ? { name: input.name.trim() } : {}),
         ...(input.description !== undefined ? { description: input.description } : {}),
+        ...(input.coverImageUrl !== undefined ? { coverImageUrl: input.coverImageUrl } : {}),
+        ...(input.coverImageStoragePath !== undefined
+          ? { coverImageStoragePath: input.coverImageStoragePath }
+          : {}),
       };
 
       const workspace = await workspaceRepository.update(WorkspaceId.create(input.id), updates);

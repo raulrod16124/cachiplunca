@@ -31,6 +31,11 @@ service cloud.firestore {
       return signedIn() && exists(membershipPath(workspaceId));
     }
 
+    function isWorkspaceMember(workspaceId, userId) {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/memberships/$(workspaceId + '_' + userId));
+    }
+
     function roleOf(workspaceId) {
       return get(membershipPath(workspaceId)).data.role;
     }
@@ -105,16 +110,40 @@ service cloud.firestore {
         request.resource.data.userId == userId;
     }
 
+    // favorites: preferencia privada por usuario y tablero (ADR-0049).
+    // El id es determinista (userId_workspaceId), solo el propio usuario puede
+    // leer o borrar su favorito y solo se pueden marcar tableros de los que es
+    // miembro. La actualización está denegada.
+    match /favorites/{favoriteId} {
+      allow read, delete: if signedIn() && resource.data.userId == request.auth.uid;
+      allow create: if signedIn() &&
+        !isAnonymous() &&
+        request.resource.data.keys().hasOnly(['id', 'userId', 'workspaceId', 'createdAt']) &&
+        request.resource.data.workspaceId is string &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.id == request.auth.uid + '_' + request.resource.data.workspaceId &&
+        request.resource.data.createdAt is timestamp &&
+        isMember(request.resource.data.workspaceId);
+      allow update: if false;
+    }
+
     // workspaces: lectura limitada a miembros del workspace (ADR-0034) o a
     // guests con un enlace válido. create exige que el creador quede registrado
     // como createdBy para poder crear su membership de owner y rechaza sesiones
-    // anónimas. update/delete exclusivos de owner.
+    // anónimas. update de metadatos y delete exclusivos de owner; owner/editor
+    // pueden actualizar únicamente lastActivityAt.
     match /workspaces/{workspaceId} {
       allow read: if isMember(workspaceId) || isGuestViewer(workspaceId);
       allow create: if signedIn() &&
         !isAnonymous() &&
         request.resource.data.createdBy == request.auth.uid;
-      allow update, delete: if hasRole(workspaceId, ['owner']);
+      allow update: if hasRole(workspaceId, ['owner']) || (
+        hasRole(workspaceId, ['owner', 'editor']) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastActivityAt']) &&
+        request.resource.data.lastActivityAt is timestamp &&
+        request.resource.data.lastActivityAt >= resource.data.createdAt
+      );
+      allow delete: if hasRole(workspaceId, ['owner']);
     }
 
     // memberships: el rol del usuario en el workspace.
@@ -245,9 +274,45 @@ service cloud.firestore {
       allow delete: if signedIn() && request.auth.uid == userId;
     }
 
+    // notifications: avisos persistentes por destinatario. Solo el destinatario
+    // lee y marca como leída su notificación. Cualquier miembro puede crear
+    // avisos de comentario en nombre propio, nunca para sí mismo, y solo si el
+    // destinatario también pertenece al workspace.
+    match /notifications/{notificationId} {
+      allow read: if signedIn() && resource.data.recipientId == request.auth.uid;
+      allow create: if signedIn() &&
+        request.resource.data.id == notificationId &&
+        request.resource.data.type == 'comment' &&
+        request.resource.data.actorId == request.auth.uid &&
+        request.resource.data.recipientId is string &&
+        request.resource.data.recipientId != request.auth.uid &&
+        request.resource.data.workspaceId is string &&
+        request.resource.data.workspaceName is string &&
+        request.resource.data.elementId is string &&
+        request.resource.data.commentId is string &&
+        request.resource.data.actorName is string &&
+        request.resource.data.bodyPreview is string &&
+        request.resource.data.bodyPreview.size() > 0 &&
+        request.resource.data.bodyPreview.size() <= 140 &&
+        request.resource.data.createdAt is timestamp &&
+        !('readAt' in request.resource.data) &&
+        isMember(request.resource.data.workspaceId) &&
+        isWorkspaceMember(
+          request.resource.data.workspaceId,
+          request.resource.data.recipientId
+        );
+      allow update: if signedIn() &&
+        resource.data.recipientId == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readAt']) &&
+        request.resource.data.readAt is timestamp &&
+        request.resource.data.readAt >= resource.data.createdAt;
+      allow delete: if false;
+    }
+
     // comments: colaboración asíncrona ligada a elementos. Solo los miembros
-    // del workspace leen y crean; cualquier miembro puede resolver. Resolver
-    // solo puede añadir resolvedAt y conserva el resto del historial.
+    // del workspace leen y crean; cualquier miembro puede resolver. El autor
+    // puede editar el cuerpo durante los primeros 15 minutos. Resolver solo
+    // puede añadir resolvedAt y conserva el resto del historial.
     match /workspaces/{workspaceId}/comments/{commentId} {
       allow read: if signedIn() && isMember(workspaceId);
       allow create: if signedIn() &&
@@ -256,13 +321,32 @@ service cloud.firestore {
         request.resource.data.id == commentId &&
         request.resource.data.authorId == request.auth.uid &&
         request.resource.data.body is string &&
-        !('resolvedAt' in request.resource.data);
+        !('resolvedAt' in request.resource.data) &&
+        !('editedAt' in request.resource.data);
       allow update: if signedIn() &&
         isMember(workspaceId) &&
         resource.data.workspaceId == workspaceId &&
         !('resolvedAt' in resource.data) &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['resolvedAt']) &&
-        request.resource.data.resolvedAt is timestamp;
+        (
+          (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['resolvedAt']) &&
+            request.resource.data.resolvedAt is timestamp
+          ) ||
+          (
+            request.auth.uid == resource.data.authorId &&
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['body', 'editedAt']) &&
+            request.resource.data.diff(resource.data).affectedKeys().hasAll(['body', 'editedAt']) &&
+            request.resource.data.body is string &&
+            request.resource.data.body.size() > 0 &&
+            request.resource.data.body.size() <= 4000 &&
+            request.resource.data.editedAt is timestamp &&
+            request.resource.data.editedAt.toMillis() >= resource.data.createdAt.toMillis() &&
+            request.resource.data.editedAt.toMillis() <= request.time.toMillis() &&
+            request.time.toMillis() >= resource.data.createdAt.toMillis() &&
+            request.time.toMillis() - resource.data.createdAt.toMillis() <= 900000
+          )
+        );
+      allow delete: if false;
     }
 
     // presence: efímera. Solo el dueño del documento la escribe siendo miembro;

@@ -5,7 +5,11 @@ import { FakeAuthPort } from '../../../fixtures/fake-auth-port';
 describe('createRefreshUser', () => {
   it('returns the refreshed user from the auth port', async () => {
     const authPort = new FakeAuthPort();
-    const user = await authPort.signUp({ email: 'user@example.com', password: 'secret123' });
+    const user = await authPort.signUp({
+      email: 'user@example.com',
+      password: 'secret123',
+      displayName: 'Test User',
+    });
     const refreshUser = createRefreshUser(authPort);
 
     await expect(refreshUser()).resolves.toEqual({ status: 'ok', user });
@@ -13,7 +17,11 @@ describe('createRefreshUser', () => {
 
   it('maps failures into an AppError result', async () => {
     const authPort = new FakeAuthPort();
-    await authPort.signUp({ email: 'user@example.com', password: 'secret123' });
+    await authPort.signUp({
+      email: 'user@example.com',
+      password: 'secret123',
+      displayName: 'Test User',
+    });
     jest
       .spyOn(authPort, 'refreshUser')
       .mockRejectedValue(createAppError('network', ERROR_CODES.NETWORK_REQUEST_FAILED, 'offline'));

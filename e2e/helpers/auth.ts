@@ -13,6 +13,7 @@ export async function registerUser(
   password = 'Secret123',
 ): Promise<string> {
   await page.goto('/register');
+  await page.getByLabel('Name').fill('Test User');
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Create account' }).click();

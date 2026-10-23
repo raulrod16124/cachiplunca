@@ -95,6 +95,23 @@ describe('SelectionOverlay', () => {
     expect(handle).toHaveAttribute('data-testid', 'rotate-handle');
   });
 
+  it('uses a rotation cursor with a grab fallback for the rotation handle', () => {
+    render(<SelectionOverlay items={[item('a', 10, 20, 100, 40)]} canRotate />);
+
+    const css = styleText();
+    expect(css).toMatch(/cursor:\s*url\("data:image\/svg/);
+    expect(css).toMatch(/12 12,\s*grab/);
+  });
+
+  it('keeps resize cursors independent from the rotation cursor', () => {
+    render(<SelectionOverlay items={[item('a', 10, 20, 100, 40)]} canRotate />);
+
+    const overlay = screen.getByTestId('selection-overlay');
+    const topLeft = overlay.querySelector('[data-resize-anchor="top-left"]');
+
+    expect(topLeft).toHaveStyle({ cursor: 'nwse-resize' });
+  });
+
   it('does not render the rotation handle when rotation is unavailable', () => {
     render(<SelectionOverlay items={[item('a', 10, 20, 100, 40)]} />);
 

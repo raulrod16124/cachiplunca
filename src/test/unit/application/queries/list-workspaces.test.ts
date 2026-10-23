@@ -14,7 +14,9 @@ const USER = UserId.create('user-1');
 
 function buildWorkspace(
   id: string,
-  timestamps: { createdAt: Date; updatedAt?: Date } = { createdAt: new Date('2026-01-01') },
+  timestamps: { createdAt: Date; updatedAt?: Date; lastActivityAt?: Date } = {
+    createdAt: new Date('2026-01-01'),
+  },
 ): Workspace {
   return Workspace.create({
     createdBy: CREATED_BY,
@@ -22,6 +24,7 @@ function buildWorkspace(
     name: `Workspace ${id}`,
     createdAt: timestamps.createdAt,
     updatedAt: timestamps.updatedAt ?? timestamps.createdAt,
+    lastActivityAt: timestamps.lastActivityAt,
   });
 }
 
@@ -38,7 +41,7 @@ async function seedMembership(
 }
 
 describe('sortWorkspacesForList', () => {
-  it('orders workspaces by most recently updated first', () => {
+  it('orders workspaces by most recent activity first', () => {
     const older = buildWorkspace('ws-a', { createdAt: new Date('2026-01-01') });
     const newer = buildWorkspace('ws-b', { createdAt: new Date('2026-02-01') });
     const newest = buildWorkspace('ws-c', {
@@ -51,7 +54,39 @@ describe('sortWorkspacesForList', () => {
     expect(sorted.map((workspace) => workspace.id.value)).toEqual(['ws-c', 'ws-b', 'ws-a']);
   });
 
-  it('breaks updatedAt ties by createdAt, most recent first', () => {
+  it('orders by last activity before metadata updates', () => {
+    const recentlyEdited = buildWorkspace('ws-a', {
+      createdAt: new Date('2026-01-01'),
+      updatedAt: new Date('2026-06-01'),
+      lastActivityAt: new Date('2026-02-01'),
+    });
+    const recentlyActive = buildWorkspace('ws-b', {
+      createdAt: new Date('2026-01-01'),
+      updatedAt: new Date('2026-01-02'),
+      lastActivityAt: new Date('2026-05-01'),
+    });
+
+    const sorted = sortWorkspacesForList([recentlyEdited, recentlyActive]);
+
+    expect(sorted.map((workspace) => workspace.id.value)).toEqual(['ws-b', 'ws-a']);
+  });
+
+  it('falls back to updatedAt when lastActivityAt is unavailable', () => {
+    const older = buildWorkspace('ws-a', {
+      createdAt: new Date('2026-01-01'),
+      updatedAt: new Date('2026-02-01'),
+    });
+    const newer = buildWorkspace('ws-b', {
+      createdAt: new Date('2026-01-01'),
+      updatedAt: new Date('2026-03-01'),
+    });
+
+    const sorted = sortWorkspacesForList([older, newer]);
+
+    expect(sorted.map((workspace) => workspace.id.value)).toEqual(['ws-b', 'ws-a']);
+  });
+
+  it('breaks activity ties by createdAt, most recent first', () => {
     const sameUpdate = new Date('2026-06-01');
     const earlier = buildWorkspace('ws-a', {
       createdAt: new Date('2026-01-01'),
@@ -159,7 +194,7 @@ describe('createListWorkspaces', () => {
     }
   });
 
-  it('orders the result by most recently updated first', async () => {
+  it('orders the result by most recent activity first', async () => {
     const workspaces = new FakeWorkspaceRepository();
     const memberships = new FakeMembershipRepository();
     const older = buildWorkspace('ws-a', { createdAt: new Date('2026-01-01') });

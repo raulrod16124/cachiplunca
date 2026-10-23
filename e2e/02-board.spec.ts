@@ -228,11 +228,29 @@ test.describe('Board (MVP happy path)', () => {
 
     const centerX = itemBox.x + itemBox.width / 2;
     const centerY = itemBox.y + itemBox.height / 2;
+    const handleCursor = (): Promise<string> =>
+      handle.evaluate((element) => getComputedStyle(element).cursor);
+
+    await expect
+      .poll(() => canvas.evaluate((element) => getComputedStyle(element).cursor))
+      .toBe('grab');
+    await expect
+      .poll(() =>
+        item
+          .locator('[data-element-content]')
+          .evaluate((element) => getComputedStyle(element).cursor),
+      )
+      .toBe('pointer');
 
     await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2);
+    await expect.poll(handleCursor).toContain('data:image/svg');
+
     await page.mouse.down();
     await page.mouse.move(centerX + itemBox.width / 2, centerY, { steps: 10 });
+    await expect.poll(handleCursor).toContain('data:image/svg');
+
     await page.mouse.up();
+    await expect.poll(handleCursor).toContain('data:image/svg');
 
     const rotatedTransform = await item.evaluate((element) => getComputedStyle(element).transform);
 

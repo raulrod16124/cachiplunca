@@ -17,23 +17,35 @@ describe('FakeAuthPort', () => {
     const listener = jest.fn();
     fake.observeSession(listener);
 
-    const user = await fake.signUp({ email: 'New@Example.com ', password: 'secret-1' });
+    const user = await fake.signUp({
+      email: 'New@Example.com ',
+      password: 'secret-1',
+      displayName: 'New User',
+    });
 
     expect(user).toEqual({
       uid: 'fake-uid-1',
       email: 'New@Example.com ',
       emailVerified: false,
-      displayName: null,
+      displayName: 'New User',
     });
     expect(listener).toHaveBeenLastCalledWith(user);
   });
 
   it('rejects signUp when the email is already registered, ignoring case and whitespace', async () => {
     const fake = new FakeAuthPort();
-    await fake.signUp({ email: 'user@example.com', password: 'secret-1' });
+    await fake.signUp({
+      email: 'user@example.com',
+      password: 'secret-1',
+      displayName: 'Test User',
+    });
 
     await expect(
-      fake.signUp({ email: '  USER@example.com ', password: 'other-secret' }),
+      fake.signUp({
+        email: '  USER@example.com ',
+        password: 'other-secret',
+        displayName: 'Other User',
+      }),
     ).rejects.toMatchObject({
       kind: 'conflict',
       code: ERROR_CODES.AUTH_EMAIL_ALREADY_IN_USE,
@@ -42,7 +54,11 @@ describe('FakeAuthPort', () => {
 
   it('signs in with valid credentials and emits the session', async () => {
     const fake = new FakeAuthPort();
-    const created = await fake.signUp({ email: 'user@example.com', password: 'secret-1' });
+    const created = await fake.signUp({
+      email: 'user@example.com',
+      password: 'secret-1',
+      displayName: 'Test User',
+    });
     await fake.signOut();
     const listener = jest.fn();
     fake.observeSession(listener);
@@ -69,7 +85,11 @@ describe('FakeAuthPort', () => {
 
   it('rejects signIn with a wrong password without opening a session', async () => {
     const fake = new FakeAuthPort();
-    await fake.signUp({ email: 'user@example.com', password: 'secret-1' });
+    await fake.signUp({
+      email: 'user@example.com',
+      password: 'secret-1',
+      displayName: 'Test User',
+    });
     await fake.signOut();
     const listener = jest.fn();
     fake.observeSession(listener);
@@ -112,7 +132,11 @@ describe('FakeAuthPort', () => {
 
   it('signs out and emits the anonymous session', async () => {
     const fake = new FakeAuthPort();
-    await fake.signUp({ email: 'user@example.com', password: 'secret-1' });
+    await fake.signUp({
+      email: 'user@example.com',
+      password: 'secret-1',
+      displayName: 'Test User',
+    });
     const listener = jest.fn();
     fake.observeSession(listener);
 
@@ -133,7 +157,11 @@ describe('FakeAuthPort', () => {
 
   it('does not re-emit when signing in as the current session user', async () => {
     const fake = new FakeAuthPort();
-    await fake.signUp({ email: 'user@example.com', password: 'secret-1' });
+    await fake.signUp({
+      email: 'user@example.com',
+      password: 'secret-1',
+      displayName: 'Test User',
+    });
     const listener = jest.fn();
     fake.observeSession(listener);
 
@@ -148,7 +176,11 @@ describe('FakeAuthPort', () => {
     const unsubscribe = fake.observeSession(listener);
 
     unsubscribe();
-    await fake.signUp({ email: 'user@example.com', password: 'secret-1' });
+    await fake.signUp({
+      email: 'user@example.com',
+      password: 'secret-1',
+      displayName: 'Test User',
+    });
 
     expect(listener).toHaveBeenCalledTimes(1);
   });
@@ -160,7 +192,11 @@ describe('FakeAuthPort', () => {
     fake.observeSession(first)();
     fake.observeSession(second);
 
-    await fake.signUp({ email: 'user@example.com', password: 'secret-1' });
+    await fake.signUp({
+      email: 'user@example.com',
+      password: 'secret-1',
+      displayName: 'Test User',
+    });
 
     expect(first).toHaveBeenCalledTimes(1);
     expect(second).toHaveBeenCalledTimes(2);

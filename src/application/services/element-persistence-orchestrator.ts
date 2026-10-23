@@ -1,21 +1,30 @@
 import type { Element } from '../../domain/element';
-import type { ElementId } from '../../domain/shared';
+import type { ElementId, WorkspaceId } from '../../domain/shared';
+import type { WorkspaceRepository } from '../ports';
 import type { ElementPersistence, PersistElementMutationResult } from './element-persistence';
 
 export interface ElementPersistenceOrchestrator {
   persistDelta(
     previous: readonly Element[],
     next: readonly Element[],
+    workspaceId?: WorkspaceId,
   ): Promise<PersistElementMutationResult>;
+}
+
+export interface ElementPersistenceOrchestratorOptions {
+  readonly workspaceRepository?: Pick<WorkspaceRepository, 'touchActivity'>;
+  readonly now?: () => Date;
 }
 
 export function createElementPersistenceOrchestrator(
   persistence: ElementPersistence,
+  options: ElementPersistenceOrchestratorOptions = {},
 ): ElementPersistenceOrchestrator {
   return {
     async persistDelta(
       previous: readonly Element[],
       next: readonly Element[],
+      workspaceId?: WorkspaceId,
     ): Promise<PersistElementMutationResult> {
       const { upserts, removedIds } = computeElementDelta(previous, next);
 
@@ -29,9 +38,33 @@ export function createElementPersistenceOrchestrator(
         return removed;
       }
 
-      return persistence.saveMany(upserts);
+      const result = await persistence.saveMany(upserts);
+
+      if (result.status === 'ok') {
+        await touchActivityBestEffort(options, workspaceId);
+      }
+
+      return result;
     },
   };
+}
+
+async function touchActivityBestEffort(
+  options: ElementPersistenceOrchestratorOptions,
+  workspaceId: WorkspaceId | undefined,
+): Promise<void> {
+  if (options.workspaceRepository === undefined || workspaceId === undefined) {
+    return;
+  }
+
+  try {
+    await options.workspaceRepository.touchActivity(
+      workspaceId,
+      options.now === undefined ? undefined : options.now(),
+    );
+  } catch {
+    return;
+  }
 }
 
 interface ElementDelta {

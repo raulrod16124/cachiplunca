@@ -17,6 +17,12 @@ import { useI18n } from '../../../i18n';
 
 const EDITABLE_SELECTOR = 'input, textarea, select, [contenteditable="true"]';
 
+const Content = styled(DialogContent)`
+  && {
+    max-width: 44rem;
+  }
+`;
+
 const Group = styled.section`
   display: flex;
   flex-direction: column;
@@ -33,19 +39,28 @@ const ShortcutList = styled.ul`
 `;
 
 const ShortcutRow = styled.li`
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: ${({ theme }) => theme.space[4]};
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 45%);
+  align-items: start;
+  gap: ${({ theme }) => `${theme.space[1]} ${theme.space[4]}`};
   min-width: 0;
+
+  @media (max-width: 600px) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: ${({ theme }) => theme.space[1]};
+  }
 `;
 
 const ShortcutLabel = styled(Text)`
   min-width: 0;
+  line-height: ${({ theme }) => theme.font.leading.normal};
+  overflow-wrap: anywhere;
 `;
 
 const ShortcutKeys = styled.kbd`
-  flex: none;
+  justify-self: end;
+  min-width: 0;
+  max-width: 100%;
   padding: ${({ theme }) => `${theme.space[1]} ${theme.space[2]}`};
   border: 1px solid ${({ theme }) => theme.color.border.default};
   border-bottom-width: 2px;
@@ -54,7 +69,15 @@ const ShortcutKeys = styled.kbd`
   color: ${({ theme }) => theme.color.text.primary};
   font-family: ${({ theme }) => theme.font.family.mono};
   font-size: ${({ theme }) => theme.font.size.xs};
-  white-space: nowrap;
+  line-height: ${({ theme }) => theme.font.leading.normal};
+  text-align: right;
+  white-space: normal;
+  overflow-wrap: anywhere;
+
+  @media (max-width: 600px) {
+    justify-self: start;
+    text-align: left;
+  }
 `;
 
 function isEditableTarget(target: EventTarget | null): boolean {
@@ -112,7 +135,7 @@ export function KeyboardShortcutsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <Content>
         <DialogHeader>
           <DialogTitle>{t('shortcuts.title')}</DialogTitle>
           <DialogDescription>{t('shortcuts.description')}</DialogDescription>
@@ -145,7 +168,7 @@ export function KeyboardShortcutsDialog({
             {t('common.close')}
           </Button>
         </DialogFooter>
-      </DialogContent>
+      </Content>
     </Dialog>
   );
 }

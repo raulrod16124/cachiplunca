@@ -42,6 +42,8 @@ export function createFirebaseWorkspaceRepository(db: Firestore): WorkspaceRepos
           name: input.name,
           createdBy: input.createdBy,
           description: input.description,
+          coverImageUrl: input.coverImageUrl,
+          coverImageStoragePath: input.coverImageStoragePath,
         }),
       );
 
@@ -70,9 +72,28 @@ export function createFirebaseWorkspaceRepository(db: Firestore): WorkspaceRepos
       if (updates.description !== undefined) {
         changes.description = updated.description;
       }
+      if (updates.coverImageUrl !== undefined) {
+        changes.coverImageUrl = updated.coverImageUrl;
+      }
+      if (updates.coverImageStoragePath !== undefined) {
+        changes.coverImageStoragePath = updated.coverImageStoragePath;
+      }
 
       await withMappedErrors(() => updateDoc(workspaceRef(id), changes));
       return updated;
+    },
+
+    async touchActivity(id: WorkspaceId, at?: Date): Promise<Workspace> {
+      const current = await findById(id);
+      if (current === null) {
+        throw notFoundError(id);
+      }
+      const touched = buildWorkspace(() => current.touchActivity(at));
+
+      await withMappedErrors(() =>
+        updateDoc(workspaceRef(id), { lastActivityAt: touched.lastActivityAt }),
+      );
+      return touched;
     },
 
     async delete(id: WorkspaceId): Promise<void> {

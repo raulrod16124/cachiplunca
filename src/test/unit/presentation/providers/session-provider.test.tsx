@@ -79,7 +79,11 @@ describe('SessionProvider', () => {
 
   it('restores an already persisted session without any interaction', async () => {
     const authPort = new FakeAuthPort();
-    await authPort.signUp({ email: 'user@example.com', password: 'secret123' });
+    await authPort.signUp({
+      email: 'user@example.com',
+      password: 'secret123',
+      displayName: 'Test User',
+    });
 
     renderSession(createSessionStore(authPort));
 

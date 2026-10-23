@@ -20,6 +20,7 @@ import {
 import type {
   AuthCredentials,
   AuthPort,
+  AuthSignUpInput,
   AuthUser,
   ChangeEmailInput,
   ChangePasswordInput,
@@ -59,13 +60,10 @@ async function reauthenticate(user: User, currentPassword: string): Promise<void
 
 export function createFirebaseAuthAdapter(auth: Auth): AuthPort {
   return {
-    async signUp(credentials: AuthCredentials): Promise<AuthUser> {
+    async signUp(input: AuthSignUpInput): Promise<AuthUser> {
       try {
-        const credential = await createUserWithEmailAndPassword(
-          auth,
-          credentials.email,
-          credentials.password,
-        );
+        const credential = await createUserWithEmailAndPassword(auth, input.email, input.password);
+        await updateProfile(credential.user, { displayName: input.displayName });
         return mapFirebaseUserToAuthUser(credential.user);
       } catch (error) {
         throw mapFirebaseError(error);

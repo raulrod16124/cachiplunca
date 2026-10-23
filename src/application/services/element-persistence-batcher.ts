@@ -1,4 +1,5 @@
 import type { Element } from '../../domain/element';
+import type { WorkspaceId } from '../../domain/shared';
 import { toAppError, type AppError } from '../../shared/errors';
 import type { PersistElementMutationResult } from './element-persistence';
 import type { ElementPersistenceOrchestrator } from './element-persistence-orchestrator';
@@ -21,6 +22,7 @@ export interface ElementPersistenceBatcher {
 
 export interface ElementPersistenceBatcherOptions {
   readonly orchestrator: ElementPersistenceOrchestrator;
+  readonly workspaceId?: WorkspaceId;
   readonly onResult?: (result: PersistElementMutationResult) => void;
   readonly onStatusChange?: (status: PersistenceSyncStatus) => void;
   readonly onMutationFailed?: (mutation: FailedElementMutation, error: AppError) => void;
@@ -78,7 +80,7 @@ export function createElementPersistenceBatcher(
   function persist(target: PendingMutation): Promise<void> {
     inFlight += 1;
     chain = chain.then(async () => {
-      const result = await resolvePersistResult(orchestrator, target);
+      const result = await resolvePersistResult(orchestrator, target, options.workspaceId);
       inFlight -= 1;
       onResult?.(result);
 
@@ -167,9 +169,10 @@ function normalizeDelayMs(delayMs: number | undefined): number {
 async function resolvePersistResult(
   orchestrator: ElementPersistenceOrchestrator,
   target: PendingMutation,
+  workspaceId?: WorkspaceId,
 ): Promise<PersistElementMutationResult> {
   try {
-    return await orchestrator.persistDelta(target.previous, target.next);
+    return await orchestrator.persistDelta(target.previous, target.next, workspaceId);
   } catch (error) {
     return { status: 'error', error: toAppError(error) };
   }

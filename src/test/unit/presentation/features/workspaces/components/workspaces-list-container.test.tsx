@@ -1,7 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
-import { MemoryRouter, useLocation } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
+import { FavoritesProvider } from '../../../../../../presentation/features/favorites';
 import { WorkspacesListContainer } from '../../../../../../presentation/features/workspaces/components/workspaces-list-container';
 import type {
   ListWorkspaces,
@@ -14,20 +15,53 @@ import type {
 } from '../../../../../../application/commands';
 import { Workspace } from '../../../../../../domain/workspace';
 import { UserId, WorkspaceId } from '../../../../../../domain/shared';
+import type { FavoriteServices } from '../../../../../../application/favorite-services';
+import { Favorite } from '../../../../../../domain/favorite';
+import { createSessionStore } from '../../../../../../application/services';
+import { SessionProvider } from '../../../../../../presentation/providers/session-provider';
+import { FakeAuthPort } from '../../../../../fixtures/fake-auth-port';
 import { createAppError, ERROR_CODES } from '../../../../../../shared/errors';
 
 const CREATED_BY = UserId.create('user-1');
 
-function createWorkspace(name: string): Workspace {
+function createWorkspace(name: string, activityAt: Date = new Date()): Workspace {
   return Workspace.create({
     id: WorkspaceId.create(`ws-${name}`),
     name,
     createdBy: CREATED_BY,
+    createdAt: activityAt,
+    updatedAt: activityAt,
+    lastActivityAt: activityAt,
   });
 }
 
-function renderWithRouter(children: ReactNode): ReturnType<typeof render> {
-  return render(<MemoryRouter>{children}</MemoryRouter>);
+function renderTree(children: ReactNode, services?: FavoriteServices): ReactNode {
+  const authPort = new FakeAuthPort();
+  authPort.setSession({
+    uid: 'user-1',
+    email: 'user@example.com',
+    emailVerified: true,
+    displayName: 'Test User',
+  });
+
+  return (
+    <MemoryRouter>
+      <SessionProvider store={createSessionStore(authPort)}>
+        <Routes>
+          <Route element={<FavoritesProvider services={services} />}>
+            <Route path="*" element={children} />
+          </Route>
+        </Routes>
+      </SessionProvider>
+    </MemoryRouter>
+  );
+}
+
+function renderWithRouter(
+  children: ReactNode,
+  services?: FavoriteServices,
+): ReturnType<typeof render> {
+  return render(renderTree(children, services));
 }
 
 function LocationProbe(): ReactNode {
@@ -40,6 +74,42 @@ describe('WorkspacesListContainer', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  it('toggles a favorite from the card', async () => {
+    const workspace = createWorkspace('Alpha');
+    const result: ListWorkspacesResult = {
+      status: 'ok',
+      workspaces: [workspace],
+      rolesByWorkspaceId: new Map([[workspace.id.value, 'owner']]),
+    };
+    const listWorkspaces: ListWorkspaces = jest.fn().mockResolvedValue(result);
+    const services: FavoriteServices = {
+      listFavorites: jest.fn().mockResolvedValue({ status: 'ok', favorites: [] }),
+      toggleFavorite: jest.fn().mockResolvedValue({ status: 'ok', favorited: true }),
+    };
+    const user = userEvent.setup();
+
+    renderWithRouter(
+      <WorkspacesListContainer
+        userId="user-1"
+        listWorkspaces={listWorkspaces}
+        onCreateWorkspace={onCreate}
+      />,
+      services,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Add to favorites Alpha' }));
+
+    expect(services.toggleFavorite).toHaveBeenCalledWith({
+      userId: 'user-1',
+      workspaceId: workspace.id.value,
+      favorited: true,
+    });
   });
 
   it('transitions from loading to success and renders workspaces', async () => {
@@ -162,14 +232,14 @@ describe('WorkspacesListContainer', () => {
     });
 
     rerender(
-      <MemoryRouter>
+      renderTree(
         <WorkspacesListContainer
           userId="user-1"
           listWorkspaces={listWorkspaces}
           onCreateWorkspace={onCreate}
           refreshToken={1}
-        />
-      </MemoryRouter>,
+        />,
+      ),
     );
 
     await waitFor(() => {
@@ -237,15 +307,17 @@ describe('WorkspacesListContainer', () => {
     const user = userEvent.setup();
 
     render(
-      <MemoryRouter>
-        <WorkspacesListContainer
-          userId="user-1"
-          listWorkspaces={listWorkspaces}
-          duplicateWorkspace={duplicateWorkspace}
-          onCreateWorkspace={onCreate}
-        />
-        <LocationProbe />
-      </MemoryRouter>,
+      renderTree(
+        <>
+          <WorkspacesListContainer
+            userId="user-1"
+            listWorkspaces={listWorkspaces}
+            duplicateWorkspace={duplicateWorkspace}
+            onCreateWorkspace={onCreate}
+          />
+          <LocationProbe />
+        </>,
+      ),
     );
 
     await waitFor(() => {
@@ -357,5 +429,106 @@ describe('WorkspacesListContainer', () => {
     });
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Alpha' })).not.toBeInTheDocument();
+  });
+
+  it('filters to favorites and keeps the activity order', async () => {
+    const older = createWorkspace('Older favorite', new Date('2025-01-01T00:00:00Z'));
+    const newer = createWorkspace('Newer favorite', new Date('2025-02-01T00:00:00Z'));
+    const other = createWorkspace('Not a favorite', new Date('2025-03-01T00:00:00Z'));
+    const result: ListWorkspacesResult = {
+      status: 'ok',
+      workspaces: [older, other, newer],
+      rolesByWorkspaceId: new Map([
+        [older.id.value, 'owner'],
+        [newer.id.value, 'owner'],
+        [other.id.value, 'owner'],
+      ]),
+    };
+    const listWorkspaces: ListWorkspaces = jest.fn().mockResolvedValue(result);
+    const userId = UserId.create('user-1');
+    const services: FavoriteServices = {
+      listFavorites: jest.fn().mockResolvedValue({
+        status: 'ok',
+        favorites: [
+          Favorite.create({ userId, workspaceId: older.id }),
+          Favorite.create({ userId, workspaceId: newer.id }),
+        ],
+      }),
+      toggleFavorite: jest.fn(),
+    };
+
+    renderWithRouter(
+      <WorkspacesListContainer
+        userId="user-1"
+        listWorkspaces={listWorkspaces}
+        onCreateWorkspace={onCreate}
+        favoritesOnly
+      />,
+      services,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { level: 3, name: 'Newer favorite' })).toBeInTheDocument();
+    });
+
+    expect(
+      screen.getAllByRole('heading', { level: 3 }).map((heading) => heading.textContent),
+    ).toEqual(['Newer favorite', 'Older favorite']);
+    expect(screen.queryByRole('heading', { name: 'Not a favorite' })).not.toBeInTheDocument();
+  });
+
+  it('removes an unfavorited card and shows the custom empty state', async () => {
+    const workspace = createWorkspace('Alpha');
+    const result: ListWorkspacesResult = {
+      status: 'ok',
+      workspaces: [workspace],
+      rolesByWorkspaceId: new Map([[workspace.id.value, 'owner']]),
+    };
+    const listWorkspaces: ListWorkspaces = jest.fn().mockResolvedValue(result);
+    const userId = UserId.create('user-1');
+    const services: FavoriteServices = {
+      listFavorites: jest.fn().mockResolvedValue({
+        status: 'ok',
+        favorites: [Favorite.create({ userId, workspaceId: workspace.id })],
+      }),
+      toggleFavorite: jest.fn().mockResolvedValue({ status: 'ok', favorited: false }),
+    };
+    const onEmptyAction = jest.fn();
+    const user = userEvent.setup();
+
+    renderWithRouter(
+      <WorkspacesListContainer
+        userId="user-1"
+        listWorkspaces={listWorkspaces}
+        onCreateWorkspace={onCreate}
+        favoritesOnly
+        loadingLabel="Loading favorites"
+        emptyState={{
+          title: 'No favorite boards yet',
+          description: 'Mark a board with the star icon to see it here.',
+          actionLabel: 'Browse boards',
+          onAction: onEmptyAction,
+        }}
+      />,
+      services,
+    );
+
+    expect(screen.getByRole('status')).toHaveTextContent('Loading favorites');
+    expect(await screen.findByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Remove from favorites Alpha' }));
+
+    expect(
+      await screen.findByRole('heading', { name: 'No favorite boards yet' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Alpha' })).not.toBeInTheDocument();
+    expect(services.toggleFavorite).toHaveBeenCalledWith({
+      userId: 'user-1',
+      workspaceId: workspace.id.value,
+      favorited: false,
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Browse boards' }));
+    expect(onEmptyAction).toHaveBeenCalledTimes(1);
   });
 });

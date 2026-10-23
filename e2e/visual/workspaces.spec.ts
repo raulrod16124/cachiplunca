@@ -53,6 +53,41 @@ test.describe('visual baseline — workspaces', () => {
         mask: dynamicMaskLocators(page),
       });
     });
+
+    test(`list theme:${theme}`, async ({ page }) => {
+      await registerUser(page);
+      await createWorkspace(page, 'List workspace');
+      await page.goto('/workspaces');
+      await expect(page.getByRole('heading', { level: 1, name: 'Your boards' })).toBeVisible();
+      await setTheme(page, theme);
+      await waitForStable(page);
+      await page.getByRole('button', { name: 'List view' }).click();
+      await expect(page.getByRole('button', { name: 'List view' })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      );
+      await expect(page).toHaveScreenshot(`workspaces-list-${theme}.png`, {
+        mask: dynamicMaskLocators(page),
+      });
+    });
+
+    test(`narrow 390 list theme:${theme}`, async ({ page }) => {
+      await registerUser(page);
+      await createWorkspace(page, 'Narrow list workspace');
+      await page.goto('/workspaces');
+      await expect(page.getByRole('heading', { level: 1, name: 'Your boards' })).toBeVisible();
+      await page.setViewportSize({ width: 390, height: 800 });
+      await setTheme(page, theme);
+      await waitForStable(page);
+      await page.getByRole('button', { name: 'List view' }).click();
+      await expect(page.getByRole('button', { name: 'List view' })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      );
+      await expect(page).toHaveScreenshot(`workspaces-narrow-390-list-${theme}.png`, {
+        mask: dynamicMaskLocators(page),
+      });
+    });
   }
 
   test('narrow viewport', async ({ page }) => {

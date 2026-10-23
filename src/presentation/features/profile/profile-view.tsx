@@ -17,27 +17,26 @@ import {
 import { ShieldCheck, Sparkles } from '@raulrod/icons';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import styled from 'styled-components';
-import type {
-  ChangeUserEmailFieldErrors,
-  ChangeUserPasswordFieldErrors,
-  UpdateUserProfileFieldErrors,
+import {
+  DISPLAY_NAME_MAX_LENGTH,
+  type ChangeUserEmailFieldErrors,
+  type ChangeUserPasswordFieldErrors,
+  type UpdateUserProfileFieldErrors,
 } from '../../../application/commands';
 import type { AuthUser } from '../../../application/ports';
 import { toAppError, ERROR_CODES, type AppError } from '../../../shared/errors';
 import { localizeFieldError, useI18n, type I18nContextValue } from '../../i18n';
-import { SettingsControls } from '../settings/settings-controls';
 import { PasswordInput } from '../auth/password-input';
 import { Card } from '../../components/card';
 import { useProfileServices } from './profile-services-provider';
 
 export const PROFILE_TAB = 'profile';
 export const SECURITY_TAB = 'security';
-export const PREFERENCES_TAB = 'preferences';
 
-export type ProfileTab = typeof PROFILE_TAB | typeof SECURITY_TAB | typeof PREFERENCES_TAB;
+export type ProfileTab = typeof PROFILE_TAB | typeof SECURITY_TAB;
 
 export function isProfileTab(value: string | null): value is ProfileTab {
-  return value === PROFILE_TAB || value === SECURITY_TAB || value === PREFERENCES_TAB;
+  return value === PROFILE_TAB || value === SECURITY_TAB;
 }
 
 const IdentityCard = styled(Card)`
@@ -103,8 +102,6 @@ const FormActions = styled.div`
   }
 `;
 
-const DISPLAY_NAME_MAX_LENGTH = 80;
-
 export interface ProfileViewProps {
   readonly currentUser: AuthUser;
   readonly tab: ProfileTab;
@@ -150,7 +147,6 @@ export function ProfileView({ currentUser, tab, onTabChange }: ProfileViewProps)
         <Tabs.List>
           <Tabs.Trigger value={PROFILE_TAB}>{t('profile.tabs.profile')}</Tabs.Trigger>
           <Tabs.Trigger value={SECURITY_TAB}>{t('profile.tabs.security')}</Tabs.Trigger>
-          <Tabs.Trigger value={PREFERENCES_TAB}>{t('profile.tabs.preferences')}</Tabs.Trigger>
         </Tabs.List>
 
         <Tabs.Panel value={PROFILE_TAB}>
@@ -204,10 +200,6 @@ export function ProfileView({ currentUser, tab, onTabChange }: ProfileViewProps)
               )}
             </Section>
           </Stack>
-        </Tabs.Panel>
-
-        <Tabs.Panel value={PREFERENCES_TAB}>
-          <SettingsControls />
         </Tabs.Panel>
       </Tabs>
     </Stack>

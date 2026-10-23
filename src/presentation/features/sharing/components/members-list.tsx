@@ -35,6 +35,12 @@ const ROLE_KEYS: Record<MembershipRole, TranslationKey> = {
   viewer: 'share.role.viewer',
 };
 
+const ROLE_DESCRIPTION_KEYS: Record<MembershipRole, TranslationKey> = {
+  owner: 'share.role.owner.description',
+  editor: 'share.role.editor.description',
+  viewer: 'share.role.viewer.description',
+};
+
 const ROLE_OPTIONS: readonly MembershipRole[] = ['owner', 'editor', 'viewer'];
 
 const List = styled.ul`
@@ -115,7 +121,7 @@ export function MembersList({
             <Card key={userId} as="li" padding="sm" data-testid="member-row">
               <ActionRow
                 wrap
-                leading={<Avatar name={label} size="sm" />}
+                leading={<Avatar name={label} size="sm" data-testid="member-avatar" />}
                 trailing={
                   <Inline gap="space-2" align="center" wrap>
                     {isSelf || !canChangeRole ? (
@@ -166,10 +172,17 @@ export function MembersList({
                   </Inline>
                 }
               >
-                <MemberIdentity gap="space-2" align="center" wrap>
-                  <Text weight="font.weight.medium">{label}</Text>
-                  {isSelf ? <Badge variant="info">{t('share.you')}</Badge> : null}
-                </MemberIdentity>
+                <Stack gap="space-1">
+                  <MemberIdentity gap="space-2" align="center" wrap data-testid="member-identity">
+                    <Text weight="font.weight.medium" data-testid="member-label">
+                      {label}
+                    </Text>
+                    {isSelf ? <Badge variant="info">{t('share.you')}</Badge> : null}
+                  </MemberIdentity>
+                  <Text size="font.size.xs" color="color.text.muted">
+                    {t(ROLE_DESCRIPTION_KEYS[member.role])}
+                  </Text>
+                </Stack>
               </ActionRow>
             </Card>
           );

@@ -76,7 +76,7 @@ describe('createElementPersistenceBatcher', () => {
     await flushMicrotasks();
 
     expect(orchestrator.persistDelta).toHaveBeenCalledTimes(1);
-    expect(orchestrator.persistDelta).toHaveBeenCalledWith(previous, third);
+    expect(orchestrator.persistDelta).toHaveBeenCalledWith(previous, third, undefined);
   });
 
   it('flushes pending work immediately and cancels the scheduled flush', async () => {
@@ -92,13 +92,33 @@ describe('createElementPersistenceBatcher', () => {
 
     await batcher.flush();
 
-    expect(orchestrator.persistDelta).toHaveBeenCalledWith(previous, next);
+    expect(orchestrator.persistDelta).toHaveBeenCalledWith(previous, next, undefined);
     expect(scheduler.pending).toBe(0);
 
     scheduler.run();
     await flushMicrotasks();
 
     expect(orchestrator.persistDelta).toHaveBeenCalledTimes(1);
+  });
+
+  it('forwards the workspace id to the orchestrator', async () => {
+    const scheduler = new ManualScheduler();
+    const orchestrator: ElementPersistenceOrchestrator = {
+      persistDelta: jest.fn().mockResolvedValue(OK),
+    };
+    const workspaceId = WorkspaceId.create('ws-1');
+    const batcher = createElementPersistenceBatcher({
+      orchestrator,
+      scheduler,
+      workspaceId,
+    });
+    const previous = [buildTextElement('el-1', 0)];
+    const next = [buildTextElement('el-1', 40)];
+
+    batcher.schedule(previous, next);
+    await batcher.flush();
+
+    expect(orchestrator.persistDelta).toHaveBeenCalledWith(previous, next, workspaceId);
   });
 
   it('does nothing when flushed without pending work', async () => {

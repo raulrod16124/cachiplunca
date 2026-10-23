@@ -1,7 +1,6 @@
 import { Avatar, DropdownMenu, Inline, Text } from '@raulrod/ui';
-import { LogOut, Settings, UserRound } from '@raulrod/icons';
+import { LogOut } from '@raulrod/icons';
 import type { ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import type { AuthUser } from '../../../application/ports';
 import type { LogoutUser } from '../../../application/commands';
@@ -42,15 +41,10 @@ export interface AccountMenuProps {
 
 export function AccountMenu({ currentUser, logoutUser }: AccountMenuProps): ReactNode {
   const { t } = useI18n();
-  const navigate = useNavigate();
   const { signingOut, signOutError, signOut } = useSignOut(logoutUser);
   const avatarName = currentUser?.displayName ?? currentUser?.email ?? 'Account';
   const identityName = currentUser?.displayName;
   const identityLabel = identityName ?? t('shell.account.identity');
-
-  const openProfile = (tab: 'profile' | 'preferences') => {
-    navigate(tab === 'preferences' ? '/profile?tab=preferences' : '/profile');
-  };
 
   return (
     <Inline gap="space-2" align="center">
@@ -72,25 +66,6 @@ export function AccountMenu({ currentUser, logoutUser }: AccountMenuProps): Reac
               <DropdownMenu.Separator />
             </>
           )}
-          {currentUser === null ? null : (
-            <DropdownMenu.Item
-              onSelect={() => {
-                openProfile('profile');
-              }}
-              startIcon={<UserRound aria-hidden="true" size={16} />}
-            >
-              {t('shell.account.profile')}
-            </DropdownMenu.Item>
-          )}
-          <DropdownMenu.Item
-            onSelect={() => {
-              openProfile('preferences');
-            }}
-            startIcon={<Settings aria-hidden="true" size={16} />}
-          >
-            {t('shell.account.preferences')}
-          </DropdownMenu.Item>
-          <DropdownMenu.Separator />
           <DropdownMenu.Item
             disabled={signingOut}
             onSelect={() => {

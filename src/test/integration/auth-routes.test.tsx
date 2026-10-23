@@ -14,7 +14,7 @@ import { FakeRealtimePort } from '../fixtures/fake-realtime-port';
 import { PendingAuthPort } from '../fixtures/pending-auth-port';
 import { renderAppRoutes } from './harness';
 
-const CREDENTIALS = { email: 'user@example.com', password: 'secret123' };
+const CREDENTIALS = { email: 'user@example.com', password: 'secret123', displayName: 'Test User' };
 
 function renderApp(
   authPort: AuthPort,
@@ -47,6 +47,9 @@ function renderApp(
         async update() {
           throw new Error('Not implemented');
         },
+        async touchActivity() {
+          throw new Error('Not implemented');
+        },
         async delete() {
           throw new Error('Not implemented');
         },
@@ -57,6 +60,10 @@ function renderApp(
       },
       realtimeSubscriptionManager: createRealtimeSubscriptionManager(new FakeRealtimePort()),
       generateElementId: () => ElementId.create('generated'),
+      favorites: {
+        listFavorites: jest.fn().mockResolvedValue({ status: 'ok' as const, favorites: [] }),
+        toggleFavorite: jest.fn().mockResolvedValue({ status: 'ok' as const, favorited: true }),
+      },
     },
   });
 }
@@ -64,6 +71,13 @@ function renderApp(
 function fillForm(): void {
   fireEvent.change(screen.getByLabelText('Email'), { target: { value: CREDENTIALS.email } });
   fireEvent.change(screen.getByLabelText('Password'), { target: { value: CREDENTIALS.password } });
+}
+
+function fillRegistrationForm(): void {
+  fireEvent.change(screen.getByLabelText('Name'), {
+    target: { value: CREDENTIALS.displayName },
+  });
+  fillForm();
 }
 
 async function registeredUser(authPort: FakeAuthPort): Promise<void> {
@@ -138,7 +152,7 @@ describe('auth routes', () => {
   it('opens /workspaces after registering', async () => {
     renderApp(new FakeAuthPort(), '/register');
 
-    fillForm();
+    fillRegistrationForm();
     fireEvent.click(screen.getByRole('button', { name: 'Create account' }));
 
     expect(
@@ -201,23 +215,66 @@ describe('auth routes', () => {
     expect(screen.getByRole('tab', { name: 'Profile' })).toHaveAttribute('aria-selected', 'true');
   });
 
-  it('opens the preferences tab from the account menu', async () => {
+  it('removes the preferences tab from the profile page', async () => {
     const authPort = new FakeAuthPort();
     await authPort.signUp(CREDENTIALS);
-    renderApp(authPort, '/workspaces');
-
-    expect(
-      await screen.findByRole('heading', { level: 1, name: 'Your boards' }),
-    ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Open account menu' }));
-    fireEvent.click(await screen.findByRole('menuitem', { name: 'Preferences' }));
+    renderApp(authPort, '/profile');
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Profile' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Preferences' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
-    expect(screen.getByTestId('location')).toHaveTextContent('/profile?tab=preferences');
+
+    expect(screen.getByRole('tab', { name: 'Profile' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Security' })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Preferences' })).not.toBeInTheDocument();
+  });
+
+  it('redirects the legacy preferences deep link to /settings', async () => {
+    const authPort = new FakeAuthPort();
+    await authPort.signUp(CREDENTIALS);
+    renderApp(authPort, '/profile?tab=preferences');
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Settings' })).toBeInTheDocument();
+    expect(screen.getByTestId('location')).toHaveTextContent('/settings');
+    expect(screen.queryByRole('heading', { level: 1, name: 'Profile' })).not.toBeInTheDocument();
+  });
+
+  it('renders the settings page with its preference controls and active navigation', async () => {
+    const authPort = new FakeAuthPort();
+    await authPort.signUp(CREDENTIALS);
+    renderApp(authPort, '/settings');
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Settings' })).toBeInTheDocument();
+    expect(screen.getByTestId('location')).toHaveTextContent('/settings');
+    expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('combobox', { name: 'Theme' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Font size' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Language' })).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'Reduce motion' })).toBeInTheDocument();
+  });
+
+  it('redirects an anonymous visitor from /settings to /login', async () => {
+    renderApp(new FakeAuthPort(), '/settings');
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeInTheDocument();
+    expect(screen.getByTestId('location')).toHaveTextContent('/login');
+  });
+
+  it('redirects an anonymous visitor from /favorites to /login', async () => {
+    renderApp(new FakeAuthPort(), '/favorites');
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeInTheDocument();
+    expect(screen.getByTestId('location')).toHaveTextContent('/login');
+  });
+
+  it('renders the favorites page with its empty state and active navigation', async () => {
+    const authPort = new FakeAuthPort();
+    await authPort.signUp(CREDENTIALS);
+    renderApp(authPort, '/favorites');
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Favorites' })).toBeInTheDocument();
+    expect(screen.getByTestId('location')).toHaveTextContent('/favorites');
+    expect(screen.getByRole('link', { name: 'Favorites' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Boards' })).not.toHaveAttribute('aria-current');
+    expect(screen.getByRole('heading', { name: 'No favorite boards yet' })).toBeInTheDocument();
   });
 
   it('keeps the selected profile tab in the query string', async () => {

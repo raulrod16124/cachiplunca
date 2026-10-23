@@ -121,9 +121,9 @@ export function TaskFormDialog({
           <DialogTitle>
             {mode === 'create' ? t('taskForm.create.title') : t('taskForm.edit.title')}
           </DialogTitle>
-          <DialogDescription>
-            {mode === 'create' ? t('taskForm.create.description') : t('taskForm.edit.description')}
-          </DialogDescription>
+          {mode === 'create' && (
+            <DialogDescription>{t('taskForm.create.description')}</DialogDescription>
+          )}
         </DialogHeader>
         <form onSubmit={handleSubmit} noValidate>
           <Stack gap="space-4">

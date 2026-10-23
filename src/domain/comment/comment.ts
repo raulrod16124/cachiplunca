@@ -4,6 +4,7 @@ import { UserId } from '../shared/value-objects/user-id';
 import { WorkspaceId } from '../shared/value-objects/workspace-id';
 
 export const COMMENT_BODY_MAX_LENGTH = 4000;
+export const COMMENT_EDIT_WINDOW_MS = 15 * 60 * 1000;
 
 export interface CommentProps {
   readonly id: CommentId;
@@ -12,6 +13,7 @@ export interface CommentProps {
   readonly authorId: UserId;
   readonly body: string;
   readonly createdAt: Date;
+  readonly editedAt: Date | undefined;
   readonly resolvedAt: Date | undefined;
 }
 
@@ -22,6 +24,7 @@ export class Comment {
   private readonly _authorId: UserId;
   private readonly _body: string;
   private readonly _createdAt: Date;
+  private readonly _editedAt: Date | undefined;
   private readonly _resolvedAt: Date | undefined;
 
   private constructor(props: CommentProps) {
@@ -31,6 +34,7 @@ export class Comment {
     this._authorId = props.authorId;
     this._body = props.body;
     this._createdAt = props.createdAt;
+    this._editedAt = props.editedAt;
     this._resolvedAt = props.resolvedAt;
   }
 
@@ -41,12 +45,16 @@ export class Comment {
     readonly authorId: UserId;
     readonly body: string;
     readonly createdAt?: Date;
+    readonly editedAt?: Date;
     readonly resolvedAt?: Date;
   }): Comment {
     const body = Comment.validateBody(props.body);
     const createdAt = props.createdAt ?? new Date();
 
     Comment.validateTimestamp(createdAt, 'Created at');
+    if (props.editedAt !== undefined) {
+      Comment.validateEditedAt(props.editedAt, createdAt);
+    }
     if (props.resolvedAt !== undefined) {
       Comment.validateResolvedAt(props.resolvedAt, createdAt);
     }
@@ -58,8 +66,42 @@ export class Comment {
       authorId: props.authorId,
       body,
       createdAt,
+      editedAt: props.editedAt,
       resolvedAt: props.resolvedAt,
     });
+  }
+
+  editBody(body: string, editedAt: Date = new Date()): Comment {
+    if (this._resolvedAt !== undefined) {
+      throw new Error('Cannot edit a resolved comment');
+    }
+
+    Comment.validateEditedAt(editedAt, this._createdAt);
+    if (editedAt.getTime() - this._createdAt.getTime() > COMMENT_EDIT_WINDOW_MS) {
+      throw new Error('Comment can only be edited within 15 minutes of creation');
+    }
+
+    const normalized = Comment.validateBody(body);
+
+    return new Comment({
+      id: this._id,
+      workspaceId: this._workspaceId,
+      elementId: this._elementId,
+      authorId: this._authorId,
+      body: normalized,
+      createdAt: this._createdAt,
+      editedAt,
+      resolvedAt: undefined,
+    });
+  }
+
+  canEdit(at: Date = new Date()): boolean {
+    if (this._resolvedAt !== undefined || !(at instanceof Date) || Number.isNaN(at.getTime())) {
+      return false;
+    }
+
+    const elapsed = at.getTime() - this._createdAt.getTime();
+    return elapsed >= 0 && elapsed <= COMMENT_EDIT_WINDOW_MS;
   }
 
   resolve(resolvedAt: Date = new Date()): Comment {
@@ -76,6 +118,7 @@ export class Comment {
       authorId: this._authorId,
       body: this._body,
       createdAt: this._createdAt,
+      editedAt: this._editedAt,
       resolvedAt,
     });
   }
@@ -107,6 +150,14 @@ export class Comment {
     }
   }
 
+  private static validateEditedAt(editedAt: Date, createdAt: Date): void {
+    Comment.validateTimestamp(editedAt, 'Edited at');
+
+    if (editedAt.getTime() < createdAt.getTime()) {
+      throw new Error('Edited at cannot be before created at');
+    }
+  }
+
   get id(): CommentId {
     return this._id;
   }
@@ -131,8 +182,16 @@ export class Comment {
     return this._createdAt;
   }
 
+  get editedAt(): Date | undefined {
+    return this._editedAt;
+  }
+
   get resolvedAt(): Date | undefined {
     return this._resolvedAt;
+  }
+
+  isEdited(): boolean {
+    return this._editedAt !== undefined;
   }
 
   isResolved(): boolean {

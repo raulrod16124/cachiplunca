@@ -1,6 +1,7 @@
 import type {
   AuthCredentials,
   AuthPort,
+  AuthSignUpInput,
   AuthUser,
   ChangeEmailInput,
   ChangePasswordInput,
@@ -24,8 +25,8 @@ export class FakeAuthPort implements AuthPort {
   #persistence: SessionPersistence = 'local';
   #sequence = 0;
 
-  async signUp(credentials: AuthCredentials): Promise<AuthUser> {
-    const key = normalizeEmail(credentials.email);
+  async signUp(input: AuthSignUpInput): Promise<AuthUser> {
+    const key = normalizeEmail(input.email);
 
     if (this.#users.has(key)) {
       throw createAppError(
@@ -37,12 +38,12 @@ export class FakeAuthPort implements AuthPort {
 
     const user: AuthUser = {
       uid: `fake-uid-${++this.#sequence}`,
-      email: credentials.email,
+      email: input.email,
       emailVerified: false,
-      displayName: null,
+      displayName: input.displayName,
     };
 
-    this.#users.set(key, { password: credentials.password, user });
+    this.#users.set(key, { password: input.password, user });
     this.#setSession(user);
     return user;
   }

@@ -20,6 +20,7 @@ import type { CommandHistory } from '../../../../../application/services';
 import { createFunctionCommand } from '../../../../../application/commands';
 import type { UpdateElementInput } from '../../../../../application/commands';
 import { Canvas } from '../../../../../presentation/canvas/components/canvas';
+import { installDragEventPolyfill } from '../../../../fixtures/drag-event';
 
 jest.mock('../../../../../presentation/canvas/components/rich-text-editor', () =>
   require('../../../../fixtures/rich-text-editor-stub'),
@@ -1444,6 +1445,80 @@ describe('Canvas', () => {
     });
   });
 
+  describe('clipboard paste', () => {
+    function clipboardData(files: readonly File[] = [], text = '') {
+      return {
+        files,
+        getData: (format: string) => (format === 'text/plain' ? text : ''),
+      };
+    }
+
+    function renderPasteCanvas(props: {
+      readonly onPasteText?: (text: string, position?: Position) => void;
+      readonly onUploadImage?: (
+        file: File,
+        position?: Position,
+      ) => Promise<ElementId | void> | ElementId | void;
+      readonly readOnly?: boolean;
+    }) {
+      const store = createCanvasViewportStore(Size.create(800, 600));
+      const selectionStore = createSelectionStore();
+
+      render(<Canvas store={store} selectionStore={selectionStore} {...props} />);
+
+      return screen.getByRole('application', { name: 'Canvas' });
+    }
+
+    it('creates text at the viewport centre on paste', () => {
+      const onPasteText = jest.fn();
+      const canvas = renderPasteCanvas({ onPasteText });
+
+      const notPrevented = fireEvent.paste(canvas, {
+        clipboardData: clipboardData([], 'Hello\nWorld'),
+      });
+
+      expect(notPrevented).toBe(false);
+      expect(onPasteText).toHaveBeenCalledWith(
+        'Hello\nWorld',
+        expect.objectContaining({ x: 320, y: 280 }),
+      );
+    });
+
+    it('forwards a pasted image with the default image size position', () => {
+      const onUploadImage = jest.fn();
+      const file = new File(['image'], 'screenshot.png', { type: 'image/png' });
+      const canvas = renderPasteCanvas({ onUploadImage });
+
+      fireEvent.paste(canvas, { clipboardData: clipboardData([file]) });
+
+      expect(onUploadImage).toHaveBeenCalledWith(file, expect.objectContaining({ x: 240, y: 200 }));
+    });
+
+    it('does not accept pasted content in read-only mode', () => {
+      const onPasteText = jest.fn();
+      const canvas = renderPasteCanvas({ onPasteText, readOnly: true });
+
+      fireEvent.paste(canvas, { clipboardData: clipboardData([], 'Hello') });
+
+      expect(onPasteText).not.toHaveBeenCalled();
+    });
+
+    it('does not intercept paste inside a contenteditable element', () => {
+      const onPasteText = jest.fn();
+      const canvas = renderPasteCanvas({ onPasteText });
+      const editable = document.createElement('div');
+      editable.setAttribute('contenteditable', 'true');
+      canvas.appendChild(editable);
+
+      const notPrevented = fireEvent.paste(editable, {
+        clipboardData: clipboardData([], 'Hello'),
+      });
+
+      expect(notPrevented).toBe(true);
+      expect(onPasteText).not.toHaveBeenCalled();
+    });
+  });
+
   describe('z-order', () => {
     it('brings the selected item to the front on Ctrl+]', async () => {
       const onReorderElements = jest.fn();
@@ -2645,5 +2720,136 @@ describe('Canvas connector endpoints', () => {
       side: 'target',
       point: expect.objectContaining({ x: 300, y: 180 }),
     });
+  });
+});
+
+describe('Canvas image drag and drop', () => {
+  beforeAll(() => {
+    installDragEventPolyfill();
+  });
+
+  function createDataTransfer(
+    files: readonly File[],
+    types: readonly string[] = ['Files'],
+  ): DataTransfer {
+    return {
+      files,
+      types,
+      items: files.map((file) => ({ kind: 'file', type: file.type, getAsFile: () => file })),
+      dropEffect: 'none',
+      effectAllowed: 'all',
+      setData: jest.fn(),
+      getData: jest.fn(),
+      clearData: jest.fn(),
+      setDragImage: jest.fn(),
+    } as unknown as DataTransfer;
+  }
+
+  function renderDropCanvas(
+    onUploadImage: (
+      file: File,
+      position?: Position,
+    ) => Promise<ElementId | void> | ElementId | void,
+    readOnly = false,
+  ) {
+    const store = createCanvasViewportStore(Size.create(800, 600));
+    const selectionStore = createSelectionStore();
+
+    render(
+      <Canvas
+        store={store}
+        selectionStore={selectionStore}
+        onUploadImage={onUploadImage}
+        readOnly={readOnly}
+      />,
+    );
+
+    return screen.getByRole('application', { name: 'Canvas' });
+  }
+
+  it('shows the drop overlay only while a compatible image is dragged', () => {
+    const canvas = renderDropCanvas(jest.fn());
+    const dataTransfer = createDataTransfer([
+      new File(['image'], 'diagram.png', { type: 'image/png' }),
+    ]);
+
+    fireEvent.dragEnter(canvas, { dataTransfer });
+
+    expect(screen.getByTestId('canvas-drop-overlay')).toBeInTheDocument();
+    expect(canvas).toHaveAttribute('data-drop-active', 'true');
+
+    fireEvent.dragLeave(canvas, { dataTransfer });
+
+    expect(screen.queryByTestId('canvas-drop-overlay')).not.toBeInTheDocument();
+    expect(canvas).toHaveAttribute('data-drop-active', 'false');
+  });
+
+  it('uploads the dropped image at the drop position', () => {
+    const onUploadImage = jest.fn();
+    const canvas = renderDropCanvas(onUploadImage);
+    const file = new File(['image'], 'diagram.png', { type: 'image/png' });
+    const dataTransfer = createDataTransfer([file]);
+
+    fireEvent.dragEnter(canvas, { dataTransfer });
+    fireEvent.dragOver(canvas, { dataTransfer });
+    fireEvent.drop(canvas, { dataTransfer, clientX: 400, clientY: 300 });
+
+    expect(onUploadImage).toHaveBeenCalledTimes(1);
+    expect(onUploadImage).toHaveBeenCalledWith(file, expect.objectContaining({ x: 240, y: 200 }));
+    expect(screen.queryByTestId('canvas-drop-overlay')).not.toBeInTheDocument();
+  });
+
+  it('forwards an unsupported file to reuse the existing validation error', () => {
+    const onUploadImage = jest.fn();
+    const canvas = renderDropCanvas(onUploadImage);
+    const file = new File(['pdf'], 'document.pdf', { type: 'application/pdf' });
+    const dataTransfer = createDataTransfer([file]);
+
+    fireEvent.dragEnter(canvas, { dataTransfer });
+
+    expect(screen.queryByTestId('canvas-drop-overlay')).not.toBeInTheDocument();
+
+    fireEvent.drop(canvas, { dataTransfer, clientX: 400, clientY: 300 });
+
+    expect(onUploadImage).toHaveBeenCalledWith(file, expect.objectContaining({ x: 240, y: 200 }));
+  });
+
+  it('ignores drags that do not contain files', () => {
+    const onUploadImage = jest.fn();
+    const canvas = renderDropCanvas(onUploadImage);
+    const dataTransfer = createDataTransfer([], ['text/plain']);
+
+    fireEvent.dragEnter(canvas, { dataTransfer });
+    fireEvent.drop(canvas, { dataTransfer, clientX: 400, clientY: 300 });
+
+    expect(screen.queryByTestId('canvas-drop-overlay')).not.toBeInTheDocument();
+    expect(onUploadImage).not.toHaveBeenCalled();
+  });
+
+  it('only uploads the first file when several are dropped', () => {
+    const onUploadImage = jest.fn();
+    const canvas = renderDropCanvas(onUploadImage);
+    const first = new File(['image'], 'first.png', { type: 'image/png' });
+    const second = new File(['image'], 'second.png', { type: 'image/png' });
+    const dataTransfer = createDataTransfer([first, second]);
+
+    fireEvent.drop(canvas, { dataTransfer, clientX: 400, clientY: 300 });
+
+    expect(onUploadImage).toHaveBeenCalledTimes(1);
+    expect(onUploadImage).toHaveBeenCalledWith(first, expect.anything());
+  });
+
+  it('does not accept drops in read-only mode', () => {
+    const onUploadImage = jest.fn();
+    const canvas = renderDropCanvas(onUploadImage, true);
+    const dataTransfer = createDataTransfer([
+      new File(['image'], 'diagram.png', { type: 'image/png' }),
+    ]);
+
+    fireEvent.dragEnter(canvas, { dataTransfer });
+    fireEvent.drop(canvas, { dataTransfer, clientX: 400, clientY: 300 });
+
+    expect(screen.queryByTestId('canvas-drop-overlay')).not.toBeInTheDocument();
+    expect(onUploadImage).not.toHaveBeenCalled();
   });
 });

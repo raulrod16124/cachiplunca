@@ -11,10 +11,11 @@ import {
   Text,
 } from '@raulrod/ui';
 import { useState, type FormEvent, type ReactNode } from 'react';
-import type {
-  RegisterFieldErrors,
-  RegisterUser,
-  SendEmailVerification,
+import {
+  DISPLAY_NAME_MAX_LENGTH,
+  type RegisterFieldErrors,
+  type RegisterUser,
+  type SendEmailVerification,
 } from '../../../application/commands';
 import type { AuthUser } from '../../../application/ports';
 import { toAppError } from '../../../shared/errors';
@@ -32,6 +33,7 @@ export function RegisterForm({
   sendEmailVerification,
 }: RegisterFormProps): ReactNode {
   const { t } = useI18n();
+  const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fieldErrors, setFieldErrors] = useState<RegisterFieldErrors>({});
@@ -62,7 +64,7 @@ export function RegisterForm({
     setFormError(null);
 
     try {
-      const result = await registerUser({ email, password });
+      const result = await registerUser({ email, password, displayName });
       switch (result.status) {
         case 'ok':
           setRegisteredUser(result.user);
@@ -124,6 +126,25 @@ export function RegisterForm({
       </Stack>
       <form onSubmit={handleSubmit} noValidate>
         <Stack gap="space-4">
+          <FormField>
+            <FormFieldLabel>{t('auth.displayName')}</FormFieldLabel>
+            <FormFieldDescription>{t('auth.register.displayNameHint')}</FormFieldDescription>
+            <FormFieldControl>
+              {(field) => (
+                <Input
+                  {...field}
+                  name="displayName"
+                  autoComplete="name"
+                  maxLength={DISPLAY_NAME_MAX_LENGTH}
+                  value={displayName}
+                  onChange={(event) => setDisplayName(event.target.value)}
+                />
+              )}
+            </FormFieldControl>
+            {fieldErrors.displayName !== undefined && (
+              <FormFieldError>{localizeFieldError(t, fieldErrors.displayName)}</FormFieldError>
+            )}
+          </FormField>
           <FormField>
             <FormFieldLabel>{t('auth.email')}</FormFieldLabel>
             <FormFieldControl>

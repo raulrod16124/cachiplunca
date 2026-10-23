@@ -113,6 +113,38 @@ function imageElementData(
   };
 }
 
+function notificationData(
+  recipientId: string,
+  actorId: string,
+  notificationId = 'notification-1',
+  overrides: Record<string, unknown> = {},
+) {
+  return {
+    id: notificationId,
+    type: 'comment',
+    recipientId,
+    workspaceId: WS1,
+    workspaceName: 'Workspace',
+    elementId: 'e1',
+    commentId: 'c1',
+    actorId,
+    actorName: 'Ada',
+    bodyPreview: 'Looks good',
+    createdAt: now,
+    ...overrides,
+  };
+}
+
+function favoriteData(userId: string, workspaceId = WS1, overrides: Record<string, unknown> = {}) {
+  return {
+    id: `${userId}_${workspaceId}`,
+    userId,
+    workspaceId,
+    createdAt: now,
+    ...overrides,
+  };
+}
+
 function presenceData(workspaceId: string, userId: string) {
   return {
     workspaceId,
@@ -226,6 +258,10 @@ beforeEach(async () => {
     await setDoc(
       doc(db, 'workspaces', WS1, 'comments', 'c-resolved'),
       commentData(WS1, 'e1', ROLE_UIDS.owner, 'c-resolved', new Date(now.getTime() + 60_000)),
+    );
+    await setDoc(
+      doc(db, 'notifications', 'notification-victim'),
+      notificationData(VICTIM_UID, ROLE_UIDS.owner, 'notification-victim'),
     );
     await setDoc(
       doc(db, 'presence', `${WS1}_${ROLE_UIDS.viewer}`),
@@ -563,6 +599,47 @@ describe('firestore.rules — workspaces', () => {
     await assertFails(updateDoc(doc(dbOf(OUTSIDER_UID), 'workspaces', WS1), { name: 'Renamed' }));
     await assertFails(
       updateDoc(doc(unauthed().firestore(), 'workspaces', WS1), { name: 'Renamed' }),
+    );
+  });
+
+  test('owners and editors can touch only lastActivityAt', async () => {
+    const activityAt = new Date(now.getTime() + 60_000);
+
+    await assertSucceeds(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', WS1), { lastActivityAt: activityAt }),
+    );
+    await assertSucceeds(
+      updateDoc(doc(dbOf(ROLE_UIDS.editor), 'workspaces', WS1), { lastActivityAt: activityAt }),
+    );
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.viewer), 'workspaces', WS1), { lastActivityAt: activityAt }),
+    );
+    await assertFails(
+      updateDoc(doc(dbOf(OUTSIDER_UID), 'workspaces', WS1), { lastActivityAt: activityAt }),
+    );
+  });
+
+  test('editors cannot change metadata together with lastActivityAt', async () => {
+    const activityAt = new Date(now.getTime() + 60_000);
+
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.editor), 'workspaces', WS1), {
+        name: 'Renamed',
+        lastActivityAt: activityAt,
+      }),
+    );
+  });
+
+  test('lastActivityAt must be a timestamp not earlier than createdAt', async () => {
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.editor), 'workspaces', WS1), {
+        lastActivityAt: 'not-a-timestamp',
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.editor), 'workspaces', WS1), {
+        lastActivityAt: new Date(now.getTime() - 60_000),
+      }),
     );
   });
 
@@ -1123,6 +1200,98 @@ describe('firestore.rules — invitations', () => {
   });
 });
 
+describe('firestore.rules — notifications', () => {
+  test('members can create a comment notification for another member', async () => {
+    await assertSucceeds(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.editor), 'notifications', 'notification-new'),
+        notificationData(VICTIM_UID, ROLE_UIDS.editor, 'notification-new'),
+      ),
+    );
+  });
+
+  test('a user cannot create a notification for themselves', async () => {
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.owner), 'notifications', 'notification-self'),
+        notificationData(ROLE_UIDS.owner, ROLE_UIDS.owner, 'notification-self'),
+      ),
+    );
+  });
+
+  test('a user cannot impersonate another actor', async () => {
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.owner), 'notifications', 'notification-spoof'),
+        notificationData(VICTIM_UID, ROLE_UIDS.editor, 'notification-spoof'),
+      ),
+    );
+  });
+
+  test('a user cannot notify a recipient outside the workspace', async () => {
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.owner), 'notifications', 'notification-outsider'),
+        notificationData(OUTSIDER_UID, ROLE_UIDS.owner, 'notification-outsider'),
+      ),
+    );
+  });
+
+  test('a non-member cannot create a notification', async () => {
+    await assertFails(
+      setDoc(
+        doc(dbOf(OUTSIDER_UID), 'notifications', 'notification-nonmember'),
+        notificationData(VICTIM_UID, OUTSIDER_UID, 'notification-nonmember'),
+      ),
+    );
+  });
+
+  test('the recipient can read and list their notifications', async () => {
+    await assertSucceeds(getDoc(doc(dbOf(VICTIM_UID), 'notifications', 'notification-victim')));
+    await assertSucceeds(
+      getDocs(
+        query(
+          collection(dbOf(VICTIM_UID), 'notifications'),
+          where('recipientId', '==', VICTIM_UID),
+        ),
+      ),
+    );
+  });
+
+  test('other users cannot read the notification', async () => {
+    await assertFails(getDoc(doc(dbOf(ROLE_UIDS.owner), 'notifications', 'notification-victim')));
+    await assertFails(getDoc(doc(dbOf(OUTSIDER_UID), 'notifications', 'notification-victim')));
+  });
+
+  test('the recipient can mark their notification as read', async () => {
+    await assertSucceeds(
+      updateDoc(doc(dbOf(VICTIM_UID), 'notifications', 'notification-victim'), {
+        readAt: new Date(now.getTime() + 60_000),
+      }),
+    );
+  });
+
+  test('the recipient cannot change fields other than readAt', async () => {
+    await assertFails(
+      updateDoc(doc(dbOf(VICTIM_UID), 'notifications', 'notification-victim'), {
+        bodyPreview: 'Changed',
+      }),
+    );
+  });
+
+  test('a different user cannot mark the notification as read', async () => {
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'notifications', 'notification-victim'), {
+        readAt: new Date(now.getTime() + 60_000),
+      }),
+    );
+  });
+
+  test('notifications cannot be deleted', async () => {
+    await assertFails(deleteDoc(doc(dbOf(VICTIM_UID), 'notifications', 'notification-victim')));
+  });
+});
+
 describe('firestore.rules — presence', () => {
   test('a member can announce and withdraw their own presence', async () => {
     await assertSucceeds(
@@ -1241,6 +1410,12 @@ describe('firestore.rules — comments', () => {
       ),
     );
     await assertFails(
+      setDoc(doc(dbOf(ROLE_UIDS.editor), 'workspaces', WS1, 'comments', 'c-pre-edited'), {
+        ...commentData(WS1, 'e1', ROLE_UIDS.editor, 'c-pre-edited'),
+        editedAt: now,
+      }),
+    );
+    await assertFails(
       setDoc(
         doc(dbOf(OUTSIDER_UID), 'workspaces', WS1, 'comments', 'c-outsider'),
         commentData(WS1, 'e1', OUTSIDER_UID, 'c-outsider'),
@@ -1296,6 +1471,67 @@ describe('firestore.rules — comments', () => {
     await assertFails(
       updateDoc(doc(unauthed().firestore(), 'workspaces', WS1, 'comments', 'c1'), {
         resolvedAt: new Date(now.getTime() + 60_000),
+      }),
+    );
+  });
+
+  test('author can edit own comment within 15 minutes', async () => {
+    const recent = new Date(Date.now());
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'workspaces', WS1, 'comments', 'c-edit'), {
+        id: 'c-edit',
+        workspaceId: WS1,
+        elementId: 'e1',
+        authorId: ROLE_UIDS.owner,
+        body: 'Original',
+        createdAt: recent,
+      });
+    });
+
+    await assertSucceeds(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', WS1, 'comments', 'c-edit'), {
+        body: 'Updated',
+        editedAt: new Date(Date.now()),
+      }),
+    );
+
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.editor), 'workspaces', WS1, 'comments', 'c-edit'), {
+        body: 'Hijack',
+        editedAt: new Date(Date.now()),
+      }),
+    );
+
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', WS1, 'comments', 'c-resolved'), {
+        body: 'Edit resolved',
+        editedAt: new Date(Date.now()),
+      }),
+    );
+
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', WS1, 'comments', 'c-edit'), {
+        body: 'Only body',
+      }),
+    );
+  });
+
+  test('author cannot edit a comment older than 15 minutes', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'workspaces', WS1, 'comments', 'c-old'), {
+        id: 'c-old',
+        workspaceId: WS1,
+        elementId: 'e1',
+        authorId: ROLE_UIDS.owner,
+        body: 'Old',
+        createdAt: new Date(Date.now() - 16 * 60 * 1000),
+      });
+    });
+
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', WS1, 'comments', 'c-old'), {
+        body: 'Too late',
+        editedAt: new Date(Date.now()),
       }),
     );
   });
@@ -1361,6 +1597,79 @@ describe('firestore.rules — user_settings', () => {
     await assertFails(
       setDoc(doc(db, 'user_settings', ROLE_UIDS.owner), userSettingsData(ROLE_UIDS.owner)),
     );
+  });
+});
+
+describe('firestore.rules — favorites', () => {
+  test('a user can create, read and delete their own favorite', async () => {
+    const db = dbOf(ROLE_UIDS.owner);
+    const path = `favorites/${ROLE_UIDS.owner}_${WS1}`;
+
+    await assertSucceeds(setDoc(doc(db, path), favoriteData(ROLE_UIDS.owner)));
+    await assertSucceeds(getDoc(doc(db, path)));
+    await assertSucceeds(
+      getDocs(query(collection(db, 'favorites'), where('userId', '==', ROLE_UIDS.owner))),
+    );
+    await assertSucceeds(deleteDoc(doc(db, path)));
+  });
+
+  test('a user cannot read or delete a favorite that belongs to another user', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), 'favorites', `${VICTIM_UID}_${WS1}`),
+        favoriteData(VICTIM_UID),
+      );
+    });
+
+    const db = dbOf(ROLE_UIDS.owner);
+    await assertFails(getDoc(doc(db, 'favorites', `${VICTIM_UID}_${WS1}`)));
+    await assertFails(deleteDoc(doc(db, 'favorites', `${VICTIM_UID}_${WS1}`)));
+  });
+
+  test('a non-member cannot favorite a workspace', async () => {
+    await assertFails(
+      setDoc(
+        doc(dbOf(OUTSIDER_UID), 'favorites', `${OUTSIDER_UID}_${WS1}`),
+        favoriteData(OUTSIDER_UID),
+      ),
+    );
+  });
+
+  test('a user cannot spoof the userId of a favorite', async () => {
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.owner), 'favorites', `${ROLE_UIDS.owner}_${WS1}`),
+        favoriteData(VICTIM_UID),
+      ),
+    );
+  });
+
+  test('the favorite id must be deterministic', async () => {
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.owner), 'favorites', 'custom-id'),
+        favoriteData(ROLE_UIDS.owner, WS1, { id: 'custom-id' }),
+      ),
+    );
+  });
+
+  test('favorites cannot be updated', async () => {
+    const db = dbOf(ROLE_UIDS.owner);
+    await assertSucceeds(
+      setDoc(doc(db, 'favorites', `${ROLE_UIDS.owner}_${WS1}`), favoriteData(ROLE_UIDS.owner)),
+    );
+
+    await assertFails(
+      updateDoc(doc(db, 'favorites', `${ROLE_UIDS.owner}_${WS1}`), { workspaceId: WS2 }),
+    );
+  });
+
+  test('anonymous users cannot create or read favorites', async () => {
+    const db = unauthed().firestore();
+    await assertFails(
+      setDoc(doc(db, 'favorites', `${ROLE_UIDS.owner}_${WS1}`), favoriteData(ROLE_UIDS.owner)),
+    );
+    await assertFails(getDoc(doc(db, 'favorites', `${ROLE_UIDS.owner}_${WS1}`)));
   });
 });
 

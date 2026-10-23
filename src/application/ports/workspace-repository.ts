@@ -5,11 +5,15 @@ export interface WorkspaceCreateInput {
   readonly name: string;
   readonly createdBy: UserId;
   readonly description?: string | null;
+  readonly coverImageUrl?: string | null;
+  readonly coverImageStoragePath?: string | null;
 }
 
 export interface WorkspaceUpdateInput {
   readonly name?: string;
   readonly description?: string | null;
+  readonly coverImageUrl?: string | null;
+  readonly coverImageStoragePath?: string | null;
 }
 
 export interface WorkspaceRepository {
@@ -17,5 +21,6 @@ export interface WorkspaceRepository {
   list(): Promise<Workspace[]>;
   findById(id: WorkspaceId): Promise<Workspace | null>;
   update(id: WorkspaceId, updates: WorkspaceUpdateInput): Promise<Workspace>;
+  touchActivity(id: WorkspaceId, at?: Date): Promise<Workspace>;
   delete(id: WorkspaceId): Promise<void>;
 }

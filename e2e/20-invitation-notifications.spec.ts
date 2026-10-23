@@ -30,12 +30,12 @@ test.describe('Invitation notifications', () => {
     await expect(notice.getByText(/invited you as editor/i)).toBeVisible();
 
     const notifications = inviteePage.getByRole('button', {
-      name: /Notifications, 1 pending/i,
+      name: /Notifications, 1 unread/i,
     });
     await expect(notifications).toBeVisible();
     await notifications.click();
 
-    const invitationsDialog = inviteePage.getByRole('dialog', { name: 'Invitations' });
+    const invitationsDialog = inviteePage.getByRole('dialog', { name: 'Notifications' });
     await expect(invitationsDialog).toBeVisible();
     await expect(invitationsDialog.getByText(/invited you as editor/i)).toBeVisible();
     await invitationsDialog.getByRole('button', { name: 'Accept invitation' }).click();

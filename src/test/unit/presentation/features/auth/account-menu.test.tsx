@@ -1,6 +1,4 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
-import type { ReactNode } from 'react';
-import { MemoryRouter, useLocation } from 'react-router-dom';
 import { render } from '../../../../setup/render-with-theme';
 import type { LogoutUser } from '../../../../../application/commands';
 import type { AuthUser } from '../../../../../application/ports';
@@ -14,21 +12,11 @@ const CURRENT_USER: AuthUser = {
   displayName: 'Ada Lovelace',
 };
 
-function LocationProbe(): ReactNode {
-  const location = useLocation();
-  return <div data-testid="location">{`${location.pathname}${location.search}`}</div>;
-}
-
 function renderMenu(
   currentUser: AuthUser | null,
   logoutUser: LogoutUser,
 ): ReturnType<typeof render> {
-  return render(
-    <MemoryRouter initialEntries={['/workspaces']}>
-      <AccountMenu currentUser={currentUser} logoutUser={logoutUser} />
-      <LocationProbe />
-    </MemoryRouter>,
-  );
+  return render(<AccountMenu currentUser={currentUser} logoutUser={logoutUser} />);
 }
 
 describe('AccountMenu', () => {
@@ -85,25 +73,15 @@ describe('AccountMenu', () => {
     );
   });
 
-  it('navigates to the profile page from the account menu', async () => {
+  it('only exposes identity and sign out in the account menu', async () => {
     const logoutUser: LogoutUser = jest.fn(async () => ({ status: 'ok' as const }));
     renderMenu(CURRENT_USER, logoutUser);
 
     fireEvent.click(screen.getByRole('button', { name: 'Open account menu' }));
-    fireEvent.click(await screen.findByRole('menuitem', { name: 'Profile' }));
 
-    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/profile'));
-  });
-
-  it('deep-links to the preferences tab from the account menu', async () => {
-    const logoutUser: LogoutUser = jest.fn(async () => ({ status: 'ok' as const }));
-    renderMenu(CURRENT_USER, logoutUser);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Open account menu' }));
-    fireEvent.click(await screen.findByRole('menuitem', { name: 'Preferences' }));
-
-    await waitFor(() =>
-      expect(screen.getByTestId('location')).toHaveTextContent('/profile?tab=preferences'),
-    );
+    expect(await screen.findByText('Ada Lovelace')).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Profile' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Preferences' })).not.toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Sign out' })).toBeInTheDocument();
   });
 });

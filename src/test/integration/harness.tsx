@@ -8,6 +8,7 @@ import {
   createAcceptInvitation,
   createAcceptInvitationById,
   createCreateComment,
+  createEditComment,
   createRefreshUser,
   createResolveComment,
   createSendEmailVerification,
@@ -24,6 +25,7 @@ import {
   createLeaveWorkspace,
   createLoginUser,
   createLogoutUser,
+  createMarkNotificationRead,
   createRegisterUser,
   createRemoveMember,
   createUpdateWorkspace,
@@ -35,6 +37,7 @@ import {
   createListPendingInvitations,
   createListPendingInvitationsForUser,
   createWatchPendingInvitationsForUser,
+  createWatchNotificationsForUser,
   createListComments,
   createListWorkspaceComments,
   createListActiveGuestLinks,
@@ -42,14 +45,16 @@ import {
   createListWorkspaces,
   createLoadWorkspaceElements,
 } from '../../application/queries';
+import { createListFavorites, createToggleFavorite } from '../../application';
 import {
   createElementPersistence,
   createElementPersistenceOrchestrator,
   createRealtimeSubscriptionManager,
   createSessionStore,
   createUserSettingsStore,
+  createNotifyComment,
 } from '../../application/services';
-import type { AuthCredentials, AuthPort, AuthUser } from '../../application/ports';
+import type { AuthPort, AuthSignUpInput, AuthUser } from '../../application/ports';
 import type { Workspace } from '../../domain/workspace';
 import { ElementId, UserId } from '../../domain/shared';
 import { CommentId } from '../../domain/shared';
@@ -61,6 +66,8 @@ import { FakePresencePort } from '../fixtures/fake-presence-port';
 import { FakeRealtimePort } from '../fixtures/fake-realtime-port';
 import { FakeWorkspaceRepository } from '../fixtures/fake-workspace-repository';
 import { FakeInvitationRepository } from '../fixtures/fake-invitation-repository';
+import { FakeNotificationRepository } from '../fixtures/fake-notification-repository';
+import { FakeFavoriteRepository } from '../fixtures/fake-favorite-repository';
 import { FakeGuestLinkRepository } from '../fixtures/fake-guest-link-repository';
 import {
   createFakeImageStoragePort,
@@ -70,9 +77,10 @@ import { hashInvitationToken } from '../../infrastructure/crypto/invitation-toke
 import { hashGuestLinkToken } from '../../infrastructure/crypto/guest-link-token';
 import { InvitationId } from '../../domain/shared';
 
-export const DEFAULT_CREDENTIALS: AuthCredentials = {
+export const DEFAULT_CREDENTIALS: AuthSignUpInput = {
   email: 'user@example.com',
   password: 'secret123',
+  displayName: 'Test User',
 };
 
 export function LocationProbe(): ReactNode {
@@ -130,11 +138,13 @@ export interface AppHarness {
   readonly realtimePort: FakeRealtimePort;
   readonly presencePort: FakePresencePort;
   readonly invitationRepository: FakeInvitationRepository;
+  readonly notificationRepository: FakeNotificationRepository;
   readonly imageStoragePort: FakeImageStoragePort;
   readonly guestLinkRepository: FakeGuestLinkRepository;
+  readonly favoriteRepository: FakeFavoriteRepository;
   readonly services: AppRoutesProps;
   readonly currentUser: AuthUser | null;
-  register(credentials?: AuthCredentials): Promise<AuthUser>;
+  register(credentials?: AuthSignUpInput): Promise<AuthUser>;
   createOwnerWorkspace(name: string): Promise<Workspace>;
   render(options?: Omit<RenderAppRoutesOptions, 'authPort' | 'props'>): RenderResult;
 }
@@ -153,8 +163,10 @@ export function createAppHarness(): AppHarness {
   const realtimePort = new FakeRealtimePort();
   const presencePort = new FakePresencePort();
   const invitationRepository = new FakeInvitationRepository();
+  const notificationRepository = new FakeNotificationRepository();
   const imageStoragePort = createFakeImageStoragePort();
   const guestLinkRepository = new FakeGuestLinkRepository();
+  const favoriteRepository = new FakeFavoriteRepository();
 
   let elementSequence = 0;
   let currentUser: AuthUser | null = null;
@@ -234,8 +246,23 @@ export function createAppHarness(): AppHarness {
       createComment: createCreateComment({
         repository: commentRepository,
         generateId: () => CommentId.create(`comment-${++elementSequence}`),
+        notifyComment: createNotifyComment({
+          notificationRepository,
+          membershipRepository,
+          workspaceRepository,
+        }),
       }),
+      editComment: createEditComment({ repository: commentRepository }),
       resolveComment: createResolveComment({ repository: commentRepository }),
+    },
+    notifications: {
+      notifyComment: createNotifyComment({
+        notificationRepository,
+        membershipRepository,
+        workspaceRepository,
+      }),
+      watchNotificationsForUser: createWatchNotificationsForUser(notificationRepository),
+      markNotificationRead: createMarkNotificationRead({ repository: notificationRepository }),
     },
     imageServices: {
       uploadImage: createUploadImage({
@@ -243,6 +270,10 @@ export function createAppHarness(): AppHarness {
         generateImageId: () => `image-${++elementSequence}`,
       }),
       deleteImage: createDeleteImage({ storage: imageStoragePort }),
+    },
+    favorites: {
+      listFavorites: createListFavorites(favoriteRepository),
+      toggleFavorite: createToggleFavorite({ favoriteRepository, membershipRepository }),
     },
     guestLinks: {
       createGuestLink: createCreateGuestLink({
@@ -277,13 +308,15 @@ export function createAppHarness(): AppHarness {
     realtimePort,
     presencePort,
     invitationRepository,
+    notificationRepository,
     imageStoragePort,
     guestLinkRepository,
+    favoriteRepository,
     services,
     get currentUser(): AuthUser | null {
       return currentUser;
     },
-    async register(credentials: AuthCredentials = DEFAULT_CREDENTIALS): Promise<AuthUser> {
+    async register(credentials: AuthSignUpInput = DEFAULT_CREDENTIALS): Promise<AuthUser> {
       return authPort.signUp(credentials);
     },
     async createOwnerWorkspace(name: string): Promise<Workspace> {

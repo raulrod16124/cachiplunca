@@ -66,6 +66,33 @@ describe('WorkspaceTopBar', () => {
     expect(screen.getByText('Editor')).toBeInTheDocument();
   });
 
+  it('shows the board cover thumbnail and falls back to the default icon', () => {
+    const covered = WORKSPACE.update({
+      coverImageUrl: 'https://storage.test/cover.png',
+      coverImageStoragePath: 'workspaces/ws-1/images/cover.png',
+    });
+    const props = {
+      role: 'owner' as const,
+      onBack: jest.fn(),
+      syncStatus: 'idle' as const,
+      connectionStatus: 'connected' as const,
+      connectedUsers: [],
+      currentUser: CURRENT_USER,
+      logoutUser: LOGOUT_USER,
+      persistenceErrorMessage: null,
+      collaborationErrorMessage: null,
+      creationErrorMessage: null,
+    };
+
+    const { rerender } = render(<WorkspaceTopBar workspace={covered} {...props} />);
+    expect(screen.getByTestId('workspace-cover-topbar')).toBeInTheDocument();
+    expect(document.querySelector('img[src="https://storage.test/cover.png"]')).toBeInTheDocument();
+
+    rerender(<WorkspaceTopBar workspace={WORKSPACE} {...props} />);
+    expect(screen.getByTestId('workspace-cover-topbar')).toBeInTheDocument();
+    expect(document.querySelector('img[src="https://storage.test/cover.png"]')).toBeNull();
+  });
+
   it('surfaces persistence and connection status as live badges', () => {
     render(
       <WorkspaceTopBar

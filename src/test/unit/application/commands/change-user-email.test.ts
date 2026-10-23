@@ -5,7 +5,7 @@ import {
 import { ERROR_CODES } from '../../../../shared/errors';
 import { FakeAuthPort } from '../../../fixtures/fake-auth-port';
 
-const CREDENTIALS = { email: 'ada@example.com', password: 'secret123' };
+const CREDENTIALS = { email: 'ada@example.com', password: 'secret123', displayName: 'Ada' };
 
 describe('change user email', () => {
   it('updates the email after confirming the current password', async () => {
