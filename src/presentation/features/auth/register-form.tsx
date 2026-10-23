@@ -1,3 +1,4 @@
+import { ArrowRight } from '@raulrod/icons';
 import {
   Button,
   FormField,
@@ -5,7 +6,6 @@ import {
   FormFieldDescription,
   FormFieldError,
   FormFieldLabel,
-  Heading,
   Input,
   Stack,
   Text,
@@ -22,6 +22,7 @@ import { toAppError } from '../../../shared/errors';
 import { localizeFieldError, localizeMessage, useI18n } from '../../i18n';
 import { PasswordInput } from './password-input';
 import { describeRegisterError } from './auth-error-messages';
+import { AuthFormRoot, AuthSubmit, AuthSubtitle, AuthTitle } from './auth-form-styles';
 
 export interface RegisterFormProps {
   readonly registerUser: RegisterUser;
@@ -87,7 +88,7 @@ export function RegisterForm({
   if (registeredUser !== null) {
     return (
       <Stack gap="space-3">
-        <Heading as="h2">{t('auth.register.successTitle')}</Heading>
+        <AuthTitle as="h2">{t('auth.register.successTitle')}</AuthTitle>
         <Text color="color.text.success">
           {t('auth.register.successDescription', { email: registeredUser.email ?? '' })}
         </Text>
@@ -119,10 +120,10 @@ export function RegisterForm({
   }
 
   return (
-    <Stack gap="space-5">
+    <AuthFormRoot>
       <Stack gap="space-2">
-        <Heading as="h1">{t('auth.register.title')}</Heading>
-        <Text color="color.text.muted">{t('auth.register.subtitle')}</Text>
+        <AuthTitle as="h1">{t('auth.register.title')}</AuthTitle>
+        <AuthSubtitle>{t('auth.register.subtitle')}</AuthSubtitle>
       </Stack>
       <form onSubmit={handleSubmit} noValidate>
         <Stack gap="space-4">
@@ -155,6 +156,7 @@ export function RegisterForm({
                   name="email"
                   autoComplete="email"
                   inputMode="email"
+                  placeholder={t('auth.emailPlaceholder')}
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                 />
@@ -173,6 +175,7 @@ export function RegisterForm({
                   {...field}
                   name="password"
                   autoComplete="new-password"
+                  placeholder={t('auth.passwordPlaceholder')}
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                 />
@@ -187,11 +190,16 @@ export function RegisterForm({
               {formError}
             </Text>
           )}
-          <Button type="submit" loading={submitting}>
+          <AuthSubmit
+            type="submit"
+            variant="secondary"
+            loading={submitting}
+            endIcon={<ArrowRight aria-hidden="true" size={18} />}
+          >
             {t('auth.register.submit')}
-          </Button>
+          </AuthSubmit>
         </Stack>
       </form>
-    </Stack>
+    </AuthFormRoot>
   );
 }

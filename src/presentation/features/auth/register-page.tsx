@@ -1,10 +1,11 @@
-import { Button, Inline, Stack, Text } from '@raulrod/ui';
+import { Inline, Stack } from '@raulrod/ui';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { RegisterUser, SendEmailVerification } from '../../../application/commands';
 import { AuthLayout } from './auth-layout';
 import { RegisterForm } from './register-form';
 import { useI18n } from '../../i18n';
+import { AuthSwitchButton, AuthSwitchText } from './auth-form-styles';
 
 export interface RegisterPageProps {
   readonly registerUser: RegisterUser;
@@ -20,13 +21,13 @@ export function RegisterPage({
 
   return (
     <AuthLayout>
-      <Stack gap="space-4">
+      <Stack gap="space-6">
         <RegisterForm registerUser={registerUser} sendEmailVerification={sendEmailVerification} />
         <Inline gap="space-2" align="center" justify="center">
-          <Text color="color.text.muted">{t('auth.register.haveAccount')}</Text>
-          <Button type="button" variant="link" onClick={() => navigate('/login')}>
+          <AuthSwitchText>{t('auth.register.haveAccount')}</AuthSwitchText>
+          <AuthSwitchButton type="button" variant="link" onClick={() => navigate('/login')}>
             {t('auth.register.signIn')}
-          </Button>
+          </AuthSwitchButton>
         </Inline>
       </Stack>
     </AuthLayout>

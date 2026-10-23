@@ -11,15 +11,20 @@ const Wrapper = styled.span`
 
   & > input {
     width: 100%;
-    padding-right: ${({ theme }) => theme.space[10]};
+    padding-right: ${({ theme }) => theme.space[12]};
   }
 `;
 
 const Toggle = styled(NeutralIconButton)`
   position: absolute;
   top: 50%;
-  right: ${({ theme }) => theme.space[1]};
+  right: ${({ theme }) => theme.space[3]};
+  color: var(--stitch-text-subtle, ${({ theme }) => theme.color.text.muted});
   transform: translateY(-50%);
+
+  &:hover:not(:disabled) {
+    color: var(--stitch-text, ${({ theme }) => theme.color.text.primary});
+  }
 `;
 
 export type PasswordInputProps = Omit<InputProps, 'type'>;
