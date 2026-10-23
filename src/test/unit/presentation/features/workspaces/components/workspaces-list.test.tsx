@@ -99,6 +99,118 @@ describe('WorkspacesList', () => {
     expect(screen.getAllByRole('article')).toHaveLength(2);
   });
 
+  it('renders both view controls with grid active by default', () => {
+    const workspaces = [createWorkspace('Alpha', new Date())];
+
+    render(<WorkspacesList status="success" workspaces={workspaces} {...baseProps} />);
+
+    const grid = screen.getByRole('button', { name: 'Grid view' });
+    const list = screen.getByRole('button', { name: 'List view' });
+
+    expect(screen.getByRole('group', { name: 'Board layout' })).toContainElement(grid);
+    expect(grid).toHaveAttribute('aria-pressed', 'true');
+    expect(list).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('switches to list view and keeps the same workspaces', async () => {
+    const user = userEvent.setup();
+    const workspaces = [createWorkspace('Alpha', new Date()), createWorkspace('Beta', new Date())];
+
+    render(<WorkspacesList status="success" workspaces={workspaces} {...baseProps} />);
+
+    await user.click(screen.getByRole('button', { name: 'List view' }));
+
+    expect(screen.getByRole('list')).toBeInTheDocument();
+    expect(screen.getAllByRole('listitem')).toHaveLength(2);
+    expect(screen.getByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Beta' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Grid view' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+    expect(screen.getByRole('button', { name: 'List view' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+  });
+
+  it('filters workspaces and keeps the selected list view', async () => {
+    const user = userEvent.setup();
+    const workspaces = [
+      createWorkspace('Alpha', new Date(), 'Product launch'),
+      createWorkspace('Beta', new Date(), 'Research notes'),
+    ];
+
+    render(<WorkspacesList status="success" workspaces={workspaces} {...baseProps} />);
+
+    await user.click(screen.getByRole('button', { name: 'List view' }));
+    const search = screen.getByRole('searchbox', { name: /search boards/i });
+
+    await user.type(search, 'launch');
+
+    expect(screen.getByRole('list')).toBeInTheDocument();
+    expect(screen.getAllByRole('listitem')).toHaveLength(1);
+    expect(screen.getByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Beta' })).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('1 board');
+    expect(screen.getByRole('button', { name: 'List view' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+  });
+
+  it('keeps permission-based actions available in list view', async () => {
+    const user = userEvent.setup();
+    const workspace = createWorkspace('Alpha', new Date());
+    const onEdit = jest.fn();
+    const onDuplicate = jest.fn();
+    const onRequestDelete = jest.fn();
+
+    render(
+      <WorkspacesList
+        {...baseProps}
+        status="success"
+        workspaces={[workspace]}
+        rolesByWorkspaceId={new Map<string, MembershipRole>([['ws-Alpha', 'owner']])}
+        onEdit={onEdit}
+        onDuplicate={onDuplicate}
+        onRequestDelete={onRequestDelete}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'List view' }));
+
+    expect(screen.getByRole('button', { name: 'Edit Alpha' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Duplicate Alpha' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Delete Alpha' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Edit Alpha' }));
+    expect(onEdit).toHaveBeenCalledWith(workspace);
+  });
+
+  it('hides all workspace actions for editors in list view', async () => {
+    const user = userEvent.setup();
+    const workspace = createWorkspace('Alpha', new Date());
+
+    render(
+      <WorkspacesList
+        {...baseProps}
+        status="success"
+        workspaces={[workspace]}
+        rolesByWorkspaceId={new Map<string, MembershipRole>([['ws-Alpha', 'editor']])}
+        onEdit={jest.fn()}
+        onDuplicate={jest.fn()}
+        onRequestDelete={jest.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'List view' }));
+
+    expect(screen.queryByRole('button', { name: /edit/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /duplicate/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+  });
+
   it('shows last activity and creation dates on each card', () => {
     const createdAt = new Date('2025-01-02T00:00:00Z');
     const activityAt = new Date('2025-03-04T00:00:00Z');
