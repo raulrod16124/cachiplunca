@@ -140,6 +140,11 @@ const Container = styled.div`
   padding: 24px;
 `;
 
+export interface CommentTarget {
+  readonly elementId: string;
+  readonly commentId: string;
+}
+
 export interface WorkspaceShellContainerProps {
   readonly workspaceId: string;
   readonly getWorkspace: GetWorkspace;
@@ -168,6 +173,8 @@ export interface WorkspaceShellContainerProps {
   readonly listWorkspaces?: ListWorkspaces;
   readonly onOpenWorkspace?: (workspaceId: string) => void;
   readonly comments?: CommentServices;
+  readonly commentTarget?: CommentTarget | null;
+  readonly onCommentTargetHandled?: () => void;
   readonly imageServices?: ImageServices;
   readonly guestLinks?: GuestLinkServices;
 }
@@ -205,6 +212,8 @@ export function WorkspaceShellContainer({
   listWorkspaces,
   onOpenWorkspace,
   comments,
+  commentTarget,
+  onCommentTargetHandled,
   imageServices,
   guestLinks,
 }: WorkspaceShellContainerProps): ReactNode {
@@ -1358,6 +1367,10 @@ export function WorkspaceShellContainer({
           listWorkspaces={listWorkspaces}
           onOpenWorkspace={onOpenWorkspace}
           commentServices={comments}
+          currentUserName={localDisplayName ?? t('notifications.actorFallback')}
+          commentTarget={commentTarget}
+          onCommentTargetHandled={onCommentTargetHandled}
+          elementsReady={elementsStatus === 'success'}
           unresolvedCommentCounts={unresolvedCommentCounts}
           onCommentSaved={handleCommentSaved}
         />

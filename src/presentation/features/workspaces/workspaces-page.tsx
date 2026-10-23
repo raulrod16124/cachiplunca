@@ -19,7 +19,7 @@ import { UserId } from '../../../domain/shared';
 import { createAppError, ERROR_CODES } from '../../../shared/errors';
 import { useI18n } from '../../i18n';
 import { AppShell } from '../app-shell/app-shell';
-import { InvitationsButton } from '../invitations';
+import { NotificationsButton } from '../notifications';
 import { CreateWorkspaceDialog } from './components/create-workspace-dialog';
 import { WorkspacesCommandPalette } from './components/workspaces-command-palette';
 import { WorkspacesListContainer } from './components/workspaces-list-container';
@@ -126,7 +126,7 @@ export function WorkspacesPage({
     <AppShell
       currentUser={currentUser}
       logoutUser={logoutUser}
-      notifications={<InvitationsButton />}
+      notifications={<NotificationsButton />}
     >
       <Main id="main-content" tabIndex={-1}>
         <Header>

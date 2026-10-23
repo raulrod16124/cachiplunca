@@ -6,6 +6,7 @@ export * from './guest-link-repository';
 export * from './image-storage-port';
 export * from './invitation-repository';
 export * from './membership-repository';
+export * from './notification-repository';
 export * from './presence-port';
 export * from './realtime-port';
 export * from './system-environment';

@@ -74,11 +74,11 @@ describe('accept invitation route', () => {
     harness.render({ initialPath: '/workspaces' });
 
     const notifications = await screen.findByRole('button', {
-      name: 'Notifications, 1 pending',
+      name: 'Notifications, 1 unread',
     });
     fireEvent.click(notifications);
 
-    const dialog = await screen.findByRole('dialog', { name: 'Invitations' });
+    const dialog = await screen.findByRole('dialog', { name: 'Notifications' });
     expect(within(dialog).getByText(/A board/)).toBeInTheDocument();
     expect(within(dialog).getByText(/editor/i)).toBeInTheDocument();
 

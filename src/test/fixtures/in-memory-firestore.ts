@@ -41,15 +41,29 @@ export interface MockRealtimeSnapshot {
 }
 
 export interface MockConstraint {
+  readonly kind: 'where';
   readonly field: string;
   readonly op: '==';
   readonly value: unknown;
 }
 
+export interface MockOrderConstraint {
+  readonly kind: 'orderBy';
+  readonly field: string;
+  readonly direction: 'asc' | 'desc';
+}
+
+export interface MockLimitConstraint {
+  readonly kind: 'limit';
+  readonly value: number;
+}
+
+export type MockQueryConstraint = MockConstraint | MockOrderConstraint | MockLimitConstraint;
+
 export interface MockQuery {
   readonly kind: 'query';
   readonly ref: MockRef;
-  readonly constraints: readonly MockConstraint[];
+  readonly constraints: readonly MockQueryConstraint[];
 }
 
 export interface MockWriteBatch {
@@ -67,8 +81,10 @@ export interface InMemoryFirestoreApi {
   updateDoc(ref: MockRef, data: Record<string, unknown>): Promise<void>;
   deleteDoc(ref: MockRef): Promise<void>;
   writeBatch(db: unknown): MockWriteBatch;
-  query(ref: MockRef, ...constraints: MockConstraint[]): MockQuery;
+  query(ref: MockRef, ...constraints: MockQueryConstraint[]): MockQuery;
   where(field: string, op: '==', value: unknown): MockConstraint;
+  orderBy(field: string, direction?: 'asc' | 'desc'): MockOrderConstraint;
+  limit(value: number): MockLimitConstraint;
   onSnapshot(
     ref: MockRef | MockQuery,
     optionsOrNext:
@@ -93,7 +109,7 @@ export interface InMemoryFirestoreApi {
 
 interface SnapshotListener {
   readonly ref: MockRef;
-  readonly constraints: readonly MockConstraint[];
+  readonly constraints: readonly MockQueryConstraint[];
   readonly onNext: (snapshot: MockRealtimeSnapshot) => void;
   readonly onError: (error: unknown) => void;
 }
@@ -161,14 +177,72 @@ export function createInMemoryFirestoreModule(): InMemoryFirestoreApi {
 
   function matchesConstraints(
     data: Record<string, unknown>,
-    constraints: readonly MockConstraint[],
+    constraints: readonly MockQueryConstraint[],
   ): boolean {
     for (const constraint of constraints) {
-      if (constraint.op === '==' && readField(data, constraint.field) !== constraint.value) {
+      if (
+        constraint.kind === 'where' &&
+        constraint.op === '==' &&
+        readField(data, constraint.field) !== constraint.value
+      ) {
         return false;
       }
     }
     return true;
+  }
+
+  function comparable(value: unknown): number | string | null {
+    if (value instanceof Date) {
+      return value.getTime();
+    }
+    if (typeof value === 'number' || typeof value === 'string') {
+      return value;
+    }
+    return null;
+  }
+
+  function collectDocuments(
+    baseRef: MockRef,
+    constraints: readonly MockQueryConstraint[],
+  ): { readonly id: string; readonly path: string; readonly data: Record<string, unknown> }[] {
+    const prefix = `${baseRef.path}/`;
+    const order = constraints.find(
+      (constraint): constraint is MockOrderConstraint => constraint.kind === 'orderBy',
+    );
+    const limitConstraint = constraints.find(
+      (constraint): constraint is MockLimitConstraint => constraint.kind === 'limit',
+    );
+    let documents = [...store.keys()]
+      .filter((path) => path.startsWith(prefix))
+      .map((path) => ({ id: lastSegment(path), path, data: store.get(path) }))
+      .filter(
+        (entry): entry is { id: string; path: string; data: Record<string, unknown> } =>
+          entry.data !== undefined && matchesConstraints(entry.data, constraints),
+      );
+
+    if (order !== undefined) {
+      const direction = order.direction === 'desc' ? -1 : 1;
+      documents = documents.sort((left, right) => {
+        const leftValue = comparable(readField(left.data, order.field));
+        const rightValue = comparable(readField(right.data, order.field));
+        if (leftValue === rightValue) {
+          return 0;
+        }
+        if (leftValue === null) {
+          return -1 * direction;
+        }
+        if (rightValue === null) {
+          return 1 * direction;
+        }
+        return leftValue < rightValue ? -1 * direction : 1 * direction;
+      });
+    }
+
+    if (limitConstraint !== undefined) {
+      documents = documents.slice(0, limitConstraint.value);
+    }
+
+    return documents;
   }
 
   function makeRealtimeDocument(
@@ -196,21 +270,15 @@ export function createInMemoryFirestoreModule(): InMemoryFirestoreApi {
 
   function buildInitialSnapshot(
     baseRef: MockRef,
-    constraints: readonly MockConstraint[],
+    constraints: readonly MockQueryConstraint[],
     fromCache: boolean,
   ): MockRealtimeSnapshot {
-    const prefix = `${baseRef.path}/`;
-    const changes: MockRealtimeDocumentChange[] = [];
-    for (const path of store.keys()) {
-      if (!path.startsWith(prefix)) {
-        continue;
-      }
-      const data = store.get(path);
-      if (data === undefined || !matchesConstraints(data, constraints)) {
-        continue;
-      }
-      changes.push({ type: 'added', doc: makeRealtimeDocument(lastSegment(path), data, false) });
-    }
+    const changes: MockRealtimeDocumentChange[] = collectDocuments(baseRef, constraints).map(
+      (entry) => ({
+        type: 'added',
+        doc: makeRealtimeDocument(entry.id, entry.data, false),
+      }),
+    );
     return makeRealtimeSnapshot(changes, fromCache);
   }
 
@@ -261,17 +329,10 @@ export function createInMemoryFirestoreModule(): InMemoryFirestoreApi {
     async getDocs(ref: MockRef | MockQuery): Promise<MockQuerySnapshot> {
       maybeFail();
       const baseRef = ref.kind === 'query' ? ref.ref : ref;
-      const prefix = `${baseRef.path}/`;
       const constraints = ref.kind === 'query' ? ref.constraints : [];
-      const docs: MockDocumentSnapshot[] = [];
-      for (const path of store.keys()) {
-        if (path.startsWith(prefix)) {
-          const data = store.get(path);
-          if (data !== undefined && matchesConstraints(data, constraints)) {
-            docs.push(makeSnapshot(lastSegment(path), path));
-          }
-        }
-      }
+      const docs = collectDocuments(baseRef, constraints).map((entry) =>
+        makeSnapshot(entry.id, entry.path),
+      );
       return { docs };
     },
 
@@ -317,12 +378,20 @@ export function createInMemoryFirestoreModule(): InMemoryFirestoreApi {
       return batch;
     },
 
-    query(ref: MockRef, ...constraints: MockConstraint[]): MockQuery {
+    query(ref: MockRef, ...constraints: MockQueryConstraint[]): MockQuery {
       return { kind: 'query', ref, constraints };
     },
 
     where(field: string, op: '==', value: unknown): MockConstraint {
-      return { field, op, value };
+      return { kind: 'where', field, op, value };
+    },
+
+    orderBy(field: string, direction: 'asc' | 'desc' = 'asc'): MockOrderConstraint {
+      return { kind: 'orderBy', field, direction };
+    },
+
+    limit(value: number): MockLimitConstraint {
+      return { kind: 'limit', value };
     },
 
     onSnapshot(

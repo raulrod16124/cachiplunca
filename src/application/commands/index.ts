@@ -19,6 +19,7 @@ export * from './edit-comment';
 export * from './invite-member';
 export * from './leave-workspace';
 export * from './login-user';
+export * from './mark-notification-read';
 export * from './logout-user';
 export * from './move-element';
 export * from './open-guest-workspace';

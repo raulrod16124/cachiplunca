@@ -29,12 +29,12 @@ test.describe('Sharing (editor accepts from the pending list)', () => {
     await verifyEmail(editorEmail);
 
     const notifications = editorPage.getByRole('button', {
-      name: /Notifications, 1 pending/i,
+      name: /Notifications, 1 unread/i,
     });
     await expect(notifications).toBeVisible({ timeout: 20000 });
     await notifications.click();
 
-    const invitationsDialog = editorPage.getByRole('dialog', { name: 'Invitations' });
+    const invitationsDialog = editorPage.getByRole('dialog', { name: 'Notifications' });
     await expect(invitationsDialog.getByText(/A board/)).toBeVisible();
     await invitationsDialog.getByRole('button', { name: 'Accept invitation' }).click();
 

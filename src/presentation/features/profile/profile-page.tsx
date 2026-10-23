@@ -6,7 +6,7 @@ import type { LogoutUser } from '../../../application/commands';
 import { useI18n } from '../../i18n';
 import { useSession } from '../../providers/session-provider';
 import { AppShell } from '../app-shell/app-shell';
-import { InvitationsButton } from '../invitations';
+import { NotificationsButton } from '../notifications';
 import { PROFILE_TAB, ProfileView, isProfileTab, type ProfileTab } from './profile-view';
 
 const Main = styled.main`
@@ -58,7 +58,7 @@ export function ProfilePage({ logoutUser }: ProfilePageProps): ReactNode {
     <AppShell
       currentUser={currentUser}
       logoutUser={logoutUser}
-      notifications={<InvitationsButton />}
+      notifications={<NotificationsButton />}
     >
       <Main id="main-content" tabIndex={-1}>
         <Header>

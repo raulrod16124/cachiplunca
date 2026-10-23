@@ -9,6 +9,8 @@ export * from './firebase-invitation-mapper';
 export * from './firebase-invitation-repository';
 export * from './firebase-membership-mapper';
 export * from './firebase-membership-repository';
+export * from './firebase-notification-mapper';
+export * from './firebase-notification-repository';
 export * from './firebase-presence-adapter';
 export * from './firebase-presence-mapper';
 export * from './firebase-realtime-adapter';

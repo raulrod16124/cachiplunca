@@ -25,6 +25,7 @@ import {
   createLeaveWorkspace,
   createLoginUser,
   createLogoutUser,
+  createMarkNotificationRead,
   createRegisterUser,
   createRemoveMember,
   createUpdateWorkspace,
@@ -36,6 +37,7 @@ import {
   createListPendingInvitations,
   createListPendingInvitationsForUser,
   createWatchPendingInvitationsForUser,
+  createWatchNotificationsForUser,
   createListComments,
   createListWorkspaceComments,
   createListActiveGuestLinks,
@@ -49,6 +51,7 @@ import {
   createRealtimeSubscriptionManager,
   createSessionStore,
   createUserSettingsStore,
+  createNotifyComment,
 } from '../../application/services';
 import type { AuthPort, AuthSignUpInput, AuthUser } from '../../application/ports';
 import type { Workspace } from '../../domain/workspace';
@@ -62,6 +65,7 @@ import { FakePresencePort } from '../fixtures/fake-presence-port';
 import { FakeRealtimePort } from '../fixtures/fake-realtime-port';
 import { FakeWorkspaceRepository } from '../fixtures/fake-workspace-repository';
 import { FakeInvitationRepository } from '../fixtures/fake-invitation-repository';
+import { FakeNotificationRepository } from '../fixtures/fake-notification-repository';
 import { FakeGuestLinkRepository } from '../fixtures/fake-guest-link-repository';
 import {
   createFakeImageStoragePort,
@@ -132,6 +136,7 @@ export interface AppHarness {
   readonly realtimePort: FakeRealtimePort;
   readonly presencePort: FakePresencePort;
   readonly invitationRepository: FakeInvitationRepository;
+  readonly notificationRepository: FakeNotificationRepository;
   readonly imageStoragePort: FakeImageStoragePort;
   readonly guestLinkRepository: FakeGuestLinkRepository;
   readonly services: AppRoutesProps;
@@ -155,6 +160,7 @@ export function createAppHarness(): AppHarness {
   const realtimePort = new FakeRealtimePort();
   const presencePort = new FakePresencePort();
   const invitationRepository = new FakeInvitationRepository();
+  const notificationRepository = new FakeNotificationRepository();
   const imageStoragePort = createFakeImageStoragePort();
   const guestLinkRepository = new FakeGuestLinkRepository();
 
@@ -236,9 +242,23 @@ export function createAppHarness(): AppHarness {
       createComment: createCreateComment({
         repository: commentRepository,
         generateId: () => CommentId.create(`comment-${++elementSequence}`),
+        notifyComment: createNotifyComment({
+          notificationRepository,
+          membershipRepository,
+          workspaceRepository,
+        }),
       }),
       editComment: createEditComment({ repository: commentRepository }),
       resolveComment: createResolveComment({ repository: commentRepository }),
+    },
+    notifications: {
+      notifyComment: createNotifyComment({
+        notificationRepository,
+        membershipRepository,
+        workspaceRepository,
+      }),
+      watchNotificationsForUser: createWatchNotificationsForUser(notificationRepository),
+      markNotificationRead: createMarkNotificationRead({ repository: notificationRepository }),
     },
     imageServices: {
       uploadImage: createUploadImage({
@@ -280,6 +300,7 @@ export function createAppHarness(): AppHarness {
     realtimePort,
     presencePort,
     invitationRepository,
+    notificationRepository,
     imageStoragePort,
     guestLinkRepository,
     services,

@@ -122,4 +122,57 @@ describe('createCreateComment', () => {
 
     expect(result).toEqual({ status: 'error', error: failure });
   });
+
+  it('notifies other members with the saved comment and actor name', async () => {
+    const repository = new FakeCommentRepository();
+    const notifyComment = jest.fn().mockResolvedValue({ status: 'ok', created: 1 });
+    const createComment = createCreateComment({
+      repository,
+      generateId: () => CommentId.create('comment-1'),
+      notifyComment,
+      now: () => NOW,
+    });
+
+    const result = await createComment(makeInput({ actorName: 'Ada' }));
+
+    expect(result.status).toBe('ok');
+    if (result.status !== 'ok') {
+      return;
+    }
+    expect(notifyComment).toHaveBeenCalledWith({
+      comment: result.comment,
+      actorName: 'Ada',
+    });
+  });
+
+  it('treats a failed notification as best-effort', async () => {
+    const repository = new FakeCommentRepository();
+    const notifyComment = jest.fn().mockRejectedValue(new Error('Notification failed'));
+    const createComment = createCreateComment({
+      repository,
+      generateId: () => CommentId.create('comment-1'),
+      notifyComment,
+    });
+
+    const result = await createComment(makeInput());
+
+    expect(result.status).toBe('ok');
+    expect(repository.list()).toHaveLength(1);
+    expect(notifyComment).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not notify when saving the comment fails', async () => {
+    const repository = new FakeCommentRepository();
+    repository.save = jest.fn().mockRejectedValue(new Error('Write failed'));
+    const notifyComment = jest.fn();
+    const createComment = createCreateComment({
+      repository,
+      generateId: () => CommentId.create('comment-1'),
+      notifyComment,
+    });
+
+    await createComment(makeInput());
+
+    expect(notifyComment).not.toHaveBeenCalled();
+  });
 });

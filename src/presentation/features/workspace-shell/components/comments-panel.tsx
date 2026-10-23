@@ -1,6 +1,14 @@
 import { Badge, Button, Heading, Text, Textarea } from '@raulrod/ui';
 import { Check, MessageSquare } from '@raulrod/icons';
-import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from 'react';
 import styled from 'styled-components';
 import type { CommentServices } from '../../../../application/comment-services';
 import type { Comment } from '../../../../domain/comment';
@@ -48,6 +56,13 @@ const Body = styled.div`
   min-height: 0;
   overflow-y: auto;
   padding: ${({ theme }) => theme.space[4]};
+`;
+
+const CommentCard = styled(Card)`
+  &[data-highlighted='true'] {
+    outline: 2px solid ${({ theme }) => theme.color.focusRing};
+    outline-offset: 2px;
+  }
 `;
 
 const CommentList = styled.ul`
@@ -130,6 +145,8 @@ export interface CommentsPanelProps {
   readonly element: Element | undefined;
   readonly currentUserId: string | undefined;
   readonly authorLabels?: ReadonlyMap<string, string>;
+  readonly currentUserName?: string;
+  readonly highlightCommentId?: string;
   readonly services?: CommentServices;
   readonly onCommentSaved?: (comment: Comment) => void;
   readonly onClose: () => void;
@@ -141,11 +158,14 @@ export function CommentsPanel({
   element,
   currentUserId,
   authorLabels,
+  currentUserName,
+  highlightCommentId,
   services,
   onCommentSaved,
   onClose,
 }: CommentsPanelProps): ReactNode {
   const { t, locale } = useI18n();
+  const bodyRef = useRef<HTMLDivElement | null>(null);
   const elementId = element?.id.value;
   const [comments, setComments] = useState<readonly Comment[]>([]);
   const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
@@ -216,6 +236,36 @@ export function CommentsPanel({
     };
   }, [elementId, open, reloadKey, services, t, workspaceId]);
 
+  useEffect(() => {
+    if (!open || status !== 'ready' || highlightCommentId === undefined) {
+      return;
+    }
+
+    const container = bodyRef.current;
+    if (container === null) {
+      return;
+    }
+
+    const target = Array.from(
+      container.querySelectorAll<HTMLElement>('[data-testid^="comment-card-"]'),
+    ).find((card) => card.getAttribute('data-testid') === `comment-card-${highlightCommentId}`);
+
+    if (target === undefined) {
+      return;
+    }
+
+    target.setAttribute('data-highlighted', 'true');
+    target.tabIndex = -1;
+    if (typeof target.scrollIntoView === 'function') {
+      target.scrollIntoView({ block: 'nearest' });
+    }
+    target.focus({ preventScroll: true });
+
+    return () => {
+      target.removeAttribute('data-highlighted');
+    };
+  }, [comments, highlightCommentId, open, status]);
+
   const handleSubmit = useCallback(
     async (event: FormEvent<HTMLFormElement>): Promise<void> => {
       event.preventDefault();
@@ -239,6 +289,7 @@ export function CommentsPanel({
           elementId: ElementId.create(elementId),
           authorId: UserId.create(currentUserId),
           body,
+          actorName: currentUserName,
         });
 
         if (result.status === 'ok') {
@@ -255,7 +306,7 @@ export function CommentsPanel({
         setSubmitting(false);
       }
     },
-    [currentUserId, draft, elementId, onCommentSaved, services, t, workspaceId],
+    [currentUserId, currentUserName, draft, elementId, onCommentSaved, services, t, workspaceId],
   );
 
   const handleResolve = useCallback(
@@ -411,7 +462,7 @@ export function CommentsPanel({
             comment.canEdit();
 
           return (
-            <Card
+            <CommentCard
               key={comment.id.value}
               as="li"
               variant={resolved ? 'sunken' : 'surface'}
@@ -510,7 +561,7 @@ export function CommentsPanel({
                   </CommentActions>
                 </>
               )}
-            </Card>
+            </CommentCard>
           );
         })}
       </CommentList>
@@ -534,7 +585,7 @@ export function CommentsPanel({
             onClose={onClose}
             closeLabel={t('comments.close')}
           />
-          <Body>
+          <Body ref={bodyRef}>
             {statusMessage === null ? null : (
               <StatusMessage role="status" color="color.text.muted">
                 {statusMessage}

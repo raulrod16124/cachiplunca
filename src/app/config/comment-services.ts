@@ -6,12 +6,17 @@ import {
 } from '../../application/commands';
 import { createListComments, createListWorkspaceComments } from '../../application/queries';
 import type { RecordWorkspaceActivity } from '../../application/services/record-activity';
+import type { NotifyComment } from '../../application/services/notify-comment';
 import { CommentId } from '../../domain/shared';
 import { createFirebaseCommentRepository } from '../../infrastructure/firebase/firebase-comment-repository';
 import { createFirebaseWorkspaceRepository } from '../../infrastructure/firebase/firebase-workspace-repository';
 import { getFirebaseFirestore } from '../../infrastructure/firebase/firebase-app';
 
-export function createCommentServices(): CommentServices {
+export interface CommentServicesDeps {
+  readonly notifyComment?: NotifyComment;
+}
+
+export function createCommentServices(deps: CommentServicesDeps = {}): CommentServices {
   const db = getFirebaseFirestore();
   const repository = createFirebaseCommentRepository(db);
   const workspaceRepository = createFirebaseWorkspaceRepository(db);
@@ -26,6 +31,7 @@ export function createCommentServices(): CommentServices {
       repository,
       generateId: () => CommentId.create(crypto.randomUUID()),
       recordActivity,
+      notifyComment: deps.notifyComment,
     }),
     editComment: createEditComment({ repository }),
     resolveComment: createResolveComment({ repository, recordActivity }),

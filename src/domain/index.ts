@@ -4,6 +4,7 @@ export * from './element';
 export * from './guest-link';
 export * from './invitation';
 export * from './membership';
+export * from './notification';
 export * from './shared';
 export * from './user-settings';
 export * from './workspace';

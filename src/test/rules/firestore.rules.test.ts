@@ -113,6 +113,28 @@ function imageElementData(
   };
 }
 
+function notificationData(
+  recipientId: string,
+  actorId: string,
+  notificationId = 'notification-1',
+  overrides: Record<string, unknown> = {},
+) {
+  return {
+    id: notificationId,
+    type: 'comment',
+    recipientId,
+    workspaceId: WS1,
+    workspaceName: 'Workspace',
+    elementId: 'e1',
+    commentId: 'c1',
+    actorId,
+    actorName: 'Ada',
+    bodyPreview: 'Looks good',
+    createdAt: now,
+    ...overrides,
+  };
+}
+
 function presenceData(workspaceId: string, userId: string) {
   return {
     workspaceId,
@@ -226,6 +248,10 @@ beforeEach(async () => {
     await setDoc(
       doc(db, 'workspaces', WS1, 'comments', 'c-resolved'),
       commentData(WS1, 'e1', ROLE_UIDS.owner, 'c-resolved', new Date(now.getTime() + 60_000)),
+    );
+    await setDoc(
+      doc(db, 'notifications', 'notification-victim'),
+      notificationData(VICTIM_UID, ROLE_UIDS.owner, 'notification-victim'),
     );
     await setDoc(
       doc(db, 'presence', `${WS1}_${ROLE_UIDS.viewer}`),
@@ -1161,6 +1187,98 @@ describe('firestore.rules — invitations', () => {
         updatedAt: now,
       }),
     );
+  });
+});
+
+describe('firestore.rules — notifications', () => {
+  test('members can create a comment notification for another member', async () => {
+    await assertSucceeds(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.editor), 'notifications', 'notification-new'),
+        notificationData(VICTIM_UID, ROLE_UIDS.editor, 'notification-new'),
+      ),
+    );
+  });
+
+  test('a user cannot create a notification for themselves', async () => {
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.owner), 'notifications', 'notification-self'),
+        notificationData(ROLE_UIDS.owner, ROLE_UIDS.owner, 'notification-self'),
+      ),
+    );
+  });
+
+  test('a user cannot impersonate another actor', async () => {
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.owner), 'notifications', 'notification-spoof'),
+        notificationData(VICTIM_UID, ROLE_UIDS.editor, 'notification-spoof'),
+      ),
+    );
+  });
+
+  test('a user cannot notify a recipient outside the workspace', async () => {
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.owner), 'notifications', 'notification-outsider'),
+        notificationData(OUTSIDER_UID, ROLE_UIDS.owner, 'notification-outsider'),
+      ),
+    );
+  });
+
+  test('a non-member cannot create a notification', async () => {
+    await assertFails(
+      setDoc(
+        doc(dbOf(OUTSIDER_UID), 'notifications', 'notification-nonmember'),
+        notificationData(VICTIM_UID, OUTSIDER_UID, 'notification-nonmember'),
+      ),
+    );
+  });
+
+  test('the recipient can read and list their notifications', async () => {
+    await assertSucceeds(getDoc(doc(dbOf(VICTIM_UID), 'notifications', 'notification-victim')));
+    await assertSucceeds(
+      getDocs(
+        query(
+          collection(dbOf(VICTIM_UID), 'notifications'),
+          where('recipientId', '==', VICTIM_UID),
+        ),
+      ),
+    );
+  });
+
+  test('other users cannot read the notification', async () => {
+    await assertFails(getDoc(doc(dbOf(ROLE_UIDS.owner), 'notifications', 'notification-victim')));
+    await assertFails(getDoc(doc(dbOf(OUTSIDER_UID), 'notifications', 'notification-victim')));
+  });
+
+  test('the recipient can mark their notification as read', async () => {
+    await assertSucceeds(
+      updateDoc(doc(dbOf(VICTIM_UID), 'notifications', 'notification-victim'), {
+        readAt: new Date(now.getTime() + 60_000),
+      }),
+    );
+  });
+
+  test('the recipient cannot change fields other than readAt', async () => {
+    await assertFails(
+      updateDoc(doc(dbOf(VICTIM_UID), 'notifications', 'notification-victim'), {
+        bodyPreview: 'Changed',
+      }),
+    );
+  });
+
+  test('a different user cannot mark the notification as read', async () => {
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'notifications', 'notification-victim'), {
+        readAt: new Date(now.getTime() + 60_000),
+      }),
+    );
+  });
+
+  test('notifications cannot be deleted', async () => {
+    await assertFails(deleteDoc(doc(dbOf(VICTIM_UID), 'notifications', 'notification-victim')));
   });
 });
 

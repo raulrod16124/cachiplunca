@@ -10,6 +10,7 @@ import {
   createInvitationServices,
   type InvitationServices,
 } from './app/config/invitation-services';
+import { createNotificationServices } from './app/config/notification-services';
 import { createPresenceServices, type PresenceServices } from './app/config/presence-services';
 import {
   createUserSettingsServices,
@@ -17,6 +18,7 @@ import {
 } from './app/config/user-settings-services';
 import { createWorkspaceServices, type WorkspaceServices } from './app/config/workspace-services';
 import type { CommentServices } from './application/comment-services';
+import type { NotificationServices } from './application/notification-services';
 import type { ImageServices } from './application/image-services';
 import { AppRoutes } from './app/routes/app-routes';
 import { UserId } from './domain/shared/value-objects/user-id';
@@ -37,6 +39,7 @@ interface AppContentProps {
   readonly userSettingsServices: UserSettingsServices;
   readonly exportServices: ExportServices;
   readonly commentServices: CommentServices;
+  readonly notificationServices: NotificationServices;
   readonly imageServices: ImageServices;
   readonly guestLinkServices: GuestLinkServices;
 }
@@ -50,6 +53,7 @@ function AppContent({
   userSettingsServices,
   exportServices,
   commentServices,
+  notificationServices,
   imageServices,
   guestLinkServices,
 }: AppContentProps) {
@@ -97,6 +101,7 @@ function AppContent({
             updateWorkspace={workspaceServices.updateWorkspace}
             fileDownload={exportServices.fileDownload}
             comments={commentServices}
+            notifications={notificationServices}
             imageServices={imageServices}
             guestLinks={guestLinkServices}
           />
@@ -114,9 +119,12 @@ function App() {
   );
   const [presenceServices] = useState(createPresenceServices);
   const [invitationServices] = useState(createInvitationServices);
+  const [notificationServices] = useState(createNotificationServices);
   const [userSettingsServices] = useState(() => createUserSettingsServices(getFirebaseFirestore()));
   const [exportServices] = useState(createExportServices);
-  const [commentServices] = useState(createCommentServices);
+  const [commentServices] = useState(() =>
+    createCommentServices({ notifyComment: notificationServices.notifyComment }),
+  );
   const [imageServices] = useState(createImageServices);
   const [guestLinkServices] = useState(() =>
     createGuestLinkServices({ signInAnonymously: authServices.signInAnonymously }),
@@ -137,6 +145,7 @@ function App() {
             userSettingsServices={userSettingsServices}
             exportServices={exportServices}
             commentServices={commentServices}
+            notificationServices={notificationServices}
             imageServices={imageServices}
             guestLinkServices={guestLinkServices}
           />

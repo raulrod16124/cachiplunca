@@ -31,6 +31,11 @@ service cloud.firestore {
       return signedIn() && exists(membershipPath(workspaceId));
     }
 
+    function isWorkspaceMember(workspaceId, userId) {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/memberships/$(workspaceId + '_' + userId));
+    }
+
     function roleOf(workspaceId) {
       return get(membershipPath(workspaceId)).data.role;
     }
@@ -250,6 +255,41 @@ service cloud.firestore {
         get(guestLinkPath(request.resource.data.tokenHash)).data.workspaceId ==
           request.resource.data.workspaceId;
       allow delete: if signedIn() && request.auth.uid == userId;
+    }
+
+    // notifications: avisos persistentes por destinatario. Solo el destinatario
+    // lee y marca como leída su notificación. Cualquier miembro puede crear
+    // avisos de comentario en nombre propio, nunca para sí mismo, y solo si el
+    // destinatario también pertenece al workspace.
+    match /notifications/{notificationId} {
+      allow read: if signedIn() && resource.data.recipientId == request.auth.uid;
+      allow create: if signedIn() &&
+        request.resource.data.id == notificationId &&
+        request.resource.data.type == 'comment' &&
+        request.resource.data.actorId == request.auth.uid &&
+        request.resource.data.recipientId is string &&
+        request.resource.data.recipientId != request.auth.uid &&
+        request.resource.data.workspaceId is string &&
+        request.resource.data.workspaceName is string &&
+        request.resource.data.elementId is string &&
+        request.resource.data.commentId is string &&
+        request.resource.data.actorName is string &&
+        request.resource.data.bodyPreview is string &&
+        request.resource.data.bodyPreview.size() > 0 &&
+        request.resource.data.bodyPreview.size() <= 140 &&
+        request.resource.data.createdAt is timestamp &&
+        !('readAt' in request.resource.data) &&
+        isMember(request.resource.data.workspaceId) &&
+        isWorkspaceMember(
+          request.resource.data.workspaceId,
+          request.resource.data.recipientId
+        );
+      allow update: if signedIn() &&
+        resource.data.recipientId == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readAt']) &&
+        request.resource.data.readAt is timestamp &&
+        request.resource.data.readAt >= resource.data.createdAt;
+      allow delete: if false;
     }
 
     // comments: colaboración asíncrona ligada a elementos. Solo los miembros
