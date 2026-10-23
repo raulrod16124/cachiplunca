@@ -56,11 +56,15 @@ test.describe('Board export', () => {
     await page.getByRole('button', { name: 'Export board' }).click();
     await page.getByRole('menuitem', { name: 'Export as PDF' }).click();
 
-    expect(
-      await page.evaluate(
-        () => (window as unknown as { readonly __exportPrintCalls: number }).__exportPrintCalls,
-      ),
-    ).toBe(1);
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => (window as unknown as { readonly __exportPrintCalls: number }).__exportPrintCalls,
+        ),
+      )
+      .toBe(1);
+
+    await expect(page).toHaveTitle(/^printable-board-\d{4}-\d{2}-\d{2}$/);
 
     await page.emulateMedia({ media: 'print' });
 
@@ -68,5 +72,8 @@ test.describe('Board export', () => {
     await expect(printView).toBeVisible();
     await expect(printView).toContainText('Printable board');
     await expect(printView).toContainText('Exported on');
+
+    await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
+    await expect(page).toHaveTitle('Cachiplunca');
   });
 });
