@@ -1,6 +1,6 @@
 import type { TranslationKey } from '../i18n';
 
-export type ShortcutGroupId = 'canvas' | 'selection' | 'editing';
+export type ShortcutGroupId = 'general' | 'canvas' | 'selection' | 'editing' | 'presentation';
 
 export interface ShortcutEntry {
   readonly id: string;
@@ -15,6 +15,22 @@ export interface ShortcutGroup {
 }
 
 export const SHORTCUT_GROUPS: readonly ShortcutGroup[] = [
+  {
+    id: 'general',
+    titleKey: 'shortcuts.group.general',
+    entries: [
+      {
+        id: 'general.command-palette',
+        labelKey: 'shortcuts.general.commandPalette',
+        keysKey: 'shortcuts.keys.commandPalette',
+      },
+      {
+        id: 'general.shortcuts',
+        labelKey: 'shortcuts.general.shortcuts',
+        keysKey: 'shortcuts.keys.shortcuts',
+      },
+    ],
+  },
   {
     id: 'canvas',
     titleKey: 'shortcuts.group.canvas',
@@ -123,6 +139,22 @@ export const SHORTCUT_GROUPS: readonly ShortcutGroup[] = [
         id: 'editing.commit',
         labelKey: 'shortcuts.editing.commit',
         keysKey: 'shortcuts.keys.commitEdit',
+      },
+    ],
+  },
+  {
+    id: 'presentation',
+    titleKey: 'shortcuts.group.presentation',
+    entries: [
+      {
+        id: 'presentation.navigate',
+        labelKey: 'shortcuts.presentation.navigate',
+        keysKey: 'shortcuts.keys.presentationNavigate',
+      },
+      {
+        id: 'presentation.exit',
+        labelKey: 'shortcuts.presentation.exit',
+        keysKey: 'shortcuts.keys.escape',
       },
     ],
   },

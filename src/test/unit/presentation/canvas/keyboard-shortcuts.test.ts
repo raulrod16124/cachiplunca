@@ -2,8 +2,14 @@ import { SHORTCUT_GROUPS } from '../../../../presentation/canvas/keyboard-shortc
 import { MESSAGES } from '../../../../presentation/i18n/messages';
 
 describe('keyboard shortcut catalogue', () => {
-  it('groups shortcuts in canvas, selection and editing contexts', () => {
-    expect(SHORTCUT_GROUPS.map((group) => group.id)).toEqual(['canvas', 'selection', 'editing']);
+  it('groups shortcuts in general, canvas, selection, editing and presentation contexts', () => {
+    expect(SHORTCUT_GROUPS.map((group) => group.id)).toEqual([
+      'general',
+      'canvas',
+      'selection',
+      'editing',
+      'presentation',
+    ]);
   });
 
   it('uses unique group and shortcut ids', () => {
@@ -31,6 +37,8 @@ describe('keyboard shortcut catalogue', () => {
 
   it('lists every shortcut implemented on the board', () => {
     expect(SHORTCUT_GROUPS.flatMap((group) => group.entries.map((entry) => entry.id))).toEqual([
+      'general.command-palette',
+      'general.shortcuts',
       'canvas.pan',
       'canvas.scroll',
       'canvas.zoom',
@@ -52,6 +60,17 @@ describe('keyboard shortcut catalogue', () => {
       'editing.edit',
       'editing.cancel',
       'editing.commit',
+      'presentation.navigate',
+      'presentation.exit',
     ]);
+  });
+
+  it('documents the command palette, shortcut dialog, redo alternatives and presentation keys', () => {
+    expect(MESSAGES.en['shortcuts.keys.commandPalette']).toContain('Ctrl/Cmd + K');
+    expect(MESSAGES.en['shortcuts.keys.shortcuts']).toBe('?');
+    expect(MESSAGES.en['shortcuts.keys.redo']).toContain('Ctrl/Cmd + Shift + Z');
+    expect(MESSAGES.en['shortcuts.keys.redo']).toContain('Ctrl/Cmd + Y');
+    expect(MESSAGES.en['shortcuts.keys.presentationNavigate']).toContain('PageUp/PageDown');
+    expect(MESSAGES.en['shortcuts.keys.escape']).toBe('Esc');
   });
 });
