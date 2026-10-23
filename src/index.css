@@ -78,7 +78,31 @@ body {
 
 /* Share modal uses the extra horizontal room for member rows and role selects. */
 .share-dialog-content {
-  max-width: 38rem;
+  max-width: 40rem;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+/* `Tabs` is a provider, so the rail and panels are direct flex children of the
+ * dialog. Without this the rail shrinks to its 1px border when a tab grows and
+ * the dialog scrolls instead. Keep every block at its natural height. */
+.share-dialog-content > * {
+  flex-shrink: 0;
+}
+
+/*
+ * Narrow screens lose the outer breathing room first so tabs, descriptions
+ * and link controls keep usable width at 390px without horizontal overflow.
+ */
+@media (max-width: 480px) {
+  .rr-dialog:has(.share-dialog-content) {
+    padding: var(--rr-space-3);
+  }
+
+  .share-dialog-content {
+    padding: var(--rr-space-4);
+    max-block-size: calc(100dvh - 2 * var(--rr-space-3));
+  }
 }
 
 /*

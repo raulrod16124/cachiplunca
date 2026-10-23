@@ -81,7 +81,8 @@ describe('PendingInvitationsList', () => {
     const items = screen.getAllByRole('listitem');
     expect(items).toHaveLength(2);
     expect(within(items[0]).getByText('editor@example.com')).toBeInTheDocument();
-    expect(within(items[0]).getByText('editor')).toBeInTheDocument();
+    expect(within(items[0]).getByText('Editor')).toBeInTheDocument();
     expect(within(items[1]).getByText('viewer@example.com')).toBeInTheDocument();
+    expect(within(items[1]).getByText('Viewer')).toBeInTheDocument();
   });
 });

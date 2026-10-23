@@ -1,8 +1,10 @@
-import { Button, Heading, Input, Stack, Text } from '@raulrod/ui';
+import { Button, Stack, Text } from '@raulrod/ui';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { GuestLinkServices } from '../../../../application/guest-link-services';
 import type { GuestLink } from '../../../../domain/guest-link';
 import { toAppError } from '../../../../shared/errors';
+import { CopyLinkField } from '../../../components/copy-link-field';
+import { SectionHeader } from '../../../components/section-header';
 import { localizeMessage, useI18n } from '../../../i18n';
 import { formatShortDate } from '../../../i18n/format';
 import { buildGuestViewLink } from '../../guest/guest-link';
@@ -31,7 +33,6 @@ export function GuestLinkPanel({
   const [token, setToken] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   const activeLink = links[0];
   const link = useMemo(() => (token === null ? null : buildGuestViewLink(token)), [token]);
@@ -59,14 +60,12 @@ export function GuestLinkPanel({
       setToken(null);
       return;
     }
-    setCopied(false);
     void fetchLinks();
   }, [active, fetchLinks]);
 
   const handleCreate = useCallback(async (): Promise<void> => {
     setBusy(true);
     setErrorMessage(null);
-    setCopied(false);
     try {
       const result = await services.createGuestLink({ workspaceId, actorUserId: currentUserId });
       if (result.status === 'ok') {
@@ -93,7 +92,6 @@ export function GuestLinkPanel({
 
     setBusy(true);
     setErrorMessage(null);
-    setCopied(false);
     try {
       const result = await services.revokeGuestLink({
         workspaceId,
@@ -117,24 +115,9 @@ export function GuestLinkPanel({
     }
   }, [activeLink, currentUserId, fetchLinks, services, t, workspaceId]);
 
-  async function handleCopy(): Promise<void> {
-    if (link === null) {
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(link);
-      setCopied(true);
-    } catch {
-      setCopied(false);
-    }
-  }
-
   return (
     <Stack gap="space-4">
-      <Stack gap="space-2">
-        <Heading as="h3">{t('share.guest.title')}</Heading>
-        <Text color="color.text.muted">{t('share.guest.description')}</Text>
-      </Stack>
+      <SectionHeader title={t('share.guest.title')} description={t('share.guest.description')} />
 
       {status === 'loading' ? <Text role="status">{t('common.loading')}</Text> : null}
 
@@ -162,25 +145,11 @@ export function GuestLinkPanel({
           )}
 
           {link === null ? null : (
-            <Stack gap="space-2">
-              <Text color="color.text.muted">{t('share.guest.linkHint')}</Text>
-              <Input
-                readOnly
-                aria-label={t('share.guest.linkLabel')}
-                value={link}
-                onFocus={(event) => event.target.select()}
-              />
-              <Stack gap="space-1">
-                <Button type="button" variant="outline" onClick={() => void handleCopy()}>
-                  {t('common.copyLink')}
-                </Button>
-                {copied ? (
-                  <Text role="status" aria-live="polite" color="color.text.muted">
-                    {t('common.copied')}
-                  </Text>
-                ) : null}
-              </Stack>
-            </Stack>
+            <CopyLinkField
+              link={link}
+              label={t('share.guest.linkLabel')}
+              hint={t('share.guest.linkHint')}
+            />
           )}
 
           {errorMessage === null ? null : (
@@ -199,14 +168,19 @@ export function GuestLinkPanel({
               {activeLink === undefined ? t('share.guest.create') : t('share.guest.replace')}
             </Button>
             {activeLink === undefined ? null : (
-              <Button
-                type="button"
-                variant="outline"
-                disabled={busy}
-                onClick={() => void handleRevoke()}
-              >
-                {t('share.guest.revoke')}
-              </Button>
+              <>
+                <Text size="font.size.sm" color="color.text.muted">
+                  {t('share.guest.revokeHint')}
+                </Text>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  disabled={busy}
+                  onClick={() => void handleRevoke()}
+                >
+                  {t('share.guest.revoke')}
+                </Button>
+              </>
             )}
           </Stack>
         </Stack>

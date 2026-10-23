@@ -87,6 +87,7 @@ describe('ShareDialog', () => {
 
     expect(await screen.findByText('user-b')).toBeInTheDocument();
     expect(screen.getByText('You')).toBeInTheDocument();
+    expect(screen.getByText(/People with access to this board/)).toBeInTheDocument();
   });
 
   it('moves focus into the dialog when it opens', async () => {
@@ -221,7 +222,10 @@ describe('ShareDialog', () => {
     });
 
     expect(await screen.findByRole('tab', { name: 'Invite' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Invite people' })).toBeInTheDocument();
+    expect(screen.getByText(/Send a one-time invitation/)).toBeInTheDocument();
     expect(await screen.findByText('No pending invitations.')).toBeInTheDocument();
+    expect(screen.getByText('Invitations that have not been accepted yet.')).toBeInTheDocument();
   });
 
   it('hides the invite tab when permission is missing', async () => {

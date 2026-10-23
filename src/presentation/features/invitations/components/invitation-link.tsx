@@ -1,7 +1,5 @@
-import { Button, Input, Stack, Text } from '@raulrod/ui';
-import { useMemo, useState, type ReactNode } from 'react';
-import { ActionRow } from '../../../components/action-row';
-import { Card } from '../../../components/card';
+import { useMemo, type ReactNode } from 'react';
+import { CopyLinkField } from '../../../components/copy-link-field';
 import { getPublicBasePath } from '../../../config/public-base';
 import { useI18n } from '../../../i18n';
 
@@ -24,44 +22,13 @@ export function InvitationLink({
   buildLink = buildInvitationLink,
 }: InvitationLinkProps): ReactNode {
   const { t } = useI18n();
-  const [copied, setCopied] = useState(false);
   const link = useMemo(() => buildLink(token), [buildLink, token]);
 
-  async function handleCopy(): Promise<void> {
-    try {
-      await navigator.clipboard.writeText(link);
-      setCopied(true);
-    } catch {
-      setCopied(false);
-    }
-  }
-
   return (
-    <Card variant="sunken" padding="sm">
-      <Stack gap="space-2">
-        <Text color="color.text.muted">{t('share.invite.linkHint')}</Text>
-        <Input
-          readOnly
-          aria-label={t('invitations.linkLabel')}
-          value={link}
-          onFocus={(event) => event.target.select()}
-        />
-        <ActionRow
-          align="center"
-          wrap
-          trailing={
-            <Button type="button" variant="outline" onClick={handleCopy}>
-              {t('common.copyLink')}
-            </Button>
-          }
-        >
-          {copied ? (
-            <Text role="status" aria-live="polite" color="color.text.muted">
-              {t('common.copied')}
-            </Text>
-          ) : null}
-        </ActionRow>
-      </Stack>
-    </Card>
+    <CopyLinkField
+      link={link}
+      label={t('invitations.linkLabel')}
+      hint={t('share.invite.linkHint')}
+    />
   );
 }

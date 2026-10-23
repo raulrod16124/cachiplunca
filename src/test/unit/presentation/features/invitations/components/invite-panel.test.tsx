@@ -58,6 +58,9 @@ describe('InvitePanel', () => {
     renderPanel(createListPendingInvitations(repository), await buildInviteMember(repository));
 
     expect(await screen.findByText('No pending invitations.')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Invite people' })).toBeInTheDocument();
+    expect(screen.getByText(/Send a one-time invitation/)).toBeInTheDocument();
+    expect(screen.getByText('Invitations that have not been accepted yet.')).toBeInTheDocument();
   });
 
   it('does not load pending invitations while inactive', async () => {

@@ -2,12 +2,25 @@ import { Badge, Inline, Skeleton, Stack, Text } from '@raulrod/ui';
 import type { ReactNode } from 'react';
 import styled from 'styled-components';
 import type { Invitation } from '../../../../domain/invitation';
+import type { MembershipRole } from '../../../../domain/membership';
 import { ActionRow } from '../../../components/action-row';
 import { Card } from '../../../components/card';
 import { EmptyState } from '../../../components/empty-state';
 import { ErrorState } from '../../../components/error-state';
 import { LoadingState } from '../../../components/loading-state';
-import { useI18n } from '../../../i18n';
+import { useI18n, type TranslationKey } from '../../../i18n';
+
+const ROLE_KEYS: Record<MembershipRole, TranslationKey> = {
+  owner: 'share.role.owner',
+  editor: 'share.role.editor',
+  viewer: 'share.role.viewer',
+};
+
+const Email = styled(Text)`
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+`;
 
 export type PendingInvitationsStatus = 'loading' | 'error' | 'ready';
 
@@ -75,7 +88,7 @@ export function PendingInvitationsList({
             wrap
             trailing={
               <Inline gap="space-2" align="center" wrap>
-                <Badge variant="neutral">{invitation.role}</Badge>
+                <Badge variant="neutral">{t(ROLE_KEYS[invitation.role])}</Badge>
                 <Text color="color.text.muted">
                   {t('share.invite.expires', {
                     date: DATE_FORMATTER.format(invitation.expiresAt),
@@ -84,7 +97,7 @@ export function PendingInvitationsList({
               </Inline>
             }
           >
-            <Text>{invitation.email}</Text>
+            <Email>{invitation.email}</Email>
           </ActionRow>
         </Card>
       ))}

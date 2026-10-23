@@ -51,6 +51,36 @@ test.describe('Sharing (editor accepts from the pending list)', () => {
   });
 });
 
+test.describe('Sharing (copy invitation link)', () => {
+  test('owner copies the complete one-time invitation link', async ({ browser }) => {
+    const context = await browser.newContext({
+      permissions: ['clipboard-read', 'clipboard-write'],
+    });
+    const page = await context.newPage();
+
+    await registerUser(page);
+    await createWorkspace(page, 'Copy link board');
+
+    await page.getByRole('button', { name: 'Share' }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog.getByRole('heading', { name: 'Share board' })).toBeVisible();
+
+    await dialog.getByLabel('Email').fill(uniqueEmail('copy-link'));
+    await dialog.getByRole('button', { name: 'Send invitation' }).click();
+
+    const linkInput = dialog.getByLabel('Invitation link');
+    await expect(linkInput).toBeVisible({ timeout: 15000 });
+    const link = await linkInput.inputValue();
+    expect(link).toContain('/invitations/');
+
+    await dialog.getByRole('button', { name: 'Copy link' }).click();
+    await expect(dialog.getByText('Link copied to clipboard.')).toBeVisible();
+    await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(link);
+
+    await context.close();
+  });
+});
+
 test.describe('Sharing (viewer happy path)', () => {
   test('owner invites a viewer; viewer gets read-only access to the board', async ({ browser }) => {
     const ownerContext = await browser.newContext();

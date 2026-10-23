@@ -14,6 +14,14 @@ const WORKSPACE_ID = 'ws-1';
 const OWNER_ID = 'owner-1';
 const TOKEN_HASH = 'a'.repeat(64);
 
+const writeText = jest.fn<Promise<void>, [string]>();
+
+beforeEach(() => {
+  writeText.mockReset();
+  writeText.mockResolvedValue(undefined);
+  Object.assign(navigator, { clipboard: { writeText } });
+});
+
 async function makeServices() {
   const guestLinks = new FakeGuestLinkRepository();
   const memberships = new FakeMembershipRepository();
@@ -61,6 +69,10 @@ describe('GuestLinkPanel', () => {
     const input = await screen.findByLabelText('Read-only link');
     expect(input).toHaveValue(buildGuestViewLink('token-1'));
     expect(screen.getByText(/A read-only link is active/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy link' }));
+    expect(writeText).toHaveBeenCalledWith(buildGuestViewLink('token-1'));
+    expect(await screen.findByText('Link copied to clipboard.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Revoke view link' }));
 

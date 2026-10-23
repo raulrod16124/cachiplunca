@@ -4,7 +4,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  Heading,
   Stack,
   Tabs,
 } from '@raulrod/ui';
@@ -24,6 +23,7 @@ import {
 } from '../../../../domain/membership';
 import { UserId, WorkspaceId } from '../../../../domain/shared';
 import { toAppError } from '../../../../shared/errors';
+import { SectionHeader } from '../../../components/section-header';
 import { InvitePanel } from '../../invitations';
 import {
   describeChangeMemberRoleError,
@@ -234,7 +234,10 @@ export function ShareDialog({
           ) : null}
           <Tabs.Panel value={PEOPLE_TAB}>
             <Stack gap="space-4">
-              <Heading as="h3">{t('share.members')}</Heading>
+              <SectionHeader
+                title={t('share.members')}
+                description={t('share.members.description')}
+              />
               <MembersList
                 status={status}
                 members={members}

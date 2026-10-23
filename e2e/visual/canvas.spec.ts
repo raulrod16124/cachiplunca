@@ -317,13 +317,27 @@ test.describe('visual baseline — canvas', () => {
       await createWorkspace(page, 'Share canvas');
       await openShareDialog(page);
       await setTheme(page, theme);
-      await expect(page).toHaveScreenshot(`canvas-share-${theme}.png`, {
-        mask: [
-          ...dynamicMaskLocators(page),
-          page.locator('[aria-label="Read-only link"]'),
-          page.locator('[aria-label="Invitation link"]'),
-        ],
-      });
+      await waitForStable(page);
+
+      const mask = [
+        ...dynamicMaskLocators(page),
+        page.locator('[data-testid="member-avatar"]'),
+        page.locator('[data-testid="member-identity"]'),
+        page.locator('[aria-label="Read-only link"]'),
+        page.locator('[aria-label="Invitation link"]'),
+      ];
+
+      await expect(page).toHaveScreenshot(`canvas-share-${theme}.png`, { mask });
+
+      await page.getByRole('tab', { name: 'People' }).click();
+      await expect(page.getByText(/People with access to this board/)).toBeVisible();
+      await waitForStable(page);
+      await expect(page).toHaveScreenshot(`canvas-share-people-${theme}.png`, { mask });
+
+      await page.getByRole('tab', { name: 'View link' }).click();
+      await expect(page.getByRole('heading', { name: 'Read-only link' })).toBeVisible();
+      await waitForStable(page);
+      await expect(page).toHaveScreenshot(`canvas-share-guest-${theme}.png`, { mask });
     });
 
     test(`command palette theme:${theme}`, async ({ page }) => {

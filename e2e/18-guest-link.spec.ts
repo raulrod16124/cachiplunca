@@ -6,7 +6,9 @@ test.describe('Guest read-only link', () => {
   test('an anonymous visitor views the board read-only and loses access when revoked', async ({
     browser,
   }) => {
-    const ownerContext = await browser.newContext();
+    const ownerContext = await browser.newContext({
+      permissions: ['clipboard-read', 'clipboard-write'],
+    });
     const ownerPage = await ownerContext.newPage();
 
     await registerUser(ownerPage);
@@ -24,6 +26,10 @@ test.describe('Guest read-only link', () => {
     await expect(linkInput).toBeVisible({ timeout: 20000 });
     const link = await linkInput.inputValue();
     expect(link).toContain('/view/');
+
+    await dialog.getByRole('button', { name: 'Copy link' }).click();
+    await expect(dialog.getByText('Link copied to clipboard.')).toBeVisible();
+    await expect.poll(() => ownerPage.evaluate(() => navigator.clipboard.readText())).toBe(link);
 
     const guestContext = await browser.newContext();
     const guestPage = await guestContext.newPage();

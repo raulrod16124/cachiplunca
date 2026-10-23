@@ -79,6 +79,8 @@ describe('MembersList', () => {
     expect(screen.getByText('user-b')).toBeInTheDocument();
     expect(screen.getByText('Owner')).toBeInTheDocument();
     expect(screen.getByText('Editor')).toBeInTheDocument();
+    expect(screen.getByText('Full control over the board and its members.')).toBeInTheDocument();
+    expect(screen.getByText('Can edit the board and invite new members.')).toBeInTheDocument();
   });
 
   it('marks the current user and offers leaving when allowed', () => {
