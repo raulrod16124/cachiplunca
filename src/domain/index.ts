@@ -1,6 +1,7 @@
 export * from './collaboration';
 export * from './comment';
 export * from './element';
+export * from './favorite';
 export * from './guest-link';
 export * from './invitation';
 export * from './membership';

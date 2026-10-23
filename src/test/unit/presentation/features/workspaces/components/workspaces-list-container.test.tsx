@@ -1,7 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
-import { MemoryRouter, useLocation } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
+import { FavoritesProvider } from '../../../../../../presentation/features/favorites';
 import { WorkspacesListContainer } from '../../../../../../presentation/features/workspaces/components/workspaces-list-container';
 import type {
   ListWorkspaces,
@@ -14,6 +15,10 @@ import type {
 } from '../../../../../../application/commands';
 import { Workspace } from '../../../../../../domain/workspace';
 import { UserId, WorkspaceId } from '../../../../../../domain/shared';
+import type { FavoriteServices } from '../../../../../../application/favorite-services';
+import { createSessionStore } from '../../../../../../application/services';
+import { SessionProvider } from '../../../../../../presentation/providers/session-provider';
+import { FakeAuthPort } from '../../../../../fixtures/fake-auth-port';
 import { createAppError, ERROR_CODES } from '../../../../../../shared/errors';
 
 const CREATED_BY = UserId.create('user-1');
@@ -26,8 +31,33 @@ function createWorkspace(name: string): Workspace {
   });
 }
 
-function renderWithRouter(children: ReactNode): ReturnType<typeof render> {
-  return render(<MemoryRouter>{children}</MemoryRouter>);
+function renderTree(children: ReactNode, services?: FavoriteServices): ReactNode {
+  const authPort = new FakeAuthPort();
+  authPort.setSession({
+    uid: 'user-1',
+    email: 'user@example.com',
+    emailVerified: true,
+    displayName: 'Test User',
+  });
+
+  return (
+    <MemoryRouter>
+      <SessionProvider store={createSessionStore(authPort)}>
+        <Routes>
+          <Route element={<FavoritesProvider services={services} />}>
+            <Route path="*" element={children} />
+          </Route>
+        </Routes>
+      </SessionProvider>
+    </MemoryRouter>
+  );
+}
+
+function renderWithRouter(
+  children: ReactNode,
+  services?: FavoriteServices,
+): ReturnType<typeof render> {
+  return render(renderTree(children, services));
 }
 
 function LocationProbe(): ReactNode {
@@ -40,6 +70,42 @@ describe('WorkspacesListContainer', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  it('toggles a favorite from the card', async () => {
+    const workspace = createWorkspace('Alpha');
+    const result: ListWorkspacesResult = {
+      status: 'ok',
+      workspaces: [workspace],
+      rolesByWorkspaceId: new Map([[workspace.id.value, 'owner']]),
+    };
+    const listWorkspaces: ListWorkspaces = jest.fn().mockResolvedValue(result);
+    const services: FavoriteServices = {
+      listFavorites: jest.fn().mockResolvedValue({ status: 'ok', favorites: [] }),
+      toggleFavorite: jest.fn().mockResolvedValue({ status: 'ok', favorited: true }),
+    };
+    const user = userEvent.setup();
+
+    renderWithRouter(
+      <WorkspacesListContainer
+        userId="user-1"
+        listWorkspaces={listWorkspaces}
+        onCreateWorkspace={onCreate}
+      />,
+      services,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Add to favorites Alpha' }));
+
+    expect(services.toggleFavorite).toHaveBeenCalledWith({
+      userId: 'user-1',
+      workspaceId: workspace.id.value,
+      favorited: true,
+    });
   });
 
   it('transitions from loading to success and renders workspaces', async () => {
@@ -162,14 +228,14 @@ describe('WorkspacesListContainer', () => {
     });
 
     rerender(
-      <MemoryRouter>
+      renderTree(
         <WorkspacesListContainer
           userId="user-1"
           listWorkspaces={listWorkspaces}
           onCreateWorkspace={onCreate}
           refreshToken={1}
-        />
-      </MemoryRouter>,
+        />,
+      ),
     );
 
     await waitFor(() => {
@@ -237,15 +303,17 @@ describe('WorkspacesListContainer', () => {
     const user = userEvent.setup();
 
     render(
-      <MemoryRouter>
-        <WorkspacesListContainer
-          userId="user-1"
-          listWorkspaces={listWorkspaces}
-          duplicateWorkspace={duplicateWorkspace}
-          onCreateWorkspace={onCreate}
-        />
-        <LocationProbe />
-      </MemoryRouter>,
+      renderTree(
+        <>
+          <WorkspacesListContainer
+            userId="user-1"
+            listWorkspaces={listWorkspaces}
+            duplicateWorkspace={duplicateWorkspace}
+            onCreateWorkspace={onCreate}
+          />
+          <LocationProbe />
+        </>,
+      ),
     );
 
     await waitFor(() => {

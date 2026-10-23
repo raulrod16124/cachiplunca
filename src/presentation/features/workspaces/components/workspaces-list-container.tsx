@@ -20,6 +20,7 @@ import {
   describeListWorkspacesError,
 } from '../workspace-error-messages';
 import { localizeMessage, useI18n } from '../../../i18n';
+import { useFavorites } from '../../favorites';
 import { DeleteWorkspaceDialog } from './delete-workspace-dialog';
 import { EditWorkspaceDialog } from './edit-workspace-dialog';
 import { WorkspacesList } from './workspaces-list';
@@ -45,6 +46,7 @@ export function WorkspacesListContainer({
 }: WorkspacesListContainerProps): ReactNode {
   const { t } = useI18n();
   const navigate = useNavigate();
+  const favorites = useFavorites();
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [result, setResult] = useState<ListWorkspacesResult | null>(null);
   const [workspaceToDelete, setWorkspaceToDelete] = useState<Workspace | null>(null);
@@ -181,6 +183,16 @@ export function WorkspacesListContainer({
             {duplicateError}
           </Text>
         )}
+        {favorites.loadError !== null && (
+          <Text role="alert" color="color.text.danger">
+            {favorites.loadError}
+          </Text>
+        )}
+        {favorites.actionError !== null && (
+          <Text role="alert" color="color.text.danger">
+            {favorites.actionError}
+          </Text>
+        )}
         <WorkspacesList
           status={status}
           workspaces={workspaces}
@@ -193,6 +205,9 @@ export function WorkspacesListContainer({
           onDuplicate={duplicateWorkspace === undefined ? undefined : handleDuplicate}
           onEdit={updateWorkspace === undefined ? undefined : handleRequestEdit}
           duplicatingWorkspaceId={duplicatingWorkspaceId}
+          favoriteWorkspaceIds={favorites.favoriteWorkspaceIds}
+          pendingFavoriteWorkspaceIds={favorites.pendingWorkspaceIds}
+          onToggleFavorite={(workspace) => favorites.toggleFavorite(workspace.id.value)}
         />
       </Stack>
       {workspaceToDelete !== null && deleteWorkspace !== undefined && (

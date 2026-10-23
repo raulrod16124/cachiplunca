@@ -1,6 +1,7 @@
 export * from './auth-port';
 export * from './comment-repository';
 export * from './element-repository';
+export * from './favorite-repository';
 export * from './file-download-port';
 export * from './guest-link-repository';
 export * from './image-storage-port';

@@ -135,6 +135,16 @@ function notificationData(
   };
 }
 
+function favoriteData(userId: string, workspaceId = WS1, overrides: Record<string, unknown> = {}) {
+  return {
+    id: `${userId}_${workspaceId}`,
+    userId,
+    workspaceId,
+    createdAt: now,
+    ...overrides,
+  };
+}
+
 function presenceData(workspaceId: string, userId: string) {
   return {
     workspaceId,
@@ -1587,6 +1597,79 @@ describe('firestore.rules — user_settings', () => {
     await assertFails(
       setDoc(doc(db, 'user_settings', ROLE_UIDS.owner), userSettingsData(ROLE_UIDS.owner)),
     );
+  });
+});
+
+describe('firestore.rules — favorites', () => {
+  test('a user can create, read and delete their own favorite', async () => {
+    const db = dbOf(ROLE_UIDS.owner);
+    const path = `favorites/${ROLE_UIDS.owner}_${WS1}`;
+
+    await assertSucceeds(setDoc(doc(db, path), favoriteData(ROLE_UIDS.owner)));
+    await assertSucceeds(getDoc(doc(db, path)));
+    await assertSucceeds(
+      getDocs(query(collection(db, 'favorites'), where('userId', '==', ROLE_UIDS.owner))),
+    );
+    await assertSucceeds(deleteDoc(doc(db, path)));
+  });
+
+  test('a user cannot read or delete a favorite that belongs to another user', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), 'favorites', `${VICTIM_UID}_${WS1}`),
+        favoriteData(VICTIM_UID),
+      );
+    });
+
+    const db = dbOf(ROLE_UIDS.owner);
+    await assertFails(getDoc(doc(db, 'favorites', `${VICTIM_UID}_${WS1}`)));
+    await assertFails(deleteDoc(doc(db, 'favorites', `${VICTIM_UID}_${WS1}`)));
+  });
+
+  test('a non-member cannot favorite a workspace', async () => {
+    await assertFails(
+      setDoc(
+        doc(dbOf(OUTSIDER_UID), 'favorites', `${OUTSIDER_UID}_${WS1}`),
+        favoriteData(OUTSIDER_UID),
+      ),
+    );
+  });
+
+  test('a user cannot spoof the userId of a favorite', async () => {
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.owner), 'favorites', `${ROLE_UIDS.owner}_${WS1}`),
+        favoriteData(VICTIM_UID),
+      ),
+    );
+  });
+
+  test('the favorite id must be deterministic', async () => {
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.owner), 'favorites', 'custom-id'),
+        favoriteData(ROLE_UIDS.owner, WS1, { id: 'custom-id' }),
+      ),
+    );
+  });
+
+  test('favorites cannot be updated', async () => {
+    const db = dbOf(ROLE_UIDS.owner);
+    await assertSucceeds(
+      setDoc(doc(db, 'favorites', `${ROLE_UIDS.owner}_${WS1}`), favoriteData(ROLE_UIDS.owner)),
+    );
+
+    await assertFails(
+      updateDoc(doc(db, 'favorites', `${ROLE_UIDS.owner}_${WS1}`), { workspaceId: WS2 }),
+    );
+  });
+
+  test('anonymous users cannot create or read favorites', async () => {
+    const db = unauthed().firestore();
+    await assertFails(
+      setDoc(doc(db, 'favorites', `${ROLE_UIDS.owner}_${WS1}`), favoriteData(ROLE_UIDS.owner)),
+    );
+    await assertFails(getDoc(doc(db, 'favorites', `${ROLE_UIDS.owner}_${WS1}`)));
   });
 });
 

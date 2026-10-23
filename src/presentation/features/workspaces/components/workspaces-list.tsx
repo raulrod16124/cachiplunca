@@ -1,5 +1,5 @@
 import { Button, Heading, IconButton, Input, Skeleton, Stack, Text, Tooltip } from '@raulrod/ui';
-import { ArrowUpRight, Copy, LayoutGrid, Pencil, Search, Trash2 } from '@raulrod/icons';
+import { ArrowUpRight, Copy, LayoutGrid, Pencil, Search, Star, Trash2 } from '@raulrod/icons';
 import { useMemo, useState, type ReactNode } from 'react';
 import styled from 'styled-components';
 import { can } from '../../../../domain/membership';
@@ -15,6 +15,7 @@ import { formatRelativeDate, formatShortDate, useI18n } from '../../../i18n';
 import { WorkspaceViewToggle, type WorkspaceViewMode } from './workspace-view-toggle';
 
 const RESULTS_COUNT_ID = 'workspaces-results-count';
+const EMPTY_WORKSPACE_IDS: ReadonlySet<string> = new Set();
 
 const ListGrid = styled.div`
   display: grid;
@@ -221,6 +222,44 @@ function resolveWorkspaceActionAvailability(
   };
 }
 
+interface FavoriteButtonProps {
+  readonly workspace: Workspace;
+  readonly isFavorite: boolean;
+  readonly isPending: boolean;
+  readonly onToggleFavorite: (workspace: Workspace) => void;
+}
+
+function FavoriteButton({
+  workspace,
+  isFavorite,
+  isPending,
+  onToggleFavorite,
+}: FavoriteButtonProps): ReactNode {
+  const { t } = useI18n();
+  const label = isFavorite
+    ? t('workspaces.card.favorite.remove')
+    : t('workspaces.card.favorite.add');
+
+  return (
+    <Tooltip content={label}>
+      <NeutralIconButton
+        type="button"
+        variant="ghost"
+        size="sm"
+        label={`${label} ${workspace.name}`}
+        aria-pressed={isFavorite}
+        loading={isPending}
+        onClick={(event) => {
+          event.stopPropagation();
+          onToggleFavorite(workspace);
+        }}
+      >
+        <Star aria-hidden="true" size={15} fill={isFavorite ? 'currentColor' : 'none'} />
+      </NeutralIconButton>
+    </Tooltip>
+  );
+}
+
 interface WorkspaceIconActionsProps {
   readonly workspace: Workspace;
   readonly availability: WorkspaceActionAvailability;
@@ -302,6 +341,9 @@ export interface WorkspacesListProps {
   readonly onRequestDelete?: (workspace: Workspace) => void;
   readonly onDuplicate?: (workspace: Workspace) => void;
   readonly duplicatingWorkspaceId?: string | null;
+  readonly favoriteWorkspaceIds?: ReadonlySet<string>;
+  readonly pendingFavoriteWorkspaceIds?: ReadonlySet<string>;
+  readonly onToggleFavorite?: (workspace: Workspace) => void;
 }
 
 export function WorkspacesList({
@@ -316,6 +358,9 @@ export function WorkspacesList({
   onRequestDelete,
   onDuplicate,
   duplicatingWorkspaceId,
+  favoriteWorkspaceIds = EMPTY_WORKSPACE_IDS,
+  pendingFavoriteWorkspaceIds = EMPTY_WORKSPACE_IDS,
+  onToggleFavorite,
 }: WorkspacesListProps): ReactNode {
   const { t, locale } = useI18n();
   const [query, setQuery] = useState('');
@@ -437,6 +482,7 @@ export function WorkspacesList({
             const isDuplicating = duplicatingWorkspaceId === workspace.id.value;
             const hasActions =
               onSelect !== undefined ||
+              onToggleFavorite !== undefined ||
               availability.canEdit ||
               availability.canDelete ||
               availability.canDuplicate;
@@ -484,6 +530,14 @@ export function WorkspacesList({
                         </Button>
                       )}
                       <CardActions>
+                        {onToggleFavorite !== undefined && (
+                          <FavoriteButton
+                            workspace={workspace}
+                            isFavorite={favoriteWorkspaceIds.has(workspace.id.value)}
+                            isPending={pendingFavoriteWorkspaceIds.has(workspace.id.value)}
+                            onToggleFavorite={onToggleFavorite}
+                          />
+                        )}
                         <WorkspaceIconActions
                           workspace={workspace}
                           availability={availability}
@@ -513,6 +567,7 @@ export function WorkspacesList({
             const isDuplicating = duplicatingWorkspaceId === workspace.id.value;
             const hasActions =
               onSelect !== undefined ||
+              onToggleFavorite !== undefined ||
               availability.canEdit ||
               availability.canDelete ||
               availability.canDuplicate;
@@ -557,6 +612,14 @@ export function WorkspacesList({
                           {t('common.open')}
                           <ArrowUpRight aria-hidden="true" size={14} />
                         </Button>
+                      )}
+                      {onToggleFavorite !== undefined && (
+                        <FavoriteButton
+                          workspace={workspace}
+                          isFavorite={favoriteWorkspaceIds.has(workspace.id.value)}
+                          isPending={pendingFavoriteWorkspaceIds.has(workspace.id.value)}
+                          onToggleFavorite={onToggleFavorite}
+                        />
                       )}
                       <WorkspaceIconActions
                         workspace={workspace}

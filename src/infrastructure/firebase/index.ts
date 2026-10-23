@@ -4,6 +4,8 @@ export * from './firebase-comment-mapper';
 export * from './firebase-comment-repository';
 export * from './firebase-element-mapper';
 export * from './firebase-element-repository';
+export * from './firebase-favorite-mapper';
+export * from './firebase-favorite-repository';
 export * from './firebase-error-mapper';
 export * from './firebase-invitation-mapper';
 export * from './firebase-invitation-repository';

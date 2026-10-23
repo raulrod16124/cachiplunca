@@ -30,6 +30,7 @@ import type {
 import type { FileDownloadPort, PresencePort } from '../../application/ports';
 import type { CommentServices } from '../../application/comment-services';
 import type { NotificationServices } from '../../application/notification-services';
+import type { FavoriteServices } from '../../application/favorite-services';
 import type { GuestLinkServices } from '../../application/guest-link-services';
 import type { ImageServices } from '../../application/image-services';
 import type {
@@ -43,6 +44,7 @@ import {
   AcceptInvitationPage,
   PendingInvitationsProvider,
 } from '../../presentation/features/invitations';
+import { FavoritesProvider } from '../../presentation/features/favorites';
 import { GuestWorkspacePage } from '../../presentation/features/guest/guest-workspace-page';
 import { NotificationsProvider } from '../../presentation/features/notifications';
 import { ProfilePage } from '../../presentation/features/profile/profile-page';
@@ -85,6 +87,7 @@ export interface AppRoutesProps {
   readonly notifications?: NotificationServices;
   readonly imageServices?: ImageServices;
   readonly guestLinks?: GuestLinkServices;
+  readonly favorites?: FavoriteServices;
 }
 
 export function AppRoutes({
@@ -120,6 +123,7 @@ export function AppRoutes({
   notifications,
   imageServices,
   guestLinks,
+  favorites,
 }: AppRoutesProps): ReactNode {
   return (
     <Routes>
@@ -160,59 +164,61 @@ export function AppRoutes({
         />
       </Route>
       <Route element={<RequireAuth />}>
-        <Route
-          element={
-            <PendingInvitationsProvider
-              listPendingInvitationsForUser={listPendingInvitationsForUser}
-              watchPendingInvitationsForUser={watchPendingInvitationsForUser}
-              acceptInvitationById={acceptInvitationById}
-              sendEmailVerification={sendEmailVerification}
-              refreshUser={refreshUser}
-            />
-          }
-        >
-          <Route element={<NotificationsProvider services={notifications} />}>
-            <Route
-              path="/workspaces"
-              element={
-                <WorkspacesPage
-                  logoutUser={logoutUser}
-                  listWorkspaces={listWorkspaces}
-                  createWorkspaceWithOwner={createWorkspaceWithOwner}
-                  deleteWorkspace={deleteWorkspace}
-                  duplicateWorkspace={duplicateWorkspace}
-                  updateWorkspace={updateWorkspace}
-                />
-              }
-            />
-            <Route path="/profile" element={<ProfilePage logoutUser={logoutUser} />} />
-            <Route path="/settings" element={<SettingsPage logoutUser={logoutUser} />} />
-            <Route
-              path="/workspaces/:workspaceId"
-              element={
-                <WorkspaceShellPage
-                  getWorkspace={getWorkspace}
-                  loadWorkspaceElements={loadWorkspaceElements}
-                  elementPersistenceOrchestrator={elementPersistenceOrchestrator}
-                  realtimeSubscriptionManager={realtimeSubscriptionManager}
-                  generateElementId={generateElementId}
-                  logoutUser={logoutUser}
-                  presencePort={presencePort}
-                  inviteMember={inviteMember}
-                  listPendingInvitations={listPendingInvitations}
-                  getWorkspaceRole={getWorkspaceRole}
-                  listWorkspaceMembers={listWorkspaceMembers}
-                  changeMemberRole={changeMemberRole}
-                  removeMember={removeMember}
-                  leaveWorkspace={leaveWorkspace}
-                  fileDownload={fileDownload}
-                  listWorkspaces={listWorkspaces}
-                  comments={comments}
-                  imageServices={imageServices}
-                  guestLinks={guestLinks}
-                />
-              }
-            />
+        <Route element={<FavoritesProvider services={favorites} />}>
+          <Route
+            element={
+              <PendingInvitationsProvider
+                listPendingInvitationsForUser={listPendingInvitationsForUser}
+                watchPendingInvitationsForUser={watchPendingInvitationsForUser}
+                acceptInvitationById={acceptInvitationById}
+                sendEmailVerification={sendEmailVerification}
+                refreshUser={refreshUser}
+              />
+            }
+          >
+            <Route element={<NotificationsProvider services={notifications} />}>
+              <Route
+                path="/workspaces"
+                element={
+                  <WorkspacesPage
+                    logoutUser={logoutUser}
+                    listWorkspaces={listWorkspaces}
+                    createWorkspaceWithOwner={createWorkspaceWithOwner}
+                    deleteWorkspace={deleteWorkspace}
+                    duplicateWorkspace={duplicateWorkspace}
+                    updateWorkspace={updateWorkspace}
+                  />
+                }
+              />
+              <Route path="/profile" element={<ProfilePage logoutUser={logoutUser} />} />
+              <Route path="/settings" element={<SettingsPage logoutUser={logoutUser} />} />
+              <Route
+                path="/workspaces/:workspaceId"
+                element={
+                  <WorkspaceShellPage
+                    getWorkspace={getWorkspace}
+                    loadWorkspaceElements={loadWorkspaceElements}
+                    elementPersistenceOrchestrator={elementPersistenceOrchestrator}
+                    realtimeSubscriptionManager={realtimeSubscriptionManager}
+                    generateElementId={generateElementId}
+                    logoutUser={logoutUser}
+                    presencePort={presencePort}
+                    inviteMember={inviteMember}
+                    listPendingInvitations={listPendingInvitations}
+                    getWorkspaceRole={getWorkspaceRole}
+                    listWorkspaceMembers={listWorkspaceMembers}
+                    changeMemberRole={changeMemberRole}
+                    removeMember={removeMember}
+                    leaveWorkspace={leaveWorkspace}
+                    fileDownload={fileDownload}
+                    listWorkspaces={listWorkspaces}
+                    comments={comments}
+                    imageServices={imageServices}
+                    guestLinks={guestLinks}
+                  />
+                }
+              />
+            </Route>
           </Route>
         </Route>
       </Route>

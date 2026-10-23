@@ -45,6 +45,7 @@ import {
   createListWorkspaces,
   createLoadWorkspaceElements,
 } from '../../application/queries';
+import { createListFavorites, createToggleFavorite } from '../../application';
 import {
   createElementPersistence,
   createElementPersistenceOrchestrator,
@@ -66,6 +67,7 @@ import { FakeRealtimePort } from '../fixtures/fake-realtime-port';
 import { FakeWorkspaceRepository } from '../fixtures/fake-workspace-repository';
 import { FakeInvitationRepository } from '../fixtures/fake-invitation-repository';
 import { FakeNotificationRepository } from '../fixtures/fake-notification-repository';
+import { FakeFavoriteRepository } from '../fixtures/fake-favorite-repository';
 import { FakeGuestLinkRepository } from '../fixtures/fake-guest-link-repository';
 import {
   createFakeImageStoragePort,
@@ -139,6 +141,7 @@ export interface AppHarness {
   readonly notificationRepository: FakeNotificationRepository;
   readonly imageStoragePort: FakeImageStoragePort;
   readonly guestLinkRepository: FakeGuestLinkRepository;
+  readonly favoriteRepository: FakeFavoriteRepository;
   readonly services: AppRoutesProps;
   readonly currentUser: AuthUser | null;
   register(credentials?: AuthSignUpInput): Promise<AuthUser>;
@@ -163,6 +166,7 @@ export function createAppHarness(): AppHarness {
   const notificationRepository = new FakeNotificationRepository();
   const imageStoragePort = createFakeImageStoragePort();
   const guestLinkRepository = new FakeGuestLinkRepository();
+  const favoriteRepository = new FakeFavoriteRepository();
 
   let elementSequence = 0;
   let currentUser: AuthUser | null = null;
@@ -267,6 +271,10 @@ export function createAppHarness(): AppHarness {
       }),
       deleteImage: createDeleteImage({ storage: imageStoragePort }),
     },
+    favorites: {
+      listFavorites: createListFavorites(favoriteRepository),
+      toggleFavorite: createToggleFavorite({ favoriteRepository, membershipRepository }),
+    },
     guestLinks: {
       createGuestLink: createCreateGuestLink({
         guestLinkRepository,
@@ -303,6 +311,7 @@ export function createAppHarness(): AppHarness {
     notificationRepository,
     imageStoragePort,
     guestLinkRepository,
+    favoriteRepository,
     services,
     get currentUser(): AuthUser | null {
       return currentUser;

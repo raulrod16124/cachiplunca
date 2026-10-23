@@ -110,6 +110,23 @@ service cloud.firestore {
         request.resource.data.userId == userId;
     }
 
+    // favorites: preferencia privada por usuario y tablero (ADR-0049).
+    // El id es determinista (userId_workspaceId), solo el propio usuario puede
+    // leer o borrar su favorito y solo se pueden marcar tableros de los que es
+    // miembro. La actualización está denegada.
+    match /favorites/{favoriteId} {
+      allow read, delete: if signedIn() && resource.data.userId == request.auth.uid;
+      allow create: if signedIn() &&
+        !isAnonymous() &&
+        request.resource.data.keys().hasOnly(['id', 'userId', 'workspaceId', 'createdAt']) &&
+        request.resource.data.workspaceId is string &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.id == request.auth.uid + '_' + request.resource.data.workspaceId &&
+        request.resource.data.createdAt is timestamp &&
+        isMember(request.resource.data.workspaceId);
+      allow update: if false;
+    }
+
     // workspaces: lectura limitada a miembros del workspace (ADR-0034) o a
     // guests con un enlace válido. create exige que el creador quede registrado
     // como createdBy para poder crear su membership de owner y rechaza sesiones

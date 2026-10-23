@@ -38,4 +38,5 @@ export * from './validate-workspace-name';
 export * from './paste-element';
 export * from './update-user-profile';
 export * from './update-user-settings';
+export * from './toggle-favorite';
 export * from './upload-image';

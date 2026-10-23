@@ -442,4 +442,73 @@ describe('WorkspacesList', () => {
 
     expect(screen.getByRole('button', { name: 'Duplicate Alpha' })).toBeDisabled();
   });
+
+  it('renders an accessible favorite action in grid view without selecting the board', async () => {
+    const user = userEvent.setup();
+    const workspace = createWorkspace('Alpha', new Date());
+    const onToggleFavorite = jest.fn();
+    const onSelect = jest.fn();
+
+    render(
+      <WorkspacesList
+        {...baseProps}
+        status="success"
+        workspaces={[workspace]}
+        rolesByWorkspaceId={new Map<string, MembershipRole>([['ws-Alpha', 'owner']])}
+        onSelect={onSelect}
+        onToggleFavorite={onToggleFavorite}
+      />,
+    );
+
+    const favorite = screen.getByRole('button', { name: 'Add to favorites Alpha' });
+    expect(favorite).toHaveAttribute('aria-pressed', 'false');
+
+    await user.click(favorite);
+
+    expect(onToggleFavorite).toHaveBeenCalledWith(workspace);
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it('marks an existing favorite as pressed in list view', async () => {
+    const user = userEvent.setup();
+    const workspace = createWorkspace('Alpha', new Date());
+    const onToggleFavorite = jest.fn();
+
+    render(
+      <WorkspacesList
+        {...baseProps}
+        status="success"
+        workspaces={[workspace]}
+        rolesByWorkspaceId={new Map<string, MembershipRole>([['ws-Alpha', 'owner']])}
+        onToggleFavorite={onToggleFavorite}
+        favoriteWorkspaceIds={new Set(['ws-Alpha'])}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'List view' }));
+
+    const favorite = screen.getByRole('button', { name: 'Remove from favorites Alpha' });
+    expect(favorite).toHaveAttribute('aria-pressed', 'true');
+
+    await user.click(favorite);
+
+    expect(onToggleFavorite).toHaveBeenCalledWith(workspace);
+  });
+
+  it('disables the favorite action while the toggle is pending', () => {
+    const workspace = createWorkspace('Alpha', new Date());
+
+    render(
+      <WorkspacesList
+        {...baseProps}
+        status="success"
+        workspaces={[workspace]}
+        rolesByWorkspaceId={new Map<string, MembershipRole>([['ws-Alpha', 'owner']])}
+        onToggleFavorite={jest.fn()}
+        pendingFavoriteWorkspaceIds={new Set(['ws-Alpha'])}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Add to favorites Alpha' })).toBeDisabled();
+  });
 });

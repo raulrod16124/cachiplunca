@@ -4,6 +4,7 @@ import { createAuthServices, type AuthServices } from './app/config/auth-service
 import { createCommentServices } from './app/config/comment-services';
 import { createElementServices, type ElementServices } from './app/config/element-services';
 import { createExportServices, type ExportServices } from './app/config/export-services';
+import { createFavoriteServices } from './app/config/favorite-services';
 import { createImageServices } from './app/config/image-services';
 import { createGuestLinkServices, type GuestLinkServices } from './app/config/guest-link-services';
 import {
@@ -19,6 +20,7 @@ import {
 import { createWorkspaceServices, type WorkspaceServices } from './app/config/workspace-services';
 import type { CommentServices } from './application/comment-services';
 import type { NotificationServices } from './application/notification-services';
+import type { FavoriteServices } from './application/favorite-services';
 import type { ImageServices } from './application/image-services';
 import { AppRoutes } from './app/routes/app-routes';
 import { UserId } from './domain/shared/value-objects/user-id';
@@ -42,6 +44,7 @@ interface AppContentProps {
   readonly notificationServices: NotificationServices;
   readonly imageServices: ImageServices;
   readonly guestLinkServices: GuestLinkServices;
+  readonly favorites: FavoriteServices;
 }
 
 function AppContent({
@@ -56,6 +59,7 @@ function AppContent({
   notificationServices,
   imageServices,
   guestLinkServices,
+  favorites,
 }: AppContentProps) {
   const session = useSession();
   const userId = session.status === 'authenticated' ? UserId.create(session.user.uid) : null;
@@ -104,6 +108,7 @@ function AppContent({
             notifications={notificationServices}
             imageServices={imageServices}
             guestLinks={guestLinkServices}
+            favorites={favorites}
           />
         </ProfileServicesProvider>
       </I18nProvider>
@@ -129,6 +134,7 @@ function App() {
   const [guestLinkServices] = useState(() =>
     createGuestLinkServices({ signInAnonymously: authServices.signInAnonymously }),
   );
+  const [favorites] = useState(createFavoriteServices);
 
   const routerBasename = import.meta.env.BASE_URL.replace(/\/$/, '') || undefined;
 
@@ -148,6 +154,7 @@ function App() {
             notificationServices={notificationServices}
             imageServices={imageServices}
             guestLinkServices={guestLinkServices}
+            favorites={favorites}
           />
         </SessionProvider>
       </BrowserRouter>

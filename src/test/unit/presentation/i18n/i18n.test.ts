@@ -36,6 +36,9 @@ describe('i18n', () => {
     );
     expect(translate('es', 'share.roleFor', { name: 'ana' })).toBe('Rol de ana');
     expect(translate('en', 'share.roleFor', { name: 'ana' })).toBe('Role for ana');
+    expect(translate('en', 'workspaces.card.favorite.add')).toBe('Add to favorites');
+    expect(translate('es', 'workspaces.card.favorite.add')).toBe('Añadir a favoritos');
+    expect(translate('es', 'workspaces.card.favorite.remove')).toBe('Quitar de favoritos');
   });
 
   it('resolves an explicit locale before the system preference', () => {
