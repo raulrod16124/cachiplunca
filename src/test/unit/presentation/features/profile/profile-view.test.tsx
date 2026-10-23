@@ -140,16 +140,13 @@ describe('ProfileView', () => {
     expect(services.changeUserPassword).toHaveBeenCalledTimes(1);
   });
 
-  it('switches to the preferences tab', () => {
+  it('only exposes the profile and security tabs', () => {
     renderWithProviders(<ProfileHarness />);
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Preferences' }));
-
-    expect(screen.getByRole('tab', { name: 'Preferences' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
-    expect(screen.getByRole('combobox', { name: 'Font size' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Profile' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Security' })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Preferences' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: 'Font size' })).not.toBeInTheDocument();
   });
 
   it('updates session consumers immediately when the display name changes', async () => {

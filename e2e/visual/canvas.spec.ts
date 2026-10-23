@@ -363,25 +363,19 @@ test.describe('visual baseline — canvas', () => {
       });
     });
 
-    test(`profile preferences page theme:${theme}`, async ({ page }) => {
+    test(`settings page theme:${theme}`, async ({ page }) => {
       await registerUser(page);
-      await expect(page.getByText('Test User', { exact: true }).first()).toBeVisible();
-      await page.getByRole('link', { name: 'Profile' }).click();
-      await page.getByRole('tab', { name: 'Preferences' }).click();
-      await expect(page.getByRole('heading', { level: 1, name: 'Profile' })).toBeVisible();
-      await expect(page.getByRole('tab', { name: 'Preferences' })).toHaveAttribute(
-        'aria-selected',
-        'true',
+      await page.getByRole('link', { name: 'Settings' }).click();
+      await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible();
+      await expect(page.getByRole('link', { name: 'Settings' })).toHaveAttribute(
+        'aria-current',
+        'page',
       );
       await setTheme(page, theme);
       await waitForStable(page);
       await page.mouse.move(0, 0);
-      await expect(page).toHaveScreenshot(`canvas-profile-preferences-${theme}.png`, {
-        mask: [
-          ...dynamicMaskLocators(page),
-          page.getByTestId('profile-identity'),
-          page.getByTestId('profile-email-section'),
-        ],
+      await expect(page).toHaveScreenshot(`canvas-settings-${theme}.png`, {
+        mask: dynamicMaskLocators(page),
       });
     });
 
@@ -403,4 +397,17 @@ test.describe('visual baseline — canvas', () => {
       });
     });
   }
+
+  test('settings page narrow 390', async ({ page }) => {
+    await registerUser(page);
+    await page.getByRole('link', { name: 'Settings' }).click();
+    await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible();
+    await page.setViewportSize({ width: 390, height: 800 });
+    await setTheme(page, 'light');
+    await waitForStable(page);
+    await page.mouse.move(0, 0);
+    await expect(page).toHaveScreenshot('canvas-settings-narrow-390.png', {
+      mask: dynamicMaskLocators(page),
+    });
+  });
 });

@@ -1,6 +1,6 @@
 import { Heading, Stack, Text } from '@raulrod/ui';
 import type { ReactNode } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import type { LogoutUser } from '../../../application/commands';
 import { useI18n } from '../../i18n';
@@ -27,6 +27,8 @@ const Header = styled.header`
   margin-bottom: ${({ theme }) => theme.space[6]};
 `;
 
+const LEGACY_PREFERENCES_TAB = 'preferences';
+
 export interface ProfilePageProps {
   readonly logoutUser: LogoutUser;
 }
@@ -39,6 +41,10 @@ export function ProfilePage({ logoutUser }: ProfilePageProps): ReactNode {
   const tabParam = searchParams.get('tab');
   const tab: ProfileTab = isProfileTab(tabParam) ? tabParam : PROFILE_TAB;
   const currentUser = session.status === 'authenticated' ? session.user : null;
+
+  if (tabParam === LEGACY_PREFERENCES_TAB) {
+    return <Navigate to="/settings" replace />;
+  }
 
   const handleTabChange = (nextTab: ProfileTab): void => {
     const nextParams = new URLSearchParams(searchParams);

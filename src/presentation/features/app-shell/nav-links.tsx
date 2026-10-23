@@ -1,4 +1,4 @@
-import { LayoutGrid, UserRound } from '@raulrod/icons';
+import { LayoutGrid, SlidersHorizontal, UserRound } from '@raulrod/icons';
 import type { ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useI18n } from '../../i18n';
@@ -13,6 +13,7 @@ export function NavLinks({ onNavigate }: NavLinksProps): ReactNode {
   const { pathname } = useLocation();
   const workspacesActive = pathname === '/workspaces' || pathname.startsWith('/workspaces/');
   const profileActive = pathname === '/profile';
+  const settingsActive = pathname === '/settings';
 
   return (
     <>
@@ -31,6 +32,14 @@ export function NavLinks({ onNavigate }: NavLinksProps): ReactNode {
         onClick={() => onNavigate?.()}
       >
         {t('shell.nav.profile')}
+      </NavItem>
+      <NavItem
+        to="/settings"
+        active={settingsActive}
+        icon={<SlidersHorizontal aria-hidden="true" size={16} />}
+        onClick={() => onNavigate?.()}
+      >
+        {t('shell.nav.settings')}
       </NavItem>
     </>
   );

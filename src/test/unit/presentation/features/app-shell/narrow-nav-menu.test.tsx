@@ -87,6 +87,9 @@ describe('NarrowNavMenu', () => {
     expect(within(dialog).getByRole('link', { name: 'Profile' })).not.toHaveAttribute(
       'aria-current',
     );
+    expect(within(dialog).getByRole('link', { name: 'Settings' })).not.toHaveAttribute(
+      'aria-current',
+    );
     expect(within(dialog).getByText('Ada Lovelace')).toBeInTheDocument();
     expect(within(dialog).getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
     expect(within(dialog).queryByRole('button', { name: 'New workspace' })).not.toBeInTheDocument();
@@ -97,6 +100,15 @@ describe('NarrowNavMenu', () => {
 
     openMenu();
     fireEvent.click(screen.getByRole('link', { name: 'Profile' }));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('closes the drawer when navigating to settings', () => {
+    render(<NarrowNavMenu currentUser={CURRENT_USER} logoutUser={logoutUser} />);
+
+    openMenu();
+    fireEvent.click(screen.getByRole('link', { name: 'Settings' }));
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });

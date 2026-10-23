@@ -35,6 +35,7 @@ describe('AppShell', () => {
     expect(screen.getByRole('link', { name: 'Boards' })).toHaveAttribute('aria-current', 'page');
     expect(screen.queryByRole('link', { name: 'Invitations' })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Profile' })).not.toHaveAttribute('aria-current');
+    expect(screen.getByRole('link', { name: 'Settings' })).not.toHaveAttribute('aria-current');
     expect(screen.queryByRole('button', { name: 'Open navigation menu' })).not.toBeInTheDocument();
     expect(screen.getByText('Ada Lovelace')).toBeInTheDocument();
     expect(screen.queryByText('ada@example.com')).not.toBeInTheDocument();
@@ -82,6 +83,20 @@ describe('AppShell', () => {
 
     expect(screen.getByRole('link', { name: 'Profile' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('link', { name: 'Boards' })).not.toHaveAttribute('aria-current');
+    expect(screen.getByRole('link', { name: 'Settings' })).not.toHaveAttribute('aria-current');
+  });
+
+  it('marks the settings link as current on the settings route', () => {
+    render(
+      <AppShell currentUser={CURRENT_USER} logoutUser={logoutUser}>
+        <p>Content</p>
+      </AppShell>,
+      ['/settings'],
+    );
+
+    expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Boards' })).not.toHaveAttribute('aria-current');
+    expect(screen.getByRole('link', { name: 'Profile' })).not.toHaveAttribute('aria-current');
   });
 
   it('does not render a create workspace action in the shell', () => {

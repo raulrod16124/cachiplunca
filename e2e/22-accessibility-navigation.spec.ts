@@ -65,11 +65,25 @@ test.describe('Profile page accessibility navigation', () => {
       'page',
     );
     await expect(page.getByRole('link', { name: 'Boards' })).not.toHaveAttribute('aria-current');
+    await expect(page.getByRole('link', { name: 'Settings' })).not.toHaveAttribute('aria-current');
 
     const skipLink = page.getByRole('link', { name: SKIP_LINK });
     await page.keyboard.press('Tab');
     await expect(skipLink).toBeFocused();
     await page.keyboard.press('Enter');
     await expect(page.locator('#main-content')).toBeFocused();
+  });
+
+  test('marks the settings navigation item as current', async ({ page }) => {
+    await registerUser(page);
+    await page.goto('/settings');
+
+    await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Settings' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    await expect(page.getByRole('link', { name: 'Profile' })).not.toHaveAttribute('aria-current');
+    await expect(page.getByRole('link', { name: 'Boards' })).not.toHaveAttribute('aria-current');
   });
 });

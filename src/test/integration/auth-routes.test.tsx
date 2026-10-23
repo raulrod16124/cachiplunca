@@ -211,22 +211,47 @@ describe('auth routes', () => {
     expect(screen.getByRole('tab', { name: 'Profile' })).toHaveAttribute('aria-selected', 'true');
   });
 
-  it('keeps the preferences tab reachable from the profile navigation', async () => {
+  it('removes the preferences tab from the profile page', async () => {
     const authPort = new FakeAuthPort();
     await authPort.signUp(CREDENTIALS);
     renderApp(authPort, '/profile');
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Profile' })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Preferences' }));
+    expect(screen.getByRole('tab', { name: 'Profile' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Security' })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Preferences' })).not.toBeInTheDocument();
+  });
 
-    expect(screen.getByRole('tab', { name: 'Preferences' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
-    await waitFor(() =>
-      expect(screen.getByTestId('location')).toHaveTextContent('/profile?tab=preferences'),
-    );
+  it('redirects the legacy preferences deep link to /settings', async () => {
+    const authPort = new FakeAuthPort();
+    await authPort.signUp(CREDENTIALS);
+    renderApp(authPort, '/profile?tab=preferences');
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Settings' })).toBeInTheDocument();
+    expect(screen.getByTestId('location')).toHaveTextContent('/settings');
+    expect(screen.queryByRole('heading', { level: 1, name: 'Profile' })).not.toBeInTheDocument();
+  });
+
+  it('renders the settings page with its preference controls and active navigation', async () => {
+    const authPort = new FakeAuthPort();
+    await authPort.signUp(CREDENTIALS);
+    renderApp(authPort, '/settings');
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Settings' })).toBeInTheDocument();
+    expect(screen.getByTestId('location')).toHaveTextContent('/settings');
+    expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('combobox', { name: 'Theme' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Font size' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Language' })).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'Reduce motion' })).toBeInTheDocument();
+  });
+
+  it('redirects an anonymous visitor from /settings to /login', async () => {
+    renderApp(new FakeAuthPort(), '/settings');
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeInTheDocument();
+    expect(screen.getByTestId('location')).toHaveTextContent('/login');
   });
 
   it('keeps the selected profile tab in the query string', async () => {

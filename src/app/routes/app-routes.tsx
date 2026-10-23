@@ -46,6 +46,7 @@ import {
 import { GuestWorkspacePage } from '../../presentation/features/guest/guest-workspace-page';
 import { NotificationsProvider } from '../../presentation/features/notifications';
 import { ProfilePage } from '../../presentation/features/profile/profile-page';
+import { SettingsPage } from '../../presentation/features/settings';
 import { WorkspaceShellPage } from '../../presentation/features/workspace-shell';
 import { WorkspacesPage } from '../../presentation/features/workspaces/workspaces-page';
 import { RequireAnonymous } from './require-anonymous';
@@ -185,6 +186,7 @@ export function AppRoutes({
               }
             />
             <Route path="/profile" element={<ProfilePage logoutUser={logoutUser} />} />
+            <Route path="/settings" element={<SettingsPage logoutUser={logoutUser} />} />
             <Route
               path="/workspaces/:workspaceId"
               element={
