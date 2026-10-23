@@ -74,6 +74,8 @@ function buildWorkspace(id: WorkspaceId, input: WorkspaceCreateInput): Workspace
       name: input.name,
       createdBy: input.createdBy,
       description: input.description,
+      coverImageUrl: input.coverImageUrl,
+      coverImageStoragePath: input.coverImageStoragePath,
     });
   } catch (error) {
     throw toValidationError(error);

@@ -19,12 +19,21 @@ import {
   Textarea,
 } from '@raulrod/ui';
 import { useEffect, useId, useState, type FormEvent, type ReactNode } from 'react';
-import type { CreateWorkspace, CreateWorkspaceFieldErrors } from '../../../../application/commands';
+import type {
+  CreateWorkspace,
+  CreateWorkspaceFieldErrors,
+  UpdateWorkspace,
+} from '../../../../application/commands';
+import type { ImageServices } from '../../../../application/image-services';
 import type { WorkspaceTemplateId } from '../../../../application/services/workspace-templates';
+import { validateImageFileCandidate } from '../../../../application/services/image-upload';
 import type { UserId } from '../../../../domain/shared';
+import { WorkspaceId } from '../../../../domain/shared';
 import { toAppError } from '../../../../shared/errors';
+import { readFileAsDataUrl, readFileBytes } from '../workspace-cover-file';
 import { describeCreateWorkspaceError } from '../workspace-error-messages';
 import { localizeFieldError, localizeMessage, useI18n, type TranslationKey } from '../../../i18n';
+import { WorkspaceCoverField } from './workspace-cover-field';
 
 type TemplateSelection = 'blank' | WorkspaceTemplateId;
 
@@ -67,6 +76,8 @@ export interface CreateWorkspaceDialogProps {
   readonly createWorkspace: CreateWorkspace;
   readonly createdBy: UserId;
   readonly onCreated: () => void;
+  readonly imageServices?: ImageServices;
+  readonly updateWorkspace?: UpdateWorkspace;
 }
 
 export function CreateWorkspaceDialog({
@@ -75,37 +86,128 @@ export function CreateWorkspaceDialog({
   createWorkspace,
   createdBy,
   onCreated,
+  imageServices,
+  updateWorkspace,
 }: CreateWorkspaceDialogProps): ReactNode {
   const { t } = useI18n();
   const templateLabelId = useId();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [template, setTemplate] = useState<TemplateSelection>('blank');
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
+  const [coverError, setCoverError] = useState<string | null>(null);
+  const [coverWarning, setCoverWarning] = useState<string | null>(null);
+  const [createdWithoutCover, setCreatedWithoutCover] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<CreateWorkspaceFieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const selectedTemplate =
     TEMPLATE_OPTIONS.find((option) => option.id === template) ?? TEMPLATE_OPTIONS[0];
+  const canSelectCover = imageServices !== undefined && updateWorkspace !== undefined;
 
   useEffect(() => {
     if (open) {
       setName('');
       setDescription('');
       setTemplate('blank');
+      setCoverFile(null);
+      setCoverPreviewUrl(null);
+      setCoverError(null);
+      setCoverWarning(null);
+      setCreatedWithoutCover(false);
       setFieldErrors({});
       setFormError(null);
+      setSubmitting(false);
     }
   }, [open]);
 
+  async function handleCoverSelect(file: File): Promise<void> {
+    const validationError = validateImageFileCandidate({
+      name: file.name,
+      type: file.type,
+      size: file.size,
+    });
+
+    if (validationError !== null) {
+      setCoverError(validationError.message);
+      return;
+    }
+
+    const previewUrl = await readFileAsDataUrl(file);
+    setCoverError(null);
+    setCoverWarning(null);
+    setCoverFile(file);
+    setCoverPreviewUrl(previewUrl);
+  }
+
+  function handleCoverRemove(): void {
+    setCoverFile(null);
+    setCoverPreviewUrl(null);
+    setCoverError(null);
+    setCoverWarning(null);
+  }
+
+  function finishCreatedWithoutCover(): void {
+    setCreatedWithoutCover(true);
+    setCoverWarning(t('workspaces.cover.createFailed'));
+    onCreated();
+  }
+
+  async function uploadCover(workspaceId: string): Promise<boolean> {
+    if (coverFile === null || imageServices === undefined || updateWorkspace === undefined) {
+      return true;
+    }
+
+    const bytes = await readFileBytes(coverFile);
+    if (bytes === null) {
+      setCoverError(t('workspaces.cover.uploadFailed'));
+      finishCreatedWithoutCover();
+      return false;
+    }
+
+    const uploaded = await imageServices.uploadImage({
+      workspaceId: WorkspaceId.create(workspaceId),
+      file: {
+        name: coverFile.name,
+        contentType: coverFile.type,
+        size: coverFile.size,
+        data: bytes,
+      },
+    });
+
+    if (uploaded.status === 'error') {
+      setCoverError(localizeMessage(t, uploaded.error.message));
+      finishCreatedWithoutCover();
+      return false;
+    }
+
+    const updated = await updateWorkspace({
+      id: workspaceId,
+      coverImageUrl: uploaded.image.url,
+      coverImageStoragePath: uploaded.image.storagePath,
+    });
+
+    if (updated.status !== 'ok') {
+      await imageServices.deleteImage({ storagePath: uploaded.image.storagePath });
+      setCoverError(t('workspaces.cover.createFailed'));
+      finishCreatedWithoutCover();
+      return false;
+    }
+
+    return true;
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    if (submitting) {
+    if (submitting || createdWithoutCover) {
       return;
     }
 
     setSubmitting(true);
     setFieldErrors({});
     setFormError(null);
+    setCoverWarning(null);
 
     try {
       const trimmedDescription = description.trim();
@@ -116,10 +218,15 @@ export function CreateWorkspaceDialog({
         ...(template === 'blank' ? {} : { templateId: template }),
       });
       switch (result.status) {
-        case 'ok':
+        case 'ok': {
+          const coverUploaded = await uploadCover(result.workspace.id.value);
+          if (!coverUploaded) {
+            break;
+          }
           onCreated();
           onOpenChange(false);
           break;
+        }
         case 'invalid-input':
           setFieldErrors(result.fieldErrors);
           break;
@@ -174,6 +281,19 @@ export function CreateWorkspaceDialog({
                 )}
               </FormFieldControl>
             </FormField>
+            {canSelectCover && (
+              <WorkspaceCoverField
+                previewUrl={coverPreviewUrl}
+                fileName={coverFile?.name ?? null}
+                disabled={submitting || createdWithoutCover}
+                uploading={submitting && coverFile !== null}
+                error={coverError}
+                onSelect={(file) => {
+                  void handleCoverSelect(file);
+                }}
+                onRemove={coverPreviewUrl === null ? undefined : handleCoverRemove}
+              />
+            )}
             <FormField>
               <FormFieldLabel id={templateLabelId}>
                 {t('workspaces.createDialog.template')}
@@ -200,23 +320,36 @@ export function CreateWorkspaceDialog({
               </FormFieldControl>
               <FormFieldDescription>{t(selectedTemplate.descriptionKey)}</FormFieldDescription>
             </FormField>
+            {coverWarning !== null && (
+              <Text role="alert" color="color.text.warning">
+                {coverWarning}
+              </Text>
+            )}
             {formError !== null && (
               <Text role="alert" color="color.text.danger">
                 {formError}
               </Text>
             )}
             <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                disabled={submitting}
-                onClick={() => onOpenChange(false)}
-              >
-                {t('common.cancel')}
-              </Button>
-              <Button type="submit" loading={submitting}>
-                {t('workspaces.createDialog.submit')}
-              </Button>
+              {createdWithoutCover ? (
+                <Button type="button" onClick={() => onOpenChange(false)}>
+                  {t('common.close')}
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={submitting}
+                    onClick={() => onOpenChange(false)}
+                  >
+                    {t('common.cancel')}
+                  </Button>
+                  <Button type="submit" loading={submitting}>
+                    {t('workspaces.createDialog.submit')}
+                  </Button>
+                </>
+              )}
             </DialogFooter>
           </Stack>
         </form>

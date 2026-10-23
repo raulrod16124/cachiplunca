@@ -31,6 +31,20 @@ describe('firebase-workspace-mapper', () => {
         updatedAt: new Date('2026-01-02T00:00:00.000Z'),
         lastActivityAt: new Date('2026-01-03T00:00:00.000Z'),
         description: 'notes',
+        coverImageUrl: null,
+        coverImageStoragePath: null,
+      });
+    });
+
+    it('serializes cover image fields', () => {
+      const workspace = makeWorkspace().update({
+        coverImageUrl: 'https://storage.test/cover.png',
+        coverImageStoragePath: 'workspaces/ws-1/images/cover.png',
+      });
+
+      expect(toWorkspaceDocument(workspace)).toMatchObject({
+        coverImageUrl: 'https://storage.test/cover.png',
+        coverImageStoragePath: 'workspaces/ws-1/images/cover.png',
       });
     });
 
@@ -94,6 +108,29 @@ describe('firebase-workspace-mapper', () => {
 
       expect(workspace.lastActivityAt.getTime()).toBe(updatedAt.getTime());
       expect(workspace.activityAt.getTime()).toBe(updatedAt.getTime());
+    });
+
+    it('reads cover image fields and normalizes legacy documents to null', () => {
+      const workspace = fromWorkspaceDocument('ws-cover', {
+        name: 'Covered',
+        createdBy: CREATED_BY.value,
+        description: null,
+        coverImageUrl: 'https://storage.test/cover.png',
+        coverImageStoragePath: 'workspaces/ws-cover/images/cover.png',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      expect(workspace.coverImageUrl).toBe('https://storage.test/cover.png');
+      expect(workspace.coverImageStoragePath).toBe('workspaces/ws-cover/images/cover.png');
+
+      const legacy = fromWorkspaceDocument('ws-legacy-cover', {
+        name: 'Legacy',
+        createdBy: CREATED_BY.value,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      expect(legacy.coverImageUrl).toBeNull();
+      expect(legacy.coverImageStoragePath).toBeNull();
     });
 
     it('normalizes a missing description to null', () => {

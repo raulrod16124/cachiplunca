@@ -25,6 +25,10 @@ describe('duplicate workspace flow', () => {
     const user = await harness.register();
     const userId = UserId.create(user.uid);
     const source = await harness.createOwnerWorkspace('Roadmap Q4');
+    const coveredSource = await harness.workspaceRepository.update(source.id, {
+      coverImageUrl: 'https://storage.test/source-cover.png',
+      coverImageStoragePath: `workspaces/${source.id.value}/images/source-cover.png`,
+    });
 
     const first = textElement('text-1', source.id, userId, 'First');
     const second = textElement('text-2', source.id, userId, 'Second');
@@ -60,6 +64,10 @@ describe('duplicate workspace flow', () => {
     if (copy === undefined) {
       return;
     }
+
+    expect(copy.coverImageUrl).toBeNull();
+    expect(copy.coverImageStoragePath).toBeNull();
+    expect(coveredSource.coverImageUrl).toBe('https://storage.test/source-cover.png');
 
     const copiedElements = await harness.elementRepository.listByWorkspace(copy.id);
     expect(copiedElements.map((element) => element.id.value)).toEqual(['el-1', 'el-2', 'el-3']);

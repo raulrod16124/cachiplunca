@@ -187,6 +187,7 @@ export function AppRoutes({
                     deleteWorkspace={deleteWorkspace}
                     duplicateWorkspace={duplicateWorkspace}
                     updateWorkspace={updateWorkspace}
+                    imageServices={imageServices}
                   />
                 }
               />

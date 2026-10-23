@@ -14,6 +14,7 @@ import type {
   LogoutUser,
   UpdateWorkspace,
 } from '../../../application/commands';
+import type { ImageServices } from '../../../application/image-services';
 import type { ListWorkspaces } from '../../../application/queries';
 import { UserId } from '../../../domain/shared';
 import { createAppError, ERROR_CODES } from '../../../shared/errors';
@@ -77,6 +78,7 @@ export interface WorkspacesPageProps {
   readonly deleteWorkspace?: DeleteWorkspace;
   readonly duplicateWorkspace?: DuplicateWorkspace;
   readonly updateWorkspace?: UpdateWorkspace;
+  readonly imageServices?: ImageServices;
 }
 
 export function WorkspacesPage({
@@ -86,6 +88,7 @@ export function WorkspacesPage({
   deleteWorkspace,
   duplicateWorkspace,
   updateWorkspace,
+  imageServices,
 }: WorkspacesPageProps): ReactNode {
   const session = useSession();
   const navigate = useNavigate();
@@ -148,6 +151,7 @@ export function WorkspacesPage({
                 deleteWorkspace={deleteWorkspace}
                 duplicateWorkspace={duplicateWorkspace}
                 updateWorkspace={updateWorkspace}
+                imageServices={imageServices}
                 onCreateWorkspace={handleCreateWorkspace}
                 refreshToken={refreshToken}
               />
@@ -161,6 +165,8 @@ export function WorkspacesPage({
         createWorkspace={createWorkspace}
         createdBy={ownerId}
         onCreated={handleCreated}
+        imageServices={imageServices}
+        updateWorkspace={updateWorkspace}
       />
       <WorkspacesCommandPalette
         open={commandPaletteOpen}

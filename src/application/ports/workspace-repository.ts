@@ -5,11 +5,15 @@ export interface WorkspaceCreateInput {
   readonly name: string;
   readonly createdBy: UserId;
   readonly description?: string | null;
+  readonly coverImageUrl?: string | null;
+  readonly coverImageStoragePath?: string | null;
 }
 
 export interface WorkspaceUpdateInput {
   readonly name?: string;
   readonly description?: string | null;
+  readonly coverImageUrl?: string | null;
+  readonly coverImageStoragePath?: string | null;
 }
 
 export interface WorkspaceRepository {

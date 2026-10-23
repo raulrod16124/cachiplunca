@@ -11,6 +11,13 @@ export interface WorkspaceProps {
   readonly updatedAt: Date;
   readonly lastActivityAt: Date;
   readonly description?: string | null;
+  readonly coverImageUrl?: string | null;
+  readonly coverImageStoragePath?: string | null;
+}
+
+interface CoverImage {
+  readonly url: string | null;
+  readonly storagePath: string | null;
 }
 
 export class Workspace {
@@ -21,6 +28,8 @@ export class Workspace {
   private readonly _updatedAt: Date;
   private readonly _lastActivityAt: Date;
   private readonly _description: string | null;
+  private readonly _coverImageUrl: string | null;
+  private readonly _coverImageStoragePath: string | null;
 
   private constructor(props: WorkspaceProps) {
     this._id = props.id;
@@ -30,6 +39,8 @@ export class Workspace {
     this._updatedAt = props.updatedAt;
     this._lastActivityAt = props.lastActivityAt;
     this._description = props.description ?? null;
+    this._coverImageUrl = props.coverImageUrl ?? null;
+    this._coverImageStoragePath = props.coverImageStoragePath ?? null;
   }
 
   static create(props: {
@@ -40,12 +51,19 @@ export class Workspace {
     readonly updatedAt?: Date;
     readonly lastActivityAt?: Date;
     readonly description?: string | null;
+    readonly coverImageUrl?: string | null;
+    readonly coverImageStoragePath?: string | null;
   }): Workspace {
     const name = Workspace.validateName(props.name);
     const now = new Date();
     const createdAt = props.createdAt ?? now;
     const updatedAt = props.updatedAt ?? createdAt;
     const lastActivityAt = props.lastActivityAt ?? updatedAt;
+    const cover = Workspace.validateCoverImage(
+      props.coverImageUrl,
+      props.coverImageStoragePath,
+      props.id,
+    );
 
     Workspace.validateTimestamps(createdAt, updatedAt, lastActivityAt);
 
@@ -57,17 +75,28 @@ export class Workspace {
       updatedAt,
       lastActivityAt,
       description: props.description,
+      coverImageUrl: cover.url,
+      coverImageStoragePath: cover.storagePath,
     });
   }
 
   update(updates: {
     readonly name?: string;
     readonly description?: string | null;
+    readonly coverImageUrl?: string | null;
+    readonly coverImageStoragePath?: string | null;
     readonly updatedAt?: Date;
   }): Workspace {
     const name = updates.name !== undefined ? Workspace.validateName(updates.name) : this._name;
     const description = updates.description !== undefined ? updates.description : this._description;
     const updatedAt = updates.updatedAt ?? new Date();
+    const cover = Workspace.validateCoverImage(
+      updates.coverImageUrl !== undefined ? updates.coverImageUrl : this._coverImageUrl,
+      updates.coverImageStoragePath !== undefined
+        ? updates.coverImageStoragePath
+        : this._coverImageStoragePath,
+      this._id,
+    );
 
     Workspace.validateTimestamps(this._createdAt, updatedAt, this._lastActivityAt);
 
@@ -79,6 +108,8 @@ export class Workspace {
       updatedAt,
       lastActivityAt: this._lastActivityAt,
       description,
+      coverImageUrl: cover.url,
+      coverImageStoragePath: cover.storagePath,
     });
   }
 
@@ -95,6 +126,8 @@ export class Workspace {
       updatedAt: this._updatedAt,
       lastActivityAt,
       description: this._description,
+      coverImageUrl: this._coverImageUrl,
+      coverImageStoragePath: this._coverImageStoragePath,
     });
   }
 
@@ -107,6 +140,37 @@ export class Workspace {
       throw new Error('Board name cannot exceed 100 characters');
     }
     return trimmed;
+  }
+
+  private static validateCoverImage(
+    url: string | null | undefined,
+    storagePath: string | null | undefined,
+    workspaceId: WorkspaceId,
+  ): CoverImage {
+    if (url === undefined || url === null) {
+      if (storagePath === undefined || storagePath === null) {
+        return { url: null, storagePath: null };
+      }
+      throw new Error('Cover image URL and storage path must be provided together');
+    }
+
+    if (storagePath === undefined || storagePath === null) {
+      throw new Error('Cover image URL and storage path must be provided together');
+    }
+
+    const trimmedUrl = url.trim();
+    const trimmedPath = storagePath.trim();
+
+    if (!isValidCoverImageUrl(trimmedUrl)) {
+      throw new Error('Cover image URL must be a valid HTTP or HTTPS URL');
+    }
+
+    const prefix = `workspaces/${workspaceId.value}/images/`;
+    if (!trimmedPath.startsWith(prefix) || trimmedPath.length === prefix.length) {
+      throw new Error('Cover image storage path must belong to the workspace images folder');
+    }
+
+    return { url: trimmedUrl, storagePath: trimmedPath };
   }
 
   private static validateTimestamps(createdAt: Date, updatedAt: Date, lastActivityAt: Date): void {
@@ -164,6 +228,14 @@ export class Workspace {
     return this._description;
   }
 
+  get coverImageUrl(): string | null {
+    return this._coverImageUrl;
+  }
+
+  get coverImageStoragePath(): string | null {
+    return this._coverImageStoragePath;
+  }
+
   toJSON(): {
     id: string;
     name: string;
@@ -172,6 +244,8 @@ export class Workspace {
     updatedAt: string;
     lastActivityAt: string;
     description: string | null;
+    coverImageUrl: string | null;
+    coverImageStoragePath: string | null;
   } {
     return {
       id: this._id.value,
@@ -181,6 +255,21 @@ export class Workspace {
       updatedAt: this._updatedAt.toISOString(),
       lastActivityAt: this._lastActivityAt.toISOString(),
       description: this._description,
+      coverImageUrl: this._coverImageUrl,
+      coverImageStoragePath: this._coverImageStoragePath,
     };
+  }
+}
+
+function isValidCoverImageUrl(value: string): boolean {
+  if (value.length === 0) {
+    return false;
+  }
+
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
   }
 }

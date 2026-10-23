@@ -1,11 +1,12 @@
 import { Button, Heading, IconButton, Input, Skeleton, Stack, Text, Tooltip } from '@raulrod/ui';
-import { ArrowUpRight, Copy, LayoutGrid, Pencil, Search, Star, Trash2 } from '@raulrod/icons';
+import { ArrowUpRight, Copy, Pencil, Search, Star, Trash2 } from '@raulrod/icons';
 import { useMemo, useState, type ReactNode } from 'react';
 import styled from 'styled-components';
 import { can } from '../../../../domain/membership';
 import type { MembershipRole } from '../../../../domain/membership';
 import type { Workspace } from '../../../../domain/workspace';
 import { Card } from '../../../components/card';
+import { WorkspaceCover } from '../../../components/workspace-cover';
 import { NeutralIconButton } from '../../../components/neutral-controls';
 import { EmptyState } from '../../../components/empty-state';
 import { ErrorState } from '../../../components/error-state';
@@ -28,52 +29,19 @@ const ListGrid = styled.div`
 `;
 
 const CardContent = styled(Stack)`
-  height: 100%;
+  flex: 1;
+  padding: ${({ theme }) => theme.space[4]};
   justify-content: space-between;
 `;
 
-type CardAccent = 'green' | 'peach' | 'mustard';
-
-const CARD_ACCENT_VARS: Record<
-  CardAccent,
-  { readonly background: string; readonly foreground: string }
-> = {
-  green: {
-    background: 'var(--cach-card-icon-green)',
-    foreground: 'var(--cach-card-icon-green-fg)',
-  },
-  peach: {
-    background: 'var(--cach-card-icon-peach)',
-    foreground: 'var(--cach-card-icon-peach-fg)',
-  },
-  mustard: {
-    background: 'var(--cach-card-icon-mustard)',
-    foreground: 'var(--cach-card-icon-mustard-fg)',
-  },
-};
-
-const CARD_ACCENTS: readonly CardAccent[] = ['green', 'peach', 'mustard'];
-
-function cardAccentFor(workspaceName: string): CardAccent {
-  let hash = 0;
-
-  for (const character of workspaceName) {
-    hash = (hash + character.charCodeAt(0)) % CARD_ACCENTS.length;
-  }
-
-  return CARD_ACCENTS[hash] ?? 'green';
-}
-
-const CardIcon = styled.span<{ $accent: CardAccent }>`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+const CoverHeader = styled.div`
+  position: relative;
   flex: none;
-  width: ${({ theme }) => theme.space[8]};
-  height: ${({ theme }) => theme.space[8]};
-  border-radius: ${({ theme }) => theme.radius.md};
-  background: ${({ $accent }) => CARD_ACCENT_VARS[$accent].background};
-  color: ${({ $accent }) => CARD_ACCENT_VARS[$accent].foreground};
+  aspect-ratio: 16 / 7;
+  min-height: 96px;
+  max-height: 160px;
+  overflow: hidden;
+  border-bottom: 1px solid ${({ theme }) => theme.color.border.default};
 `;
 
 const CardHeading = styled.div`
@@ -168,9 +136,13 @@ const ListItemLayout = styled.div`
   }
 `;
 
-const ListIcon = styled(CardIcon)`
-  width: ${({ theme }) => theme.space[10]};
-  height: ${({ theme }) => theme.space[10]};
+const ListCover = styled.div`
+  position: relative;
+  width: ${({ theme }) => theme.space[12]};
+  height: ${({ theme }) => theme.space[12]};
+  overflow: hidden;
+  border: 1px solid ${({ theme }) => theme.color.border.default};
+  border-radius: ${({ theme }) => theme.radius.md};
 `;
 
 const ListTitle = styled(CardTitle)`
@@ -500,16 +472,20 @@ export function WorkspacesList({
               availability.canEdit ||
               availability.canDelete ||
               availability.canDuplicate;
-            const accent = cardAccentFor(workspace.name);
-
             return (
-              <Card key={workspace.id.value} as="article" interactive>
+              <Card
+                key={workspace.id.value}
+                as="article"
+                interactive
+                padding="none"
+                style={{ overflow: 'hidden' }}
+              >
+                <CoverHeader data-testid="workspace-cover-card">
+                  <WorkspaceCover url={workspace.coverImageUrl} iconSize={24} />
+                </CoverHeader>
                 <CardContent gap="space-4">
                   <Stack gap="space-3">
                     <CardHeading>
-                      <CardIcon aria-hidden="true" $accent={accent}>
-                        <LayoutGrid size={16} />
-                      </CardIcon>
                       <Stack gap="space-1">
                         <CardTitle as="h3">{workspace.name}</CardTitle>
                         <Stack gap="space-1">
@@ -585,14 +561,12 @@ export function WorkspacesList({
               availability.canEdit ||
               availability.canDelete ||
               availability.canDuplicate;
-            const accent = cardAccentFor(workspace.name);
-
             return (
               <Card key={workspace.id.value} as="li" padding="sm" interactive>
                 <ListItemLayout>
-                  <ListIcon aria-hidden="true" $accent={accent}>
-                    <LayoutGrid size={18} />
-                  </ListIcon>
+                  <ListCover data-testid="workspace-cover-list">
+                    <WorkspaceCover url={workspace.coverImageUrl} iconSize={20} />
+                  </ListCover>
                   <Stack gap="space-2">
                     <ListTitle as="h3">{workspace.name}</ListTitle>
                     <Stack gap="space-1">

@@ -17,6 +17,7 @@ const FIELD_ERROR_KEYS: Readonly<Record<string, TranslationKey>> = {
   'Board name cannot exceed 100 characters.': 'workspaces.errors.nameTooLong',
   'Board name must be at most 100 characters.': 'workspaces.errors.nameTooLong',
   'Board names cannot exceed 100 characters.': 'workspaces.errors.nameTooLong',
+  'Provide both cover image URL and storage path.': 'workspaces.errors.coverPair',
 };
 
 export function localizeFieldError(t: I18nContextValue['t'], message: string): string {

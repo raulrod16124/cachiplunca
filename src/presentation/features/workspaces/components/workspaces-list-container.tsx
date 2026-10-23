@@ -7,6 +7,7 @@ import type {
   DuplicateWorkspace,
   UpdateWorkspace,
 } from '../../../../application/commands';
+import type { ImageServices } from '../../../../application/image-services';
 import type {
   ListWorkspaces,
   ListWorkspacesResult,
@@ -31,6 +32,7 @@ export interface WorkspacesListContainerProps {
   readonly deleteWorkspace?: DeleteWorkspace;
   readonly duplicateWorkspace?: DuplicateWorkspace;
   readonly updateWorkspace?: UpdateWorkspace;
+  readonly imageServices?: ImageServices;
   readonly onCreateWorkspace: () => void;
   readonly refreshToken?: number;
   readonly favoritesOnly?: boolean;
@@ -44,6 +46,7 @@ export function WorkspacesListContainer({
   deleteWorkspace,
   duplicateWorkspace,
   updateWorkspace,
+  imageServices,
   onCreateWorkspace,
   refreshToken = 0,
   favoritesOnly = false,
@@ -270,6 +273,7 @@ export function WorkspacesListContainer({
           workspace={workspaceToEdit}
           updateWorkspace={updateWorkspace}
           onUpdated={handleEdited}
+          imageServices={imageServices}
         />
       )}
     </>

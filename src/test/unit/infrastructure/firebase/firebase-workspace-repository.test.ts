@@ -107,6 +107,30 @@ describe('createFirebaseWorkspaceRepository', () => {
     expect(stored?.updatedAt).toBeInstanceOf(Date);
   });
 
+  it('persists cover image fields and clears them explicitly', async () => {
+    const repository = createFirebaseWorkspaceRepository(makeFirestore());
+    const created = await repository.create({
+      name: 'Covered',
+      createdBy: UserId.create('user-1'),
+    });
+
+    const withCover = await repository.update(created.id, {
+      coverImageUrl: 'https://storage.test/cover.png',
+      coverImageStoragePath: `workspaces/${created.id.value}/images/cover.png`,
+    });
+    const stored = firestoreMock.__read(`workspaces/${created.id.value}`);
+    expect(stored?.coverImageUrl).toBe(withCover.coverImageUrl);
+    expect(stored?.coverImageStoragePath).toBe(withCover.coverImageStoragePath);
+
+    await repository.update(created.id, {
+      coverImageUrl: null,
+      coverImageStoragePath: null,
+    });
+    const cleared = firestoreMock.__read(`workspaces/${created.id.value}`);
+    expect(cleared?.coverImageUrl).toBeNull();
+    expect(cleared?.coverImageStoragePath).toBeNull();
+  });
+
   it('writes only lastActivityAt when touching activity', async () => {
     const repository = createFirebaseWorkspaceRepository(makeFirestore());
     const created = await repository.create({

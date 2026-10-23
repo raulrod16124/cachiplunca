@@ -30,6 +30,7 @@ import type { Presence } from '../../../../domain/collaboration';
 import type { MembershipRole } from '../../../../domain/membership';
 import type { Workspace } from '../../../../domain/workspace';
 import { NeutralButton, NeutralIconButton } from '../../../components';
+import { WorkspaceCover } from '../../../components/workspace-cover';
 import {
   presenceColorFor,
   PRESENCE_TEXT_COLOR,
@@ -202,6 +203,16 @@ const BackButton = styled(NeutralButton)`
   flex: none;
 `;
 
+const TopbarCover = styled.span`
+  display: block;
+  flex: none;
+  width: ${({ theme }) => theme.space[8]};
+  height: ${({ theme }) => theme.space[8]};
+  overflow: hidden;
+  border: 1px solid ${({ theme }) => theme.color.border.default};
+  border-radius: ${({ theme }) => theme.radius.md};
+`;
+
 const TopbarButton = styled(NeutralIconButton)`
   flex: none;
 `;
@@ -349,6 +360,9 @@ export function WorkspaceTopBar({
           >
             <ArrowLeft aria-hidden="true" size={16} />
           </BackButton>
+          <TopbarCover data-testid="workspace-cover-topbar">
+            <WorkspaceCover url={workspace.coverImageUrl} loading="eager" iconSize={16} />
+          </TopbarCover>
           <WorkspaceTitleField name={workspace.name} />
           {role === undefined ? (
             readOnly ? (

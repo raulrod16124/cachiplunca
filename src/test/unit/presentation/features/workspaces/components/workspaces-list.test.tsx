@@ -260,23 +260,43 @@ describe('WorkspacesList', () => {
     expect(screen.getByText(/^Created/)).toBeInTheDocument();
   });
 
-  it('tints workspace card icons with brand surface tokens', () => {
-    const workspaces = [
-      createWorkspace('A', new Date()),
-      createWorkspace('B', new Date()),
-      createWorkspace('C', new Date()),
-    ];
+  it('renders uploaded covers and a themed default background when missing', () => {
+    const withCover = createWorkspace('Alpha', new Date()).update({
+      coverImageUrl: 'https://storage.test/workspaces/ws-Alpha/images/cover.png',
+      coverImageStoragePath: 'workspaces/ws-Alpha/images/cover.png',
+    });
+    const withoutCover = createWorkspace('Beta', new Date());
 
-    render(<WorkspacesList status="success" workspaces={workspaces} {...baseProps} />);
+    render(
+      <WorkspacesList status="success" workspaces={[withCover, withoutCover]} {...baseProps} />,
+    );
 
-    const css = styleText();
-    expect(css).toContain('var(--cach-card-icon-green)');
-    expect(css).toContain('var(--cach-card-icon-green-fg)');
-    expect(css).toContain('var(--cach-card-icon-peach)');
-    expect(css).toContain('var(--cach-card-icon-peach-fg)');
-    expect(css).toContain('var(--cach-card-icon-mustard)');
-    expect(css).toContain('var(--cach-card-icon-mustard-fg)');
-    expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+    expect(screen.getAllByTestId('workspace-cover-card')).toHaveLength(2);
+    expect(
+      document.querySelector(
+        'img[src="https://storage.test/workspaces/ws-Alpha/images/cover.png"]',
+      ),
+    ).toBeInTheDocument();
+    expect(styleText()).toContain('linear-gradient');
+  });
+
+  it('renders covers as thumbnails in list view', async () => {
+    const user = userEvent.setup();
+
+    const workspace = createWorkspace('Alpha', new Date()).update({
+      coverImageUrl: 'https://storage.test/workspaces/ws-Alpha/images/cover.png',
+      coverImageStoragePath: 'workspaces/ws-Alpha/images/cover.png',
+    });
+
+    render(<WorkspacesList status="success" workspaces={[workspace]} {...baseProps} />);
+    await user.click(screen.getByRole('button', { name: 'List view' }));
+
+    expect(screen.getByTestId('workspace-cover-list')).toBeInTheDocument();
+    expect(
+      document.querySelector(
+        'img[src="https://storage.test/workspaces/ws-Alpha/images/cover.png"]',
+      ),
+    ).toBeInTheDocument();
   });
 
   it('filters workspaces by name and description', async () => {

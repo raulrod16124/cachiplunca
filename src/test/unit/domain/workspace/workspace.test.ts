@@ -276,6 +276,75 @@ describe('Workspace', () => {
     expect(() => workspace.update({ name: '' })).toThrow('Board name cannot be empty');
   });
 
+  it('creates a workspace with a cover image', () => {
+    const workspace = Workspace.create({
+      createdBy: CREATED_BY,
+      id: WorkspaceId.create('ws-123'),
+      name: 'Covered',
+      coverImageUrl: 'https://storage.test/cover.png',
+      coverImageStoragePath: 'workspaces/ws-123/images/cover.png',
+    });
+
+    expect(workspace.coverImageUrl).toBe('https://storage.test/cover.png');
+    expect(workspace.coverImageStoragePath).toBe('workspaces/ws-123/images/cover.png');
+  });
+
+  it('rejects a cover image URL without a storage path', () => {
+    expect(() =>
+      Workspace.create({
+        createdBy: CREATED_BY,
+        id: WorkspaceId.create('ws-123'),
+        name: 'Covered',
+        coverImageUrl: 'https://storage.test/cover.png',
+      }),
+    ).toThrow('Cover image URL and storage path must be provided together');
+  });
+
+  it('rejects a non-http cover image URL', () => {
+    expect(() =>
+      Workspace.create({
+        createdBy: CREATED_BY,
+        id: WorkspaceId.create('ws-123'),
+        name: 'Covered',
+        coverImageUrl: 'ftp://storage.test/cover.png',
+        coverImageStoragePath: 'workspaces/ws-123/images/cover.png',
+      }),
+    ).toThrow('Cover image URL must be a valid HTTP or HTTPS URL');
+  });
+
+  it('rejects a cover storage path outside the workspace images folder', () => {
+    expect(() =>
+      Workspace.create({
+        createdBy: CREATED_BY,
+        id: WorkspaceId.create('ws-123'),
+        name: 'Covered',
+        coverImageUrl: 'https://storage.test/cover.png',
+        coverImageStoragePath: 'workspaces/other/images/cover.png',
+      }),
+    ).toThrow('Cover image storage path must belong to the workspace images folder');
+  });
+
+  it('updates and clears the cover image', () => {
+    const workspace = Workspace.create({
+      createdBy: CREATED_BY,
+      id: WorkspaceId.create('ws-123'),
+      name: 'Covered',
+    });
+
+    const withCover = workspace.update({
+      coverImageUrl: 'https://storage.test/cover.png',
+      coverImageStoragePath: 'workspaces/ws-123/images/cover.png',
+    });
+    expect(withCover.coverImageUrl).toBe('https://storage.test/cover.png');
+
+    const cleared = withCover.update({
+      coverImageUrl: null,
+      coverImageStoragePath: null,
+    });
+    expect(cleared.coverImageUrl).toBeNull();
+    expect(cleared.coverImageStoragePath).toBeNull();
+  });
+
   it('serializes to JSON correctly', () => {
     const createdAt = new Date('2024-01-01T00:00:00.000Z');
     const updatedAt = new Date('2024-01-01T01:00:00.000Z');
@@ -298,6 +367,8 @@ describe('Workspace', () => {
       updatedAt: '2024-01-01T01:00:00.000Z',
       lastActivityAt: '2024-01-01T01:00:00.000Z',
       description: 'Description',
+      coverImageUrl: null,
+      coverImageStoragePath: null,
     });
   });
 });

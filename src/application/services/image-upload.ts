@@ -17,12 +17,16 @@ export interface ImageFileDescriptor {
   readonly type: string;
 }
 
+export interface ImageFileCandidate extends ImageFileDescriptor {
+  readonly size: number;
+}
+
 export function isImageFileLike(file: ImageFileDescriptor): boolean {
   return isAllowedContentType(file.type) || IMAGE_FILE_EXTENSION_PATTERN.test(file.name);
 }
 
-export function validateImageUploadFile(file: ImageUploadFile): AppError | null {
-  if (!isAllowedContentType(file.contentType)) {
+export function validateImageFileCandidate(file: ImageFileCandidate): AppError | null {
+  if (!isAllowedContentType(file.type)) {
     return createAppError(
       'validation',
       ERROR_CODES.IMAGE_INVALID_TYPE,
@@ -39,6 +43,14 @@ export function validateImageUploadFile(file: ImageUploadFile): AppError | null 
   }
 
   return null;
+}
+
+export function validateImageUploadFile(file: ImageUploadFile): AppError | null {
+  return validateImageFileCandidate({
+    name: file.name,
+    type: file.contentType,
+    size: file.size,
+  });
 }
 
 export function imageAltFromFileName(fileName: string): string {

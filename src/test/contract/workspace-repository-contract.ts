@@ -20,6 +20,8 @@ function expectSameWorkspace(actual: Workspace, expected: Workspace): void {
   expect(actual.name).toBe(expected.name);
   expect(actual.createdBy.equals(expected.createdBy)).toBe(true);
   expect(actual.description).toBe(expected.description);
+  expect(actual.coverImageUrl).toBe(expected.coverImageUrl);
+  expect(actual.coverImageStoragePath).toBe(expected.coverImageStoragePath);
   expect(actual.createdAt.getTime()).toBe(expected.createdAt.getTime());
   expect(actual.updatedAt.getTime()).toBe(expected.updatedAt.getTime());
   expect(actual.lastActivityAt.getTime()).toBe(expected.lastActivityAt.getTime());
@@ -121,6 +123,36 @@ export function describeWorkspaceRepositoryContract(
       const listed = await repository.list();
       expect(listed).toHaveLength(1);
       expectSameWorkspace(listed[0], updated);
+    });
+
+    it('stores, replaces and clears a cover image', async () => {
+      const created = await repository.create({
+        name: 'Covered',
+        createdBy: CREATED_BY,
+      });
+
+      const withCover = await repository.update(created.id, {
+        coverImageUrl: 'https://storage.test/first.png',
+        coverImageStoragePath: `workspaces/${created.id.value}/images/first.png`,
+      });
+      expect(withCover.coverImageUrl).toBe('https://storage.test/first.png');
+
+      const replaced = await repository.update(created.id, {
+        coverImageUrl: 'https://storage.test/second.png',
+        coverImageStoragePath: `workspaces/${created.id.value}/images/second.png`,
+      });
+      expect(replaced.coverImageUrl).toBe('https://storage.test/second.png');
+      expect(replaced.coverImageStoragePath).toBe(
+        `workspaces/${created.id.value}/images/second.png`,
+      );
+
+      const cleared = await repository.update(created.id, {
+        coverImageUrl: null,
+        coverImageStoragePath: null,
+      });
+      expect(cleared.coverImageUrl).toBeNull();
+      expect(cleared.coverImageStoragePath).toBeNull();
+      expectSameWorkspace(requireWorkspace(await repository.findById(created.id)), cleared);
     });
 
     it('keeps omitted fields untouched on update', async () => {

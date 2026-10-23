@@ -8,6 +8,8 @@ export interface WorkspaceDocument {
   readonly updatedAt: Date;
   readonly lastActivityAt: Date;
   readonly description: string | null;
+  readonly coverImageUrl: string | null;
+  readonly coverImageStoragePath: string | null;
 }
 
 export function toWorkspaceDocument(workspace: Workspace): WorkspaceDocument {
@@ -18,6 +20,8 @@ export function toWorkspaceDocument(workspace: Workspace): WorkspaceDocument {
     updatedAt: workspace.updatedAt,
     lastActivityAt: workspace.lastActivityAt,
     description: workspace.description,
+    coverImageUrl: workspace.coverImageUrl,
+    coverImageStoragePath: workspace.coverImageStoragePath,
   };
 }
 
@@ -37,6 +41,8 @@ export function fromWorkspaceDocument(id: string, data: unknown): Workspace {
     name: data.name,
     createdBy: UserId.create(readString(data.createdBy, 'createdBy')),
     description: readDescription(data.description),
+    coverImageUrl: readNullableString(data.coverImageUrl, 'coverImageUrl'),
+    coverImageStoragePath: readNullableString(data.coverImageStoragePath, 'coverImageStoragePath'),
     createdAt,
     updatedAt,
     lastActivityAt: readOptionalDate(data.lastActivityAt, 'lastActivityAt') ?? updatedAt,
@@ -89,6 +95,16 @@ function readDescription(value: unknown): string | null {
     return value;
   }
   throw new Error('Workspace document field "description" must be a string or null');
+}
+
+function readNullableString(value: unknown, field: string): string | null {
+  if (value === undefined || value === null) {
+    return null;
+  }
+  if (typeof value === 'string') {
+    return value;
+  }
+  throw new Error(`Workspace document field "${field}" must be a string or null`);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
