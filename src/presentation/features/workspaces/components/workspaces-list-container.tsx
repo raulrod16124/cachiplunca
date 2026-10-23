@@ -1,6 +1,6 @@
 import { Stack, Text } from '@raulrod/ui';
 import type { ReactNode } from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type {
   DeleteWorkspace,
@@ -23,7 +23,7 @@ import { localizeMessage, useI18n } from '../../../i18n';
 import { useFavorites } from '../../favorites';
 import { DeleteWorkspaceDialog } from './delete-workspace-dialog';
 import { EditWorkspaceDialog } from './edit-workspace-dialog';
-import { WorkspacesList } from './workspaces-list';
+import { WorkspacesList, type WorkspacesListEmptyState } from './workspaces-list';
 
 export interface WorkspacesListContainerProps {
   readonly userId: string;
@@ -33,6 +33,9 @@ export interface WorkspacesListContainerProps {
   readonly updateWorkspace?: UpdateWorkspace;
   readonly onCreateWorkspace: () => void;
   readonly refreshToken?: number;
+  readonly favoritesOnly?: boolean;
+  readonly loadingLabel?: string;
+  readonly emptyState?: WorkspacesListEmptyState;
 }
 
 export function WorkspacesListContainer({
@@ -43,6 +46,9 @@ export function WorkspacesListContainer({
   updateWorkspace,
   onCreateWorkspace,
   refreshToken = 0,
+  favoritesOnly = false,
+  loadingLabel,
+  emptyState,
 }: WorkspacesListContainerProps): ReactNode {
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -70,12 +76,39 @@ export function WorkspacesListContainer({
     void fetchWorkspaces();
   }, [fetchWorkspaces, refreshToken]);
 
-  const errorMessage =
+  const workspacesErrorMessage =
     result?.status === 'error'
       ? localizeMessage(t, describeListWorkspacesError(result.error))
       : undefined;
-  const workspaces = result?.status === 'ok' ? result.workspaces : [];
+  const favoritesFailed = favoritesOnly && favorites.status === 'error';
+  const favoritesLoading = favoritesOnly && favorites.status === 'loading';
+  const listStatus: 'idle' | 'loading' | 'success' | 'error' = favoritesFailed
+    ? 'error'
+    : favoritesLoading && status === 'success'
+      ? 'loading'
+      : status;
+  const errorMessage = favoritesFailed
+    ? (favorites.loadError ?? workspacesErrorMessage)
+    : workspacesErrorMessage;
+  const workspaces = useMemo(() => {
+    const base = result?.status === 'ok' ? result.workspaces : [];
+
+    if (!favoritesOnly) {
+      return base;
+    }
+
+    return sortWorkspacesForList(
+      base.filter((workspace) => favorites.favoriteWorkspaceIds.has(workspace.id.value)),
+    );
+  }, [favorites.favoriteWorkspaceIds, favoritesOnly, result]);
   const rolesByWorkspaceId = result?.status === 'ok' ? result.rolesByWorkspaceId : EMPTY_ROLES;
+
+  const handleRetry = useCallback((): void => {
+    if (favoritesFailed) {
+      favorites.retry();
+    }
+    void fetchWorkspaces();
+  }, [favorites, favoritesFailed, fetchWorkspaces]);
 
   const handleSelectWorkspace = useCallback(
     (workspace: Workspace): void => {
@@ -183,7 +216,7 @@ export function WorkspacesListContainer({
             {duplicateError}
           </Text>
         )}
-        {favorites.loadError !== null && (
+        {favorites.loadError !== null && !favoritesOnly && (
           <Text role="alert" color="color.text.danger">
             {favorites.loadError}
           </Text>
@@ -194,11 +227,13 @@ export function WorkspacesListContainer({
           </Text>
         )}
         <WorkspacesList
-          status={status}
+          status={listStatus}
           workspaces={workspaces}
           rolesByWorkspaceId={rolesByWorkspaceId}
           errorMessage={errorMessage}
-          onRetry={fetchWorkspaces}
+          loadingLabel={loadingLabel}
+          emptyState={emptyState}
+          onRetry={handleRetry}
           onCreate={onCreateWorkspace}
           onSelect={handleSelectWorkspace}
           onRequestDelete={deleteWorkspace === undefined ? undefined : handleRequestDelete}

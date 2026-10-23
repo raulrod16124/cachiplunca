@@ -87,6 +87,44 @@ describe('WorkspacesList', () => {
     expect(baseProps.onCreate).toHaveBeenCalledTimes(1);
   });
 
+  it('renders a custom empty state when provided', async () => {
+    const user = userEvent.setup();
+    const onAction = jest.fn();
+    render(
+      <WorkspacesList
+        status="success"
+        workspaces={[]}
+        emptyState={{
+          title: 'No favorite boards yet',
+          description: 'Mark a board with the star icon to see it here.',
+          actionLabel: 'Browse boards',
+          onAction,
+        }}
+        {...baseProps}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'No favorite boards yet' })).toBeInTheDocument();
+    expect(screen.getByText('Mark a board with the star icon to see it here.')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Browse boards' }));
+    expect(onAction).toHaveBeenCalledTimes(1);
+    expect(baseProps.onCreate).not.toHaveBeenCalled();
+  });
+
+  it('uses the custom loading label', () => {
+    render(
+      <WorkspacesList
+        status="loading"
+        workspaces={[]}
+        loadingLabel="Loading favorites"
+        {...baseProps}
+      />,
+    );
+
+    expect(screen.getByRole('status')).toHaveTextContent('Loading favorites');
+  });
+
   it('renders data state with workspace cards', () => {
     const now = new Date('2025-10-08T12:30:00Z');
     const earlier = new Date('2025-10-07T09:00:00Z');

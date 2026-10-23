@@ -60,6 +60,10 @@ function renderApp(
       },
       realtimeSubscriptionManager: createRealtimeSubscriptionManager(new FakeRealtimePort()),
       generateElementId: () => ElementId.create('generated'),
+      favorites: {
+        listFavorites: jest.fn().mockResolvedValue({ status: 'ok' as const, favorites: [] }),
+        toggleFavorite: jest.fn().mockResolvedValue({ status: 'ok' as const, favorited: true }),
+      },
     },
   });
 }
@@ -252,6 +256,25 @@ describe('auth routes', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeInTheDocument();
     expect(screen.getByTestId('location')).toHaveTextContent('/login');
+  });
+
+  it('redirects an anonymous visitor from /favorites to /login', async () => {
+    renderApp(new FakeAuthPort(), '/favorites');
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeInTheDocument();
+    expect(screen.getByTestId('location')).toHaveTextContent('/login');
+  });
+
+  it('renders the favorites page with its empty state and active navigation', async () => {
+    const authPort = new FakeAuthPort();
+    await authPort.signUp(CREDENTIALS);
+    renderApp(authPort, '/favorites');
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Favorites' })).toBeInTheDocument();
+    expect(screen.getByTestId('location')).toHaveTextContent('/favorites');
+    expect(screen.getByRole('link', { name: 'Favorites' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Boards' })).not.toHaveAttribute('aria-current');
+    expect(screen.getByRole('heading', { name: 'No favorite boards yet' })).toBeInTheDocument();
   });
 
   it('keeps the selected profile tab in the query string', async () => {

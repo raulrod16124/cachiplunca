@@ -44,7 +44,7 @@ import {
   AcceptInvitationPage,
   PendingInvitationsProvider,
 } from '../../presentation/features/invitations';
-import { FavoritesProvider } from '../../presentation/features/favorites';
+import { FavoritesPage, FavoritesProvider } from '../../presentation/features/favorites';
 import { GuestWorkspacePage } from '../../presentation/features/guest/guest-workspace-page';
 import { NotificationsProvider } from '../../presentation/features/notifications';
 import { ProfilePage } from '../../presentation/features/profile/profile-page';
@@ -189,6 +189,10 @@ export function AppRoutes({
                     updateWorkspace={updateWorkspace}
                   />
                 }
+              />
+              <Route
+                path="/favorites"
+                element={<FavoritesPage logoutUser={logoutUser} listWorkspaces={listWorkspaces} />}
               />
               <Route path="/profile" element={<ProfilePage logoutUser={logoutUser} />} />
               <Route path="/settings" element={<SettingsPage logoutUser={logoutUser} />} />

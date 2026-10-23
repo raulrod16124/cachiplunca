@@ -329,11 +329,21 @@ function WorkspaceIconActions({
   );
 }
 
+export interface WorkspacesListEmptyState {
+  readonly title: string;
+  readonly description: string;
+  readonly actionLabel: string;
+  readonly onAction: () => void;
+  readonly illustration?: ReactNode;
+}
+
 export interface WorkspacesListProps {
   readonly status: 'idle' | 'loading' | 'success' | 'error';
   readonly workspaces: readonly Workspace[];
   readonly rolesByWorkspaceId: ReadonlyMap<string, MembershipRole>;
   readonly errorMessage?: string;
+  readonly loadingLabel?: string;
+  readonly emptyState?: WorkspacesListEmptyState;
   readonly onRetry: () => void;
   readonly onCreate: () => void;
   readonly onSelect?: (workspace: Workspace) => void;
@@ -351,6 +361,8 @@ export function WorkspacesList({
   workspaces,
   rolesByWorkspaceId,
   errorMessage,
+  loadingLabel,
+  emptyState,
   onRetry,
   onCreate,
   onSelect,
@@ -379,7 +391,7 @@ export function WorkspacesList({
 
   if (status === 'loading' || status === 'idle') {
     return (
-      <LoadingState label={t('workspaces.loading')}>
+      <LoadingState label={loadingLabel ?? t('workspaces.loading')}>
         <ListGrid>
           {Array.from({ length: 6 }).map((_, index) => (
             <Card key={`workspace-skeleton-${index}`}>
@@ -413,11 +425,13 @@ export function WorkspacesList({
     return (
       <Card padding="lg">
         <EmptyState
-          title={t('workspaces.empty.title')}
-          description={t('workspaces.empty.description')}
-          actionLabel={t('workspaces.empty.action')}
-          onAction={onCreate}
-          illustration={<DecorativeSpark color="orange-500" size="lg" />}
+          title={emptyState?.title ?? t('workspaces.empty.title')}
+          description={emptyState?.description ?? t('workspaces.empty.description')}
+          actionLabel={emptyState?.actionLabel ?? t('workspaces.empty.action')}
+          onAction={emptyState?.onAction ?? onCreate}
+          illustration={
+            emptyState?.illustration ?? <DecorativeSpark color="orange-500" size="lg" />
+          }
           tone="brand"
           titleVariant="display"
         />

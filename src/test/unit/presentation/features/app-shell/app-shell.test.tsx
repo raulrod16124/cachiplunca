@@ -34,6 +34,7 @@ describe('AppShell', () => {
     expect(screen.getByRole('navigation', { name: 'Primary navigation' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Boards' })).toHaveAttribute('aria-current', 'page');
     expect(screen.queryByRole('link', { name: 'Invitations' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Favorites' })).not.toHaveAttribute('aria-current');
     expect(screen.getByRole('link', { name: 'Profile' })).not.toHaveAttribute('aria-current');
     expect(screen.getByRole('link', { name: 'Settings' })).not.toHaveAttribute('aria-current');
     expect(screen.queryByRole('button', { name: 'Open navigation menu' })).not.toBeInTheDocument();
