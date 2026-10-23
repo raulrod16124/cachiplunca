@@ -5,25 +5,20 @@ import {
   FormFieldError,
   FormFieldLabel,
   Input,
-  Select,
+  Radio,
+  RadioGroup,
   Stack,
   Text,
 } from '@raulrod/ui';
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useId, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import type { InviteMember, InviteMemberFieldErrors } from '../../../../application/commands';
 import type { Invitation } from '../../../../domain/invitation';
-import type { MembershipRole } from '../../../../domain/membership';
+import { isValidRole, type MembershipRole } from '../../../../domain/membership';
 import { UserId, WorkspaceId } from '../../../../domain/shared';
 import { toAppError } from '../../../../shared/errors';
 import { describeInviteMemberError } from '../invitation-error-messages';
-import { localizeFieldError, localizeMessage, useI18n, type TranslationKey } from '../../../i18n';
-
-const ROLE_OPTIONS: readonly { readonly value: MembershipRole; readonly label: TranslationKey }[] =
-  [
-    { value: 'editor', label: 'share.role.editor' },
-    { value: 'viewer', label: 'share.role.viewer' },
-    { value: 'owner', label: 'share.role.owner' },
-  ];
+import { localizeFieldError, localizeMessage, useI18n } from '../../../i18n';
+import { defaultInviteRole, inviteRoleOptionsFor } from './invite-role-options';
 
 export interface InvitedMemberResult {
   readonly invitation: Invitation;
@@ -33,6 +28,7 @@ export interface InvitedMemberResult {
 export interface InviteMemberFormProps {
   readonly workspaceId: string;
   readonly invitedBy: UserId;
+  readonly availableRoles: readonly MembershipRole[];
   readonly inviteMember: InviteMember;
   readonly onInvited: (result: InvitedMemberResult) => void;
 }
@@ -40,15 +36,23 @@ export interface InviteMemberFormProps {
 export function InviteMemberForm({
   workspaceId,
   invitedBy,
+  availableRoles,
   inviteMember,
   onInvited,
 }: InviteMemberFormProps): ReactNode {
   const { t } = useI18n();
+  const roleLabelId = useId();
+  const roleOptions = useMemo(() => inviteRoleOptionsFor(availableRoles), [availableRoles]);
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<MembershipRole>('editor');
+  const [selectedRole, setSelectedRole] = useState<MembershipRole>(() =>
+    defaultInviteRole(availableRoles),
+  );
   const [fieldErrors, setFieldErrors] = useState<InviteMemberFieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const role = availableRoles.includes(selectedRole)
+    ? selectedRole
+    : defaultInviteRole(availableRoles);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
@@ -70,7 +74,7 @@ export function InviteMemberForm({
       switch (result.status) {
         case 'ok':
           setEmail('');
-          setRole('editor');
+          setSelectedRole(defaultInviteRole(availableRoles));
           onInvited({ invitation: result.invitation, token: result.token });
           break;
         case 'invalid-input':
@@ -109,21 +113,29 @@ export function InviteMemberForm({
           )}
         </FormField>
         <FormField>
-          <FormFieldLabel>{t('share.invite.role')}</FormFieldLabel>
+          <FormFieldLabel id={roleLabelId}>{t('share.invite.role')}</FormFieldLabel>
           <FormFieldControl>
             {(field) => (
-              <Select value={role} onValueChange={(value) => setRole(value as MembershipRole)}>
-                <Select.Trigger {...field} aria-label={t('share.invite.role')}>
-                  <Select.Value />
-                </Select.Trigger>
-                <Select.Content>
-                  {ROLE_OPTIONS.map((option) => (
-                    <Select.Item key={option.value} value={option.value}>
-                      {t(option.label)}
-                    </Select.Item>
-                  ))}
-                </Select.Content>
-              </Select>
+              <RadioGroup
+                {...field}
+                aria-labelledby={roleLabelId}
+                value={role}
+                onValueChange={(value) => {
+                  if (isValidRole(value)) {
+                    setSelectedRole(value);
+                  }
+                }}
+              >
+                {roleOptions.map((option) => (
+                  <Radio key={option.value} value={option.value}>
+                    {t(option.labelKey)}
+                    {' — '}
+                    <Text size="font.size.sm" color="color.text.muted">
+                      {t(option.descriptionKey)}
+                    </Text>
+                  </Radio>
+                ))}
+              </RadioGroup>
             )}
           </FormFieldControl>
           {fieldErrors.role !== undefined && (

@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createInviteMember } from '../../../../../../application/commands';
+import { GRANTABLE_ROLES, type MembershipRole } from '../../../../../../domain/membership';
 import { InvitationId, UserId, WorkspaceId } from '../../../../../../domain/shared';
 import {
   InviteMemberForm,
@@ -11,7 +12,7 @@ import { FakeMembershipRepository } from '../../../../../fixtures/fake-membershi
 const WORKSPACE_ID = 'ws-1';
 const INVITED_BY = UserId.create('user-1');
 
-async function buildHarness() {
+async function buildHarness(availableRoles: readonly MembershipRole[] = GRANTABLE_ROLES.owner) {
   const repository = new FakeInvitationRepository();
   const membershipRepository = new FakeMembershipRepository();
   await membershipRepository.create({
@@ -33,6 +34,7 @@ async function buildHarness() {
     <InviteMemberForm
       workspaceId={WORKSPACE_ID}
       invitedBy={INVITED_BY}
+      availableRoles={availableRoles}
       inviteMember={inviteMember}
       onInvited={onInvited}
     />,
@@ -84,11 +86,34 @@ describe('InviteMemberForm', () => {
     ).resolves.toEqual([]);
   });
 
-  it('invites with the chosen role', async () => {
+  it('shows every role an owner can grant and selects editor by default', async () => {
+    await buildHarness(GRANTABLE_ROLES.owner);
+
+    expect(screen.getByRole('radiogroup', { name: 'Role' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /^Owner/ })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /^Editor/ })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /^Viewer/ })).toBeInTheDocument();
+  });
+
+  it('only offers the roles an editor can grant', async () => {
+    await buildHarness(GRANTABLE_ROLES.editor);
+
+    expect(screen.getByRole('radio', { name: /^Editor/ })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /^Viewer/ })).toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /^Owner/ })).not.toBeInTheDocument();
+  });
+
+  it('falls back to the first available role when editor is not grantable', async () => {
+    await buildHarness(['owner', 'viewer']);
+
+    expect(screen.getByRole('radio', { name: /^Owner/ })).toBeChecked();
+    expect(screen.queryByRole('radio', { name: /^Editor/ })).not.toBeInTheDocument();
+  });
+
+  it('invites with the chosen viewer role', async () => {
     const { repository } = await buildHarness();
 
-    fireEvent.click(screen.getByRole('combobox', { name: 'Role' }));
-    fireEvent.click(await screen.findByRole('option', { name: 'Viewer' }));
+    fireEvent.click(screen.getByRole('radio', { name: /^Viewer/ }));
     fillEmail('viewer@example.com');
     submit();
 
@@ -96,6 +121,20 @@ describe('InviteMemberForm', () => {
       const stored = await repository.listPendingByWorkspace(WorkspaceId.create(WORKSPACE_ID));
       expect(stored).toHaveLength(1);
       expect(stored[0].role).toBe('viewer');
+    });
+  });
+
+  it('invites with the owner role when the actor can grant it', async () => {
+    const { repository } = await buildHarness();
+
+    fireEvent.click(screen.getByRole('radio', { name: /^Owner/ }));
+    fillEmail('owner@example.com');
+    submit();
+
+    await waitFor(async () => {
+      const stored = await repository.listPendingByWorkspace(WorkspaceId.create(WORKSPACE_ID));
+      expect(stored).toHaveLength(1);
+      expect(stored[0].role).toBe('owner');
     });
   });
 

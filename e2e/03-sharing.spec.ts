@@ -19,7 +19,7 @@ test.describe('Sharing (editor accepts from the pending list)', () => {
     await expect(dialog.getByRole('heading', { name: 'Share board' })).toBeVisible();
 
     await dialog.getByLabel('Email').fill(editorEmail);
-    await expect(dialog.getByLabel('Role')).toHaveText(/Editor/);
+    await expect(dialog.getByRole('radio', { name: /^Editor/ })).toBeChecked();
     await dialog.getByRole('button', { name: 'Send invitation' }).click();
     await expect(dialog.getByLabel('Invitation link')).toBeVisible({ timeout: 15000 });
 
@@ -66,10 +66,8 @@ test.describe('Sharing (viewer happy path)', () => {
     await expect(dialog.getByRole('heading', { name: 'Share board' })).toBeVisible();
 
     await dialog.getByLabel('Email').fill(viewerEmail);
-    await dialog.getByLabel('Role').click();
-    await ownerPage.keyboard.press('ArrowDown');
-    await ownerPage.keyboard.press('Enter');
-    await expect(dialog.getByLabel('Role')).toHaveText(/Viewer/);
+    await dialog.getByRole('radio', { name: /^Viewer/ }).check();
+    await expect(dialog.getByRole('radio', { name: /^Viewer/ })).toBeChecked();
     await dialog.getByRole('button', { name: 'Send invitation' }).click();
 
     const invitationLink = dialog.getByLabel('Invitation link');

@@ -17,7 +17,11 @@ import type {
 } from '../../../../application/commands';
 import type { ListPendingInvitations, ListWorkspaceMembers } from '../../../../application/queries';
 import type { GuestLinkServices } from '../../../../application/guest-link-services';
-import type { Membership, MembershipRole } from '../../../../domain/membership';
+import {
+  GRANTABLE_ROLES,
+  type Membership,
+  type MembershipRole,
+} from '../../../../domain/membership';
 import { UserId, WorkspaceId } from '../../../../domain/shared';
 import { toAppError } from '../../../../shared/errors';
 import { InvitePanel } from '../../invitations';
@@ -86,6 +90,10 @@ export function ShareDialog({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [pendingUserId, setPendingUserId] = useState<string | null>(null);
+
+  const actorRole = members.find((member) => member.userId.value === currentUserId)?.role;
+  const availableRoles =
+    actorRole === undefined ? GRANTABLE_ROLES.editor : GRANTABLE_ROLES[actorRole];
 
   const fetchMembers = useCallback(async (): Promise<void> => {
     setStatus('loading');
@@ -218,6 +226,7 @@ export function ShareDialog({
                 active={open && tab === INVITE_TAB}
                 workspaceId={workspaceId}
                 invitedBy={UserId.create(currentUserId)}
+                availableRoles={availableRoles}
                 inviteMember={inviteMember}
                 listPendingInvitations={listPendingInvitations}
               />

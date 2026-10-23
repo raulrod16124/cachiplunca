@@ -234,6 +234,64 @@ describe('ShareDialog', () => {
     expect(screen.queryByRole('tab', { name: 'Invite' })).not.toBeInTheDocument();
   });
 
+  it('offers every role to an owner and invites with the owner role', async () => {
+    const repository = new FakeMembershipRepository();
+    await seed(repository, CURRENT_USER_ID, 'owner');
+    const invitationRepository = new FakeInvitationRepository();
+    const inviteMember = createInviteMember({
+      invitationRepository,
+      membershipRepository: repository,
+      generateId: () => InvitationId.create('inv-1'),
+      issueToken: async () => ({ token: 'token-abc', tokenHash: 'hash-abc' }),
+      now: () => new Date('2026-01-01T00:00:00.000Z'),
+    });
+
+    renderDialog(repository, {
+      canInvite: true,
+      inviteMember,
+      listPendingInvitations: createListPendingInvitations(invitationRepository),
+    });
+
+    fireEvent.click(await screen.findByRole('radio', { name: /^Owner/ }));
+    expect(screen.getByRole('radio', { name: /^Editor/ })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /^Viewer/ })).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Email'), {
+      target: { value: 'new-owner@example.com' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Send invitation' }));
+
+    await waitFor(async () => {
+      const stored = await invitationRepository.listPendingByWorkspace(
+        WorkspaceId.create(WORKSPACE_ID),
+      );
+      expect(stored).toHaveLength(1);
+      expect(stored[0].role).toBe('owner');
+    });
+  });
+
+  it('only offers editor and viewer to an editor', async () => {
+    const repository = new FakeMembershipRepository();
+    await seed(repository, CURRENT_USER_ID, 'editor');
+    const invitationRepository = new FakeInvitationRepository();
+    const inviteMember = createInviteMember({
+      invitationRepository,
+      membershipRepository: repository,
+      generateId: () => InvitationId.create('inv-1'),
+      issueToken: async () => ({ token: 'token-abc', tokenHash: 'hash-abc' }),
+    });
+
+    renderDialog(repository, {
+      canInvite: true,
+      inviteMember,
+      listPendingInvitations: createListPendingInvitations(invitationRepository),
+    });
+
+    expect(await screen.findByRole('radio', { name: /^Editor/ })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /^Viewer/ })).toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /^Owner/ })).not.toBeInTheDocument();
+  });
+
   it('shows the read-only link tab to owners when guest link services are available', async () => {
     const repository = new FakeMembershipRepository();
     const guestLinks = new FakeGuestLinkRepository();

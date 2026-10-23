@@ -8,6 +8,7 @@ import {
   createListPendingInvitations,
   type ListPendingInvitations,
 } from '../../../../../../application/queries';
+import { GRANTABLE_ROLES } from '../../../../../../domain/membership';
 import { InvitationId, UserId, WorkspaceId } from '../../../../../../domain/shared';
 import { InvitePanel } from '../../../../../../presentation/features/invitations/components/invite-panel';
 import { createAppError, ERROR_CODES } from '../../../../../../shared/errors';
@@ -44,6 +45,7 @@ function renderPanel(
       active={active}
       workspaceId={WORKSPACE_ID}
       invitedBy={INVITED_BY}
+      availableRoles={GRANTABLE_ROLES.owner}
       inviteMember={inviteMember}
       listPendingInvitations={listPendingInvitations}
     />,

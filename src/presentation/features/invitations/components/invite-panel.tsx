@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import type { InviteMember } from '../../../../application/commands';
 import type { ListPendingInvitations } from '../../../../application/queries';
 import type { Invitation } from '../../../../domain/invitation';
+import type { MembershipRole } from '../../../../domain/membership';
 import type { UserId } from '../../../../domain/shared';
 import { toAppError } from '../../../../shared/errors';
 import { describePendingInvitationsError } from '../invitation-error-messages';
@@ -15,6 +16,7 @@ export interface InvitePanelProps {
   readonly active: boolean;
   readonly workspaceId: string;
   readonly invitedBy: UserId;
+  readonly availableRoles: readonly MembershipRole[];
   readonly inviteMember: InviteMember;
   readonly listPendingInvitations: ListPendingInvitations;
 }
@@ -23,6 +25,7 @@ export function InvitePanel({
   active,
   workspaceId,
   invitedBy,
+  availableRoles,
   inviteMember,
   listPendingInvitations,
 }: InvitePanelProps): ReactNode {
@@ -70,6 +73,7 @@ export function InvitePanel({
       <InviteMemberForm
         workspaceId={workspaceId}
         invitedBy={invitedBy}
+        availableRoles={availableRoles}
         inviteMember={inviteMember}
         onInvited={handleInvited}
       />
