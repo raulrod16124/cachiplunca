@@ -44,3 +44,21 @@ export type {
   DecorativeSize,
   PaperTextureProps,
 } from './decorative';
+
+export {
+  BoardsContainer,
+  BoardsFooter,
+  BoardsHeader,
+  BoardsMain,
+  BoardsSubtitle,
+  BoardsTitle,
+  BoardsTitleGroup,
+  CreateBoardCta,
+  DotGrid,
+  PrimaryCta,
+  StitchPanel,
+  StitchSection,
+  StitchSectionHeading,
+  StitchSectionIcon,
+  StitchSectionTitle,
+} from './stitch-page-shell';

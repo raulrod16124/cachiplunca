@@ -61,13 +61,13 @@ export const BoardsTitle = styled(Heading)`
   margin: 0;
   color: var(--stitch-text);
   font-family: var(--stitch-font-body);
-  font-size: 32px;
+  font-size: calc(32px * var(--cach-font-scale));
   font-weight: ${({ theme }) => theme.font.weight.bold};
   letter-spacing: -0.015em;
   line-height: 1.25;
 
   @media (max-width: 700px) {
-    font-size: 28px;
+    font-size: calc(28px * var(--cach-font-scale));
   }
 `;
 
@@ -148,3 +148,66 @@ export function CreateBoardCta({ label, onClick }: CreateBoardCtaProps): ReactNo
     </PrimaryCta>
   );
 }
+
+export const StitchPanel = styled.section`
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: ${({ theme }) => theme.space[6]};
+  border: 1px solid var(--stitch-border);
+  border-radius: var(--stitch-radius-card);
+  background: var(--stitch-surface);
+  color: var(--stitch-text);
+  box-shadow: var(--stitch-card-shadow);
+
+  @media (max-width: 700px) {
+    padding: ${({ theme }) => theme.space[4]};
+  }
+`;
+
+export const StitchSection = styled.section`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.space[4]};
+  padding-top: ${({ theme }) => theme.space[5]};
+  border-top: 1px solid var(--stitch-border-soft);
+
+  &:first-of-type {
+    padding-top: 0;
+    border-top: none;
+  }
+`;
+
+export const StitchSectionHeading = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: ${({ theme }) => theme.space[3]};
+
+  & > svg {
+    flex: none;
+    margin-top: 2px;
+    color: var(--stitch-text-muted);
+  }
+`;
+
+export const StitchSectionIcon = styled.span`
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: ${({ theme }) => theme.space[8]};
+  height: ${({ theme }) => theme.space[8]};
+  border: 1px solid color-mix(in srgb, var(--stitch-secondary) 28%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--stitch-secondary) 12%, transparent);
+  color: var(--stitch-secondary);
+`;
+
+export const StitchSectionTitle = styled(Heading)`
+  && {
+    margin: 0;
+    color: var(--stitch-text);
+    font-size: ${({ theme }) => theme.font.size.lg};
+    line-height: ${({ theme }) => theme.font.leading.tight};
+  }
+`;

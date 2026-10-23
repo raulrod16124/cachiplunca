@@ -19,7 +19,7 @@ import {
   BoardsTitle,
   BoardsTitleGroup,
   DotGrid,
-} from '../workspaces/components/boards-page-shell';
+} from '../../components/stitch-page-shell';
 
 const TitleRow = styled.div`
   display: inline-flex;

@@ -1,31 +1,21 @@
-import { Heading, Stack, Text } from '@raulrod/ui';
 import type { ReactNode } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
-import styled from 'styled-components';
 import type { LogoutUser } from '../../../application/commands';
 import { useI18n } from '../../i18n';
 import { useSession } from '../../providers/session-provider';
 import { AppShell } from '../app-shell/app-shell';
 import { NotificationsButton } from '../notifications';
+import {
+  BoardsContainer,
+  BoardsFooter,
+  BoardsHeader,
+  BoardsMain,
+  BoardsSubtitle,
+  BoardsTitle,
+  BoardsTitleGroup,
+  DotGrid,
+} from '../../components/stitch-page-shell';
 import { PROFILE_TAB, ProfileView, isProfileTab, type ProfileTab } from './profile-view';
-
-const Main = styled.main`
-  width: 100%;
-  max-width: 960px;
-  margin: 0 auto;
-  padding: ${({ theme }) => `${theme.space[8]} ${theme.space[6]}`};
-
-  @media (max-width: 900px) {
-    padding: ${({ theme }) => `${theme.space[5]} ${theme.space[4]}`};
-  }
-`;
-
-const Header = styled.header`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.space[2]};
-  margin-bottom: ${({ theme }) => theme.space[6]};
-`;
 
 const LEGACY_PREFERENCES_TAB = 'preferences';
 
@@ -65,16 +55,25 @@ export function ProfilePage({ logoutUser }: ProfilePageProps): ReactNode {
       currentUser={currentUser}
       logoutUser={logoutUser}
       notifications={<NotificationsButton />}
+      variant="stitch"
     >
-      <Main id="main-content" tabIndex={-1}>
-        <Header>
-          <Stack gap="space-1">
-            <Heading as="h1">{t('profile.title')}</Heading>
-            <Text color="color.text.muted">{t('profile.description')}</Text>
-          </Stack>
-        </Header>
-        <ProfileView currentUser={currentUser} tab={tab} onTabChange={handleTabChange} />
-      </Main>
+      <BoardsMain id="main-content" tabIndex={-1}>
+        <DotGrid />
+        <BoardsContainer>
+          <BoardsHeader>
+            <BoardsTitleGroup>
+              <BoardsTitle as="h1">{t('profile.title')}</BoardsTitle>
+              <BoardsSubtitle>{t('profile.description')}</BoardsSubtitle>
+            </BoardsTitleGroup>
+          </BoardsHeader>
+
+          <ProfileView currentUser={currentUser} tab={tab} onTabChange={handleTabChange} />
+
+          <BoardsFooter>
+            <span>{t('app.copyright')}</span>
+          </BoardsFooter>
+        </BoardsContainer>
+      </BoardsMain>
     </AppShell>
   );
 }

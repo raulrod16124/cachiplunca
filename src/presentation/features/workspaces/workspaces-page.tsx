@@ -31,7 +31,7 @@ import {
   BoardsTitleGroup,
   CreateBoardCta,
   DotGrid,
-} from './components/boards-page-shell';
+} from '../../components/stitch-page-shell';
 
 const Section = styled.section`
   display: flex;

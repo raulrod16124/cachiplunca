@@ -461,3 +461,115 @@
   background-size: 20px 20px;
   opacity: var(--stitch-pattern-opacity);
 }
+
+/* Shared form and tab treatments inside the Stitch surface. */
+
+[data-surface='stitch'] .rr-button {
+  border-radius: var(--stitch-radius-control);
+  font-family: var(--stitch-font-body);
+}
+
+[data-surface='stitch'] .rr-input,
+[data-surface='stitch'] .rr-select-trigger {
+  border-color: var(--stitch-border);
+  border-radius: var(--stitch-radius-control);
+  background: var(--stitch-input-bg);
+  color: var(--stitch-text);
+}
+
+[data-surface='stitch'] .rr-input::placeholder {
+  color: var(--stitch-input-placeholder);
+}
+
+[data-surface='stitch'] .rr-input:focus-visible,
+[data-surface='stitch'] .rr-select-trigger:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--stitch-primary) 30%, transparent);
+  outline-offset: 1px;
+  border-color: color-mix(in srgb, var(--stitch-primary) 50%, transparent);
+}
+
+[data-surface='stitch'] .profile-tabs-list {
+  display: flex;
+  width: 100%;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--stitch-border);
+  border-radius: var(--stitch-radius-control);
+  background: var(--stitch-surface-container);
+  overflow: visible;
+  scroll-snap-type: none;
+}
+
+[data-surface='stitch'] .profile-tabs-trigger.rr-tabs-trigger {
+  flex: 1 1 0;
+  margin: 0;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  color: var(--stitch-text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+}
+
+[data-surface='stitch'] .profile-tabs-trigger.rr-tabs-trigger:hover {
+  background: color-mix(in srgb, var(--stitch-text) 6%, transparent);
+  color: var(--stitch-text);
+}
+
+[data-surface='stitch'] .profile-tabs-trigger.rr-tabs-trigger[aria-selected='true'] {
+  background: var(--stitch-surface);
+  color: var(--stitch-secondary);
+  border-bottom-color: transparent;
+  box-shadow: var(--rr-shadow-sm);
+}
+
+[data-surface='stitch'] .rr-tabs-panel:not([hidden]) {
+  padding-top: 0;
+}
+
+/* Select options portal to <body>, outside the Stitch wrapper. Mirror the
+ * theme on their content class so the listbox matches the trigger. */
+.settings-select-content {
+  --stitch-font-body: 'Outfit', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --rr-font-family-sans: var(--stitch-font-body);
+  --rr-color-background-surface: #ffffff;
+  --rr-color-background-default: #ffffff;
+  --rr-color-background-sunken: #f4f3f0;
+  --rr-color-text-primary: #1a1c1a;
+  --rr-color-text-muted: #5a4138;
+  --rr-color-border-default: #e5e3dd;
+  --rr-color-border-strong: #d9d5ce;
+  --rr-color-action-primary-background: #a43700;
+  --rr-color-action-primary-text: #ffffff;
+  --rr-color-focus-ring: #a43700;
+}
+
+[data-theme='dark'] .settings-select-content {
+  --rr-color-background-surface: #0e2319;
+  --rr-color-background-default: #0e2319;
+  --rr-color-background-sunken: #0d281e;
+  --rr-color-text-primary: #ffffff;
+  --rr-color-text-muted: #a1a1aa;
+  --rr-color-border-default: #ffffff1a;
+  --rr-color-border-strong: #ffffff1a;
+  --rr-color-action-primary-background: #f59e0b;
+  --rr-color-action-primary-text: #2a1700;
+  --rr-color-focus-ring: #f59e0b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .settings-select-content {
+    --rr-color-background-surface: #0e2319;
+    --rr-color-background-default: #0e2319;
+    --rr-color-background-sunken: #0d281e;
+    --rr-color-text-primary: #ffffff;
+    --rr-color-text-muted: #a1a1aa;
+    --rr-color-border-default: #ffffff1a;
+    --rr-color-border-strong: #ffffff1a;
+    --rr-color-action-primary-background: #f59e0b;
+    --rr-color-action-primary-text: #2a1700;
+    --rr-color-focus-ring: #f59e0b;
+  }
+}

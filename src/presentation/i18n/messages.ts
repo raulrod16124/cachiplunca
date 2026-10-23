@@ -249,6 +249,9 @@ const en = {
 
   'settings.title': 'Settings',
   'settings.description': 'Manage how the app looks and behaves for your account.',
+  'settings.section.appearance': 'Appearance',
+  'settings.section.language': 'Language',
+  'settings.section.accessibility': 'Accessibility',
   'settings.theme': 'Theme',
   'settings.theme.system': 'System',
   'settings.theme.light': 'Light',
@@ -934,6 +937,9 @@ const es: Record<TranslationKey, string> = {
 
   'settings.title': 'Configuración',
   'settings.description': 'Gestiona el aspecto y el comportamiento de la app en tu cuenta.',
+  'settings.section.appearance': 'Apariencia',
+  'settings.section.language': 'Idioma',
+  'settings.section.accessibility': 'Accesibilidad',
   'settings.theme': 'Tema',
   'settings.theme.system': 'Sistema',
   'settings.theme.light': 'Claro',
