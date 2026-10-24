@@ -267,7 +267,7 @@ export function AuthLayout({ children }: AuthLayoutProps): ReactNode {
             <Glows aria-hidden="true" />
             <PanelContent>
               <BrandRow>
-                <BrandLogo variant="wordmark" size="lg" />
+                <BrandLogo variant="wordmark" size="lg" tone="dark" />
                 <Spark color="mustard-500" size="md" />
               </BrandRow>
               <Pitch>
