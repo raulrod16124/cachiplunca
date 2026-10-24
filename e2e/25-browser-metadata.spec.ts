@@ -1,22 +1,29 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('Browser metadata', () => {
-  test('shows the product title and a resolvable favicon', async ({ page }) => {
+  test('shows the product title and resolvable theme favicons', async ({ page }) => {
     await page.goto('/login');
 
     await expect(page).toHaveTitle('Cachiplunca');
 
-    const icon = page.locator('link[rel="icon"]');
-    await expect(icon).toHaveAttribute('href', /\/favicon\.svg$/);
-
-    const iconHref = await icon.evaluate((element) =>
-      element instanceof HTMLLinkElement ? element.href : '',
+    const icons = page.locator('link[rel="icon"]');
+    const hrefs = await icons.evaluateAll((elements) =>
+      elements
+        .map((element) => (element instanceof HTMLLinkElement ? element.href : ''))
+        .filter(Boolean),
     );
-    expect(new URL(iconHref).pathname).toBe('/favicon.svg');
 
-    const favicon = await page.request.get(iconHref);
-    expect(favicon.status()).toBe(200);
-    expect(favicon.headers()['content-type']).toContain('image/svg+xml');
+    expect(hrefs.some((href) => href.endsWith('/brand/favicon-light-32.png'))).toBe(true);
+    expect(hrefs.some((href) => href.endsWith('/brand/favicon-dark-32.png'))).toBe(true);
+
+    for (const href of new Set(hrefs)) {
+      const favicon = await page.request.get(href);
+      expect(favicon.status()).toBe(200);
+      expect(favicon.headers()['content-type']).toMatch(/image\/(png|x-icon|vnd\.microsoft\.icon)/);
+    }
+
+    const appleTouchIcon = page.locator('link[rel="apple-touch-icon"]');
+    await expect(appleTouchIcon).toHaveAttribute('href', /\/brand\/apple-touch-icon\.png$/);
   });
 
   test('keeps the title across reloads and navigation', async ({ page }) => {

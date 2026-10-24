@@ -1,20 +1,24 @@
 import { screen } from '@testing-library/react';
 import { render } from '../../../setup/render-with-theme';
 import { BrandLogo } from '../../../../presentation/components/brand-logo';
+import { setPublicBasePath } from '../../../../presentation/config/public-base';
 
-function styleText(): string {
-  return [...document.head.querySelectorAll('style')]
-    .map((style) => style.textContent ?? '')
-    .join('');
+function imageSources(container: HTMLElement): string[] {
+  return [...container.querySelectorAll('img')].map((image) => image.getAttribute('src') ?? '');
 }
 
 describe('BrandLogo', () => {
-  it('exposes the brand name as the accessible name of the mark', () => {
+  afterEach(() => setPublicBasePath('/'));
+
+  it('exposes the brand name and renders both theme wordmarks', () => {
     const { container } = render(<BrandLogo />);
 
     expect(screen.getByRole('img', { name: 'Cachiplunca' })).toBeInTheDocument();
-    expect(container.querySelectorAll('svg[aria-hidden="true"]').length).toBeGreaterThan(0);
     expect(screen.getByText('Cachiplunca')).toBeInTheDocument();
+    expect(imageSources(container)).toEqual([
+      '/brand/light_theme_logo_cachiplunca.png',
+      '/brand/dark_theme_logo_cachiplunca.png',
+    ]);
   });
 
   it('accepts a custom accessible label', () => {
@@ -23,43 +27,47 @@ describe('BrandLogo', () => {
     expect(screen.getByRole('img', { name: 'Cachiplunca home' })).toBeInTheDocument();
   });
 
-  it('renders the compact lockup as lettering without the decoration svg', () => {
-    const { container } = render(<BrandLogo variant="compact" />);
+  it('renders a single wordmark when the tone is forced', () => {
+    const { container } = render(<BrandLogo tone="dark" />);
 
-    expect(screen.getByRole('img', { name: 'Cachiplunca' })).toBeInTheDocument();
-    expect(screen.getByText('CACHIPLUNCA')).toBeInTheDocument();
-    expect(container.querySelector('svg')).toBeNull();
+    expect(imageSources(container)).toEqual(['/brand/dark_theme_logo_cachiplunca.png']);
   });
 
-  it('renders the isotipo as a hidden decorative svg sized by the size prop', () => {
-    const { container } = render(<BrandLogo variant="isotipo" size="lg" />);
+  it('renders the reduced mark for compact and isotype variants', () => {
+    const compact = render(<BrandLogo variant="compact" />);
+    expect(imageSources(compact.container)).toEqual([
+      '/brand/light_theme_logo_reducido_cachiplunca.png',
+      '/brand/dark_theme_logo_reducido_cachiplunca.png',
+    ]);
 
-    const svg = container.querySelector('svg');
-    expect(svg).not.toBeNull();
-    expect(svg).toHaveAttribute('aria-hidden', 'true');
-    expect(svg).toHaveAttribute('viewBox', '0 0 64 64');
-    expect(svg).toHaveStyle({ width: '40px', height: '40px' });
+    const isotipo = render(<BrandLogo variant="isotipo" size="lg" />);
+    expect(imageSources(isotipo.container)).toEqual([
+      '/brand/light_theme_logo_reducido_cachiplunca.png',
+      '/brand/dark_theme_logo_reducido_cachiplunca.png',
+    ]);
+    expect(isotipo.container.querySelector('img')).toHaveStyle({
+      width: '48px',
+      height: '48px',
+    });
   });
 
-  it('renders both lockups in responsive mode so CSS can swap them', () => {
+  it('renders the wordmark and reduced mark in responsive mode', () => {
     const { container } = render(<BrandLogo variant="wordmark" responsive />);
 
-    const lockups = screen.getAllByText('CACHIPLUNCA');
-    expect(lockups).toHaveLength(2);
-    expect(container.querySelector('svg')).not.toBeNull();
+    expect(imageSources(container)).toEqual([
+      '/brand/light_theme_logo_cachiplunca.png',
+      '/brand/dark_theme_logo_cachiplunca.png',
+      '/brand/light_theme_logo_reducido_cachiplunca.png',
+      '/brand/dark_theme_logo_reducido_cachiplunca.png',
+    ]);
   });
 
-  it('paints brand tokens only, never hardcoded hex colors', () => {
-    render(<BrandLogo />);
+  it('resolves brand assets through the configured public base path', () => {
+    setPublicBasePath('/cachiplunca/');
+    const { container } = render(<BrandLogo tone="light" />);
 
-    const styles = styleText();
-    expect(styles).toContain('var(--cach-orange-500)');
-    expect(styles).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
-  });
-
-  it('uses the display font token for the lettering', () => {
-    render(<BrandLogo />);
-
-    expect(styleText()).toContain('var(--cach-font-display)');
+    expect(imageSources(container)).toEqual([
+      '/cachiplunca/brand/light_theme_logo_cachiplunca.png',
+    ]);
   });
 });
