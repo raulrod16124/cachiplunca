@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="public/brand/dark_theme_logo_reducido_cachiplunca.png">
-    <img src="public/brand/light_theme_logo_reducido_cachiplunca.png" width="112" alt="Cachiplunca">
+    <img src="public/brand/dark_theme_logo_cachiplunca.png" width="112" alt="Cachiplunca">
   </picture>
 </p>
 
