@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { WorkspacesList } from '../../../../../../presentation/features/workspaces/components/workspaces-list';
 import { Workspace } from '../../../../../../domain/workspace';
@@ -170,6 +170,115 @@ describe('WorkspacesList', () => {
       'aria-pressed',
       'true',
     );
+  });
+
+  it('renders a create board action in list view and calls onCreate', async () => {
+    const user = userEvent.setup();
+    const workspaces = [createWorkspace('Alpha', new Date())];
+
+    render(<WorkspacesList status="success" workspaces={workspaces} {...baseProps} />);
+
+    await user.click(screen.getByRole('button', { name: 'List view' }));
+
+    const createRow = screen.getByTestId('workspaces-create-list');
+    const createButton = within(createRow).getByRole('button', { name: 'Start now' });
+
+    expect(createButton.tagName).toBe('BUTTON');
+    expect(within(createRow).getByRole('heading', { name: 'New blank board' })).toBeInTheDocument();
+    expect(
+      within(createRow).getByText(/start an infinite canvas with sticky notes/i),
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole('listitem')).toHaveLength(1);
+
+    const list = screen.getByTestId('workspaces-list');
+    expect(list.compareDocumentPosition(createRow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    await user.click(createButton);
+    expect(baseProps.onCreate).toHaveBeenCalledTimes(1);
+  });
+
+  it('creates a board when the list create icon is clicked', async () => {
+    const user = userEvent.setup();
+    const workspaces = [createWorkspace('Alpha', new Date())];
+
+    render(<WorkspacesList status="success" workspaces={workspaces} {...baseProps} />);
+    await user.click(screen.getByRole('button', { name: 'List view' }));
+
+    const icon = screen.getByTestId('workspaces-create-list-icon');
+    expect(icon).toBeInstanceOf(HTMLButtonElement);
+    expect(icon).toHaveAccessibleName('New blank board');
+
+    await user.click(icon);
+    expect(baseProps.onCreate).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides the list create action when onCreateCard is false', async () => {
+    const user = userEvent.setup();
+    const workspaces = [createWorkspace('Alpha', new Date())];
+
+    const { rerender } = render(
+      <WorkspacesList status="success" workspaces={workspaces} {...baseProps} />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'List view' }));
+    expect(screen.getByTestId('workspaces-create-list')).toBeInTheDocument();
+
+    rerender(
+      <WorkspacesList
+        status="success"
+        workspaces={workspaces}
+        onCreateCard={false}
+        {...baseProps}
+      />,
+    );
+
+    expect(screen.queryByTestId('workspaces-create-list')).not.toBeInTheDocument();
+  });
+
+  it('hides the list create action when the filter has no results', async () => {
+    const user = userEvent.setup();
+    const workspaces = [createWorkspace('Alpha', new Date())];
+
+    render(<WorkspacesList status="success" workspaces={workspaces} {...baseProps} />);
+
+    await user.click(screen.getByRole('button', { name: 'List view' }));
+    expect(screen.getByTestId('workspaces-create-list')).toBeInTheDocument();
+
+    await user.type(screen.getByRole('searchbox', { name: /search boards/i }), 'Gamma');
+
+    expect(screen.getByRole('heading', { name: /no matching boards/i })).toBeInTheDocument();
+    expect(screen.queryByTestId('workspaces-create-list')).not.toBeInTheDocument();
+  });
+
+  it('creates a board when the grid create icon is clicked', async () => {
+    const user = userEvent.setup();
+    const workspaces = [createWorkspace('Alpha', new Date())];
+
+    render(<WorkspacesList status="success" workspaces={workspaces} {...baseProps} />);
+
+    const icon = screen.getByTestId('workspaces-create-icon');
+    expect(icon).toBeInstanceOf(HTMLButtonElement);
+    expect(icon).toHaveAccessibleName('New blank board');
+
+    await user.click(icon);
+    expect(baseProps.onCreate).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the grid create card unchanged', async () => {
+    const user = userEvent.setup();
+    const workspaces = [createWorkspace('Alpha', new Date())];
+
+    render(<WorkspacesList status="success" workspaces={workspaces} {...baseProps} />);
+
+    const grid = screen.getByTestId('workspaces-grid');
+    expect(screen.queryByTestId('workspaces-create-list')).not.toBeInTheDocument();
+    expect(within(grid).getByRole('heading', { name: 'New blank board' })).toBeInTheDocument();
+    expect(
+      within(grid).getByText(/start an infinite canvas with sticky notes/i),
+    ).toBeInTheDocument();
+
+    await user.click(within(grid).getByRole('button', { name: 'Start now' }));
+    expect(baseProps.onCreate).toHaveBeenCalledTimes(1);
   });
 
   it('filters workspaces and keeps the selected list view', async () => {
