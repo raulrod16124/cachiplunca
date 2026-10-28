@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs the Playwright E2E suite against the Firebase emulators (Auth + Firestore).
+# Runs the Playwright E2E suite against the Firebase emulators (Auth + Firestore + Storage).
 # Extra arguments are forwarded to `playwright test`, e.g.:
 #   ./scripts/e2e.sh 00-repro --reporter=list
 set -euo pipefail
@@ -11,5 +11,5 @@ if lsof -ti:5173 >/dev/null 2>&1; then
   sleep 1
 fi
 
-npx firebase emulators:exec --only auth,firestore --project demo-cachiplunca \
+npx firebase emulators:exec --only auth,firestore,storage --project demo-cachiplunca \
   "node node_modules/@playwright/test/cli.js test ${*:---reporter=list}"
