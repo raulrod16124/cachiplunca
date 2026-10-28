@@ -43,6 +43,66 @@ test.describe('Workspace grid/list toggle', () => {
     await expect(search).toHaveValue('Alpha');
   });
 
+  test('creates a board from the grid create icon', async ({ page }) => {
+    await registerUser(page);
+    await createWorkspace(page, 'Alpha board');
+    await page.getByRole('button', { name: 'Back to boards' }).click();
+
+    await page.getByTestId('workspaces-create-icon').click();
+    await page.getByLabel('Name').fill('Beta board');
+    await page.getByRole('button', { name: 'Create', exact: true }).click();
+
+    await expect(page.getByRole('heading', { level: 3, name: 'Beta board' })).toBeVisible({
+      timeout: 20000,
+    });
+    await expect(page.getByRole('article')).toHaveCount(2);
+  });
+
+  test('creates a board from the list create icon', async ({ page }) => {
+    await registerUser(page);
+    await createWorkspace(page, 'Alpha board');
+    await page.getByRole('button', { name: 'Back to boards' }).click();
+
+    await page.getByRole('button', { name: 'List view' }).click();
+    await expect(page.getByTestId('workspaces-create-list-icon')).toBeVisible();
+
+    await page.getByTestId('workspaces-create-list-icon').click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.getByLabel('Name').fill('Beta board');
+    await page.getByRole('button', { name: 'Create', exact: true }).click();
+
+    await expect(page.getByRole('heading', { level: 3, name: 'Beta board' })).toBeVisible({
+      timeout: 20000,
+    });
+    await expect(page.getByRole('listitem')).toHaveCount(2);
+  });
+
+  test('creates a board from the list view', async ({ page }) => {
+    await registerUser(page);
+    await createWorkspace(page, 'Alpha board');
+    await page.getByRole('button', { name: 'Back to boards' }).click();
+
+    await page.getByRole('button', { name: 'List view' }).click();
+    await expect(page.getByRole('listitem')).toHaveCount(1);
+
+    await page
+      .getByTestId('workspaces-create-list')
+      .getByRole('button', { name: 'Start now' })
+      .click();
+    await page.getByLabel('Name').fill('Beta board');
+    await page.getByRole('button', { name: 'Create', exact: true }).click();
+
+    await expect(page.getByRole('heading', { level: 3, name: 'Beta board' })).toBeVisible({
+      timeout: 20000,
+    });
+    await expect(page.getByRole('listitem')).toHaveCount(2);
+    await expect(page.getByTestId('workspaces-create-list')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'List view' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+  });
+
   test('keeps the toggle usable in a narrow viewport', async ({ page }) => {
     await registerUser(page);
     await createWorkspace(page, 'Narrow board');

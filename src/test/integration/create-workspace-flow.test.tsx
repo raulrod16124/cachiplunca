@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import {
   createCreateOwnerMembership,
   createCreateWorkspaceWithOwner,
@@ -128,6 +128,41 @@ describe('create workspace flow', () => {
       workspace.id,
     );
     expect(membership?.role).toBe('owner');
+  });
+
+  it('creates a workspace from the list view create action', async () => {
+    await renderAuthenticatedApp();
+
+    expect(await screen.findByRole('heading', { name: 'No boards yet' })).toBeInTheDocument();
+
+    openCreateDialog();
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Alpha board' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }));
+    expect(
+      await screen.findByRole('heading', { level: 3, name: 'Alpha board' }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'List view' }));
+    expect(screen.getAllByRole('listitem')).toHaveLength(1);
+
+    fireEvent.click(
+      within(screen.getByTestId('workspaces-create-list')).getByRole('button', {
+        name: 'Start now',
+      }),
+    );
+    fireEvent.change(await screen.findByLabelText('Name'), {
+      target: { value: 'Beta board' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }));
+
+    expect(
+      await screen.findByRole('heading', { level: 3, name: 'Beta board' }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole('listitem')).toHaveLength(2);
+    expect(screen.getByRole('button', { name: 'List view' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
   });
 
   it('leaves the list untouched when the dialog is cancelled', async () => {

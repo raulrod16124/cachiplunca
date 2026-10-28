@@ -26,6 +26,7 @@ import { formatRelativeDate, formatShortDate, useI18n } from '../../../i18n';
 import { WorkspaceViewToggle, type WorkspaceViewMode } from './workspace-view-toggle';
 
 const RESULTS_COUNT_ID = 'workspaces-results-count';
+const LIST_ROW_RADIUS = '20px';
 const EMPTY_WORKSPACE_IDS: ReadonlySet<string> = new Set();
 
 type CoverTone = 'warm' | 'green' | 'amber';
@@ -481,6 +482,13 @@ const ResultsCount = styled(Text)`
   color: var(--stitch-text-muted);
 `;
 
+const ListSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.space[3]};
+  min-width: 0;
+`;
+
 const ListRows = styled.ul`
   list-style: none;
   margin: 0;
@@ -498,7 +506,7 @@ const ListRow = styled.li`
   min-width: 0;
   padding: ${({ theme }) => theme.space[3]};
   border: 1px solid var(--stitch-border);
-  border-radius: 20px;
+  border-radius: ${LIST_ROW_RADIUS};
   background: var(--stitch-surface);
   color: var(--stitch-text);
   box-shadow: ${({ theme }) => theme.shadow.sm};
@@ -587,18 +595,11 @@ const StateSurface = styled.section`
   box-shadow: var(--stitch-card-shadow);
 `;
 
-const CreateCard = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 340px;
-  padding: ${({ theme }) => theme.space[6]};
+const CreateSurface = styled.div`
+  min-width: 0;
   border: 2px dashed var(--stitch-new-border);
-  border-radius: var(--stitch-radius-card);
   background: var(--stitch-new-bg);
   color: var(--stitch-text);
-  text-align: center;
   transition:
     border-color 300ms ease,
     background 300ms ease,
@@ -615,27 +616,145 @@ const CreateCard = styled.div`
   }
 `;
 
-const CreateIcon = styled.span`
+const CreateCard = styled(CreateSurface)`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 340px;
+  padding: ${({ theme }) => theme.space[6]};
+  border-radius: var(--stitch-radius-card);
+  text-align: center;
+`;
+
+const CreateListRow = styled(CreateSurface)`
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: ${({ theme }) => `${theme.space[2]} ${theme.space[4]}`};
+  padding: ${({ theme }) => theme.space[3]};
+  border-width: 1px;
+  border-radius: ${LIST_ROW_RADIUS};
+
+  @media (max-width: 700px) {
+    grid-template-columns: auto minmax(0, 1fr);
+    row-gap: ${({ theme }) => theme.space[3]};
+  }
+`;
+
+const CreateListIcon = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: ${({ theme }) => theme.space[12]};
+  height: ${({ theme }) => theme.space[12]};
+  padding: 0;
+  border: 1px solid var(--stitch-new-icon-border);
+  border-radius: ${({ theme }) => theme.radius.md};
+  background: linear-gradient(135deg, var(--stitch-new-icon-from), var(--stitch-new-icon-to));
+  color: var(--stitch-new-icon-text);
+  box-shadow: ${({ theme }) => theme.shadow.sm};
+  cursor: pointer;
+  transition: transform 300ms ease;
+
+  &:hover,
+  ${CreateListRow}:hover & {
+    transform: scale(1.05);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--rr-color-focus-ring);
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+    transform: none;
+  }
+`;
+
+const CreateListMain = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.space[1]};
+  min-width: 0;
+`;
+
+const CreateListTitle = styled.h2`
+  margin: 0;
+  color: var(--stitch-text);
+  font-size: ${({ theme }) => theme.font.size.base};
+  font-weight: ${({ theme }) => theme.font.weight.bold};
+  letter-spacing: -0.01em;
+  line-height: ${({ theme }) => theme.font.leading.tight};
+  overflow-wrap: anywhere;
+  transition: color 300ms ease;
+
+  ${CreateListRow}:hover & {
+    color: var(--stitch-secondary);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+`;
+
+const CreateListDescription = styled.p`
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  color: var(--stitch-text-muted);
+  font-size: ${({ theme }) => theme.font.size['2xs']};
+  line-height: 1.5;
+`;
+
+const CreateListActions = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  @media (max-width: 700px) {
+    grid-column: 2;
+    justify-content: flex-start;
+  }
+`;
+
+const CreateIcon = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
   width: 64px;
   height: 64px;
   margin-bottom: ${({ theme }) => theme.space[4]};
+  padding: 0;
   border: 1px solid var(--stitch-new-icon-border);
   border-radius: 22px;
   background: linear-gradient(135deg, var(--stitch-new-icon-from), var(--stitch-new-icon-to));
   color: var(--stitch-new-icon-text);
   box-shadow: ${({ theme }) => theme.shadow.sm};
+  cursor: pointer;
   transition:
     background 300ms ease,
     color 300ms ease,
     transform 300ms ease;
 
+  &:hover,
   ${CreateCard}:hover & {
     background: var(--stitch-new-icon-hover-bg);
     color: var(--stitch-new-icon-hover-text);
     transform: scale(1.1);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--rr-color-focus-ring);
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+    transform: none;
   }
 `;
 
@@ -678,6 +797,67 @@ const CreateButton = styled(Button)`
     color: var(--stitch-new-button-hover-text);
   }
 `;
+
+const CreateListButton = styled(CreateButton)`
+  &&.rr-button.rr-button--primary {
+    flex: none;
+    gap: ${({ theme }) => theme.space[2]};
+    white-space: nowrap;
+  }
+`;
+
+interface CreateActionProps {
+  readonly variant: 'grid' | 'list';
+  readonly onCreate: () => void;
+}
+
+function CreateAction({ variant, onCreate }: CreateActionProps): ReactNode {
+  const { t } = useI18n();
+
+  if (variant === 'list') {
+    return (
+      <CreateListRow data-testid="workspaces-create-list">
+        <CreateListIcon
+          type="button"
+          aria-label={t('workspaces.createCard.title')}
+          onClick={onCreate}
+          data-testid="workspaces-create-list-icon"
+        >
+          <Plus aria-hidden="true" size={22} />
+        </CreateListIcon>
+        <CreateListMain>
+          <CreateListTitle>{t('workspaces.createCard.title')}</CreateListTitle>
+          <CreateListDescription>{t('workspaces.createCard.description')}</CreateListDescription>
+        </CreateListMain>
+        <CreateListActions>
+          <CreateListButton type="button" variant="primary" onClick={onCreate}>
+            {t('workspaces.createCard.action')}
+            <ArrowUpRight aria-hidden="true" size={14} />
+          </CreateListButton>
+        </CreateListActions>
+      </CreateListRow>
+    );
+  }
+
+  return (
+    <CreateCard>
+      <CreateIcon
+        type="button"
+        aria-label={t('workspaces.createCard.title')}
+        onClick={onCreate}
+        data-testid="workspaces-create-icon"
+      >
+        <Plus aria-hidden="true" size={30} />
+      </CreateIcon>
+      <CreateTitle>{t('workspaces.createCard.title')}</CreateTitle>
+      <CreateDescription>{t('workspaces.createCard.description')}</CreateDescription>
+      <CreateButton type="button" variant="primary" onClick={onCreate}>
+        {t('workspaces.createCard.action')}
+        <ArrowUpRight aria-hidden="true" size={14} />
+      </CreateButton>
+    </CreateCard>
+  );
+}
 
 const SkeletonCard = styled.div`
   display: flex;
@@ -966,20 +1146,7 @@ export function WorkspacesList({
       ? t('workspaces.results.one')
       : t('workspaces.results.other', { count: filtered.length });
 
-  const createCard =
-    onCreateCard && filtered.length > 0 ? (
-      <CreateCard>
-        <CreateIcon>
-          <Plus aria-hidden="true" size={30} />
-        </CreateIcon>
-        <CreateTitle>{t('workspaces.createCard.title')}</CreateTitle>
-        <CreateDescription>{t('workspaces.createCard.description')}</CreateDescription>
-        <CreateButton type="button" variant="primary" onClick={onCreate}>
-          {t('workspaces.createCard.action')}
-          <ArrowUpRight aria-hidden="true" size={14} />
-        </CreateButton>
-      </CreateCard>
-    ) : null;
+  const showCreate = onCreateCard && filtered.length > 0;
 
   return (
     <Stack gap="space-4">
@@ -1111,83 +1278,90 @@ export function WorkspacesList({
               </BoardCard>
             );
           })}
-          {createCard}
+          {showCreate ? <CreateAction variant="grid" onCreate={onCreate} /> : null}
         </ListGrid>
       ) : (
-        <ListRows data-testid="workspaces-list">
-          {filtered.map((workspace) => {
-            const role = rolesByWorkspaceId.get(workspace.id.value);
-            const availability = resolveWorkspaceActionAvailability(
-              role,
-              onEdit,
-              onRequestDelete,
-              onDuplicate,
-            );
-            const isDuplicating = duplicatingWorkspaceId === workspace.id.value;
-            return (
-              <ListRow key={workspace.id.value}>
-                <ListCover data-testid="workspace-cover-list">
-                  {workspace.coverImageUrl === null ? (
-                    <ListCoverLetter>{workspace.name.charAt(0)}</ListCoverLetter>
-                  ) : (
-                    <CoverImage src={workspace.coverImageUrl} alt="" loading="lazy" />
-                  )}
-                </ListCover>
-                <ListMain>
-                  <ListTitle as="h3">{workspace.name}</ListTitle>
-                  <Description color="color.text.muted" size="font.size.sm">
-                    {workspace.description ?? t('workspaces.card.noDescription')}
-                  </Description>
-                  <ListMeta>
-                    <MetaItem $accent>
-                      <Clock aria-hidden="true" size={13} />
-                      {t('workspaces.card.updated', {
-                        when: formatRelativeDate(workspace.activityAt, locale),
-                      })}
-                    </MetaItem>
-                    <MetaDot aria-hidden="true">·</MetaDot>
-                    <MetaItem>
-                      <CalendarDays aria-hidden="true" size={13} />
-                      {t('workspaces.card.created', {
-                        when: formatShortDate(workspace.createdAt, locale),
-                      })}
-                    </MetaItem>
-                    {role === undefined ? null : (
-                      <>
-                        <MetaDot aria-hidden="true">·</MetaDot>
-                        <RoleChipLabel role={role} />
-                      </>
+        <ListSection>
+          <ListRows data-testid="workspaces-list">
+            {filtered.map((workspace) => {
+              const role = rolesByWorkspaceId.get(workspace.id.value);
+              const availability = resolveWorkspaceActionAvailability(
+                role,
+                onEdit,
+                onRequestDelete,
+                onDuplicate,
+              );
+              const isDuplicating = duplicatingWorkspaceId === workspace.id.value;
+              return (
+                <ListRow key={workspace.id.value}>
+                  <ListCover data-testid="workspace-cover-list">
+                    {workspace.coverImageUrl === null ? (
+                      <ListCoverLetter>{workspace.name.charAt(0)}</ListCoverLetter>
+                    ) : (
+                      <CoverImage src={workspace.coverImageUrl} alt="" loading="lazy" />
                     )}
-                  </ListMeta>
-                </ListMain>
-                <ListActions>
-                  {onSelect !== undefined && (
-                    <OpenButton type="button" variant="primary" onClick={() => onSelect(workspace)}>
-                      {t('common.open')}
-                      <ArrowUpRight aria-hidden="true" size={14} />
-                    </OpenButton>
-                  )}
-                  {onToggleFavorite !== undefined && (
-                    <FavoriteButton
+                  </ListCover>
+                  <ListMain>
+                    <ListTitle as="h3">{workspace.name}</ListTitle>
+                    <Description color="color.text.muted" size="font.size.sm">
+                      {workspace.description ?? t('workspaces.card.noDescription')}
+                    </Description>
+                    <ListMeta>
+                      <MetaItem $accent>
+                        <Clock aria-hidden="true" size={13} />
+                        {t('workspaces.card.updated', {
+                          when: formatRelativeDate(workspace.activityAt, locale),
+                        })}
+                      </MetaItem>
+                      <MetaDot aria-hidden="true">·</MetaDot>
+                      <MetaItem>
+                        <CalendarDays aria-hidden="true" size={13} />
+                        {t('workspaces.card.created', {
+                          when: formatShortDate(workspace.createdAt, locale),
+                        })}
+                      </MetaItem>
+                      {role === undefined ? null : (
+                        <>
+                          <MetaDot aria-hidden="true">·</MetaDot>
+                          <RoleChipLabel role={role} />
+                        </>
+                      )}
+                    </ListMeta>
+                  </ListMain>
+                  <ListActions>
+                    {onSelect !== undefined && (
+                      <OpenButton
+                        type="button"
+                        variant="primary"
+                        onClick={() => onSelect(workspace)}
+                      >
+                        {t('common.open')}
+                        <ArrowUpRight aria-hidden="true" size={14} />
+                      </OpenButton>
+                    )}
+                    {onToggleFavorite !== undefined && (
+                      <FavoriteButton
+                        workspace={workspace}
+                        isFavorite={favoriteWorkspaceIds.has(workspace.id.value)}
+                        isPending={pendingFavoriteWorkspaceIds.has(workspace.id.value)}
+                        onToggleFavorite={onToggleFavorite}
+                      />
+                    )}
+                    <WorkspaceIconActions
                       workspace={workspace}
-                      isFavorite={favoriteWorkspaceIds.has(workspace.id.value)}
-                      isPending={pendingFavoriteWorkspaceIds.has(workspace.id.value)}
-                      onToggleFavorite={onToggleFavorite}
+                      availability={availability}
+                      isDuplicating={isDuplicating}
+                      onEdit={onEdit}
+                      onRequestDelete={onRequestDelete}
+                      onDuplicate={onDuplicate}
                     />
-                  )}
-                  <WorkspaceIconActions
-                    workspace={workspace}
-                    availability={availability}
-                    isDuplicating={isDuplicating}
-                    onEdit={onEdit}
-                    onRequestDelete={onRequestDelete}
-                    onDuplicate={onDuplicate}
-                  />
-                </ListActions>
-              </ListRow>
-            );
-          })}
-        </ListRows>
+                  </ListActions>
+                </ListRow>
+              );
+            })}
+          </ListRows>
+          {showCreate ? <CreateAction variant="list" onCreate={onCreate} /> : null}
+        </ListSection>
       )}
     </Stack>
   );
