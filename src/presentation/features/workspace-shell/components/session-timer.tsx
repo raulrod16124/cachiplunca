@@ -1,7 +1,6 @@
 import {
   Button,
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -13,6 +12,12 @@ import {
 import { Pause, Play, RotateCcw, Timer as TimerIcon } from '@raulrod/icons';
 import { useEffect, useReducer, useState, type ReactNode } from 'react';
 import styled from 'styled-components';
+import {
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalLayout,
+} from '../../../components/modal-layout';
 import { useI18n, type TranslationKey } from '../../../i18n';
 import {
   createSessionTimerState,
@@ -202,22 +207,32 @@ export function SessionTimer(): ReactNode {
         </Popover.Content>
       </Popover>
       <Dialog open={finishedDialogOpen} onOpenChange={setFinishedDialogOpen}>
-        <DialogContent data-testid="session-timer-finished-dialog">
-          <DialogHeader>
-            <DialogTitle>{t('sessionTimer.finishedTitle')}</DialogTitle>
-            <DialogDescription>
-              {t('sessionTimer.finishedDescription', { time: formattedDuration })}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setFinishedDialogOpen(false)}>
-              {t('common.close')}
-            </Button>
-            <Button type="button" onClick={restart}>
-              {t('sessionTimer.finishedRestart')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
+        <ModalContent data-testid="session-timer-finished-dialog">
+          <ModalLayout>
+            <ModalHeader>
+              <DialogHeader>
+                <DialogTitle>{t('sessionTimer.finishedTitle')}</DialogTitle>
+                <DialogDescription>
+                  {t('sessionTimer.finishedDescription', { time: formattedDuration })}
+                </DialogDescription>
+              </DialogHeader>
+            </ModalHeader>
+            <ModalFooter>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setFinishedDialogOpen(false)}
+                >
+                  {t('common.close')}
+                </Button>
+                <Button type="button" onClick={restart}>
+                  {t('sessionTimer.finishedRestart')}
+                </Button>
+              </DialogFooter>
+            </ModalFooter>
+          </ModalLayout>
+        </ModalContent>
       </Dialog>
     </>
   );

@@ -75,12 +75,32 @@ async function renderAuthenticatedApp() {
   return { ...view, repository, membershipRepository, elementRepository, listWorkspaces };
 }
 
-function openCreateDialog(): void {
+function openCreateDialog(): HTMLElement {
   const [trigger] = screen.getAllByRole('button', { name: 'Create board' });
+  trigger.focus();
   fireEvent.click(trigger);
+  return trigger;
 }
 
 describe('create workspace flow', () => {
+  it('keeps the footer outside the scroll body and returns focus when closed', async () => {
+    await renderAuthenticatedApp();
+    expect(await screen.findByRole('heading', { name: 'No boards yet' })).toBeInTheDocument();
+
+    const trigger = openCreateDialog();
+    const dialog = await screen.findByRole('dialog');
+
+    expect(dialog).toHaveFocus();
+    expect(screen.getByTestId('modal-body')).not.toContainElement(
+      screen.getByTestId('modal-footer'),
+    );
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(trigger).toHaveFocus();
+  });
+
   it('creates a workspace from the empty state and shows it in the list', async () => {
     const { repository, membershipRepository, listWorkspaces } = await renderAuthenticatedApp();
 

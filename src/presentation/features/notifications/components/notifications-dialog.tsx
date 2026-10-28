@@ -2,7 +2,6 @@ import {
   Badge,
   Button,
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -15,6 +14,13 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import type { Notification } from '../../../../domain/notification';
+import {
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalLayout,
+} from '../../../components/modal-layout';
 import { useI18n } from '../../../i18n';
 import { PendingInvitationsPanel } from '../../invitations/components/pending-invitations-panel';
 import { useNotifications } from '../notifications-provider';
@@ -60,7 +66,7 @@ const BadgeSlot = styled.span`
   transform: translate(35%, -25%);
 `;
 
-const Content = styled(DialogContent)`
+const Content = styled(ModalContent)`
   && {
     max-width: 36rem;
   }
@@ -128,57 +134,67 @@ export function NotificationsDialog({ open, onOpenChange }: NotificationsDialogP
       </Trigger>
       <VisuallyHidden aria-live="polite">{label}</VisuallyHidden>
       <Content>
-        <DialogHeader>
-          <DialogTitle>{t('shell.notifications.title')}</DialogTitle>
-          <DialogDescription>{t('shell.notifications.description')}</DialogDescription>
-        </DialogHeader>
-        <Tabs value={tab} onValueChange={setTab}>
-          <Tabs.List>
-            <Tabs.Trigger value={INVITATIONS_TAB}>
-              {t('notifications.tabs.invitations')}
-            </Tabs.Trigger>
-            {notifications.commentsSupported ? (
-              <Tabs.Trigger value={COMMENTS_TAB}>{t('notifications.tabs.comments')}</Tabs.Trigger>
-            ) : null}
-          </Tabs.List>
-          <Tabs.Panel value={INVITATIONS_TAB}>
-            <PendingInvitationsPanel
-              status={notifications.invitations.status}
-              invitations={notifications.invitations.invitations}
-              loadError={notifications.invitations.loadError}
-              actionError={notifications.invitations.actionError}
-              needsVerification={notifications.invitations.needsVerification}
-              verificationSent={notifications.invitations.verificationSent}
-              acceptingId={notifications.invitations.acceptingId}
-              onAccept={notifications.invitations.accept}
-              onRetry={notifications.invitations.retry}
-              onSendVerification={notifications.invitations.sendVerification}
-            />
-          </Tabs.Panel>
-          {notifications.commentsSupported ? (
-            <Tabs.Panel value={COMMENTS_TAB}>
-              <CommentNotificationsList
-                status={notifications.commentStatus}
-                notifications={notifications.commentNotifications}
-                errorMessage={notifications.loadError}
-                actionError={notifications.actionError}
-                onSelect={selectNotification}
-                onRetry={notifications.retry}
-              />
-            </Tabs.Panel>
-          ) : null}
-        </Tabs>
-        <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              onOpenChange(false);
-            }}
-          >
-            {t('common.close')}
-          </Button>
-        </DialogFooter>
+        <ModalLayout>
+          <ModalHeader>
+            <DialogHeader>
+              <DialogTitle>{t('shell.notifications.title')}</DialogTitle>
+              <DialogDescription>{t('shell.notifications.description')}</DialogDescription>
+            </DialogHeader>
+          </ModalHeader>
+          <ModalBody variant="tabs">
+            <Tabs value={tab} onValueChange={setTab}>
+              <Tabs.List>
+                <Tabs.Trigger value={INVITATIONS_TAB}>
+                  {t('notifications.tabs.invitations')}
+                </Tabs.Trigger>
+                {notifications.commentsSupported ? (
+                  <Tabs.Trigger value={COMMENTS_TAB}>
+                    {t('notifications.tabs.comments')}
+                  </Tabs.Trigger>
+                ) : null}
+              </Tabs.List>
+              <Tabs.Panel value={INVITATIONS_TAB}>
+                <PendingInvitationsPanel
+                  status={notifications.invitations.status}
+                  invitations={notifications.invitations.invitations}
+                  loadError={notifications.invitations.loadError}
+                  actionError={notifications.invitations.actionError}
+                  needsVerification={notifications.invitations.needsVerification}
+                  verificationSent={notifications.invitations.verificationSent}
+                  acceptingId={notifications.invitations.acceptingId}
+                  onAccept={notifications.invitations.accept}
+                  onRetry={notifications.invitations.retry}
+                  onSendVerification={notifications.invitations.sendVerification}
+                />
+              </Tabs.Panel>
+              {notifications.commentsSupported ? (
+                <Tabs.Panel value={COMMENTS_TAB}>
+                  <CommentNotificationsList
+                    status={notifications.commentStatus}
+                    notifications={notifications.commentNotifications}
+                    errorMessage={notifications.loadError}
+                    actionError={notifications.actionError}
+                    onSelect={selectNotification}
+                    onRetry={notifications.retry}
+                  />
+                </Tabs.Panel>
+              ) : null}
+            </Tabs>
+          </ModalBody>
+          <ModalFooter>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  onOpenChange(false);
+                }}
+              >
+                {t('common.close')}
+              </Button>
+            </DialogFooter>
+          </ModalFooter>
+        </ModalLayout>
       </Content>
     </Dialog>
   );

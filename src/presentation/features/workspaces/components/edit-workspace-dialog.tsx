@@ -1,7 +1,6 @@
 import {
   Button,
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -24,6 +23,14 @@ import { WorkspaceId } from '../../../../domain/shared';
 import { toAppError } from '../../../../shared/errors';
 import { readFileAsDataUrl, readFileBytes } from '../workspace-cover-file';
 import { localizeFieldError, localizeMessage, useI18n } from '../../../i18n';
+import {
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalForm,
+  ModalHeader,
+  ModalLayout,
+} from '../../../components/modal-layout';
 import { describeUpdateWorkspaceError } from '../workspace-error-messages';
 import { WorkspaceCoverField } from './workspace-cover-field';
 
@@ -213,78 +220,86 @@ export function EditWorkspaceDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent {...(surface === 'stitch' ? { 'data-surface': 'stitch' } : {})}>
-        <DialogHeader>
-          <DialogTitle>{t('workspaces.editDialog.title')}</DialogTitle>
-          <DialogDescription>{t('workspaces.editDialog.description')}</DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} noValidate>
-          <Stack gap="space-4">
-            <FormField>
-              <FormFieldLabel>{t('workspaces.createDialog.name')}</FormFieldLabel>
-              <FormFieldControl>
-                {(field) => (
-                  <Input
-                    {...field}
-                    name="name"
-                    autoComplete="off"
-                    value={name}
-                    onChange={(event) => setName(event.target.value)}
+      <ModalContent {...(surface === 'stitch' ? { 'data-surface': 'stitch' } : {})}>
+        <ModalForm onSubmit={handleSubmit} noValidate>
+          <ModalLayout>
+            <ModalHeader>
+              <DialogHeader>
+                <DialogTitle>{t('workspaces.editDialog.title')}</DialogTitle>
+                <DialogDescription>{t('workspaces.editDialog.description')}</DialogDescription>
+              </DialogHeader>
+            </ModalHeader>
+            <ModalBody>
+              <Stack gap="space-4">
+                <FormField>
+                  <FormFieldLabel>{t('workspaces.createDialog.name')}</FormFieldLabel>
+                  <FormFieldControl>
+                    {(field) => (
+                      <Input
+                        {...field}
+                        name="name"
+                        autoComplete="off"
+                        value={name}
+                        onChange={(event) => setName(event.target.value)}
+                      />
+                    )}
+                  </FormFieldControl>
+                  {fieldErrors.name !== undefined && (
+                    <FormFieldError>{localizeFieldError(t, fieldErrors.name)}</FormFieldError>
+                  )}
+                </FormField>
+                <FormField>
+                  <FormFieldLabel>{t('workspaces.createDialog.descriptionLabel')}</FormFieldLabel>
+                  <FormFieldControl>
+                    {(field) => (
+                      <Textarea
+                        {...field}
+                        name="description"
+                        rows={3}
+                        value={description}
+                        onChange={(event) => setDescription(event.target.value)}
+                      />
+                    )}
+                  </FormFieldControl>
+                </FormField>
+                {imageServices !== undefined && (
+                  <WorkspaceCoverField
+                    previewUrl={coverPreview}
+                    fileName={coverFile?.name ?? null}
+                    disabled={submitting}
+                    uploading={submitting && coverFile !== null}
+                    error={coverError}
+                    onSelect={(file) => {
+                      void handleCoverSelect(file);
+                    }}
+                    onRemove={coverPreview === null ? undefined : handleCoverRemove}
                   />
                 )}
-              </FormFieldControl>
-              {fieldErrors.name !== undefined && (
-                <FormFieldError>{localizeFieldError(t, fieldErrors.name)}</FormFieldError>
-              )}
-            </FormField>
-            <FormField>
-              <FormFieldLabel>{t('workspaces.createDialog.descriptionLabel')}</FormFieldLabel>
-              <FormFieldControl>
-                {(field) => (
-                  <Textarea
-                    {...field}
-                    name="description"
-                    rows={3}
-                    value={description}
-                    onChange={(event) => setDescription(event.target.value)}
-                  />
+                {formError !== null && (
+                  <Text role="alert" color="color.text.danger">
+                    {formError}
+                  </Text>
                 )}
-              </FormFieldControl>
-            </FormField>
-            {imageServices !== undefined && (
-              <WorkspaceCoverField
-                previewUrl={coverPreview}
-                fileName={coverFile?.name ?? null}
-                disabled={submitting}
-                uploading={submitting && coverFile !== null}
-                error={coverError}
-                onSelect={(file) => {
-                  void handleCoverSelect(file);
-                }}
-                onRemove={coverPreview === null ? undefined : handleCoverRemove}
-              />
-            )}
-            {formError !== null && (
-              <Text role="alert" color="color.text.danger">
-                {formError}
-              </Text>
-            )}
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                disabled={submitting}
-                onClick={() => onOpenChange(false)}
-              >
-                {t('common.cancel')}
-              </Button>
-              <Button type="submit" loading={submitting}>
-                {t('common.save')}
-              </Button>
-            </DialogFooter>
-          </Stack>
-        </form>
-      </DialogContent>
+              </Stack>
+            </ModalBody>
+            <ModalFooter>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={submitting}
+                  onClick={() => onOpenChange(false)}
+                >
+                  {t('common.cancel')}
+                </Button>
+                <Button type="submit" loading={submitting}>
+                  {t('common.save')}
+                </Button>
+              </DialogFooter>
+            </ModalFooter>
+          </ModalLayout>
+        </ModalForm>
+      </ModalContent>
     </Dialog>
   );
 }

@@ -1,7 +1,6 @@
 import {
   Button,
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -14,6 +13,13 @@ import type { DeleteWorkspace } from '../../../../application/commands';
 import type { Workspace } from '../../../../domain/workspace';
 import { toAppError } from '../../../../shared/errors';
 import { localizeMessage, useI18n } from '../../../i18n';
+import {
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalLayout,
+} from '../../../components/modal-layout';
 import { describeDeleteWorkspaceError } from '../workspace-error-messages';
 
 export interface DeleteWorkspaceDialogProps {
@@ -80,41 +86,49 @@ export function DeleteWorkspaceDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent {...(surface === 'stitch' ? { 'data-surface': 'stitch' } : {})}>
-        <DialogHeader>
-          <DialogTitle>{t('workspaces.deleteDialog.title')}</DialogTitle>
-          <DialogDescription>
-            {t('workspaces.deleteDialog.description', { name: workspace.name })}
-          </DialogDescription>
-        </DialogHeader>
-        <Stack gap="space-4">
-          {formError !== null && (
-            <Text role="alert" color="color.text.danger">
-              {formError}
-            </Text>
-          )}
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={submitting}
-              onClick={() => onOpenChange(false)}
-            >
-              {t('common.cancel')}
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              loading={submitting}
-              onClick={() => {
-                void handleConfirm();
-              }}
-            >
-              {t('workspaces.deleteDialog.confirm')}
-            </Button>
-          </DialogFooter>
-        </Stack>
-      </DialogContent>
+      <ModalContent {...(surface === 'stitch' ? { 'data-surface': 'stitch' } : {})}>
+        <ModalLayout>
+          <ModalHeader>
+            <DialogHeader>
+              <DialogTitle>{t('workspaces.deleteDialog.title')}</DialogTitle>
+              <DialogDescription>
+                {t('workspaces.deleteDialog.description', { name: workspace.name })}
+              </DialogDescription>
+            </DialogHeader>
+          </ModalHeader>
+          <ModalBody>
+            <Stack gap="space-4">
+              {formError !== null && (
+                <Text role="alert" color="color.text.danger">
+                  {formError}
+                </Text>
+              )}
+            </Stack>
+          </ModalBody>
+          <ModalFooter>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={submitting}
+                onClick={() => onOpenChange(false)}
+              >
+                {t('common.cancel')}
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                loading={submitting}
+                onClick={() => {
+                  void handleConfirm();
+                }}
+              >
+                {t('workspaces.deleteDialog.confirm')}
+              </Button>
+            </DialogFooter>
+          </ModalFooter>
+        </ModalLayout>
+      </ModalContent>
     </Dialog>
   );
 }

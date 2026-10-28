@@ -100,6 +100,8 @@ describe('SessionTimer', () => {
 
     expect(screen.getByRole('dialog', { name: 'Time is up' })).toBeInTheDocument();
     expect(screen.getByText('Your 1:00 session timer has finished.')).toBeInTheDocument();
+    expect(screen.getByTestId('modal-layout')).toBeInTheDocument();
+    expect(screen.getByTestId('modal-footer')).toBeInTheDocument();
     expect(screen.getByTestId('session-timer-trigger')).toHaveAccessibleName(
       'Session timer: 0:00 remaining',
     );

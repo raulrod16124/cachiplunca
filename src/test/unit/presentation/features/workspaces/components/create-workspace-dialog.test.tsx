@@ -59,6 +59,16 @@ function submit(): void {
 }
 
 describe('CreateWorkspaceDialog', () => {
+  it('uses the shared modal layout and keeps the footer outside the scroll body', () => {
+    renderDialog(jest.fn());
+
+    const body = screen.getByTestId('modal-body');
+    const footer = screen.getByTestId('modal-footer');
+
+    expect(screen.getByTestId('modal-layout')).toContainElement(body);
+    expect(body).not.toContainElement(footer);
+  });
+
   it('renders labelled fields while open and nothing while closed', () => {
     const createWorkspace = jest.fn();
     const onOpenChange = jest.fn();

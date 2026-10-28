@@ -1,7 +1,6 @@
 import {
   Button,
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -18,6 +17,14 @@ import {
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { TASK_STATUSES } from '../../../domain/element';
 import type { TaskStatus } from '../../../domain/element';
+import {
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalForm,
+  ModalHeader,
+  ModalLayout,
+} from '../../components/modal-layout';
 import { shortUserId } from '../../collaboration';
 import { useI18n } from '../../i18n';
 import { TASK_STATUS_LABEL_KEYS } from '../renderers/task-status-meta';
@@ -116,121 +123,132 @@ export function TaskFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent data-testid="task-form-dialog">
-        <DialogHeader>
-          <DialogTitle>
-            {mode === 'create' ? t('taskForm.create.title') : t('taskForm.edit.title')}
-          </DialogTitle>
-          {mode === 'create' && (
-            <DialogDescription>{t('taskForm.create.description')}</DialogDescription>
-          )}
-        </DialogHeader>
-        <form onSubmit={handleSubmit} noValidate>
-          <Stack gap="space-4">
-            <FormField>
-              <FormFieldLabel>{t('taskForm.title')}</FormFieldLabel>
-              <FormFieldControl>
-                {(field) => (
-                  <Input
-                    {...field}
-                    name="title"
-                    autoComplete="off"
-                    value={title}
-                    onChange={(event) => {
-                      setTitle(event.target.value);
-                      if (titleError !== null) {
-                        setTitleError(null);
-                      }
-                    }}
-                  />
+      <ModalContent data-testid="task-form-dialog">
+        <ModalForm onSubmit={handleSubmit} noValidate>
+          <ModalLayout>
+            <ModalHeader>
+              <DialogHeader>
+                <DialogTitle>
+                  {mode === 'create' ? t('taskForm.create.title') : t('taskForm.edit.title')}
+                </DialogTitle>
+                {mode === 'create' && (
+                  <DialogDescription>{t('taskForm.create.description')}</DialogDescription>
                 )}
-              </FormFieldControl>
-              {titleError !== null && <FormFieldError>{titleError}</FormFieldError>}
-            </FormField>
-            <FormField>
-              <FormFieldLabel>{t('taskForm.status')}</FormFieldLabel>
-              <FormFieldControl>
-                {(field) => (
-                  <Select value={status} onValueChange={(value) => setStatus(value as TaskStatus)}>
-                    <Select.Trigger {...field} aria-label={t('taskForm.status')}>
-                      <Select.Value />
-                    </Select.Trigger>
-                    <Select.Content
-                      placement="bottom-start"
-                      style={{ zIndex: MODAL_SELECT_Z_INDEX }}
-                    >
-                      {TASK_STATUSES.map((option) => (
-                        <Select.Item key={option} value={option}>
-                          {t(TASK_STATUS_LABEL_KEYS[option])}
-                        </Select.Item>
-                      ))}
-                    </Select.Content>
-                  </Select>
-                )}
-              </FormFieldControl>
-            </FormField>
-            <FormField>
-              <FormFieldLabel>{t('taskForm.assignee')}</FormFieldLabel>
-              <FormFieldControl>
-                {(field) => (
-                  <Select value={assigneeId} onValueChange={setAssigneeId}>
-                    <Select.Trigger {...field} aria-label={t('taskForm.assignee')}>
-                      <Select.Value />
-                    </Select.Trigger>
-                    <Select.Content
-                      placement="bottom-start"
-                      style={{ zIndex: MODAL_SELECT_Z_INDEX }}
-                    >
-                      <Select.Item value="">{t('taskForm.unassigned')}</Select.Item>
-                      {assigneeOptions.map((assignee) => (
-                        <Select.Item key={assignee.userId} value={assignee.userId}>
-                          {assignee.label}
-                        </Select.Item>
-                      ))}
-                    </Select.Content>
-                  </Select>
-                )}
-              </FormFieldControl>
-            </FormField>
-            <FormField>
-              <FormFieldLabel>{t('taskForm.dueDate')}</FormFieldLabel>
-              <FormFieldControl>
-                {(field) => (
-                  <Input
-                    {...field}
-                    type="date"
-                    name="dueDate"
-                    value={dueDate}
-                    onChange={(event) => setDueDate(event.target.value)}
-                  />
-                )}
-              </FormFieldControl>
-            </FormField>
-            <FormField>
-              <FormFieldLabel>{t('taskForm.notes')}</FormFieldLabel>
-              <FormFieldControl>
-                {(field) => (
-                  <Textarea
-                    {...field}
-                    name="notes"
-                    rows={4}
-                    value={notes}
-                    onChange={(event) => setNotes(event.target.value)}
-                  />
-                )}
-              </FormFieldControl>
-            </FormField>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                {t('common.cancel')}
-              </Button>
-              <Button type="submit">
-                {mode === 'create' ? t('taskForm.createAction') : t('taskForm.saveAction')}
-              </Button>
-            </DialogFooter>
-          </Stack>
-        </form>
-      </DialogContent>
+              </DialogHeader>
+            </ModalHeader>
+            <ModalBody>
+              <Stack gap="space-4">
+                <FormField>
+                  <FormFieldLabel>{t('taskForm.title')}</FormFieldLabel>
+                  <FormFieldControl>
+                    {(field) => (
+                      <Input
+                        {...field}
+                        name="title"
+                        autoComplete="off"
+                        value={title}
+                        onChange={(event) => {
+                          setTitle(event.target.value);
+                          if (titleError !== null) {
+                            setTitleError(null);
+                          }
+                        }}
+                      />
+                    )}
+                  </FormFieldControl>
+                  {titleError !== null && <FormFieldError>{titleError}</FormFieldError>}
+                </FormField>
+                <FormField>
+                  <FormFieldLabel>{t('taskForm.status')}</FormFieldLabel>
+                  <FormFieldControl>
+                    {(field) => (
+                      <Select
+                        value={status}
+                        onValueChange={(value) => setStatus(value as TaskStatus)}
+                      >
+                        <Select.Trigger {...field} aria-label={t('taskForm.status')}>
+                          <Select.Value />
+                        </Select.Trigger>
+                        <Select.Content
+                          placement="bottom-start"
+                          style={{ zIndex: MODAL_SELECT_Z_INDEX }}
+                        >
+                          {TASK_STATUSES.map((option) => (
+                            <Select.Item key={option} value={option}>
+                              {t(TASK_STATUS_LABEL_KEYS[option])}
+                            </Select.Item>
+                          ))}
+                        </Select.Content>
+                      </Select>
+                    )}
+                  </FormFieldControl>
+                </FormField>
+                <FormField>
+                  <FormFieldLabel>{t('taskForm.assignee')}</FormFieldLabel>
+                  <FormFieldControl>
+                    {(field) => (
+                      <Select value={assigneeId} onValueChange={setAssigneeId}>
+                        <Select.Trigger {...field} aria-label={t('taskForm.assignee')}>
+                          <Select.Value />
+                        </Select.Trigger>
+                        <Select.Content
+                          placement="bottom-start"
+                          style={{ zIndex: MODAL_SELECT_Z_INDEX }}
+                        >
+                          <Select.Item value="">{t('taskForm.unassigned')}</Select.Item>
+                          {assigneeOptions.map((assignee) => (
+                            <Select.Item key={assignee.userId} value={assignee.userId}>
+                              {assignee.label}
+                            </Select.Item>
+                          ))}
+                        </Select.Content>
+                      </Select>
+                    )}
+                  </FormFieldControl>
+                </FormField>
+                <FormField>
+                  <FormFieldLabel>{t('taskForm.dueDate')}</FormFieldLabel>
+                  <FormFieldControl>
+                    {(field) => (
+                      <Input
+                        {...field}
+                        type="date"
+                        name="dueDate"
+                        value={dueDate}
+                        onChange={(event) => setDueDate(event.target.value)}
+                      />
+                    )}
+                  </FormFieldControl>
+                </FormField>
+                <FormField>
+                  <FormFieldLabel>{t('taskForm.notes')}</FormFieldLabel>
+                  <FormFieldControl>
+                    {(field) => (
+                      <Textarea
+                        {...field}
+                        name="notes"
+                        rows={4}
+                        value={notes}
+                        onChange={(event) => setNotes(event.target.value)}
+                      />
+                    )}
+                  </FormFieldControl>
+                </FormField>
+              </Stack>
+            </ModalBody>
+            <ModalFooter>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                  {t('common.cancel')}
+                </Button>
+                <Button type="submit">
+                  {mode === 'create' ? t('taskForm.createAction') : t('taskForm.saveAction')}
+                </Button>
+              </DialogFooter>
+            </ModalFooter>
+          </ModalLayout>
+        </ModalForm>
+      </ModalContent>
     </Dialog>
   );
 }
