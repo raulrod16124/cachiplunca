@@ -92,11 +92,10 @@ describe('theme favicon integration', () => {
       </UserSettingsProvider>,
     );
 
-    const themeSelect = await screen.findByRole('combobox', { name: 'Theme' });
-    await waitFor(() => expect(themeSelect).toBeEnabled());
+    const darkTheme = await screen.findByRole('radio', { name: 'Dark' });
+    await waitFor(() => expect(darkTheme).toBeEnabled());
 
-    await user.click(themeSelect);
-    await user.click(screen.getByRole('option', { name: 'Dark' }));
+    await user.click(darkTheme);
 
     await waitFor(() => {
       expect(document.documentElement).toHaveAttribute('data-theme', 'dark');
@@ -104,8 +103,7 @@ describe('theme favicon integration', () => {
     expect(link16).toHaveAttribute('href', '/brand/favicon-dark-16.png');
     expect(link32).toHaveAttribute('href', '/brand/favicon-dark-32.png');
 
-    await user.click(screen.getByRole('combobox', { name: 'Theme' }));
-    await user.click(screen.getByRole('option', { name: 'Light' }));
+    await user.click(screen.getByRole('radio', { name: 'Light' }));
 
     await waitFor(() => {
       expect(document.documentElement).toHaveAttribute('data-theme', 'light');

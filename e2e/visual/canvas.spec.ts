@@ -373,7 +373,7 @@ test.describe('visual baseline — canvas', () => {
       );
       await setTheme(page, theme);
       await waitForStable(page);
-      await expect(page.getByRole('combobox', { name: 'Theme' })).toBeEnabled();
+      await expect(page.getByRole('radio', { name: 'System', exact: true })).toBeEnabled();
       await expect(page.getByText('Loading your preferences…')).toHaveCount(0);
       await page.mouse.move(0, 0);
       await expect(page).toHaveScreenshot(`canvas-settings-${theme}.png`, {
@@ -407,7 +407,7 @@ test.describe('visual baseline — canvas', () => {
     await page.setViewportSize({ width: 390, height: 800 });
     await setTheme(page, 'light');
     await waitForStable(page);
-    await expect(page.getByRole('combobox', { name: 'Theme' })).toBeEnabled();
+    await expect(page.getByRole('radio', { name: 'System', exact: true })).toBeEnabled();
     await expect(page.getByText('Loading your preferences…')).toHaveCount(0);
     await page.mouse.move(0, 0);
     await expect(page).toHaveScreenshot('canvas-settings-narrow-390.png', {

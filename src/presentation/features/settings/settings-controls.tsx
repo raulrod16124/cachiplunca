@@ -9,9 +9,9 @@ import {
   Text,
 } from '@raulrod/ui';
 import { Accessibility, Languages, Palette } from '@raulrod/icons';
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import styled from 'styled-components';
-import type { FontSize, Locale, ThemeMode } from '../../../domain/user-settings';
+import type { FontSize } from '../../../domain/user-settings';
 import { useI18n, type TranslationKey } from '../../i18n';
 import { useUserSettings } from '../../providers/user-settings-provider';
 import {
@@ -21,24 +21,14 @@ import {
   StitchSectionIcon,
   StitchSectionTitle,
 } from '../../components/stitch-page-shell';
-
-const THEME_OPTIONS: readonly { readonly value: ThemeMode; readonly label: TranslationKey }[] = [
-  { value: 'system', label: 'settings.theme.system' },
-  { value: 'light', label: 'settings.theme.light' },
-  { value: 'dark', label: 'settings.theme.dark' },
-];
+import { LanguagePicker } from './language-picker';
+import { ThemePicker } from './theme-picker';
 
 const FONT_SIZE_OPTIONS: readonly { readonly value: FontSize; readonly label: TranslationKey }[] = [
   { value: 'sm', label: 'settings.fontSize.sm' },
   { value: 'base', label: 'settings.fontSize.base' },
   { value: 'lg', label: 'settings.fontSize.lg' },
   { value: 'xl', label: 'settings.fontSize.xl' },
-];
-
-const LOCALE_OPTIONS: readonly { readonly value: Locale; readonly label: TranslationKey }[] = [
-  { value: 'system', label: 'settings.language.system' },
-  { value: 'es', label: 'settings.language.es' },
-  { value: 'en', label: 'settings.language.en' },
 ];
 
 const SELECT_CLASS_NAMES = { content: 'settings-select-content' } as const;
@@ -66,9 +56,16 @@ const SettingField = styled(FormField)`
   }
 `;
 
+const FieldLabel = styled.span`
+  color: var(--stitch-text);
+  font-weight: ${({ theme }) => theme.font.weight.semibold};
+`;
+
 export function SettingsControls(): ReactNode {
   const { settings, error, update } = useUserSettings();
   const { t } = useI18n();
+  const themeLabelId = useId();
+  const languageLabelId = useId();
 
   const theme = settings?.theme ?? 'system';
   const fontSize = settings?.fontSize ?? 'base';
@@ -89,33 +86,15 @@ export function SettingsControls(): ReactNode {
 
           <Fields>
             <SettingField>
-              <FormFieldLabel>{t('settings.theme')}</FormFieldLabel>
-              <FormFieldControl>
-                {(field) => (
-                  <Select
-                    value={theme}
-                    classNames={SELECT_CLASS_NAMES}
-                    onValueChange={(value) => {
-                      void update({ theme: value as ThemeMode });
-                    }}
-                  >
-                    <Select.Trigger
-                      {...field}
-                      aria-label={t('settings.theme')}
-                      disabled={isLoading}
-                    >
-                      <Select.Value />
-                    </Select.Trigger>
-                    <Select.Content>
-                      {THEME_OPTIONS.map((option) => (
-                        <Select.Item key={option.value} value={option.value}>
-                          {t(option.label)}
-                        </Select.Item>
-                      ))}
-                    </Select.Content>
-                  </Select>
-                )}
-              </FormFieldControl>
+              <FieldLabel id={themeLabelId}>{t('settings.theme')}</FieldLabel>
+              <ThemePicker
+                value={theme}
+                disabled={isLoading}
+                labelledBy={themeLabelId}
+                onChange={(value) => {
+                  void update({ theme: value });
+                }}
+              />
             </SettingField>
 
             <SettingField>
@@ -160,33 +139,15 @@ export function SettingsControls(): ReactNode {
 
           <Fields>
             <SettingField>
-              <FormFieldLabel>{t('settings.language')}</FormFieldLabel>
-              <FormFieldControl>
-                {(field) => (
-                  <Select
-                    value={locale}
-                    classNames={SELECT_CLASS_NAMES}
-                    onValueChange={(value) => {
-                      void update({ locale: value as Locale });
-                    }}
-                  >
-                    <Select.Trigger
-                      {...field}
-                      aria-label={t('settings.language')}
-                      disabled={isLoading}
-                    >
-                      <Select.Value />
-                    </Select.Trigger>
-                    <Select.Content>
-                      {LOCALE_OPTIONS.map((option) => (
-                        <Select.Item key={option.value} value={option.value}>
-                          {t(option.label)}
-                        </Select.Item>
-                      ))}
-                    </Select.Content>
-                  </Select>
-                )}
-              </FormFieldControl>
+              <FieldLabel id={languageLabelId}>{t('settings.language')}</FieldLabel>
+              <LanguagePicker
+                value={locale}
+                disabled={isLoading}
+                labelledBy={languageLabelId}
+                onChange={(value) => {
+                  void update({ locale: value });
+                }}
+              />
             </SettingField>
           </Fields>
         </StitchSection>
