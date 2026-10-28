@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { useUserSettings } from '../providers/user-settings-provider';
 import { resolveLocale } from '../../application/services/user-settings-store';
+import { applyFavicon } from './use-favicon';
 
 export interface ThemeModeResult {
   readonly resolvedTheme: 'light' | 'dark';
@@ -28,7 +29,9 @@ export function useThemeMode(): ThemeModeResult {
     if (settings.theme === 'system') {
       const media = window.matchMedia('(prefers-color-scheme: dark)');
       const apply = (): void => {
-        root.setAttribute('data-theme', media.matches ? 'dark' : 'light');
+        const theme = media.matches ? 'dark' : 'light';
+        root.setAttribute('data-theme', theme);
+        applyFavicon(theme);
       };
       apply();
       media.addEventListener('change', apply);
@@ -38,6 +41,7 @@ export function useThemeMode(): ThemeModeResult {
     }
 
     root.setAttribute('data-theme', settings.theme);
+    applyFavicon(settings.theme);
     return undefined;
   }, [settings]);
 
