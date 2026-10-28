@@ -27,6 +27,23 @@ describe('document metadata', () => {
     expect(html).not.toContain('href="/favicon.svg"');
   });
 
+  it('marks both theme favicon sizes for runtime updates', () => {
+    const html = read('index.html');
+
+    expect(html.match(/data-app-favicon="16"/g)).toHaveLength(2);
+    expect(html.match(/data-app-favicon="32"/g)).toHaveLength(2);
+
+    for (const theme of ['light', 'dark']) {
+      for (const size of [16, 32]) {
+        expect(html).toMatch(
+          new RegExp(
+            `href="%BASE_URL%brand/favicon-${theme}-${size}\\.png"[^>]*data-app-favicon="${size}"`,
+          ),
+        );
+      }
+    }
+  });
+
   it('ships non-empty PNG favicons', () => {
     const favicons = [
       'public/brand/favicon-light-16.png',
