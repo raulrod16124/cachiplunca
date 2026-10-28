@@ -7,22 +7,41 @@ import {
 import type { ConnectorEndpoint } from '../../../domain/element';
 import type { Element, ElementType, TaskStatus } from '../../../domain/element';
 import { isTaskOverdue } from '../../../application/services';
+import { translate } from '../../i18n';
+import type { TranslationKey } from '../../i18n';
 
-const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
-  todo: 'to do',
-  in_progress: 'in progress',
-  completed: 'completed',
-  blocked: 'blocked',
+export type DescribeTranslator = (
+  key: TranslationKey,
+  params?: Readonly<Record<string, string | number>>,
+) => string;
+
+const defaultTranslator: DescribeTranslator = (key, params) => translate('en', key, params);
+
+const TASK_STATUS_LABEL_KEYS: Record<TaskStatus, TranslationKey> = {
+  todo: 'canvas.a11y.status.todo',
+  in_progress: 'canvas.a11y.status.in_progress',
+  completed: 'canvas.a11y.status.completed',
+  blocked: 'canvas.a11y.status.blocked',
 };
 
-const ELEMENT_TYPE_LABELS: Record<ElementType, string> = {
-  text: 'text',
-  note: 'note',
-  task: 'task',
-  frame: 'frame',
-  connector: 'connector',
-  link: 'link',
-  image: 'image',
+const REFERENCE_LABEL_KEYS: Record<ElementType, TranslationKey> = {
+  text: 'canvas.a11y.reference.text',
+  note: 'canvas.a11y.reference.note',
+  task: 'canvas.a11y.reference.task',
+  frame: 'canvas.a11y.reference.frame',
+  connector: 'canvas.a11y.reference.connector',
+  link: 'canvas.a11y.reference.link',
+  image: 'canvas.a11y.reference.image',
+};
+
+const ELEMENT_LABEL_KEYS: Record<ElementType, TranslationKey> = {
+  text: 'canvas.elementType.text',
+  note: 'canvas.elementType.note',
+  task: 'canvas.elementType.task',
+  frame: 'canvas.elementType.frame',
+  connector: 'canvas.elementType.connector',
+  link: 'canvas.elementType.link',
+  image: 'canvas.elementType.image',
 };
 
 const CONTENT_MAX_LENGTH = 80;
@@ -47,28 +66,28 @@ function contentLabel(prefix: string, content: string): string {
   return trimmed.length === 0 ? prefix : `${prefix}: ${trimmed}`;
 }
 
-function referenceLabel(element: Element): string {
+function referenceLabel(element: Element, t: DescribeTranslator): string {
   switch (element.type) {
     case 'text':
-      return contentLabel('text', richTextToPlain(element.content));
+      return contentLabel(t('canvas.a11y.reference.text'), richTextToPlain(element.content));
     case 'note':
-      return contentLabel('note', richTextToPlain(element.content));
+      return contentLabel(t('canvas.a11y.reference.note'), richTextToPlain(element.content));
     case 'task':
-      return contentLabel('task', richTextToPlain(element.title));
+      return contentLabel(t('canvas.a11y.reference.task'), richTextToPlain(element.title));
     case 'frame':
-      return contentLabel('frame', richTextToPlain(element.title));
+      return contentLabel(t('canvas.a11y.reference.frame'), richTextToPlain(element.title));
     case 'link':
       return contentLabel(
-        'link',
+        t('canvas.a11y.reference.link'),
         element.title === undefined ? element.url : richTextToPlain(element.title),
       );
     case 'image':
-      return contentLabel('image', element.alt ?? element.src);
+      return contentLabel(t('canvas.a11y.reference.image'), element.alt ?? element.src);
     case 'connector':
-      return 'connector';
+      return t('canvas.a11y.reference.connector');
     default: {
       const unknown: never = element;
-      return `element ${JSON.stringify(unknown)}`;
+      return t('canvas.a11y.unknownElement', { json: JSON.stringify(unknown) });
     }
   }
 }
@@ -77,15 +96,16 @@ function describeConnectorEndpoint(
   endpoint: ConnectorEndpoint,
   elements: readonly Element[],
   connectorPosition: Element['position'],
+  t: DescribeTranslator,
 ): string {
   if (endpoint.kind === 'point') {
     const world = endpoint.point.add(connectorPosition);
-    return `point ${Math.round(world.x)}, ${Math.round(world.y)}`;
+    return t('canvas.a11y.point', { x: Math.round(world.x), y: Math.round(world.y) });
   }
 
   const referenced = elements.find((candidate) => candidate.id.value === endpoint.elementId.value);
 
-  return referenced === undefined ? endpoint.elementId.value : referenceLabel(referenced);
+  return referenced === undefined ? endpoint.elementId.value : referenceLabel(referenced, t);
 }
 
 /**
@@ -93,59 +113,69 @@ function describeConnectorEndpoint(
  *
  * Pure and React-free so it can be unit-tested and shared. When the full board
  * is provided, connector endpoints are resolved to the referenced element's
- * label instead of exposing raw ids.
+ * label instead of exposing raw ids. Text is localized through the injected
+ * translator, defaulting to English.
  */
 export function describeElement(
   element: Element,
   elements: readonly Element[] = [],
   now: Date = new Date(),
+  t: DescribeTranslator = defaultTranslator,
 ): string {
   switch (element.type) {
     case 'text':
-      return contentLabel('Text', richTextToPlain(element.content));
+      return contentLabel(t(ELEMENT_LABEL_KEYS.text), richTextToPlain(element.content));
     case 'note':
-      return contentLabel('Note', richTextToPlain(element.content));
+      return contentLabel(t(ELEMENT_LABEL_KEYS.note), richTextToPlain(element.content));
     case 'task': {
       const parts = [
-        `Task: ${truncate(richTextToPlain(element.title))}`,
-        TASK_STATUS_LABELS[element.status],
+        t('canvas.a11y.task', {
+          title: truncate(richTextToPlain(element.title)),
+          status: t(TASK_STATUS_LABEL_KEYS[element.status]),
+        }),
       ];
 
       if (element.dueDate !== undefined) {
         const due = element.dueDate.toISOString().slice(0, 10);
         const overdue = element.status !== 'completed' && isTaskOverdue(element.dueDate, now);
 
-        parts.push(overdue ? `overdue (due ${due})` : `due ${due}`);
+        parts.push(
+          overdue
+            ? t('canvas.a11y.taskOverdue', { date: due })
+            : t('canvas.a11y.taskDue', { date: due }),
+        );
       }
 
       return parts.join(', ');
     }
     case 'frame':
-      return contentLabel('Frame', richTextToPlain(element.title));
+      return contentLabel(t(ELEMENT_LABEL_KEYS.frame), richTextToPlain(element.title));
     case 'connector': {
       const from = describeConnectorEndpoint(
         connectorSourceEndpoint(element),
         elements,
         element.position,
+        t,
       );
       const to = describeConnectorEndpoint(
         connectorTargetEndpoint(element),
         elements,
         element.position,
+        t,
       );
 
-      return `Connector from ${from} to ${to}`;
+      return t('canvas.a11y.connector', { from, to });
     }
     case 'link':
       return contentLabel(
-        'Link',
+        t(ELEMENT_LABEL_KEYS.link),
         element.title === undefined ? element.url : richTextToPlain(element.title),
       );
     case 'image':
-      return contentLabel('Image', element.alt ?? element.src);
+      return contentLabel(t(ELEMENT_LABEL_KEYS.image), element.alt ?? element.src);
     default: {
       const unknown: never = element;
-      return `Element ${JSON.stringify(unknown)}`;
+      return t('canvas.a11y.unknownElement', { json: JSON.stringify(unknown) });
     }
   }
 }
@@ -154,9 +184,12 @@ export function describeElement(
  * Minimal textual alternative for the whole board: a concise, scalable summary
  * by element type used as the canvas `aria-describedby` description.
  */
-export function describeBoard(elements: readonly Element[]): string {
+export function describeBoard(
+  elements: readonly Element[],
+  t: DescribeTranslator = defaultTranslator,
+): string {
   if (elements.length === 0) {
-    return 'This board is empty.';
+    return t('canvas.a11y.boardEmpty');
   }
 
   const counts = new Map<ElementType, number>();
@@ -166,10 +199,15 @@ export function describeBoard(elements: readonly Element[]): string {
   }
 
   const breakdown = ELEMENT_TYPES.filter((type) => counts.has(type))
-    .map((type) => `${counts.get(type)} ${ELEMENT_TYPE_LABELS[type]}`)
+    .map((type) => `${counts.get(type)} ${t(REFERENCE_LABEL_KEYS[type])}`)
     .join(', ');
 
-  const noun = elements.length === 1 ? 'element' : 'elements';
+  const nounKey: TranslationKey =
+    elements.length === 1 ? 'canvas.a11y.boardElement' : 'canvas.a11y.boardElements';
 
-  return `Board with ${elements.length} ${noun}: ${breakdown}.`;
+  return t('canvas.a11y.boardSummary', {
+    count: elements.length,
+    noun: t(nounKey),
+    breakdown,
+  });
 }

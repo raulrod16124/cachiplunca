@@ -1,6 +1,8 @@
 import { screen, fireEvent } from '@testing-library/react';
 import { render } from '../../../setup/render-with-theme';
+import { localeWrapper } from '../../../setup/locale-wrapper';
 import { EmptyState } from '../../../../presentation/components/empty-state';
+import { MESSAGES } from '../../../../presentation/i18n';
 
 function styleText(): string {
   return [...document.head.querySelectorAll('style')]
@@ -12,7 +14,12 @@ describe('EmptyState', () => {
   it('renders with default title and status role', () => {
     render(<EmptyState />);
     expect(screen.getByRole('status')).toBeInTheDocument();
-    expect(screen.getByText('Nothing here yet')).toBeInTheDocument();
+    expect(screen.getByText(MESSAGES.en['common.emptyTitle'])).toBeInTheDocument();
+  });
+
+  it('renders the default title in Spanish', () => {
+    render(<EmptyState />, { wrapper: localeWrapper('es') });
+    expect(screen.getByText(MESSAGES.es['common.emptyTitle'])).toBeInTheDocument();
   });
 
   it('renders description and action', () => {

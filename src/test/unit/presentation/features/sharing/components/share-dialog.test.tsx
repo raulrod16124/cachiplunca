@@ -22,6 +22,8 @@ import { createAppError, ERROR_CODES } from '../../../../../../shared/errors';
 import { FakeInvitationRepository } from '../../../../../fixtures/fake-invitation-repository';
 import { FakeMembershipRepository } from '../../../../../fixtures/fake-membership-repository';
 import { FakeGuestLinkRepository } from '../../../../../fixtures/fake-guest-link-repository';
+import { localeWrapper } from '../../../../../setup/locale-wrapper';
+import { MESSAGES, translate } from '../../../../../../presentation/i18n';
 
 const WORKSPACE_ID = 'ws-1';
 const CURRENT_USER_ID = 'user-a';
@@ -48,6 +50,7 @@ interface RenderOptions {
   readonly listPendingInvitations?: ReturnType<typeof createListPendingInvitations>;
   readonly guestLinks?: GuestLinkServices;
   readonly canManageGuestLinks?: boolean;
+  readonly locale?: 'en' | 'es';
 }
 
 function renderDialog(repository: FakeMembershipRepository, options: RenderOptions = {}) {
@@ -73,6 +76,7 @@ function renderDialog(repository: FakeMembershipRepository, options: RenderOptio
       canManageGuestLinks={options.canManageGuestLinks}
       onLeft={onLeft}
     />,
+    options.locale === undefined ? undefined : { wrapper: localeWrapper(options.locale) },
   );
   return { onOpenChange, onLeft };
 }
@@ -211,6 +215,44 @@ describe('ShareDialog', () => {
     expect(
       await screen.findByText('You do not have permission to change member roles in this board.'),
     ).toBeInTheDocument();
+  });
+
+  it('localizes an invalid role error', async () => {
+    const repository = new FakeMembershipRepository();
+    await seed(repository, CURRENT_USER_ID, 'owner');
+    await seed(repository, 'user-b', 'editor');
+    const changeMemberRole: ChangeMemberRole = async () => ({
+      status: 'invalid-input',
+      fieldErrors: { role: 'Choose a valid role.' },
+    });
+
+    renderDialog(repository, { changeMemberRole });
+    await screen.findByText('user-b');
+
+    fireEvent.click(screen.getByRole('combobox', { name: 'Role for user-b' }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Viewer' }));
+
+    expect(await screen.findByText(MESSAGES.en['errors.invalidRole'])).toBeInTheDocument();
+  });
+
+  it('localizes an invalid role error in Spanish', async () => {
+    const repository = new FakeMembershipRepository();
+    await seed(repository, CURRENT_USER_ID, 'owner');
+    await seed(repository, 'user-b', 'editor');
+    const changeMemberRole: ChangeMemberRole = async () => ({
+      status: 'invalid-input',
+      fieldErrors: { role: 'Choose a valid role.' },
+    });
+
+    renderDialog(repository, { changeMemberRole, locale: 'es' });
+    await screen.findByText('user-b');
+
+    fireEvent.click(
+      screen.getByRole('combobox', { name: translate('es', 'share.roleFor', { name: 'user-b' }) }),
+    );
+    fireEvent.click(await screen.findByRole('option', { name: MESSAGES.es['share.role.viewer'] }));
+
+    expect(await screen.findByText(MESSAGES.es['errors.invalidRole'])).toBeInTheDocument();
   });
 
   it('shows the invite tab only when invitation services and permission are available', async () => {

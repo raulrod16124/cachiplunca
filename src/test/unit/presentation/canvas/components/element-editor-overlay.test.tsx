@@ -10,6 +10,8 @@ import {
 } from '../../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../../domain/shared';
 import { ElementEditorOverlay } from '../../../../../presentation/canvas/components/element-editor-overlay';
+import { MESSAGES } from '../../../../../presentation/i18n';
+import { localeWrapper } from '../../../../setup/locale-wrapper';
 
 jest.mock('../../../../../presentation/canvas/components/rich-text-editor', () =>
   require('../../../../fixtures/rich-text-editor-stub'),
@@ -293,6 +295,30 @@ describe('ElementEditorOverlay', () => {
   });
 
   describe('link', () => {
+    it('uses the localized url placeholder', () => {
+      const element = createLink('https://example.com', 'Example');
+
+      render(<ElementEditorOverlay element={element} onCommit={jest.fn()} onCancel={jest.fn()} />);
+
+      expect(screen.getByLabelText('Link URL')).toHaveAttribute(
+        'placeholder',
+        MESSAGES.en['canvas.linkUrlPlaceholder'],
+      );
+    });
+
+    it('uses the Spanish url placeholder', () => {
+      const element = createLink('https://example.com', 'Example');
+
+      render(<ElementEditorOverlay element={element} onCommit={jest.fn()} onCancel={jest.fn()} />, {
+        wrapper: localeWrapper('es'),
+      });
+
+      expect(screen.getByLabelText(MESSAGES.es['canvas.linkUrl'])).toHaveAttribute(
+        'placeholder',
+        MESSAGES.es['canvas.linkUrlPlaceholder'],
+      );
+    });
+
     it('commits both title and url', async () => {
       const user = userEvent.setup();
       const element = createLink('https://example.com', 'Example');

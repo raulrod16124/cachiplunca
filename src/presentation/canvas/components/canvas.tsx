@@ -87,6 +87,7 @@ import type { ElementRendererRegistry } from '../renderers';
 import { DecorativeSpark, PaperTexture } from '../../components/decorative';
 import { EmptyState } from '../../components/empty-state';
 import { useI18n } from '../../i18n';
+import type { TranslationKey } from '../../i18n';
 import { CanvasActionsToolbar } from './canvas-actions-toolbar';
 import { ElementContextMenu } from './element-context-menu';
 import { ElementEditorOverlay } from './element-editor-overlay';
@@ -223,8 +224,24 @@ export const CULLING_MARGIN = 64;
 
 const BOARD_SUMMARY_ID = 'canvas-board-summary';
 
-const CANVAS_SHORTCUTS =
-  'Arrow keys to move selection · Shift + Arrow to extend selection · Drag on empty canvas to pan · Shift + drag to select · Space + drag or middle-drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo · Ctrl/Cmd + ] to bring to front · Ctrl/Cmd + [ to send to back · Right-click an object for more options';
+const CANVAS_SHORTCUT_ITEM_KEYS = [
+  ['shortcuts.selection.navigate', 'shortcuts.keys.arrowKeys'],
+  ['shortcuts.selection.extend', 'shortcuts.keys.shiftArrowKeys'],
+  ['shortcuts.canvas.pan', 'shortcuts.keys.pan'],
+  ['shortcuts.selection.marquee', 'shortcuts.keys.marquee'],
+  ['shortcuts.canvas.zoom', 'shortcuts.keys.zoom'],
+  ['shortcuts.selection.clear', 'shortcuts.keys.escape'],
+  ['shortcuts.selection.selectAll', 'shortcuts.keys.selectAll'],
+  ['shortcuts.selection.delete', 'shortcuts.keys.delete'],
+  ['shortcuts.selection.duplicate', 'shortcuts.keys.duplicate'],
+  ['shortcuts.selection.copy', 'shortcuts.keys.copy'],
+  ['shortcuts.selection.paste', 'shortcuts.keys.paste'],
+  ['shortcuts.selection.undo', 'shortcuts.keys.undo'],
+  ['shortcuts.selection.redo', 'shortcuts.keys.redo'],
+  ['shortcuts.selection.bringToFront', 'shortcuts.keys.bringToFront'],
+  ['shortcuts.selection.sendToBack', 'shortcuts.keys.sendToBack'],
+  ['shortcuts.selection.contextMenu', 'shortcuts.keys.contextMenu'],
+] as const satisfies readonly (readonly [TranslationKey, TranslationKey])[];
 
 function hasFilePayload(dataTransfer: DataTransfer | null): boolean {
   return (
@@ -349,6 +366,11 @@ export function Canvas({
   commandRef,
 }: CanvasProps & { readonly commandRef?: Ref<CanvasCommandHandle> }): ReactElement {
   const { t } = useI18n();
+  const canvasShortcuts = useMemo(
+    () =>
+      CANVAS_SHORTCUT_ITEM_KEYS.map(([action, keys]) => `${t(action)} — ${t(keys)}`).join(' · '),
+    [t],
+  );
   const viewport = useSyncExternalStore(store.subscribe, store.getSnapshot);
   const selection = useSyncExternalStore(selectionStore.subscribe, selectionStore.getSnapshot);
   const spacePressed = useSpacePressed();
@@ -543,7 +565,7 @@ export function Canvas({
 
     return [...connectors, ...others];
   }, [elements]);
-  const boardSummary = useMemo(() => describeBoard(elements), [elements]);
+  const boardSummary = useMemo(() => describeBoard(elements, t), [elements, t]);
   const { isPanning, ref: panRef } = usePan({
     onPan: store.pan,
     onEmptyClick: handleClear,
@@ -1342,11 +1364,12 @@ export function Canvas({
 
   const ariaLabels = useMemo(() => {
     const labels = new Map<string, string>();
+    const now = new Date();
     for (const element of elements) {
-      labels.set(element.id.value, describeElement(element, elements));
+      labels.set(element.id.value, describeElement(element, elements, now, t));
     }
     return labels;
-  }, [elements]);
+  }, [elements, t]);
 
   const visibleIds = useMemo<ReadonlySet<string> | null>(() => {
     const measured =
@@ -1498,7 +1521,7 @@ export function Canvas({
             titleAs="h2"
             titleVariant="display"
             tone="brand"
-            description={CANVAS_SHORTCUTS}
+            description={canvasShortcuts}
             illustration={<DecorativeSpark color="orange-500" size="lg" />}
             actionLabel={
               readOnly || onCreateElement === undefined ? undefined : t('canvas.empty.action')

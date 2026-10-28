@@ -109,7 +109,7 @@ export function ShareDialog({
       setErrorMessage(localizeMessage(t, describeListMembersError(toAppError(error))));
       setStatus('error');
     }
-  }, [listWorkspaceMembers, workspaceId]);
+  }, [listWorkspaceMembers, workspaceId, t]);
 
   useEffect(() => {
     if (!open) {
@@ -137,7 +137,7 @@ export function ShareDialog({
         if (result.status === 'ok') {
           await fetchMembers();
         } else if (result.status === 'invalid-input') {
-          setActionError('Choose a valid role.');
+          setActionError(localizeMessage(t, result.fieldErrors.role ?? 'Choose a valid role.'));
         } else {
           setActionError(localizeMessage(t, describeChangeMemberRoleError(result.error)));
         }
@@ -147,7 +147,7 @@ export function ShareDialog({
         setPendingUserId(null);
       }
     },
-    [changeMemberRole, currentUserId, fetchMembers, workspaceId],
+    [changeMemberRole, currentUserId, fetchMembers, workspaceId, t],
   );
 
   const handleRemove = useCallback(
@@ -174,7 +174,7 @@ export function ShareDialog({
         setPendingUserId(null);
       }
     },
-    [removeMember, currentUserId, fetchMembers, workspaceId],
+    [removeMember, currentUserId, fetchMembers, workspaceId, t],
   );
 
   const handleLeave = useCallback(async (): Promise<void> => {
@@ -195,7 +195,7 @@ export function ShareDialog({
     } finally {
       setPendingUserId(null);
     }
-  }, [leaveWorkspace, currentUserId, workspaceId, onLeft]);
+  }, [leaveWorkspace, currentUserId, workspaceId, onLeft, t]);
 
   return (
     <Dialog

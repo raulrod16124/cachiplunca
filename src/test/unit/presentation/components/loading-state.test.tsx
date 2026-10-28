@@ -1,6 +1,8 @@
 import { screen } from '@testing-library/react';
 import { render } from '../../../setup/render-with-theme';
+import { localeWrapper } from '../../../setup/locale-wrapper';
 import { LoadingState } from '../../../../presentation/components/loading-state';
+import { MESSAGES } from '../../../../presentation/i18n';
 
 function styleText(): string {
   return [...document.head.querySelectorAll('style')]
@@ -12,7 +14,12 @@ describe('LoadingState', () => {
   it('renders with default message and status role', () => {
     render(<LoadingState />);
     expect(screen.getByRole('status')).toBeInTheDocument();
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    expect(screen.getByText(MESSAGES.en['common.loading'])).toBeInTheDocument();
+  });
+
+  it('renders the default message in Spanish', () => {
+    render(<LoadingState />, { wrapper: localeWrapper('es') });
+    expect(screen.getByText(MESSAGES.es['common.loading'])).toBeInTheDocument();
   });
 
   it('renders custom message', () => {
@@ -23,7 +30,7 @@ describe('LoadingState', () => {
   it('renders without message when empty string', () => {
     render(<LoadingState message="" />);
     expect(screen.getByRole('status')).toBeInTheDocument();
-    expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+    expect(screen.queryByText(MESSAGES.en['common.loading'])).not.toBeInTheDocument();
   });
 
   it('marks the status as busy', () => {

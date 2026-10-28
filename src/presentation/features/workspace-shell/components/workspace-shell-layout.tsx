@@ -33,6 +33,7 @@ import type {
   TaskFormValues,
 } from '../../../canvas/components/task-form-dialog';
 import { KeyboardShortcutsDialog } from './keyboard-shortcuts-dialog';
+import { useI18n } from '../../../i18n';
 import { CommentsPanel } from './comments-panel';
 import { BoardPresentation } from './board-presentation';
 import { TaskPlanPanel } from './task-plan-panel';
@@ -192,6 +193,7 @@ export function WorkspaceShellLayout({
   unresolvedCommentCounts,
   onCommentSaved,
 }: WorkspaceShellLayoutProps): ReactNode {
+  const { t } = useI18n();
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [planOpen, setPlanOpen] = useState(false);
@@ -365,7 +367,7 @@ export function WorkspaceShellLayout({
           <Text color="color.text.primary">{accessErrorMessage}</Text>
           {onRetryRole === undefined ? null : (
             <Button type="button" variant="outline" size="sm" onClick={onRetryRole}>
-              Retry
+              {t('common.retry')}
             </Button>
           )}
         </AccessBanner>

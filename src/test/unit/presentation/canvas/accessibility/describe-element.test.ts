@@ -9,6 +9,12 @@ import {
 import type { Element } from '../../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../../domain/shared';
 import { describeBoard, describeElement } from '../../../../../presentation/canvas/accessibility';
+import { translate } from '../../../../../presentation/i18n';
+
+const tEs = (
+  key: Parameters<typeof translate>[1],
+  params?: Readonly<Record<string, string | number>>,
+) => translate('es', key, params);
 
 const WORKSPACE = WorkspaceId.create('ws-1');
 const USER = UserId.create('user-1');
@@ -111,5 +117,39 @@ describe('describeBoard', () => {
 
   it('uses the singular noun for a single element', () => {
     expect(describeBoard([text])).toBe('Board with 1 element: 1 text.');
+  });
+
+  it('describes the board in Spanish when a translator is provided', () => {
+    expect(describeBoard([], tEs)).toBe('Este tablero está vacío.');
+    expect(describeBoard([text, note, task, connector], tEs)).toBe(
+      'Tablero con 4 elementos: 1 texto, 1 nota, 1 tarea, 1 conector.',
+    );
+    expect(describeBoard([text], tEs)).toBe('Tablero con 1 elemento: 1 texto.');
+  });
+});
+
+describe('describeElement in Spanish', () => {
+  it('localizes element labels, task status and connector references', () => {
+    expect(describeElement(text, [], new Date(), tEs)).toBe('Texto: Hello world');
+    expect(describeElement(task, [], new Date(), tEs)).toBe('Tarea: Ship it, en progreso');
+    expect(describeElement(connector, [text, task, connector], new Date(), tEs)).toBe(
+      'Conector de texto: Hello world a tarea: Ship it',
+    );
+  });
+
+  it('localizes due and overdue task details', () => {
+    const taskWithDue = createTaskElement({
+      ...base('task-due-es'),
+      title: 'Deliver',
+      status: 'todo',
+      dueDate: new Date('2026-03-01T00:00:00.000Z'),
+    });
+
+    expect(describeElement(taskWithDue, [], new Date('2026-10-20T12:00:00.000Z'), tEs)).toBe(
+      'Tarea: Deliver, por hacer, vencida (vence el 2026-03-01)',
+    );
+    expect(describeElement(taskWithDue, [], new Date('2026-01-20T12:00:00.000Z'), tEs)).toBe(
+      'Tarea: Deliver, por hacer, vence el 2026-03-01',
+    );
   });
 });

@@ -1,12 +1,19 @@
 import { screen } from '@testing-library/react';
 import { render } from '../../../setup/render-with-theme';
+import { localeWrapper } from '../../../setup/locale-wrapper';
 import { Spinner } from '../../../../presentation/components/spinner';
+import { MESSAGES } from '../../../../presentation/i18n';
 
 describe('Spinner', () => {
   it('renders with default label and status role', () => {
     render(<Spinner />);
     expect(screen.getByRole('status')).toBeInTheDocument();
-    expect(screen.getByLabelText('Loading')).toBeInTheDocument();
+    expect(screen.getByLabelText(MESSAGES.en['common.loading'])).toBeInTheDocument();
+  });
+
+  it('renders the default label in Spanish', () => {
+    render(<Spinner />, { wrapper: localeWrapper('es') });
+    expect(screen.getByLabelText(MESSAGES.es['common.loading'])).toBeInTheDocument();
   });
 
   it('renders with custom label', () => {

@@ -1,6 +1,7 @@
 import { Button, Inline, Stack, Text } from '@raulrod/ui';
 import type { HeadingLevel } from '@raulrod/ui';
 import type { ReactNode } from 'react';
+import { useI18n } from '../i18n';
 import { StateIllustration, StateTitle } from './state-shared';
 import type { StateTitleVariant, StateTone } from './state-shared';
 
@@ -20,7 +21,7 @@ export interface ErrorStateProps {
 }
 
 export function ErrorState({
-  title = 'Something went wrong',
+  title,
   description,
   actionLabel,
   onAction,
@@ -33,6 +34,9 @@ export function ErrorState({
   titleVariant = 'default',
   titleAs = 'h2',
 }: ErrorStateProps): ReactNode {
+  const { t } = useI18n();
+  const resolvedTitle = title ?? t('common.somethingWentWrong');
+
   return (
     <Stack gap="space-3" role="alert" aria-live="polite" align="center" justify="center">
       {illustration ? (
@@ -42,7 +46,7 @@ export function ErrorState({
       ) : null}
       <Stack gap="space-1" align="center">
         <StateTitle as={titleAs} titleVariant={titleVariant}>
-          {title}
+          {resolvedTitle}
         </StateTitle>
         {description ? <Text color="color.text.muted">{description}</Text> : null}
       </Stack>
@@ -60,7 +64,7 @@ export function ErrorState({
           ) : null}
           {dismissible && onDismiss ? (
             <Button type="button" variant="outline" onClick={onDismiss}>
-              Dismiss
+              {t('common.dismiss')}
             </Button>
           ) : null}
         </Inline>

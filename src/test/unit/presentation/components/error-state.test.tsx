@@ -1,6 +1,8 @@
 import { screen, fireEvent } from '@testing-library/react';
 import { render } from '../../../setup/render-with-theme';
+import { localeWrapper } from '../../../setup/locale-wrapper';
 import { ErrorState } from '../../../../presentation/components/error-state';
+import { MESSAGES } from '../../../../presentation/i18n';
 
 function styleText(): string {
   return [...document.head.querySelectorAll('style')]
@@ -12,7 +14,12 @@ describe('ErrorState', () => {
   it('renders with default title and alert role', () => {
     render(<ErrorState />);
     expect(screen.getByRole('alert')).toBeInTheDocument();
-    expect(screen.getByText('Something went wrong')).toBeInTheDocument();
+    expect(screen.getByText(MESSAGES.en['common.somethingWentWrong'])).toBeInTheDocument();
+  });
+
+  it('renders the default title in Spanish', () => {
+    render(<ErrorState />, { wrapper: localeWrapper('es') });
+    expect(screen.getByText(MESSAGES.es['common.somethingWentWrong'])).toBeInTheDocument();
   });
 
   it('renders description and action', () => {
@@ -34,7 +41,14 @@ describe('ErrorState', () => {
   it('renders dismissible button', () => {
     const onDismiss = jest.fn();
     render(<ErrorState dismissible onDismiss={onDismiss} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
+    fireEvent.click(screen.getByRole('button', { name: MESSAGES.en['common.dismiss'] }));
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders the dismissible button in Spanish', () => {
+    const onDismiss = jest.fn();
+    render(<ErrorState dismissible onDismiss={onDismiss} />, { wrapper: localeWrapper('es') });
+    fireEvent.click(screen.getByRole('button', { name: MESSAGES.es['common.dismiss'] }));
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 

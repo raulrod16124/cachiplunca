@@ -1,7 +1,10 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState, type ReactNode } from 'react';
+import { render } from '../../../setup/render-with-theme';
+import { localeWrapper } from '../../../setup/locale-wrapper';
 import { ErrorBoundary } from '../../../../presentation/components/error-boundary';
+import { MESSAGES } from '../../../../presentation/i18n';
 
 function Bomb({ shouldThrow }: { readonly shouldThrow: boolean }): ReactNode {
   if (shouldThrow) {
@@ -50,8 +53,24 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>,
     );
 
-    expect(screen.getByRole('alert')).toHaveTextContent('Something went wrong');
-    expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent(MESSAGES.en['common.somethingWentWrong']);
+    expect(
+      screen.getByRole('button', { name: MESSAGES.en['common.tryAgain'] }),
+    ).toBeInTheDocument();
+  });
+
+  it('renders the default fallback in Spanish', () => {
+    render(
+      <ErrorBoundary>
+        <Bomb shouldThrow />
+      </ErrorBoundary>,
+      { wrapper: localeWrapper('es') },
+    );
+
+    expect(screen.getByRole('alert')).toHaveTextContent(MESSAGES.es['common.somethingWentWrong']);
+    expect(
+      screen.getByRole('button', { name: MESSAGES.es['common.tryAgain'] }),
+    ).toBeInTheDocument();
   });
 
   it('calls onError when a child throws', () => {

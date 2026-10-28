@@ -437,7 +437,7 @@ function LinkFieldsEditor({
       <UrlField
         data-editor-field="url"
         aria-label={t('canvas.linkUrl')}
-        placeholder="https://example.com"
+        placeholder={t('canvas.linkUrlPlaceholder')}
         autoFocus
         value={urlDraft}
         onChange={(event) => setUrlDraft(event.target.value)}

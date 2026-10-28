@@ -21,6 +21,12 @@ import { createFunctionCommand } from '../../../../../application/commands';
 import type { UpdateElementInput } from '../../../../../application/commands';
 import { Canvas } from '../../../../../presentation/canvas/components/canvas';
 import { installDragEventPolyfill } from '../../../../fixtures/drag-event';
+import { localeWrapper } from '../../../../setup/locale-wrapper';
+import { MESSAGES } from '../../../../../presentation/i18n';
+
+function fragment(text: string): RegExp {
+  return new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+}
 
 jest.mock('../../../../../presentation/canvas/components/rich-text-editor', () =>
   require('../../../../fixtures/rich-text-editor-stub'),
@@ -101,6 +107,23 @@ function renderCanvas(
   );
 
   return { store, selectionStore, container };
+}
+
+function renderCanvasInLocale(
+  locale: 'en' | 'es',
+  elements: readonly Element[] = [],
+): {
+  store: ReturnType<typeof createCanvasViewportStore>;
+  selectionStore: ReturnType<typeof createSelectionStore>;
+} {
+  const store = createCanvasViewportStore(Size.create(800, 600));
+  const selectionStore = createSelectionStore();
+
+  render(<Canvas store={store} selectionStore={selectionStore} elements={elements} />, {
+    wrapper: localeWrapper(locale),
+  });
+
+  return { store, selectionStore };
 }
 
 interface RotationCanvasOptions {
@@ -251,10 +274,23 @@ describe('Canvas', () => {
 
     expect(screen.getByRole('application', { name: 'Canvas' })).toBeInTheDocument();
     expect(
-      screen.getByText(
-        'Arrow keys to move selection · Shift + Arrow to extend selection · Drag on empty canvas to pan · Shift + drag to select · Space + drag or middle-drag to pan · Ctrl/Cmd + scroll to zoom · Esc to clear · Ctrl/Cmd + A to select all · Delete to remove · Ctrl/Cmd + D to duplicate · Ctrl/Cmd + C to copy · Ctrl/Cmd + V to paste · Ctrl/Cmd + Z to undo · Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y to redo · Ctrl/Cmd + ] to bring to front · Ctrl/Cmd + [ to send to back · Right-click an object for more options',
-      ),
+      screen.getByText(fragment(MESSAGES.en['shortcuts.selection.navigate'])),
     ).toBeInTheDocument();
+    expect(
+      screen.getByText(fragment(MESSAGES.en['shortcuts.selection.contextMenu'])),
+    ).toBeInTheDocument();
+  });
+
+  it('renders the shortcut hint in Spanish', () => {
+    renderCanvasInLocale('es');
+
+    expect(
+      screen.getByText(fragment(MESSAGES.es['shortcuts.selection.navigate'])),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(fragment(MESSAGES.es['shortcuts.selection.contextMenu'])),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(fragment(MESSAGES.en['shortcuts.selection.navigate']))).toBeNull();
   });
 
   it('shows an empty board state when there are no elements', () => {

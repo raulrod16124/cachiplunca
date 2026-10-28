@@ -1,6 +1,7 @@
 import { Button, Inline, Stack, Text } from '@raulrod/ui';
 import type { ButtonVariant, HeadingLevel } from '@raulrod/ui';
 import type { ReactNode } from 'react';
+import { useI18n } from '../i18n';
 import { StateIllustration, StateTitle } from './state-shared';
 import type { StateTitleVariant, StateTone } from './state-shared';
 
@@ -18,7 +19,7 @@ export interface EmptyStateProps {
 }
 
 export function EmptyState({
-  title = 'Nothing here yet',
+  title,
   description,
   actionLabel,
   onAction,
@@ -29,6 +30,9 @@ export function EmptyState({
   titleVariant = 'default',
   titleAs = 'h2',
 }: EmptyStateProps): ReactNode {
+  const { t } = useI18n();
+  const resolvedTitle = title ?? t('common.emptyTitle');
+
   return (
     <Stack gap="space-3" role="status" aria-live="polite" align="center" justify="center">
       {illustration ? (
@@ -39,7 +43,7 @@ export function EmptyState({
       {icon ? <Inline>{icon}</Inline> : null}
       <Stack gap="space-1" align="center">
         <StateTitle as={titleAs} titleVariant={titleVariant}>
-          {title}
+          {resolvedTitle}
         </StateTitle>
         {description ? <Text color="color.text.muted">{description}</Text> : null}
       </Stack>
