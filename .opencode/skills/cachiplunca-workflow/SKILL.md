@@ -32,15 +32,22 @@ user before changing or deleting its card.
 ## Selecting the next task
 
 1. Read `docs/jiras/INDEX.md`.
-2. Load the active JIRA documents in index order.
+2. The active phase is the highest `Orden` whose phase `Estado` is not `DONE`.
+   Only tasks from that phase are eligible by default.
 3. Filter `TODO` tasks.
 4. Exclude tasks whose dependencies are not `DONE`.
 5. Exclude tasks with open blocking questions.
-6. Sort by: phase order, priority (`P0` first), recommended graph order, size,
-   risk, then ID.
+6. Sort within the active phase by: priority (`P0` first), document order,
+   recommended graph order, size, risk, then ID.
 7. If there is a tie, ask or choose the first one and explain why.
 8. If nothing is eligible, report blocked tasks, review tasks and completed
-   phases. Do not invent work.
+   phases. Do not jump to an older phase; use `jira:next --all` only when the
+   user asks for it or there is no active phase.
+9. Do not invent work.
+
+`node scripts/jira.mjs next` applies this rule. `next --all` searches every
+phase in ascending index order (legacy behaviour). `card <ID>` prints a single
+card, useful when a document is too large to load whole.
 
 When `/jira-next` receives `plan`, only select and plan. Do not modify code.
 
@@ -152,7 +159,10 @@ The deterministic selector is available through:
 ```bash
 npm run jira:list
 npm run jira:next
+npm run jira:next -- --all
+npm run jira:card <ID>
 npm run jira:validate
+npm run test:jira
 ```
 
 ## Metrics

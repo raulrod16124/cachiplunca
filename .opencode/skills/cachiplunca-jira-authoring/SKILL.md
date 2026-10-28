@@ -33,7 +33,8 @@ Preferred input:
 
 If the target is missing, read `docs/jiras/INDEX.md`:
 
-1. If there is exactly one active phase, propose appending there.
+1. The active phase is the highest `Orden` whose phase `Estado` is not `DONE`.
+   Propose appending there.
 2. If the list looks like a new phase, propose a new document.
 3. If it is ambiguous, ask before writing.
 

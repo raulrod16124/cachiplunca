@@ -216,7 +216,10 @@ TypeScript.
 npm run jira:list
 npm run jira:list TODO
 npm run jira:next
+npm run jira:next -- --all
+npm run jira:card CACH-PRD-001
 npm run jira:validate
+npm run test:jira
 ```
 
 También se pueden ejecutar directamente:
@@ -224,12 +227,17 @@ También se pueden ejecutar directamente:
 ```bash
 node scripts/jira.mjs list
 node scripts/jira.mjs next
+node scripts/jira.mjs card CACH-PRD-001
 node scripts/jira.mjs validate
 ```
 
-`next` respeta el orden de fase, la prioridad, el orden del documento, el tamaño
-y el riesgo. No selecciona tareas con dependencias pendientes ni con preguntas
-bloqueantes.
+La **fase activa** es la de mayor `Orden` del índice cuyo estado no sea `DONE`.
+`next` solo busca tareas `TODO` en esa fase y las ordena por prioridad, orden del
+documento, tamaño y riesgo. `next --all` recorre todas las fases en orden
+ascendente. `card <ID>` imprime una ficha completa sin cargar el documento entero.
+El selector no elige tareas con dependencias pendientes ni con preguntas
+bloqueantes. Su lógica pura vive en `scripts/jira-selector.mjs` y se cubre con
+`npm run test:jira`.
 
 ## 11. Matriz de gates
 

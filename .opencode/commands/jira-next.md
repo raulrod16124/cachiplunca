@@ -20,12 +20,14 @@ Interpretación:
 Selección:
 
 1. Ejecuta `node scripts/jira.mjs next` para obtener la tarea elegible.
-2. Si el script no está disponible, lee `docs/jiras/INDEX.md`, carga los JIRA
-   activos y aplica el mismo orden.
+2. Si el script no está disponible, lee `docs/jiras/INDEX.md`: la fase activa
+   es la de mayor `Orden` cuyo estado no sea `DONE`, y solo sus tareas son
+   elegibles salvo que el usuario pida `--all`.
 3. Excluye tareas con dependencias que no estén `DONE` o con preguntas
    bloqueantes.
-4. Si hay empate, pregunta o elige la primera explicando el motivo.
-5. Si no hay tareas elegibles, informa de bloqueos y tareas en `REVIEW`.
+4. Usa `node scripts/jira.mjs card <ID>` si necesitas leer una ficha completa.
+5. Si hay empate, pregunta o elige la primera explicando el motivo.
+6. Si no hay tareas elegibles, informa de bloqueos y tareas en `REVIEW`.
 
 Ejecución, salvo que el argumento sea `plan`:
 

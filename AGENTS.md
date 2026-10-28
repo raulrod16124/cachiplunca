@@ -19,6 +19,7 @@
 ```bash
 npm run dev            # Vite dev server
 npm test               # Jest, includes the architecture boundary gate
+npm run test:jira      # Node test runner, JIRA selector logic
 npm run lint           # Oxlint
 npm run format:check   # Prettier check
 npx tsc -b --noEmit    # Type check
@@ -48,6 +49,8 @@ Deterministic JIRA helpers:
 ```bash
 npm run jira:list
 npm run jira:next
+npm run jira:next -- --all
+npm run jira:card <ID>
 npm run jira:validate
 ```
 
@@ -95,6 +98,7 @@ TypeScript work.
 - `npm run lint` passes.
 - `npm run format:check` passes.
 - `npm test` passes.
+- `npm run test:jira` passes when the JIRA selector changes.
 - `npm run test:rules` passes when Firestore/Storage is touched.
 - `npm run test:e2e` passes when real user flows are touched.
 - i18n ES/EN parity for visible text.
