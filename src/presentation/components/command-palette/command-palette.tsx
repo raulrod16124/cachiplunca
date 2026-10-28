@@ -1,6 +1,5 @@
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
@@ -19,6 +18,7 @@ import {
   type ReactNode,
 } from 'react';
 import styled, { css } from 'styled-components';
+import { ModalBody, ModalContent, ModalHeader, ModalLayout } from '../modal-layout';
 import { useI18n } from '../../i18n';
 import { useCommandPaletteShortcut } from '../../hooks/use-command-palette-shortcut';
 import {
@@ -29,7 +29,7 @@ import {
 } from './command-palette-filter';
 import type { CommandPaletteGroup } from './command-palette.types';
 
-const PaletteContent = styled(DialogContent)<{ $surface: CommandPaletteSurface }>`
+const PaletteContent = styled(ModalContent)<{ $surface: CommandPaletteSurface }>`
   && {
     gap: ${({ theme }) => theme.space[4]};
     max-width: 40rem;
@@ -354,103 +354,111 @@ export function CommandPalette({
         $surface={surface}
         {...(surface === 'stitch' ? { 'data-surface': 'stitch' } : {})}
       >
-        <DialogHeader>
-          <DialogTitle>{t('commandPalette.title')}</DialogTitle>
-          <DialogDescription>{t('commandPalette.description')}</DialogDescription>
-        </DialogHeader>
-        <Body>
-          <SearchField>
-            <Search aria-hidden="true" size={16} />
-            <SearchInput
-              ref={inputRef}
-              type="text"
-              size="lg"
-              role="combobox"
-              aria-label={t('commandPalette.inputLabel')}
-              aria-autocomplete="list"
-              aria-expanded={open}
-              aria-controls={listboxId}
-              aria-activedescendant={
-                activeItem === undefined ? undefined : `${listboxId}-option-${resolvedActiveIndex}`
-              }
-              placeholder={t('commandPalette.placeholder')}
-              value={query}
-              onChange={(event) => {
-                setQuery(event.target.value);
-                setActiveIndex(-1);
-              }}
-              onKeyDown={handleKeyDown}
-              data-testid="command-palette-input"
-            />
-          </SearchField>
-          <VisuallyHidden role="status" aria-live="polite">
-            {resultLabel}
-          </VisuallyHidden>
-          {statusMessage === null || query.trim().length === 0 ? null : (
-            <Text color="color.text.muted" size="font.size.sm" role="status">
-              {statusMessage}
-            </Text>
-          )}
-          <Results id={listboxId} role="listbox" aria-label={t('commandPalette.resultsLabel')}>
-            {items.length === 0 ? (
-              <Empty color="color.text.muted" size="font.size.sm">
-                {t('commandPalette.empty')}
-              </Empty>
-            ) : (
-              visibleGroups.map((group) => {
-                const headingId = `${listboxId}-group-${group.id}`;
+        <ModalLayout>
+          <ModalHeader>
+            <DialogHeader>
+              <DialogTitle>{t('commandPalette.title')}</DialogTitle>
+              <DialogDescription>{t('commandPalette.description')}</DialogDescription>
+            </DialogHeader>
+          </ModalHeader>
+          <ModalBody variant="none">
+            <Body>
+              <SearchField>
+                <Search aria-hidden="true" size={16} />
+                <SearchInput
+                  ref={inputRef}
+                  type="text"
+                  size="lg"
+                  role="combobox"
+                  aria-label={t('commandPalette.inputLabel')}
+                  aria-autocomplete="list"
+                  aria-expanded={open}
+                  aria-controls={listboxId}
+                  aria-activedescendant={
+                    activeItem === undefined
+                      ? undefined
+                      : `${listboxId}-option-${resolvedActiveIndex}`
+                  }
+                  placeholder={t('commandPalette.placeholder')}
+                  value={query}
+                  onChange={(event) => {
+                    setQuery(event.target.value);
+                    setActiveIndex(-1);
+                  }}
+                  onKeyDown={handleKeyDown}
+                  data-testid="command-palette-input"
+                />
+              </SearchField>
+              <VisuallyHidden role="status" aria-live="polite">
+                {resultLabel}
+              </VisuallyHidden>
+              {statusMessage === null || query.trim().length === 0 ? null : (
+                <Text color="color.text.muted" size="font.size.sm" role="status">
+                  {statusMessage}
+                </Text>
+              )}
+              <Results id={listboxId} role="listbox" aria-label={t('commandPalette.resultsLabel')}>
+                {items.length === 0 ? (
+                  <Empty color="color.text.muted" size="font.size.sm">
+                    {t('commandPalette.empty')}
+                  </Empty>
+                ) : (
+                  visibleGroups.map((group) => {
+                    const headingId = `${listboxId}-group-${group.id}`;
 
-                return (
-                  <Group key={group.id} role="group" aria-labelledby={headingId}>
-                    <GroupTitle id={headingId}>{group.label}</GroupTitle>
-                    <OptionList role="none">
-                      {group.items.map((item) => {
-                        optionIndex += 1;
-                        const index = optionIndex;
-                        const active = index === resolvedActiveIndex;
-                        const disabled = item.disabled === true;
+                    return (
+                      <Group key={group.id} role="group" aria-labelledby={headingId}>
+                        <GroupTitle id={headingId}>{group.label}</GroupTitle>
+                        <OptionList role="none">
+                          {group.items.map((item) => {
+                            optionIndex += 1;
+                            const index = optionIndex;
+                            const active = index === resolvedActiveIndex;
+                            const disabled = item.disabled === true;
 
-                        return (
-                          <Option
-                            key={`${group.id}-${item.id}`}
-                            id={`${listboxId}-option-${index}`}
-                            role="option"
-                            aria-selected={active}
-                            aria-disabled={disabled ? true : undefined}
-                            $disabled={disabled}
-                            data-testid={`command-palette-item-${item.id}`}
-                            onMouseMove={() => {
-                              if (!disabled) {
-                                setActiveIndex(index);
-                              }
-                            }}
-                            onMouseDown={(event) => event.preventDefault()}
-                            onClick={() => selectItem(item)}
-                          >
-                            <OptionMain>
-                              <OptionLabel>{item.label}</OptionLabel>
-                              {item.description === undefined ? null : (
-                                <OptionDescription>{item.description}</OptionDescription>
-                              )}
-                            </OptionMain>
-                            {item.shortcut === undefined ? null : (
-                              <Shortcut>{item.shortcut}</Shortcut>
-                            )}
-                          </Option>
-                        );
-                      })}
-                    </OptionList>
-                  </Group>
-                );
-              })
-            )}
-          </Results>
-          <Hint>
-            <Text color="color.text.muted" size="font.size.xs">
-              {t('commandPalette.hint')}
-            </Text>
-          </Hint>
-        </Body>
+                            return (
+                              <Option
+                                key={`${group.id}-${item.id}`}
+                                id={`${listboxId}-option-${index}`}
+                                role="option"
+                                aria-selected={active}
+                                aria-disabled={disabled ? true : undefined}
+                                $disabled={disabled}
+                                data-testid={`command-palette-item-${item.id}`}
+                                onMouseMove={() => {
+                                  if (!disabled) {
+                                    setActiveIndex(index);
+                                  }
+                                }}
+                                onMouseDown={(event) => event.preventDefault()}
+                                onClick={() => selectItem(item)}
+                              >
+                                <OptionMain>
+                                  <OptionLabel>{item.label}</OptionLabel>
+                                  {item.description === undefined ? null : (
+                                    <OptionDescription>{item.description}</OptionDescription>
+                                  )}
+                                </OptionMain>
+                                {item.shortcut === undefined ? null : (
+                                  <Shortcut>{item.shortcut}</Shortcut>
+                                )}
+                              </Option>
+                            );
+                          })}
+                        </OptionList>
+                      </Group>
+                    );
+                  })
+                )}
+              </Results>
+              <Hint>
+                <Text color="color.text.muted" size="font.size.xs">
+                  {t('commandPalette.hint')}
+                </Text>
+              </Hint>
+            </Body>
+          </ModalBody>
+        </ModalLayout>
       </PaletteContent>
     </Dialog>
   );

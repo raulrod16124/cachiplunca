@@ -1,12 +1,4 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  Stack,
-  Tabs,
-} from '@raulrod/ui';
+import { Dialog, DialogDescription, DialogHeader, DialogTitle, Stack, Tabs } from '@raulrod/ui';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import type {
   ChangeMemberRole,
@@ -24,6 +16,12 @@ import {
 import { UserId, WorkspaceId } from '../../../../domain/shared';
 import { toAppError } from '../../../../shared/errors';
 import { SectionHeader } from '../../../components/section-header';
+import {
+  ModalBody,
+  ModalContent,
+  ModalHeader,
+  ModalLayout,
+} from '../../../components/modal-layout';
 import { InvitePanel } from '../../invitations';
 import {
   describeChangeMemberRoleError,
@@ -205,68 +203,76 @@ export function ShareDialog({
       onOpenChange={onOpenChange}
       classNames={{ content: 'share-dialog-content' }}
     >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t('share.title')}</DialogTitle>
-          <DialogDescription>{t('share.description')}</DialogDescription>
-        </DialogHeader>
-        <Tabs value={tab} onValueChange={setTab}>
-          <Tabs.List>
-            {canShowInvite ? (
-              <Tabs.Trigger value={INVITE_TAB}>{t('share.tabs.invite')}</Tabs.Trigger>
-            ) : null}
-            <Tabs.Trigger value={PEOPLE_TAB}>{t('share.tabs.people')}</Tabs.Trigger>
-            {canShowGuestLink ? (
-              <Tabs.Trigger value={VIEW_LINK_TAB}>{t('share.tabs.viewLink')}</Tabs.Trigger>
-            ) : null}
-          </Tabs.List>
-          {canShowInvite && inviteMember !== undefined && listPendingInvitations !== undefined ? (
-            <Tabs.Panel value={INVITE_TAB}>
-              <InvitePanel
-                active={open && tab === INVITE_TAB}
-                workspaceId={workspaceId}
-                invitedBy={UserId.create(currentUserId)}
-                availableRoles={availableRoles}
-                inviteMember={inviteMember}
-                listPendingInvitations={listPendingInvitations}
-              />
-            </Tabs.Panel>
-          ) : null}
-          <Tabs.Panel value={PEOPLE_TAB}>
-            <Stack gap="space-4">
-              <SectionHeader
-                title={t('share.members')}
-                description={t('share.members.description')}
-              />
-              <MembersList
-                status={status}
-                members={members}
-                currentUserId={currentUserId}
-                errorMessage={errorMessage}
-                actionError={actionError}
-                pendingUserId={pendingUserId}
-                canChangeRole={canChangeRole}
-                canRemove={canRemove}
-                canLeave={canLeave}
-                onChangeRole={(userId, role) => void handleChangeRole(userId, role)}
-                onRemove={(userId) => void handleRemove(userId)}
-                onLeave={() => void handleLeave()}
-                onRetry={() => void fetchMembers()}
-              />
-            </Stack>
-          </Tabs.Panel>
-          {canShowGuestLink && guestLinks !== undefined ? (
-            <Tabs.Panel value={VIEW_LINK_TAB}>
-              <GuestLinkPanel
-                active={open && tab === VIEW_LINK_TAB}
-                workspaceId={workspaceId}
-                currentUserId={currentUserId}
-                services={guestLinks}
-              />
-            </Tabs.Panel>
-          ) : null}
-        </Tabs>
-      </DialogContent>
+      <ModalContent>
+        <ModalLayout>
+          <ModalHeader>
+            <DialogHeader>
+              <DialogTitle>{t('share.title')}</DialogTitle>
+              <DialogDescription>{t('share.description')}</DialogDescription>
+            </DialogHeader>
+          </ModalHeader>
+          <ModalBody variant="tabs">
+            <Tabs value={tab} onValueChange={setTab}>
+              <Tabs.List>
+                {canShowInvite ? (
+                  <Tabs.Trigger value={INVITE_TAB}>{t('share.tabs.invite')}</Tabs.Trigger>
+                ) : null}
+                <Tabs.Trigger value={PEOPLE_TAB}>{t('share.tabs.people')}</Tabs.Trigger>
+                {canShowGuestLink ? (
+                  <Tabs.Trigger value={VIEW_LINK_TAB}>{t('share.tabs.viewLink')}</Tabs.Trigger>
+                ) : null}
+              </Tabs.List>
+              {canShowInvite &&
+              inviteMember !== undefined &&
+              listPendingInvitations !== undefined ? (
+                <Tabs.Panel value={INVITE_TAB}>
+                  <InvitePanel
+                    active={open && tab === INVITE_TAB}
+                    workspaceId={workspaceId}
+                    invitedBy={UserId.create(currentUserId)}
+                    availableRoles={availableRoles}
+                    inviteMember={inviteMember}
+                    listPendingInvitations={listPendingInvitations}
+                  />
+                </Tabs.Panel>
+              ) : null}
+              <Tabs.Panel value={PEOPLE_TAB}>
+                <Stack gap="space-4">
+                  <SectionHeader
+                    title={t('share.members')}
+                    description={t('share.members.description')}
+                  />
+                  <MembersList
+                    status={status}
+                    members={members}
+                    currentUserId={currentUserId}
+                    errorMessage={errorMessage}
+                    actionError={actionError}
+                    pendingUserId={pendingUserId}
+                    canChangeRole={canChangeRole}
+                    canRemove={canRemove}
+                    canLeave={canLeave}
+                    onChangeRole={(userId, role) => void handleChangeRole(userId, role)}
+                    onRemove={(userId) => void handleRemove(userId)}
+                    onLeave={() => void handleLeave()}
+                    onRetry={() => void fetchMembers()}
+                  />
+                </Stack>
+              </Tabs.Panel>
+              {canShowGuestLink && guestLinks !== undefined ? (
+                <Tabs.Panel value={VIEW_LINK_TAB}>
+                  <GuestLinkPanel
+                    active={open && tab === VIEW_LINK_TAB}
+                    workspaceId={workspaceId}
+                    currentUserId={currentUserId}
+                    services={guestLinks}
+                  />
+                </Tabs.Panel>
+              ) : null}
+            </Tabs>
+          </ModalBody>
+        </ModalLayout>
+      </ModalContent>
     </Dialog>
   );
 }

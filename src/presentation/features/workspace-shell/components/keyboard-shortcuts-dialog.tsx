@@ -1,7 +1,6 @@
 import {
   Button,
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -12,12 +11,19 @@ import {
 } from '@raulrod/ui';
 import { useEffect, type ReactNode } from 'react';
 import styled from 'styled-components';
+import {
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalLayout,
+} from '../../../components/modal-layout';
 import { SHORTCUT_GROUPS } from '../../../canvas/keyboard-shortcuts';
 import { useI18n } from '../../../i18n';
 
 const EDITABLE_SELECTOR = 'input, textarea, select, [contenteditable="true"]';
 
-const Content = styled(DialogContent)`
+const Content = styled(ModalContent)`
   && {
     max-width: 44rem;
   }
@@ -136,38 +142,46 @@ export function KeyboardShortcutsDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <Content>
-        <DialogHeader>
-          <DialogTitle>{t('shortcuts.title')}</DialogTitle>
-          <DialogDescription>{t('shortcuts.description')}</DialogDescription>
-        </DialogHeader>
-        <Stack gap="space-5">
-          {SHORTCUT_GROUPS.map((group) => {
-            const headingId = `shortcuts-group-${group.id}`;
+        <ModalLayout>
+          <ModalHeader>
+            <DialogHeader>
+              <DialogTitle>{t('shortcuts.title')}</DialogTitle>
+              <DialogDescription>{t('shortcuts.description')}</DialogDescription>
+            </DialogHeader>
+          </ModalHeader>
+          <ModalBody>
+            <Stack gap="space-5">
+              {SHORTCUT_GROUPS.map((group) => {
+                const headingId = `shortcuts-group-${group.id}`;
 
-            return (
-              <Group key={group.id} aria-labelledby={headingId} data-testid={headingId}>
-                <Heading as="h3" id={headingId}>
-                  {t(group.titleKey)}
-                </Heading>
-                <ShortcutList>
-                  {group.entries.map((entry) => (
-                    <ShortcutRow key={entry.id}>
-                      <ShortcutLabel color="color.text.primary" size="font.size.sm">
-                        {t(entry.labelKey)}
-                      </ShortcutLabel>
-                      <ShortcutKeys>{t(entry.keysKey)}</ShortcutKeys>
-                    </ShortcutRow>
-                  ))}
-                </ShortcutList>
-              </Group>
-            );
-          })}
-        </Stack>
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            {t('common.close')}
-          </Button>
-        </DialogFooter>
+                return (
+                  <Group key={group.id} aria-labelledby={headingId} data-testid={headingId}>
+                    <Heading as="h3" id={headingId}>
+                      {t(group.titleKey)}
+                    </Heading>
+                    <ShortcutList>
+                      {group.entries.map((entry) => (
+                        <ShortcutRow key={entry.id}>
+                          <ShortcutLabel color="color.text.primary" size="font.size.sm">
+                            {t(entry.labelKey)}
+                          </ShortcutLabel>
+                          <ShortcutKeys>{t(entry.keysKey)}</ShortcutKeys>
+                        </ShortcutRow>
+                      ))}
+                    </ShortcutList>
+                  </Group>
+                );
+              })}
+            </Stack>
+          </ModalBody>
+          <ModalFooter>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                {t('common.close')}
+              </Button>
+            </DialogFooter>
+          </ModalFooter>
+        </ModalLayout>
       </Content>
     </Dialog>
   );

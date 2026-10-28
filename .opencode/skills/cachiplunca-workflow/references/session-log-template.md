@@ -1,0 +1,23 @@
+# Session log template
+
+Append this block to `.local/session-log.md` when a task is started, paused or
+closed.
+
+```markdown
+## YYYY-MM-DD — <ID>: <título>
+
+- JIRA: `docs/jiras/<archivo>.md`
+- Rama: `feat/<prefijo>-<nnn>-<slug>`
+- Estado inicial: `TODO`
+- Cambios: ...
+- Tests: ...
+- Gates: ...
+- Decisiones: ...
+- ADR: ...
+- Incidencias: ...
+- Estado final: `DONE` | `REVIEW` | `BLOCKED`
+- Siguiente tarea: ...
+```
+
+Keep the entry factual and short. Include test counts when they change and any
+gap detected in the JIRA or the codebase.

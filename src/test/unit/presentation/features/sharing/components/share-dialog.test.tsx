@@ -78,6 +78,16 @@ function renderDialog(repository: FakeMembershipRepository, options: RenderOptio
 }
 
 describe('ShareDialog', () => {
+  it('uses the shared tabs modal layout', async () => {
+    const repository = new FakeMembershipRepository();
+    await seed(repository, CURRENT_USER_ID, 'owner');
+    renderDialog(repository);
+    await screen.findByText('You');
+
+    expect(screen.getByTestId('modal-body')).toHaveAttribute('data-variant', 'tabs');
+    expect(screen.queryByTestId('modal-footer')).not.toBeInTheDocument();
+  });
+
   it('loads the members of the workspace on open', async () => {
     const repository = new FakeMembershipRepository();
     await seed(repository, CURRENT_USER_ID, 'owner');

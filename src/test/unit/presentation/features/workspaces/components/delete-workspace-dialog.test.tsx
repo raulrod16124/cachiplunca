@@ -40,6 +40,16 @@ function renderDialog({
 }
 
 describe('DeleteWorkspaceDialog', () => {
+  it('uses the shared modal layout and keeps the footer outside the scroll body', () => {
+    renderDialog();
+
+    const body = screen.getByTestId('modal-body');
+    const footer = screen.getByTestId('modal-footer');
+
+    expect(screen.getByTestId('modal-layout')).toContainElement(body);
+    expect(body).not.toContainElement(footer);
+  });
+
   it('renders nothing while closed', () => {
     renderDialog({ open: false });
 

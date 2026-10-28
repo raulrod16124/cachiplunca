@@ -1,7 +1,6 @@
 import {
   Button,
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -33,6 +32,14 @@ import { toAppError } from '../../../../shared/errors';
 import { readFileAsDataUrl, readFileBytes } from '../workspace-cover-file';
 import { describeCreateWorkspaceError } from '../workspace-error-messages';
 import { localizeFieldError, localizeMessage, useI18n, type TranslationKey } from '../../../i18n';
+import {
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalForm,
+  ModalHeader,
+  ModalLayout,
+} from '../../../components/modal-layout';
 import { WorkspaceCoverField } from './workspace-cover-field';
 
 type TemplateSelection = 'blank' | WorkspaceTemplateId;
@@ -245,117 +252,125 @@ export function CreateWorkspaceDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent {...(surface === 'stitch' ? { 'data-surface': 'stitch' } : {})}>
-        <DialogHeader>
-          <DialogTitle>{t('workspaces.createDialog.title')}</DialogTitle>
-          <DialogDescription>{t('workspaces.createDialog.description')}</DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} noValidate>
-          <Stack gap="space-4">
-            <FormField>
-              <FormFieldLabel>{t('workspaces.createDialog.name')}</FormFieldLabel>
-              <FormFieldControl>
-                {(field) => (
-                  <Input
-                    {...field}
-                    name="name"
-                    autoComplete="off"
-                    value={name}
-                    onChange={(event) => setName(event.target.value)}
-                  />
-                )}
-              </FormFieldControl>
-              {fieldErrors.name !== undefined && (
-                <FormFieldError>{localizeFieldError(t, fieldErrors.name)}</FormFieldError>
-              )}
-            </FormField>
-            <FormField>
-              <FormFieldLabel>{t('workspaces.createDialog.descriptionLabel')}</FormFieldLabel>
-              <FormFieldControl>
-                {(field) => (
-                  <Textarea
-                    {...field}
-                    name="description"
-                    rows={3}
-                    value={description}
-                    onChange={(event) => setDescription(event.target.value)}
-                  />
-                )}
-              </FormFieldControl>
-            </FormField>
-            {canSelectCover && (
-              <WorkspaceCoverField
-                previewUrl={coverPreviewUrl}
-                fileName={coverFile?.name ?? null}
-                disabled={submitting || createdWithoutCover}
-                uploading={submitting && coverFile !== null}
-                error={coverError}
-                onSelect={(file) => {
-                  void handleCoverSelect(file);
-                }}
-                onRemove={coverPreviewUrl === null ? undefined : handleCoverRemove}
-              />
-            )}
-            <FormField>
-              <FormFieldLabel id={templateLabelId}>
-                {t('workspaces.createDialog.template')}
-              </FormFieldLabel>
-              <FormFieldControl>
-                {(field) => (
-                  <RadioGroup
-                    {...field}
-                    aria-labelledby={templateLabelId}
-                    value={template}
-                    onValueChange={(value) => {
-                      if (isTemplateSelection(value)) {
-                        setTemplate(value);
-                      }
+      <ModalContent {...(surface === 'stitch' ? { 'data-surface': 'stitch' } : {})}>
+        <ModalForm onSubmit={handleSubmit} noValidate>
+          <ModalLayout>
+            <ModalHeader>
+              <DialogHeader>
+                <DialogTitle>{t('workspaces.createDialog.title')}</DialogTitle>
+                <DialogDescription>{t('workspaces.createDialog.description')}</DialogDescription>
+              </DialogHeader>
+            </ModalHeader>
+            <ModalBody>
+              <Stack gap="space-4">
+                <FormField>
+                  <FormFieldLabel>{t('workspaces.createDialog.name')}</FormFieldLabel>
+                  <FormFieldControl>
+                    {(field) => (
+                      <Input
+                        {...field}
+                        name="name"
+                        autoComplete="off"
+                        value={name}
+                        onChange={(event) => setName(event.target.value)}
+                      />
+                    )}
+                  </FormFieldControl>
+                  {fieldErrors.name !== undefined && (
+                    <FormFieldError>{localizeFieldError(t, fieldErrors.name)}</FormFieldError>
+                  )}
+                </FormField>
+                <FormField>
+                  <FormFieldLabel>{t('workspaces.createDialog.descriptionLabel')}</FormFieldLabel>
+                  <FormFieldControl>
+                    {(field) => (
+                      <Textarea
+                        {...field}
+                        name="description"
+                        rows={3}
+                        value={description}
+                        onChange={(event) => setDescription(event.target.value)}
+                      />
+                    )}
+                  </FormFieldControl>
+                </FormField>
+                {canSelectCover && (
+                  <WorkspaceCoverField
+                    previewUrl={coverPreviewUrl}
+                    fileName={coverFile?.name ?? null}
+                    disabled={submitting || createdWithoutCover}
+                    uploading={submitting && coverFile !== null}
+                    error={coverError}
+                    onSelect={(file) => {
+                      void handleCoverSelect(file);
                     }}
-                  >
-                    {TEMPLATE_OPTIONS.map((option) => (
-                      <Radio key={option.id} value={option.id}>
-                        {t(option.nameKey)}
-                      </Radio>
-                    ))}
-                  </RadioGroup>
+                    onRemove={coverPreviewUrl === null ? undefined : handleCoverRemove}
+                  />
                 )}
-              </FormFieldControl>
-              <FormFieldDescription>{t(selectedTemplate.descriptionKey)}</FormFieldDescription>
-            </FormField>
-            {coverWarning !== null && (
-              <Text role="alert" color="color.text.warning">
-                {coverWarning}
-              </Text>
-            )}
-            {formError !== null && (
-              <Text role="alert" color="color.text.danger">
-                {formError}
-              </Text>
-            )}
-            <DialogFooter>
-              {createdWithoutCover ? (
-                <Button type="button" onClick={() => onOpenChange(false)}>
-                  {t('common.close')}
-                </Button>
-              ) : (
-                <>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={submitting}
-                    onClick={() => onOpenChange(false)}
-                  >
-                    {t('common.cancel')}
+                <FormField>
+                  <FormFieldLabel id={templateLabelId}>
+                    {t('workspaces.createDialog.template')}
+                  </FormFieldLabel>
+                  <FormFieldControl>
+                    {(field) => (
+                      <RadioGroup
+                        {...field}
+                        aria-labelledby={templateLabelId}
+                        value={template}
+                        onValueChange={(value) => {
+                          if (isTemplateSelection(value)) {
+                            setTemplate(value);
+                          }
+                        }}
+                      >
+                        {TEMPLATE_OPTIONS.map((option) => (
+                          <Radio key={option.id} value={option.id}>
+                            {t(option.nameKey)}
+                          </Radio>
+                        ))}
+                      </RadioGroup>
+                    )}
+                  </FormFieldControl>
+                  <FormFieldDescription>{t(selectedTemplate.descriptionKey)}</FormFieldDescription>
+                </FormField>
+                {coverWarning !== null && (
+                  <Text role="alert" color="color.text.warning">
+                    {coverWarning}
+                  </Text>
+                )}
+                {formError !== null && (
+                  <Text role="alert" color="color.text.danger">
+                    {formError}
+                  </Text>
+                )}
+              </Stack>
+            </ModalBody>
+            <ModalFooter>
+              <DialogFooter>
+                {createdWithoutCover ? (
+                  <Button type="button" onClick={() => onOpenChange(false)}>
+                    {t('common.close')}
                   </Button>
-                  <Button type="submit" loading={submitting}>
-                    {t('workspaces.createDialog.submit')}
-                  </Button>
-                </>
-              )}
-            </DialogFooter>
-          </Stack>
-        </form>
-      </DialogContent>
+                ) : (
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={submitting}
+                      onClick={() => onOpenChange(false)}
+                    >
+                      {t('common.cancel')}
+                    </Button>
+                    <Button type="submit" loading={submitting}>
+                      {t('workspaces.createDialog.submit')}
+                    </Button>
+                  </>
+                )}
+              </DialogFooter>
+            </ModalFooter>
+          </ModalLayout>
+        </ModalForm>
+      </ModalContent>
     </Dialog>
   );
 }

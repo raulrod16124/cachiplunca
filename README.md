@@ -21,6 +21,8 @@
   ·
   <a href="docs/architecture.md">Architecture</a>
   ·
+  <a href="docs/opencode-workflow.md">Workflow</a>
+  ·
   <a href="docs/adr/">ADRs</a>
   ·
   <a href="LICENSE">MIT License</a>
@@ -184,12 +186,13 @@ Read [Architecture](docs/architecture.md) for the full dependency rules and
 
 ## Documentation
 
-| Document                                       | Content                                                   |
-| ---------------------------------------------- | --------------------------------------------------------- |
-| [`docs/architecture.md`](docs/architecture.md) | Layers, dependency rules, patterns and enforcement.       |
-| [`docs/adr/`](docs/adr/)                       | Architecture Decision Records and their rationale.        |
-| [`docs/performance/`](docs/performance/)       | Canvas performance strategy, budgets and how to run them. |
-| [`AGENTS.md`](AGENTS.md)                       | Engineering conventions for contributors and agents.      |
+| Document                                                 | Content                                                   |
+| -------------------------------------------------------- | --------------------------------------------------------- |
+| [`docs/architecture.md`](docs/architecture.md)           | Layers, dependency rules, patterns and enforcement.       |
+| [`docs/opencode-workflow.md`](docs/opencode-workflow.md) | Commands, skills, subagents and JIRA task workflow.       |
+| [`docs/adr/`](docs/adr/)                                 | Architecture Decision Records and their rationale.        |
+| [`docs/performance/`](docs/performance/)                 | Canvas performance strategy, budgets and how to run them. |
+| [`AGENTS.md`](AGENTS.md)                                 | Engineering conventions for contributors and agents.      |
 
 ## Contributing
 

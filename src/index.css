@@ -76,18 +76,14 @@ body {
   max-width: 32rem;
 }
 
-/* Share modal uses the extra horizontal room for member rows and role selects. */
+/* Share modal uses the extra horizontal room for member rows and role selects.
+ * The shared modal layout owns header/body/footer and the single scroll region
+ * (see `src/presentation/components/modal-layout.tsx`); this class only widens
+ * the panel. */
 .share-dialog-content {
   max-width: 40rem;
   min-width: 0;
   overflow-x: hidden;
-}
-
-/* `Tabs` is a provider, so the rail and panels are direct flex children of the
- * dialog. Without this the rail shrinks to its 1px border when a tab grows and
- * the dialog scrolls instead. Keep every block at its natural height. */
-.share-dialog-content > * {
-  flex-shrink: 0;
 }
 
 /*

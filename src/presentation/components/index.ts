@@ -62,3 +62,20 @@ export {
   StitchSectionIcon,
   StitchSectionTitle,
 } from './stitch-page-shell';
+
+export {
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalForm,
+  ModalHeader,
+  ModalLayout,
+} from './modal-layout';
+export type {
+  ModalBodyProps,
+  ModalBodyVariant,
+  ModalFooterProps,
+  ModalFormProps,
+  ModalHeaderProps,
+  ModalLayoutProps,
+} from './modal-layout';

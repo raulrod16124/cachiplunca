@@ -64,6 +64,13 @@ function renderPalette({
 }
 
 describe('CommandPalette', () => {
+  it('uses the shared modal layout and leaves scrolling to the results list', () => {
+    renderPalette();
+
+    expect(screen.getByTestId('modal-body')).toHaveAttribute('data-variant', 'none');
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+  });
+
   it('opens with Cmd/Ctrl + K when closed', () => {
     const { onOpenChange } = renderPalette({ open: false });
 
