@@ -105,5 +105,7 @@ TypeScript work.
 ## Further reading
 
 - `docs/architecture.md`
+- `docs/opencode-workflow.md` — how to work with the OpenCode commands,
+  subagents, skills and JIRA flow.
 - `docs/adr/`
 - `docs/performance/README.md`
