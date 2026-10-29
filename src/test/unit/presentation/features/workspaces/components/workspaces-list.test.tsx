@@ -71,6 +71,33 @@ describe('WorkspacesList', () => {
     expect(status).toContainElement(screen.getAllByTestId(/skeleton/i)[0]);
   });
 
+  it('renders the grid loading skeletons with the same multi-column grid as the boards', () => {
+    render(<WorkspacesList status="loading" workspaces={[]} {...baseProps} />);
+
+    const skeletonGrid = screen.getByTestId('workspaces-grid-skeleton');
+    expect(skeletonGrid).toBeInTheDocument();
+    expect(within(skeletonGrid).getAllByTestId('skeleton').length).toBeGreaterThan(0);
+    expect(screen.queryByTestId('workspaces-list-skeleton')).not.toBeInTheDocument();
+  });
+
+  it('renders the list loading skeletons when list view was selected', async () => {
+    const user = userEvent.setup();
+    const workspaces = [createWorkspace('Alpha', new Date())];
+
+    const { rerender } = render(
+      <WorkspacesList status="success" workspaces={workspaces} {...baseProps} />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'List view' }));
+
+    rerender(<WorkspacesList status="loading" workspaces={workspaces} {...baseProps} />);
+
+    const skeletonList = screen.getByTestId('workspaces-list-skeleton');
+    expect(skeletonList).toBeInTheDocument();
+    expect(within(skeletonList).getAllByTestId('skeleton').length).toBeGreaterThan(0);
+    expect(screen.queryByTestId('workspaces-grid-skeleton')).not.toBeInTheDocument();
+  });
+
   it('renders error state with retry', async () => {
     const user = userEvent.setup();
     render(
