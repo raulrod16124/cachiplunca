@@ -63,13 +63,12 @@ test.describe('Browser metadata', () => {
     await page.getByRole('link', { name: 'Settings' }).click();
     await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible();
 
-    const themeSelect = page.getByRole('combobox', { name: 'Theme' });
-    await expect(themeSelect).toBeEnabled();
+    const darkTheme = page.getByRole('radio', { name: 'Dark' });
+    await expect(darkTheme).toBeEnabled();
     const themeWrite = page.waitForEvent('requestfinished', {
       predicate: (request) => request.url().includes('Firestore/Write/channel'),
     });
-    await themeSelect.click();
-    await page.getByRole('option', { name: 'Dark' }).click();
+    await darkTheme.click();
 
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     await expect(favicon32).toHaveAttribute('href', /\/brand\/favicon-dark-32\.png$/);
@@ -99,17 +98,15 @@ test.describe('Browser metadata', () => {
     await page.getByRole('link', { name: 'Settings' }).click();
     await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible();
 
-    const darkOsThemeSelect = page.getByRole('combobox', { name: 'Theme' });
-    await expect(darkOsThemeSelect).toBeEnabled();
-    await darkOsThemeSelect.click();
-    await page.getByRole('option', { name: 'Light' }).click();
+    const lightTheme = page.getByRole('radio', { name: 'Light' });
+    await expect(lightTheme).toBeEnabled();
+    await lightTheme.click();
 
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
     await expect(favicon32).toHaveAttribute('href', /\/brand\/favicon-light-32\.png$/);
     await expect(favicon16).toHaveAttribute('href', /\/brand\/favicon-light-16\.png$/);
 
-    await darkOsThemeSelect.click();
-    await page.getByRole('option', { name: 'System' }).click();
+    await page.getByRole('radio', { name: 'System', exact: true }).click();
 
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     await expect(favicon32).toHaveAttribute('href', /\/brand\/favicon-dark-32\.png$/);

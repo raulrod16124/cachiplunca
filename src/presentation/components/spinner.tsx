@@ -1,5 +1,6 @@
-import styled, { keyframes } from 'styled-components';
 import type { ReactNode } from 'react';
+import styled, { keyframes } from 'styled-components';
+import { useI18n } from '../i18n';
 import { respectReducedMotion } from '../styles/preferences';
 
 const spin = keyframes`
@@ -21,6 +22,7 @@ const SpinnerRing = styled.div`
 export interface SpinnerProps {
   size?: 'sm' | 'md';
   label?: string;
+  decorative?: boolean;
 }
 
 const sizeMap = {
@@ -28,10 +30,21 @@ const sizeMap = {
   md: '16px',
 } as const;
 
-export function Spinner({ size = 'md', label = 'Loading' }: SpinnerProps): ReactNode {
+export function Spinner({ size = 'md', label, decorative = false }: SpinnerProps): ReactNode {
+  const { t } = useI18n();
   const dimension = sizeMap[size];
+  const resolvedLabel = label ?? t('common.loading');
+
+  if (decorative) {
+    return (
+      <div aria-hidden="true" data-testid="spinner">
+        <SpinnerRing style={{ width: dimension, height: dimension }} />
+      </div>
+    );
+  }
+
   return (
-    <div role="status" aria-label={label} aria-live="polite">
+    <div role="status" aria-label={resolvedLabel} aria-live="polite" data-testid="spinner">
       <SpinnerRing style={{ width: dimension, height: dimension }} />
     </div>
   );

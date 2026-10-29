@@ -335,4 +335,35 @@ test.describe('Board (MVP happy path)', () => {
       timeout: 20000,
     });
   });
+
+  test('shows the element context menu in Spanish after switching language', async ({ page }) => {
+    await registerUser(page);
+    await createWorkspace(page, 'Context menu ES');
+
+    await addElement(page, 'note');
+    await page.keyboard.press('Escape');
+
+    await page.getByRole('button', { name: 'Back to boards' }).click();
+    await page.getByRole('link', { name: 'Settings' }).click();
+
+    const spanish = page.getByRole('radio', { name: 'Español (Spanish)' });
+    const languageWrite = page.waitForEvent('requestfinished', {
+      predicate: (request) => request.url().includes('Firestore/Write/channel'),
+    });
+    await spanish.click();
+
+    await expect(page.locator('html')).toHaveAttribute('lang', 'es');
+    await languageWrite;
+
+    await page.getByRole('link', { name: 'Tableros' }).click();
+    const card = page.getByRole('article').filter({ hasText: 'Context menu ES' }).first();
+    await card.getByRole('button', { name: 'Abrir' }).click();
+    await expect(page.getByTestId('canvas-toolbar')).toBeVisible({ timeout: 20000 });
+
+    await page.locator('[data-testid^="canvas-item-"]').first().click({ button: 'right' });
+
+    await expect(page.getByRole('menuitem', { name: 'Traer al frente' })).toBeVisible();
+    await expect(page.getByRole('menuitem', { name: 'Enviar al fondo' })).toBeVisible();
+    await expect(page.getByRole('menuitem', { name: 'Bring to front' })).toHaveCount(0);
+  });
 });

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { SessionLoading } from '../../presentation/components/session-loading';
+import { FullPageLoading } from '../../presentation/components/full-page-loading';
 import { useSession } from '../../presentation/providers/session-provider';
 
 export function resolveRedirect(search: string): string | null {
@@ -21,7 +21,7 @@ export function RequireAnonymous(): ReactNode {
   const location = useLocation();
 
   if (session.status === 'loading') {
-    return <SessionLoading />;
+    return <FullPageLoading messageKey="session.restoring" />;
   }
 
   if (session.status === 'authenticated' && session.user.email !== null) {

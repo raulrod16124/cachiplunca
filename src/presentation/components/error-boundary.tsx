@@ -1,10 +1,28 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { useI18n } from '../i18n';
 import { ErrorState } from './error-state';
 
 export interface ErrorBoundaryProps {
   readonly children: ReactNode;
   readonly fallback?: ReactNode;
   readonly onError?: (error: Error, errorInfo: ErrorInfo) => void;
+}
+
+interface DefaultErrorFallbackProps {
+  readonly error: Error | null;
+  readonly onReset: () => void;
+}
+
+function DefaultErrorFallback({ error, onReset }: DefaultErrorFallbackProps): ReactNode {
+  const { t } = useI18n();
+
+  return (
+    <ErrorState
+      description={error?.message}
+      actionLabel={t('common.tryAgain')}
+      onAction={onReset}
+    />
+  );
 }
 
 interface ErrorBoundaryState {
@@ -36,14 +54,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         return this.props.fallback;
       }
 
-      return (
-        <ErrorState
-          title="Something went wrong"
-          description={this.state.error?.message}
-          actionLabel="Try again"
-          onAction={this.handleReset}
-        />
-      );
+      return <DefaultErrorFallback error={this.state.error} onReset={this.handleReset} />;
     }
 
     return this.props.children;

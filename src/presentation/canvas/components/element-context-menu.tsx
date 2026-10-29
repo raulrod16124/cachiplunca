@@ -155,13 +155,13 @@ export function ElementContextMenu({
           onSelect={onBringToFront}
           startIcon={<BringToFront aria-hidden="true" size={16} />}
         >
-          Bring to front
+          {t('shortcuts.selection.bringToFront')}
         </DropdownMenu.Item>
         <DropdownMenu.Item
           onSelect={onSendToBack}
           startIcon={<SendToBack aria-hidden="true" size={16} />}
         >
-          Send to back
+          {t('shortcuts.selection.sendToBack')}
         </DropdownMenu.Item>
       </DropdownMenu.Content>
     </DropdownMenu>

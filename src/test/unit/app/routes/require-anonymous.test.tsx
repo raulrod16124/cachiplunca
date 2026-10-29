@@ -27,7 +27,12 @@ describe('RequireAnonymous', () => {
   it('holds the current route without redirecting while the session loads', () => {
     renderGuard(new PendingAuthPort());
 
-    expect(screen.getByRole('status')).toHaveTextContent('Restoring your session…');
+    const status = screen.getAllByRole('status');
+    expect(status).toHaveLength(1);
+    expect(status[0]).toHaveTextContent('Restoring your session…');
+    expect(status[0]).toHaveAttribute('aria-busy', 'true');
+    expect(status[0]).toHaveAttribute('aria-live', 'polite');
+    expect(screen.getByRole('main')).toHaveAttribute('id', 'main-content');
     expect(screen.queryByText('Guest content')).not.toBeInTheDocument();
     expect(screen.queryByText('Workspaces page')).not.toBeInTheDocument();
   });

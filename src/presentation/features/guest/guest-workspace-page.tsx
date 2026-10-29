@@ -5,8 +5,7 @@ import styled from 'styled-components';
 import type { OpenGuestWorkspace, OpenGuestWorkspaceResult } from '../../../application/commands';
 import type { ElementId } from '../../../domain/shared';
 import { toAppError } from '../../../shared/errors';
-import { LoadingState } from '../../components/loading-state';
-import { SessionLoading } from '../../components/session-loading';
+import { FullPageLoading } from '../../components/full-page-loading';
 import { localizeMessage, useI18n } from '../../i18n';
 import { useSession } from '../../providers/session-provider';
 import { describeOpenGuestWorkspaceError } from './guest-link-error-messages';
@@ -98,13 +97,9 @@ export function GuestWorkspacePage({
 
   if (session.status === 'loading' || state.status === 'loading' || state.status === 'idle') {
     return (
-      <Page id="main-content" tabIndex={-1}>
-        {session.status === 'loading' ? (
-          <SessionLoading />
-        ) : (
-          <LoadingState message={t('guest.loading')} />
-        )}
-      </Page>
+      <FullPageLoading
+        messageKey={session.status === 'loading' ? 'session.restoring' : 'guest.loading'}
+      />
     );
   }
 

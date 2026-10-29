@@ -202,7 +202,7 @@ function ElementViewComponent({
     <Wrapper
       id={`element-${element.id.value}`}
       role="group"
-      aria-label={ariaLabel ?? describeElement(element)}
+      aria-label={ariaLabel ?? describeElement(element, [], new Date(), t)}
       aria-current={selected ? 'true' : undefined}
       data-selectable="true"
       data-selected={selected}

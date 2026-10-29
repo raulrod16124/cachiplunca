@@ -13,8 +13,7 @@ import { UserId } from '../../../domain/shared';
 import { createAppError, ERROR_CODES, toAppError } from '../../../shared/errors';
 import { DecorativeSpark } from '../../components/decorative';
 import { ErrorState } from '../../components/error-state';
-import { LoadingState } from '../../components/loading-state';
-import { SessionLoading } from '../../components/session-loading';
+import { FullPageLoading } from '../../components/full-page-loading';
 import { AuthLayout } from '../auth/auth-layout';
 import { localizeMessage, useI18n } from '../../i18n';
 import { describeAcceptInvitationError } from './invitation-error-messages';
@@ -112,11 +111,7 @@ export function AcceptInvitationPage({
   };
 
   if (session.status === 'loading') {
-    return (
-      <AuthLayout>
-        <SessionLoading />
-      </AuthLayout>
-    );
+    return <FullPageLoading messageKey="session.restoring" />;
   }
 
   if (session.status === 'anonymous') {
@@ -189,11 +184,7 @@ export function AcceptInvitationPage({
   }
 
   if (result === null) {
-    return (
-      <AuthLayout>
-        <LoadingState message={t('auth.accept.accepting')} tone="brand" />
-      </AuthLayout>
-    );
+    return <FullPageLoading messageKey="auth.accept.accepting" />;
   }
 
   if (result.status === 'ok') {

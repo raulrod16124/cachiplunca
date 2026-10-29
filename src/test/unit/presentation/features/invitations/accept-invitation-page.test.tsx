@@ -49,7 +49,31 @@ describe('AcceptInvitationPage', () => {
   it('holds the page while the session loads', () => {
     renderPage(new PendingAuthPort(), jest.fn());
 
-    expect(screen.getByRole('status')).toHaveTextContent('Restoring your session…');
+    const status = screen.getAllByRole('status');
+    expect(status).toHaveLength(1);
+    expect(status[0]).toHaveTextContent('Restoring your session…');
+    expect(status[0]).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByRole('main')).toHaveAttribute('id', 'main-content');
+  });
+
+  it('shows the full-page loading screen while accepting the invitation', async () => {
+    const authPort = new FakeAuthPort();
+    const user = await authPort.signUp({
+      email: 'invitee@example.com',
+      password: 'secret123',
+      displayName: 'Invitee',
+    });
+    authPort.setSession({ ...user, emailVerified: true });
+    const acceptInvitation = jest
+      .fn<ReturnType<AcceptInvitation>, Parameters<AcceptInvitation>>()
+      .mockImplementation(() => new Promise(() => undefined));
+
+    renderPage(authPort, acceptInvitation);
+
+    const status = await screen.findByRole('status');
+    expect(status).toHaveTextContent('Accepting invitation…');
+    expect(status).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByTestId('full-page-loading')).toBeInTheDocument();
   });
 
   it('prompts anonymous visitors to sign in or create an account', async () => {

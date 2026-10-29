@@ -1,6 +1,7 @@
 import { Inline, Skeleton, Stack, Text, VisuallyHidden } from '@raulrod/ui';
 import type { ReactNode } from 'react';
 import styled from 'styled-components';
+import { useI18n } from '../i18n';
 import type { StateTone } from './state-shared';
 
 export interface LoadingStateProps {
@@ -30,11 +31,14 @@ const Dot = styled(Skeleton)<{ $tone: StateTone }>`
 `;
 
 export function LoadingState({
-  message = 'Loading...',
+  message,
   label,
   tone = 'neutral',
   children,
 }: LoadingStateProps): ReactNode {
+  const { t } = useI18n();
+  const resolvedMessage = message ?? t('common.loading');
+
   if (children !== undefined) {
     return (
       <StatusRoot gap="space-2" role="status" aria-live="polite" aria-busy="true">
@@ -59,7 +63,7 @@ export function LoadingState({
         <Dot $tone={tone} variant="circle" style={{ width: '8px', height: '8px' }} />
         <Dot $tone={tone} variant="circle" style={{ width: '8px', height: '8px' }} />
       </Inline>
-      {message !== '' ? <Text color="color.text.muted">{message}</Text> : null}
+      {resolvedMessage !== '' ? <Text color="color.text.muted">{resolvedMessage}</Text> : null}
     </StatusRoot>
   );
 }

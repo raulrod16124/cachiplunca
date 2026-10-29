@@ -45,6 +45,72 @@ test.describe('Accessibility preferences', () => {
     await expect(page.locator('html')).toHaveAttribute('data-reduced-motion', 'true');
   });
 
+  test('applies and persists the account theme and language', async ({ page }) => {
+    await registerUser(page);
+
+    await page.getByRole('link', { name: 'Settings' }).click();
+
+    await expect(page).toHaveURL(/\/settings$/);
+    await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible();
+
+    const darkTheme = page.getByRole('radio', { name: 'Dark' });
+    await expect(darkTheme).toBeEnabled();
+    const themeWrite = page.waitForEvent('requestfinished', {
+      predicate: (request) => request.url().includes('Firestore/Write/channel'),
+    });
+    await darkTheme.click();
+
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await themeWrite;
+
+    const spanish = page.getByRole('radio', { name: 'Español (Spanish)' });
+    const languageWrite = page.waitForEvent('requestfinished', {
+      predicate: (request) => request.url().includes('Firestore/Write/channel'),
+    });
+    await spanish.click();
+
+    await expect(page.locator('html')).toHaveAttribute('lang', 'es');
+    await expect(page.getByRole('heading', { level: 1, name: 'Configuración' })).toBeVisible();
+    await languageWrite;
+
+    await page.reload();
+
+    await expect(page.getByRole('heading', { level: 1, name: 'Configuración' })).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'es');
+    await expect(page.getByRole('radio', { name: 'Oscuro' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    await expect(page.getByRole('radio', { name: /^Español/ })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+  });
+
+  test('supports keyboard navigation in the theme picker', async ({ page }) => {
+    await registerUser(page);
+
+    await page.getByRole('link', { name: 'Settings' }).click();
+
+    const system = page.getByRole('radio', { name: 'System', exact: true });
+    await expect(system).toBeEnabled();
+    await system.click();
+
+    await page.keyboard.press('ArrowRight');
+    await expect(page.getByRole('radio', { name: 'Light' })).toBeFocused();
+    await expect(page.getByRole('radio', { name: 'Light' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+
+    await page.keyboard.press('End');
+    await expect(page.getByRole('radio', { name: 'System', exact: true })).toBeFocused();
+
+    await page.keyboard.press('Home');
+    await expect(page.getByRole('radio', { name: 'Light' })).toBeFocused();
+  });
+
   test('redirects the legacy preferences deep link to settings', async ({ page }) => {
     await registerUser(page);
 

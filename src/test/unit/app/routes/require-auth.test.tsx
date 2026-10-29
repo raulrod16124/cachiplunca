@@ -26,9 +26,20 @@ describe('RequireAuth', () => {
   it('holds the current route without redirecting while the session loads', () => {
     renderGuard(new PendingAuthPort());
 
-    expect(screen.getByRole('status')).toHaveTextContent('Restoring your session…');
+    const status = screen.getAllByRole('status');
+    expect(status).toHaveLength(1);
+    expect(status[0]).toHaveTextContent('Restoring your session…');
+    expect(status[0]).toHaveAttribute('aria-busy', 'true');
+    expect(status[0]).toHaveAttribute('aria-live', 'polite');
+    expect(screen.getByRole('img', { name: 'Cachiplunca' })).toBeInTheDocument();
     expect(screen.queryByText('Protected content')).not.toBeInTheDocument();
     expect(screen.queryByText('Login page')).not.toBeInTheDocument();
+  });
+
+  it('renders the loading screen as the main landmark while the session loads', () => {
+    renderGuard(new PendingAuthPort());
+
+    expect(screen.getByRole('main')).toHaveAttribute('id', 'main-content');
   });
 
   it('redirects to /login only after the session resolves as anonymous', async () => {
