@@ -1,6 +1,7 @@
 import { Check, Globe } from '@raulrod/icons';
 import { useId, useRef, type KeyboardEvent, type ReactNode } from 'react';
 import type { Locale } from '../../../domain/user-settings';
+import { publicAssetUrl } from '../../config/public-base';
 import { useI18n, type TranslationKey } from '../../i18n';
 
 interface LanguageOption {
@@ -17,14 +18,14 @@ const LANGUAGE_OPTIONS: readonly LanguageOption[] = [
     labelKey: 'settings.language.es',
     descriptionKey: 'settings.language.es.description',
     translatedKey: 'settings.language.es.translated',
-    flag: '/brand/flags/es.svg',
+    flag: 'brand/flags/es.svg',
   },
   {
     value: 'en',
     labelKey: 'settings.language.en',
     descriptionKey: 'settings.language.en.description',
     translatedKey: 'settings.language.en.translated',
-    flag: '/brand/flags/en.svg',
+    flag: 'brand/flags/en.svg',
   },
   {
     value: 'system',
@@ -149,7 +150,7 @@ export function LanguagePicker({
             ) : (
               <img
                 className="settings-language-option__flag"
-                src={option.flag}
+                src={publicAssetUrl(option.flag)}
                 alt=""
                 aria-hidden="true"
                 width={24}
