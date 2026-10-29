@@ -8,3 +8,8 @@ export function setPublicBasePath(base: string): void {
 export function getPublicBasePath(): string {
   return publicBasePath;
 }
+
+export function publicAssetUrl(path: string): string {
+  const base = getPublicBasePath();
+  return `${base === '/' ? '' : base}/${path.replace(/^\/+/, '')}`;
+}

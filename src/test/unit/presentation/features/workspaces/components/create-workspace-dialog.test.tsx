@@ -103,6 +103,8 @@ describe('CreateWorkspaceDialog', () => {
     expect(screen.getByRole('radio', { name: 'Retrospective' })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: 'Project kickoff' })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: 'Brainstorming' })).toBeInTheDocument();
+    expect(screen.getByRole('radiogroup', { name: 'Board type' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'General' })).toBeChecked();
   });
 
   it('shows a field error for an empty name and keeps the dialog open', async () => {
@@ -136,9 +138,28 @@ describe('CreateWorkspaceDialog', () => {
       name: '  Roadmap Q4  ',
       description: 'Shared plan',
       createdBy: CREATED_BY,
+      type: 'general',
     });
     const stored = await repository.list();
     expect(stored.map((workspace) => workspace.name)).toEqual(['Roadmap Q4']);
+    expect(stored[0]?.type).toBe('general');
+  });
+
+  it('creates the workspace with the selected type', async () => {
+    const repository = new FakeWorkspaceRepository();
+    const createWorkspace = jest.fn(createCreateWorkspace(repository));
+    const { onCreated } = renderDialog(createWorkspace);
+
+    const user = userEvent.setup();
+    fillName('Trip');
+    expect(screen.getByRole('radio', { name: 'General' })).toBeChecked();
+    await user.click(screen.getByRole('radio', { name: 'Travel' }));
+    expect(screen.getByRole('radio', { name: 'Travel' })).toBeChecked();
+    submit();
+
+    await waitFor(() => expect(onCreated).toHaveBeenCalledTimes(1));
+    const [stored] = await repository.list();
+    expect(stored?.type).toBe('travel');
   });
 
   it('submits the selected template instead of a blank board', async () => {

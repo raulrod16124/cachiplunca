@@ -1,5 +1,5 @@
 import type { UserId, WorkspaceId } from '../../domain/shared';
-import type { Workspace } from '../../domain/workspace';
+import type { Workspace, WorkspaceType } from '../../domain/workspace';
 
 export interface WorkspaceCreateInput {
   readonly name: string;
@@ -7,6 +7,7 @@ export interface WorkspaceCreateInput {
   readonly description?: string | null;
   readonly coverImageUrl?: string | null;
   readonly coverImageStoragePath?: string | null;
+  readonly type?: WorkspaceType;
 }
 
 export interface WorkspaceUpdateInput {
@@ -14,6 +15,7 @@ export interface WorkspaceUpdateInput {
   readonly description?: string | null;
   readonly coverImageUrl?: string | null;
   readonly coverImageStoragePath?: string | null;
+  readonly type?: WorkspaceType;
 }
 
 export interface WorkspaceRepository {

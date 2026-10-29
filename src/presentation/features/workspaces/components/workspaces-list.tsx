@@ -4,11 +4,9 @@ import {
   CalendarDays,
   Clock,
   Copy,
-  LayoutGrid,
   Pencil,
   Plus,
   Search,
-  Shapes,
   Star,
   Trash2,
 } from '@raulrod/icons';
@@ -17,6 +15,7 @@ import styled from 'styled-components';
 import { can } from '../../../../domain/membership';
 import type { MembershipRole } from '../../../../domain/membership';
 import type { Workspace } from '../../../../domain/workspace';
+import { WorkspaceTypeIcon } from '../../../components/workspace-type-icon';
 import { NeutralIconButton } from '../../../components/neutral-controls';
 import { EmptyState } from '../../../components/empty-state';
 import { ErrorState } from '../../../components/error-state';
@@ -53,14 +52,8 @@ function coverDot(tone: CoverTone): string {
   return `var(--stitch-cover-${tone}-dot)`;
 }
 
-function coverIcon(tone: CoverTone): ReactNode {
-  if (tone === 'green') {
-    return <CalendarDays aria-hidden="true" size={26} />;
-  }
-  if (tone === 'amber') {
-    return <Shapes aria-hidden="true" size={26} />;
-  }
-  return <LayoutGrid aria-hidden="true" size={26} />;
+function coverIcon(type: Workspace['type']): ReactNode {
+  return <WorkspaceTypeIcon type={type} size={26} aria-hidden />;
 }
 
 const ListGrid = styled.div`
@@ -859,6 +852,10 @@ function CreateAction({ variant, onCreate }: CreateActionProps): ReactNode {
   );
 }
 
+const LoadingSurface = styled.div`
+  width: 100%;
+`;
+
 const SkeletonCard = styled.div`
   display: flex;
   flex-direction: column;
@@ -879,9 +876,84 @@ const SkeletonBody = styled.div`
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: ${({ theme }) => theme.space[3]};
-  padding: ${({ theme }) => theme.space[6]};
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.space[4]};
+  padding: ${({ theme }) => `${theme.space[3]} ${theme.space[6]} ${theme.space[5]}`};
 `;
+
+const SkeletonStack = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.space[2]};
+`;
+
+const SkeletonMeta = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.space[3]};
+  padding-top: ${({ theme }) => theme.space[3]};
+  border-top: 1px solid var(--stitch-border-soft);
+`;
+
+const SkeletonActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.space[2]};
+`;
+
+function WorkspaceGridSkeleton(): ReactNode {
+  return (
+    <ListGrid data-testid="workspaces-grid-skeleton">
+      {Array.from({ length: 6 }).map((_, index) => (
+        <SkeletonCard key={`workspace-grid-skeleton-${index}`}>
+          <SkeletonCover />
+          <SkeletonBody>
+            <SkeletonStack>
+              <Skeleton data-testid="skeleton" style={{ height: '22px', width: '70%' }} />
+              <Skeleton data-testid="skeleton" style={{ height: '14px', width: '90%' }} />
+              <Skeleton data-testid="skeleton" style={{ height: '14px', width: '60%' }} />
+            </SkeletonStack>
+            <SkeletonMeta>
+              <Skeleton data-testid="skeleton" style={{ height: '12px', width: '32%' }} />
+              <Skeleton data-testid="skeleton" style={{ height: '12px', width: '28%' }} />
+            </SkeletonMeta>
+            <SkeletonActions>
+              <Skeleton data-testid="skeleton" style={{ height: '40px', flex: '1 1 auto' }} />
+              <Skeleton data-testid="skeleton" style={{ height: '40px', width: '40px' }} />
+              <Skeleton data-testid="skeleton" style={{ height: '40px', width: '40px' }} />
+            </SkeletonActions>
+          </SkeletonBody>
+        </SkeletonCard>
+      ))}
+    </ListGrid>
+  );
+}
+
+function WorkspaceListSkeleton(): ReactNode {
+  return (
+    <ListSection>
+      <ListRows data-testid="workspaces-list-skeleton">
+        {Array.from({ length: 5 }).map((_, index) => (
+          <ListRow key={`workspace-list-skeleton-${index}`} aria-hidden="true">
+            <ListCover>
+              <Skeleton data-testid="skeleton" style={{ height: '100%', width: '100%' }} />
+            </ListCover>
+            <ListMain>
+              <Skeleton data-testid="skeleton" style={{ height: '18px', width: '40%' }} />
+              <Skeleton data-testid="skeleton" style={{ height: '12px', width: '70%' }} />
+              <Skeleton data-testid="skeleton" style={{ height: '12px', width: '55%' }} />
+            </ListMain>
+            <ListActions>
+              <Skeleton data-testid="skeleton" style={{ height: '40px', width: '88px' }} />
+              <Skeleton data-testid="skeleton" style={{ height: '40px', width: '40px' }} />
+            </ListActions>
+          </ListRow>
+        ))}
+      </ListRows>
+    </ListSection>
+  );
+}
 
 interface WorkspaceActionAvailability {
   readonly canEdit: boolean;
@@ -1093,19 +1165,9 @@ export function WorkspacesList({
   if (status === 'loading' || status === 'idle') {
     return (
       <FullPageLoading variant="section" message={loadingLabel ?? t('workspaces.loading')}>
-        <ListGrid>
-          {Array.from({ length: 6 }).map((_, index) => (
-            <SkeletonCard key={`workspace-skeleton-${index}`}>
-              <SkeletonCover />
-              <SkeletonBody>
-                <Skeleton data-testid="skeleton" style={{ height: '24px', width: '70%' }} />
-                <Skeleton data-testid="skeleton" style={{ height: '14px', width: '90%' }} />
-                <Skeleton data-testid="skeleton" style={{ height: '14px', width: '60%' }} />
-                <Skeleton data-testid="skeleton" style={{ height: '40px', width: '100%' }} />
-              </SkeletonBody>
-            </SkeletonCard>
-          ))}
-        </ListGrid>
+        <LoadingSurface>
+          {viewMode === 'grid' ? <WorkspaceGridSkeleton /> : <WorkspaceListSkeleton />}
+        </LoadingSurface>
       </FullPageLoading>
     );
   }
@@ -1204,13 +1266,14 @@ export function WorkspacesList({
             );
             const isDuplicating = duplicatingWorkspaceId === workspace.id.value;
             const tone = coverToneFor(workspace.name);
+            const workspaceType = workspace.type;
             return (
               <BoardCard key={workspace.id.value}>
                 <div>
                   <Cover $tone={tone} $hasCover={workspace.coverImageUrl !== null}>
                     <CoverFrame data-testid="workspace-cover-card">
                       {workspace.coverImageUrl === null ? (
-                        coverIcon(tone)
+                        coverIcon(workspaceType)
                       ) : (
                         <CoverImage src={workspace.coverImageUrl} alt="" loading="lazy" />
                       )}
@@ -1227,8 +1290,8 @@ export function WorkspacesList({
                     )}
                   </Cover>
                   <BadgeRow>
-                    <IconBadge $tone={tone}>
-                      <IconBadgeInner>{coverIcon(tone)}</IconBadgeInner>
+                    <IconBadge $tone={tone} data-testid="workspace-type-badge">
+                      <IconBadgeInner>{coverIcon(workspaceType)}</IconBadgeInner>
                     </IconBadge>
                     <RoleChipLabel role={role} />
                   </BadgeRow>
@@ -1292,11 +1355,14 @@ export function WorkspacesList({
                 onDuplicate,
               );
               const isDuplicating = duplicatingWorkspaceId === workspace.id.value;
+              const workspaceType = workspace.type;
               return (
                 <ListRow key={workspace.id.value}>
                   <ListCover data-testid="workspace-cover-list">
                     {workspace.coverImageUrl === null ? (
-                      <ListCoverLetter>{workspace.name.charAt(0)}</ListCoverLetter>
+                      <ListCoverLetter>
+                        <WorkspaceTypeIcon type={workspaceType} size={18} aria-hidden />
+                      </ListCoverLetter>
                     ) : (
                       <CoverImage src={workspace.coverImageUrl} alt="" loading="lazy" />
                     )}

@@ -102,8 +102,27 @@ describe('EditWorkspaceDialog', () => {
       id: 'ws-alpha',
       name: 'Renamed',
       description: 'Updated description',
+      type: 'general',
     });
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it('updates the board type when the selector changes', async () => {
+    const user = userEvent.setup();
+    const updated = WORKSPACE.update({ type: 'travel' });
+    const updateWorkspace: UpdateWorkspace = jest
+      .fn()
+      .mockResolvedValue({ status: 'ok', workspace: updated });
+    const { onUpdated } = renderDialog({ updateWorkspace });
+
+    await user.click(screen.getByRole('radio', { name: 'Travel' }));
+    expect(screen.getByRole('radio', { name: 'Travel' })).toBeChecked();
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    await waitFor(() => expect(onUpdated).toHaveBeenCalledWith(updated));
+    expect(updateWorkspace).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'ws-alpha', type: 'travel' }),
+    );
   });
 
   it('clears the description when the field is emptied', async () => {
@@ -121,6 +140,7 @@ describe('EditWorkspaceDialog', () => {
         id: 'ws-alpha',
         name: 'Alpha',
         description: null,
+        type: 'general',
       }),
     );
   });
@@ -195,6 +215,7 @@ describe('EditWorkspaceDialog', () => {
         id: 'ws-alpha',
         name: 'Alpha',
         description: 'Current description',
+        type: 'general',
         coverImageUrl: null,
         coverImageStoragePath: null,
       }),

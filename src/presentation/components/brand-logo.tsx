@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import styled, { css } from 'styled-components';
-import { getPublicBasePath } from '../config/public-base';
+import { publicAssetUrl } from '../config/public-base';
 import { useI18n } from '../i18n';
 
 export type BrandLogoVariant = 'wordmark' | 'compact' | 'isotipo';
@@ -124,8 +124,7 @@ const VisuallyHidden = styled.span`
 `;
 
 function assetUrl(file: string): string {
-  const base = getPublicBasePath();
-  return `${base === '/' ? '' : base}/brand/${file}`;
+  return publicAssetUrl(`brand/${file}`);
 }
 
 function intrinsicSize(kind: LogoKind): { width: number; height: number } {

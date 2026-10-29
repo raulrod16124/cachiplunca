@@ -37,6 +37,41 @@ test.describe('Workspaces (owner edits a workspace)', () => {
     await expect(page.getByRole('textbox', { name: 'Workspace name' })).toHaveCount(0);
   });
 
+  test('creates a board with a type and shows its icon', async ({ page }) => {
+    await registerUser(page);
+    await createWorkspace(page, 'Travel board', 'Travel');
+
+    await page.getByRole('button', { name: 'Back to boards' }).click();
+    const card = page.getByRole('article').filter({ hasText: 'Travel board' });
+    await expect(
+      card.getByTestId('workspace-cover-card').locator('.lucide-calendar-days'),
+    ).toBeVisible();
+    await expect(
+      card.getByTestId('workspace-type-badge').locator('.lucide-calendar-days'),
+    ).toBeVisible();
+  });
+
+  test('owner changes the board type and the card shows its icon', async ({ page }) => {
+    await registerUser(page);
+    await createWorkspace(page, 'Typed board');
+
+    await page.getByRole('button', { name: 'Back to boards' }).click();
+    const card = page.getByRole('article').filter({ hasText: 'Typed board' });
+    await card.getByRole('button', { name: 'Edit Typed board' }).click();
+
+    const dialog = page.getByRole('dialog');
+    await dialog.getByRole('radio', { name: 'Travel' }).click();
+    await expect(dialog.getByRole('radio', { name: 'Travel' })).toBeChecked();
+    await dialog.getByRole('button', { name: 'Save changes' }).click();
+
+    await expect(dialog).toBeHidden();
+    const cover = card.getByTestId('workspace-cover-card');
+    await expect(cover.locator('.lucide-calendar-days')).toBeVisible();
+    await expect(
+      card.getByTestId('workspace-type-badge').locator('.lucide-calendar-days'),
+    ).toBeVisible();
+  });
+
   test('orders boards by the most recent activity', async ({ page }) => {
     await registerUser(page);
 

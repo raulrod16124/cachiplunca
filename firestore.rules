@@ -136,8 +136,64 @@ service cloud.firestore {
       allow read: if isMember(workspaceId) || isGuestViewer(workspaceId);
       allow create: if signedIn() &&
         !isAnonymous() &&
-        request.resource.data.createdBy == request.auth.uid;
-      allow update: if hasRole(workspaceId, ['owner']) || (
+        request.resource.data.createdBy == request.auth.uid &&
+        request.resource.data.name is string &&
+        request.resource.data.name.trim().size() >= 1 &&
+        request.resource.data.name.trim().size() <= 100 &&
+        (!('description' in request.resource.data) ||
+          request.resource.data.description == null ||
+          request.resource.data.description is string) &&
+        (!('coverImageUrl' in request.resource.data) ||
+          request.resource.data.coverImageUrl == null ||
+          request.resource.data.coverImageUrl is string) &&
+        (!('coverImageStoragePath' in request.resource.data) ||
+          request.resource.data.coverImageStoragePath == null ||
+          request.resource.data.coverImageStoragePath is string) &&
+        (!('type' in request.resource.data) ||
+          (request.resource.data.type is string &&
+            (request.resource.data.type == 'general' ||
+              request.resource.data.type == 'work' ||
+              request.resource.data.type == 'travel' ||
+              request.resource.data.type == 'tasks' ||
+              request.resource.data.type == 'ideas')));
+      allow update: if (hasRole(workspaceId, ['owner']) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'name',
+          'description',
+          'coverImageUrl',
+          'coverImageStoragePath',
+          'type',
+          'updatedAt',
+          'lastActivityAt'
+        ]) &&
+        request.resource.data.name is string &&
+        request.resource.data.name.trim().size() >= 1 &&
+        request.resource.data.name.trim().size() <= 100 &&
+        (!('description' in request.resource.data) ||
+          request.resource.data.description == null ||
+          request.resource.data.description is string) &&
+        ((request.resource.data.get('coverImageUrl', null) == null &&
+          request.resource.data.get('coverImageStoragePath', null) == null) ||
+          (request.resource.data.get('coverImageUrl', null) is string &&
+            request.resource.data.get('coverImageStoragePath', null) is string &&
+            request.resource.data.get('coverImageUrl', null).matches('^https?://.+') &&
+            request.resource.data
+              .get('coverImageStoragePath', null)
+              .matches('^workspaces/' + workspaceId + '/images/.+'))) &&
+        ((resource.data.get('type', null) == null &&
+          !('type' in request.resource.data)) ||
+          (request.resource.data.get('type', null) is string &&
+            (request.resource.data.get('type', null) == 'general' ||
+              request.resource.data.get('type', null) == 'work' ||
+              request.resource.data.get('type', null) == 'travel' ||
+              request.resource.data.get('type', null) == 'tasks' ||
+              request.resource.data.get('type', null) == 'ideas'))) &&
+        (!('updatedAt' in request.resource.data) ||
+          (request.resource.data.updatedAt is timestamp &&
+            request.resource.data.updatedAt >= resource.data.createdAt)) &&
+        (!('lastActivityAt' in request.resource.data) ||
+          (request.resource.data.lastActivityAt is timestamp &&
+            request.resource.data.lastActivityAt >= resource.data.createdAt))) || (
         hasRole(workspaceId, ['owner', 'editor']) &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastActivityAt']) &&
         request.resource.data.lastActivityAt is timestamp &&

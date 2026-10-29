@@ -3,6 +3,10 @@ import { WorkspaceId } from '../shared/value-objects/workspace-id';
 
 export const WORKSPACE_NAME_MAX_LENGTH = 100;
 
+export const WORKSPACE_TYPES = ['general', 'work', 'travel', 'tasks', 'ideas'] as const;
+
+export type WorkspaceType = (typeof WORKSPACE_TYPES)[number];
+
 export interface WorkspaceProps {
   readonly id: WorkspaceId;
   readonly name: string;
@@ -13,6 +17,7 @@ export interface WorkspaceProps {
   readonly description?: string | null;
   readonly coverImageUrl?: string | null;
   readonly coverImageStoragePath?: string | null;
+  readonly type?: WorkspaceType;
 }
 
 interface CoverImage {
@@ -30,6 +35,7 @@ export class Workspace {
   private readonly _description: string | null;
   private readonly _coverImageUrl: string | null;
   private readonly _coverImageStoragePath: string | null;
+  private readonly _type: WorkspaceType;
 
   private constructor(props: WorkspaceProps) {
     this._id = props.id;
@@ -41,6 +47,7 @@ export class Workspace {
     this._description = props.description ?? null;
     this._coverImageUrl = props.coverImageUrl ?? null;
     this._coverImageStoragePath = props.coverImageStoragePath ?? null;
+    this._type = Workspace.validateType(props.type);
   }
 
   static create(props: {
@@ -53,6 +60,7 @@ export class Workspace {
     readonly description?: string | null;
     readonly coverImageUrl?: string | null;
     readonly coverImageStoragePath?: string | null;
+    readonly type?: WorkspaceType;
   }): Workspace {
     const name = Workspace.validateName(props.name);
     const now = new Date();
@@ -64,6 +72,7 @@ export class Workspace {
       props.coverImageStoragePath,
       props.id,
     );
+    const type = Workspace.validateType(props.type);
 
     Workspace.validateTimestamps(createdAt, updatedAt, lastActivityAt);
 
@@ -77,6 +86,7 @@ export class Workspace {
       description: props.description,
       coverImageUrl: cover.url,
       coverImageStoragePath: cover.storagePath,
+      type,
     });
   }
 
@@ -86,6 +96,7 @@ export class Workspace {
     readonly coverImageUrl?: string | null;
     readonly coverImageStoragePath?: string | null;
     readonly updatedAt?: Date;
+    readonly type?: WorkspaceType;
   }): Workspace {
     const name = updates.name !== undefined ? Workspace.validateName(updates.name) : this._name;
     const description = updates.description !== undefined ? updates.description : this._description;
@@ -97,6 +108,7 @@ export class Workspace {
         : this._coverImageStoragePath,
       this._id,
     );
+    const type = updates.type !== undefined ? Workspace.validateType(updates.type) : this._type;
 
     Workspace.validateTimestamps(this._createdAt, updatedAt, this._lastActivityAt);
 
@@ -110,6 +122,7 @@ export class Workspace {
       description,
       coverImageUrl: cover.url,
       coverImageStoragePath: cover.storagePath,
+      type,
     });
   }
 
@@ -128,6 +141,7 @@ export class Workspace {
       description: this._description,
       coverImageUrl: this._coverImageUrl,
       coverImageStoragePath: this._coverImageStoragePath,
+      type: this._type,
     });
   }
 
@@ -236,6 +250,10 @@ export class Workspace {
     return this._coverImageStoragePath;
   }
 
+  get type(): WorkspaceType {
+    return this._type;
+  }
+
   toJSON(): {
     id: string;
     name: string;
@@ -246,6 +264,7 @@ export class Workspace {
     description: string | null;
     coverImageUrl: string | null;
     coverImageStoragePath: string | null;
+    type: WorkspaceType;
   } {
     return {
       id: this._id.value,
@@ -257,7 +276,20 @@ export class Workspace {
       description: this._description,
       coverImageUrl: this._coverImageUrl,
       coverImageStoragePath: this._coverImageStoragePath,
+      type: this._type,
     };
+  }
+
+  private static validateType(type?: WorkspaceType): WorkspaceType {
+    if (type === undefined || type === null) {
+      return 'general';
+    }
+
+    if (!WORKSPACE_TYPES.includes(type)) {
+      throw new Error('Invalid workspace type');
+    }
+
+    return type;
   }
 }
 

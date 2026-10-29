@@ -417,7 +417,12 @@ export function WorkspaceTopBar({
           </BackButton>
           <Divider aria-hidden="true" />
           <TopbarCover data-testid="workspace-cover-topbar">
-            <WorkspaceCover url={workspace.coverImageUrl} loading="eager" iconSize={16} />
+            <WorkspaceCover
+              url={workspace.coverImageUrl}
+              loading="eager"
+              iconSize={16}
+              type={workspace.type}
+            />
           </TopbarCover>
           <TitleBlock>
             <TitleRow>

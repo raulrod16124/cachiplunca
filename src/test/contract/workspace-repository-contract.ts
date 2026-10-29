@@ -22,6 +22,7 @@ function expectSameWorkspace(actual: Workspace, expected: Workspace): void {
   expect(actual.description).toBe(expected.description);
   expect(actual.coverImageUrl).toBe(expected.coverImageUrl);
   expect(actual.coverImageStoragePath).toBe(expected.coverImageStoragePath);
+  expect(actual.type).toBe(expected.type);
   expect(actual.createdAt.getTime()).toBe(expected.createdAt.getTime());
   expect(actual.updatedAt.getTime()).toBe(expected.updatedAt.getTime());
   expect(actual.lastActivityAt.getTime()).toBe(expected.lastActivityAt.getTime());
@@ -100,6 +101,21 @@ export function describeWorkspaceRepositoryContract(
 
     it('returns null from findById for an unknown id', async () => {
       expect(await repository.findById(WorkspaceId.create('missing'))).toBeNull();
+    });
+
+    it('creates and updates the workspace type', async () => {
+      const created = await repository.create({
+        name: 'Trip',
+        createdBy: CREATED_BY,
+        type: 'travel',
+      });
+      expect(created.type).toBe('travel');
+
+      const updated = await repository.update(created.id, { type: 'ideas' });
+      expect(updated.type).toBe('ideas');
+
+      const found = requireWorkspace(await repository.findById(created.id));
+      expect(found.type).toBe('ideas');
     });
 
     it('updates name and description with a new instance while preserving id and createdAt', async () => {

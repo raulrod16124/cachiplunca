@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { render, screen } from '../../../../setup/render-with-theme';
 import userEvent from '@testing-library/user-event';
 import { LanguagePicker } from '../../../../../presentation/features/settings/language-picker';
+import { setPublicBasePath } from '../../../../../presentation/config/public-base';
 import type { Locale } from '../../../../../domain/user-settings';
 
 function renderPicker(value: Locale, onChange = jest.fn(), disabled = false): void {
@@ -42,6 +43,8 @@ function ControlledLanguagePicker({
 }
 
 describe('LanguagePicker', () => {
+  afterEach(() => setPublicBasePath('/'));
+
   it('renders a radiogroup with native names and the system option', () => {
     renderPicker('system');
 
@@ -83,6 +86,20 @@ describe('LanguagePicker', () => {
     expect(englishFlag).toHaveAttribute('aria-hidden', 'true');
 
     expect(screen.queryByTestId('language-flag-system')).not.toBeInTheDocument();
+  });
+
+  it('resolves flag assets through the configured public base path', () => {
+    setPublicBasePath('/cachiplunca/');
+    renderPicker('system');
+
+    expect(screen.getByTestId('language-flag-es')).toHaveAttribute(
+      'src',
+      '/cachiplunca/brand/flags/es.svg',
+    );
+    expect(screen.getByTestId('language-flag-en')).toHaveAttribute(
+      'src',
+      '/cachiplunca/brand/flags/en.svg',
+    );
   });
 
   it('calls onChange when a different language is clicked', async () => {

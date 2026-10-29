@@ -1,6 +1,6 @@
 import type { Element } from '../../domain/element';
 import type { ElementId, UserId, WorkspaceId } from '../../domain/shared';
-import type { Workspace } from '../../domain/workspace';
+import type { Workspace, WorkspaceType } from '../../domain/workspace';
 import { createAppError, toAppError, type AppError } from '../../shared/errors';
 import type { ElementRepository, MembershipRepository, WorkspaceRepository } from '../ports';
 import {
@@ -16,6 +16,7 @@ export interface CreateWorkspaceWithOwnerInput {
   readonly description?: string | null;
   readonly ownerId: UserId;
   readonly templateId?: WorkspaceTemplateId | null;
+  readonly type?: WorkspaceType;
 }
 
 export type CreateWorkspaceWithOwnerResult =
@@ -51,6 +52,7 @@ export function createCreateWorkspaceWithOwner(
         name: input.name.trim(),
         createdBy: input.ownerId,
         description: input.description,
+        type: input.type,
       });
     } catch (error) {
       return { status: 'error', error: toAppError(error) };

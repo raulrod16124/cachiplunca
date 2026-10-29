@@ -424,6 +424,7 @@ describe('WorkspacesListContainer', () => {
         id: workspace.id.value,
         name: 'Renamed',
         description: 'New description',
+        type: 'general',
       });
       expect(screen.getByRole('heading', { name: 'Renamed' })).toBeInTheDocument();
     });

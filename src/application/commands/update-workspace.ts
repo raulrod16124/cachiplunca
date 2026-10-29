@@ -1,5 +1,5 @@
 import { WorkspaceId } from '../../domain/shared';
-import type { Workspace } from '../../domain/workspace';
+import type { Workspace, WorkspaceType } from '../../domain/workspace';
 import { toAppError, type AppError } from '../../shared/errors';
 import type { WorkspaceRepository, WorkspaceUpdateInput } from '../ports';
 import { validateWorkspaceName } from './validate-workspace-name';
@@ -10,6 +10,7 @@ export interface UpdateWorkspaceInput {
   readonly description?: string | null;
   readonly coverImageUrl?: string | null;
   readonly coverImageStoragePath?: string | null;
+  readonly type?: WorkspaceType;
 }
 
 export type UpdateWorkspaceFieldName = 'id' | 'name' | 'cover' | 'form';
@@ -49,6 +50,7 @@ export function validateUpdateWorkspaceInput(
   if (
     input.name === undefined &&
     input.description === undefined &&
+    input.type === undefined &&
     !hasCoverUrl &&
     !hasCoverPath
   ) {
@@ -73,6 +75,7 @@ export function createUpdateWorkspace(workspaceRepository: WorkspaceRepository):
         ...(input.coverImageStoragePath !== undefined
           ? { coverImageStoragePath: input.coverImageStoragePath }
           : {}),
+        ...(input.type !== undefined ? { type: input.type } : {}),
       };
 
       const workspace = await workspaceRepository.update(WorkspaceId.create(input.id), updates);

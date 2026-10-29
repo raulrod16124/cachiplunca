@@ -1,5 +1,5 @@
 import type { UserId } from '../../domain/shared';
-import type { Workspace } from '../../domain/workspace';
+import type { Workspace, WorkspaceType } from '../../domain/workspace';
 import { toAppError, type AppError } from '../../shared/errors';
 import type { WorkspaceRepository } from '../ports';
 import type { WorkspaceTemplateId } from '../services/workspace-templates';
@@ -10,6 +10,7 @@ export interface CreateWorkspaceInput {
   readonly createdBy: UserId;
   readonly description?: string | null;
   readonly templateId?: WorkspaceTemplateId | null;
+  readonly type?: WorkspaceType;
 }
 
 export type CreateWorkspaceFieldName = 'name';
@@ -52,7 +53,8 @@ export function createCreateWorkspace(workspaceRepository: WorkspaceRepository):
       const workspace = await workspaceRepository.create({
         name: input.name.trim(),
         createdBy: input.createdBy,
-        description: input.description,
+        description: input.description ?? null,
+        type: input.type,
       });
       return { status: 'ok', workspace };
     } catch (error) {

@@ -1,6 +1,8 @@
-import { LayoutGrid } from '@raulrod/icons';
 import type { ReactNode } from 'react';
 import styled, { css } from 'styled-components';
+
+import type { WorkspaceType } from '../../domain/workspace';
+import { WorkspaceTypeIcon } from './workspace-type-icon';
 
 export const workspaceCoverBackground = css`
   background:
@@ -41,6 +43,7 @@ export interface WorkspaceCoverProps {
   readonly loading?: 'lazy' | 'eager';
   readonly iconSize?: number;
   readonly className?: string;
+  readonly type?: WorkspaceType;
 }
 
 export function WorkspaceCover({
@@ -49,11 +52,12 @@ export function WorkspaceCover({
   loading = 'lazy',
   iconSize = 18,
   className,
+  type,
 }: WorkspaceCoverProps): ReactNode {
   return (
     <Frame className={className} aria-hidden={url === null ? 'true' : undefined}>
       {url === null ? (
-        <LayoutGrid aria-hidden="true" size={iconSize} />
+        <WorkspaceTypeIcon type={type ?? 'general'} size={iconSize} aria-hidden />
       ) : (
         <Cover src={url} alt={alt} loading={loading} />
       )}

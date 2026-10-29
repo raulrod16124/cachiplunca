@@ -7,6 +7,7 @@ import {
 } from '@firebase/rules-unit-testing';
 import {
   collection,
+  deleteField,
   deleteDoc,
   doc,
   getDoc,
@@ -640,6 +641,105 @@ describe('firestore.rules — workspaces', () => {
       updateDoc(doc(dbOf(ROLE_UIDS.editor), 'workspaces', WS1), {
         lastActivityAt: new Date(now.getTime() - 60_000),
       }),
+    );
+  });
+
+  test('workspace create accepts a valid type and rejects an invalid one', async () => {
+    await assertSucceeds(
+      setDoc(doc(dbOf(CREATOR_UID), 'workspaces', 'typed-valid'), {
+        ...workspaceData('Typed', CREATOR_UID),
+        type: 'travel',
+      }),
+    );
+    await assertFails(
+      setDoc(doc(dbOf(CREATOR_UID), 'workspaces', 'typed-invalid'), {
+        ...workspaceData('Typed', CREATOR_UID),
+        type: 'unsupported',
+      }),
+    );
+  });
+
+  test('viewers, outsiders and anonymous users cannot update the type', async () => {
+    await assertFails(updateDoc(doc(dbOf(ROLE_UIDS.viewer), 'workspaces', WS1), { type: 'ideas' }));
+    await assertFails(updateDoc(doc(dbOf(OUTSIDER_UID), 'workspaces', WS1), { type: 'ideas' }));
+    await assertFails(updateDoc(doc(unauthed().firestore(), 'workspaces', WS1), { type: 'ideas' }));
+  });
+
+  test('create and update reject null or non-string types', async () => {
+    await assertFails(
+      setDoc(doc(dbOf(CREATOR_UID), 'workspaces', 'typed-null'), {
+        ...workspaceData('Null type', CREATOR_UID),
+        type: null,
+      }),
+    );
+    await assertFails(
+      setDoc(doc(dbOf(CREATOR_UID), 'workspaces', 'typed-number'), {
+        ...workspaceData('Number type', CREATOR_UID),
+        type: 42,
+      }),
+    );
+    await assertFails(updateDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', WS1), { type: null }));
+  });
+
+  test('owner cannot remove the type from a typed workspace', async () => {
+    await assertSucceeds(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', WS1), { type: 'ideas' }),
+    );
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', WS1), { type: deleteField() }),
+    );
+  });
+
+  test('owner cannot remove the name or set a whitespace-only name', async () => {
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', WS1), { name: deleteField() }),
+    );
+    await assertFails(updateDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', WS1), { name: '   ' }));
+  });
+
+  test('owner cannot write half or invalid cover image fields', async () => {
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', WS1), {
+        coverImageUrl: 'https://storage.test/cover.png',
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', WS1), {
+        coverImageUrl: 'not-a-url',
+        coverImageStoragePath: `workspaces/${WS1}/images/cover.png`,
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', WS1), {
+        coverImageUrl: 'https://storage.test/cover.png',
+        coverImageStoragePath: 'workspaces/other/images/cover.png',
+      }),
+    );
+  });
+
+  test('owner can update the type and invalid values are rejected', async () => {
+    await assertSucceeds(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', WS1), { type: 'ideas' }),
+    );
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', WS1), { type: 'unsupported' }),
+    );
+    await assertFails(updateDoc(doc(dbOf(ROLE_UIDS.editor), 'workspaces', WS1), { type: 'ideas' }));
+  });
+
+  test('legacy workspaces without a type can still be updated without touching type', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'workspaces', 'legacy-no-type'), workspaceData());
+    });
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), 'memberships', `legacy-no-type_${ROLE_UIDS.owner}`),
+        membershipData('legacy-no-type', ROLE_UIDS.owner, 'owner'),
+      );
+    });
+
+    await assertSucceeds(
+      updateDoc(doc(dbOf(ROLE_UIDS.owner), 'workspaces', 'legacy-no-type'), { name: 'Renamed' }),
     );
   });
 

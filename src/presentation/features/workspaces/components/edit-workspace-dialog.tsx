@@ -10,18 +10,22 @@ import {
   FormFieldError,
   FormFieldLabel,
   Input,
+  Radio,
+  RadioGroup,
   Stack,
   Text,
   Textarea,
 } from '@raulrod/ui';
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useId, useState, type FormEvent, type ReactNode } from 'react';
 import type { UpdateWorkspace, UpdateWorkspaceFieldErrors } from '../../../../application/commands';
 import type { ImageServices } from '../../../../application/image-services';
 import { validateImageFileCandidate } from '../../../../application/services/image-upload';
-import type { Workspace } from '../../../../domain/workspace';
+import type { Workspace, WorkspaceType } from '../../../../domain/workspace';
+import { WORKSPACE_TYPES } from '../../../../domain/workspace';
 import { WorkspaceId } from '../../../../domain/shared';
 import { toAppError } from '../../../../shared/errors';
 import { readFileAsDataUrl, readFileBytes } from '../workspace-cover-file';
+import { isWorkspaceType, WORKSPACE_TYPE_LABEL_KEYS } from '../workspace-type-labels';
 import { localizeFieldError, localizeMessage, useI18n } from '../../../i18n';
 import {
   ModalBody,
@@ -54,8 +58,10 @@ export function EditWorkspaceDialog({
   surface = 'brand',
 }: EditWorkspaceDialogProps): ReactNode {
   const { t } = useI18n();
+  const typeLabelId = useId();
   const [name, setName] = useState(workspace.name);
   const [description, setDescription] = useState(workspace.description ?? '');
+  const [type, setType] = useState<WorkspaceType>(workspace.type);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
   const [removeCover, setRemoveCover] = useState(false);
@@ -70,6 +76,7 @@ export function EditWorkspaceDialog({
     if (open) {
       setName(workspace.name);
       setDescription(workspace.description ?? '');
+      setType(workspace.type);
       setCoverFile(null);
       setCoverPreviewUrl(null);
       setRemoveCover(false);
@@ -176,6 +183,7 @@ export function EditWorkspaceDialog({
         id: workspace.id.value,
         name,
         description: trimmedDescription === '' ? null : trimmedDescription,
+        type,
         ...coverFields,
       });
 
@@ -247,6 +255,31 @@ export function EditWorkspaceDialog({
                   {fieldErrors.name !== undefined && (
                     <FormFieldError>{localizeFieldError(t, fieldErrors.name)}</FormFieldError>
                   )}
+                </FormField>
+                <FormField>
+                  <FormFieldLabel id={typeLabelId}>
+                    {t('workspaces.editDialog.typeLabel')}
+                  </FormFieldLabel>
+                  <FormFieldControl>
+                    {(field) => (
+                      <RadioGroup
+                        {...field}
+                        aria-labelledby={typeLabelId}
+                        value={type}
+                        onValueChange={(value) => {
+                          if (isWorkspaceType(value)) {
+                            setType(value);
+                          }
+                        }}
+                      >
+                        {WORKSPACE_TYPES.map((workspaceType) => (
+                          <Radio key={workspaceType} value={workspaceType}>
+                            {t(WORKSPACE_TYPE_LABEL_KEYS[workspaceType])}
+                          </Radio>
+                        ))}
+                      </RadioGroup>
+                    )}
+                  </FormFieldControl>
                 </FormField>
                 <FormField>
                   <FormFieldLabel>{t('workspaces.createDialog.descriptionLabel')}</FormFieldLabel>

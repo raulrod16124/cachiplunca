@@ -20,6 +20,10 @@ describe('validateUpdateWorkspaceInput', () => {
     expect(validateUpdateWorkspaceInput({ id: VALID_ID, description: null })).toEqual({});
   });
 
+  it('returns no errors for a type-only update', () => {
+    expect(validateUpdateWorkspaceInput({ id: VALID_ID, type: 'travel' })).toEqual({});
+  });
+
   it('rejects empty and whitespace-only ids', () => {
     expect(validateUpdateWorkspaceInput({ id: '' }).id).toBe('Enter a workspace id.');
     expect(validateUpdateWorkspaceInput({ id: '   ', name: 'Name' }).id).toBe(
@@ -97,6 +101,20 @@ describe('createUpdateWorkspace', () => {
         created.updatedAt.getTime(),
       );
       expect(result.workspace).not.toBe(created);
+    }
+  });
+
+  it('updates the type on its own', async () => {
+    const repository = new FakeWorkspaceRepository();
+    const created = await repository.create({ createdBy: CREATED_BY, name: 'Board' });
+    const updateWorkspace = createUpdateWorkspace(repository);
+
+    const result = await updateWorkspace({ id: created.id.value, type: 'tasks' });
+
+    expect(result.status).toBe('ok');
+    if (result.status === 'ok') {
+      expect(result.workspace.type).toBe('tasks');
+      expect(result.workspace.name).toBe('Board');
     }
   });
 

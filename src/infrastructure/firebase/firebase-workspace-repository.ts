@@ -44,6 +44,7 @@ export function createFirebaseWorkspaceRepository(db: Firestore): WorkspaceRepos
           description: input.description,
           coverImageUrl: input.coverImageUrl,
           coverImageStoragePath: input.coverImageStoragePath,
+          type: input.type,
         }),
       );
 
@@ -77,6 +78,9 @@ export function createFirebaseWorkspaceRepository(db: Firestore): WorkspaceRepos
       }
       if (updates.coverImageStoragePath !== undefined) {
         changes.coverImageStoragePath = updated.coverImageStoragePath;
+      }
+      if (updates.type !== undefined) {
+        changes.type = updated.type;
       }
 
       await withMappedErrors(() => updateDoc(workspaceRef(id), changes));

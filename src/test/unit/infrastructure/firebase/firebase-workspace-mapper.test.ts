@@ -33,7 +33,14 @@ describe('firebase-workspace-mapper', () => {
         description: 'notes',
         coverImageUrl: null,
         coverImageStoragePath: null,
+        type: 'general',
       });
+    });
+
+    it('serializes the workspace type', () => {
+      const workspace = makeWorkspace().update({ type: 'travel' });
+
+      expect(toWorkspaceDocument(workspace).type).toBe('travel');
     });
 
     it('serializes cover image fields', () => {
@@ -142,6 +149,37 @@ describe('firebase-workspace-mapper', () => {
       });
 
       expect(workspace.description).toBeNull();
+    });
+
+    it('reads a valid type and falls back to general for legacy documents', () => {
+      const typed = fromWorkspaceDocument('ws-type', {
+        name: 'Typed',
+        createdBy: CREATED_BY.value,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        type: 'travel',
+      });
+      expect(typed.type).toBe('travel');
+
+      const legacy = fromWorkspaceDocument('ws-legacy-type', {
+        name: 'Legacy',
+        createdBy: CREATED_BY.value,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      expect(legacy.type).toBe('general');
+    });
+
+    it('rejects an invalid type', () => {
+      expect(() =>
+        fromWorkspaceDocument('ws-invalid-type', {
+          name: 'Invalid',
+          createdBy: CREATED_BY.value,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          type: 'unknown',
+        }),
+      ).toThrow('Invalid workspace type');
     });
 
     it('rejects data that is not an object', () => {

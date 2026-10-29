@@ -94,6 +94,7 @@ export function createDuplicateWorkspace(deps: DuplicateWorkspaceDeps): Duplicat
         name: buildDuplicateWorkspaceName(source.name),
         description: source.description,
         ownerId: actorUserId,
+        type: source.type,
       });
       if (created.status === 'invalid-input') {
         return {

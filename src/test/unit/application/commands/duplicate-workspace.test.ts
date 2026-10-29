@@ -90,6 +90,7 @@ async function seedSource() {
     name: 'Roadmap Q4',
     description: 'Shared plan',
     createdBy: OWNER,
+    type: 'travel',
   });
   await seedMember(fixture.membershipRepository, OWNER, 'owner', source.id);
   return { ...fixture, source };
@@ -143,6 +144,7 @@ describe('createDuplicateWorkspace', () => {
     expect(result.workspace.id.equals(source.id)).toBe(false);
     expect(result.workspace.name).toBe('Copy of Roadmap Q4');
     expect(result.workspace.description).toBe('Shared plan');
+    expect(result.workspace.type).toBe('travel');
 
     const membership = await membershipRepository.findByUserAndWorkspace(
       OWNER,
