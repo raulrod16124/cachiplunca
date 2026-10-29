@@ -94,6 +94,7 @@ import type { ElementId } from '../../../../domain/shared';
 import { createAppError, ERROR_CODES, toAppError, type AppError } from '../../../../shared/errors';
 import { EmptyState } from '../../../components/empty-state';
 import { ErrorState } from '../../../components/error-state';
+import { FullPageLoading } from '../../../components/full-page-loading';
 import { LoadingState } from '../../../components/loading-state';
 import type { ConnectorEndpointDragInput } from '../../../canvas/hooks';
 import type { TaskFormValues } from '../../../canvas/components/task-form-dialog';
@@ -1200,16 +1201,7 @@ export function WorkspaceShellContainer({
   }, [connectionStatus, persistenceBatcher]);
 
   if (status === 'loading') {
-    return (
-      <Container>
-        <LoadingState label={t('workspaceShell.loadingWorkspace')}>
-          <Stack gap="space-4">
-            <Skeleton style={{ height: '32px', width: '40%' }} />
-            <Skeleton style={{ height: '400px', width: '100%' }} />
-          </Stack>
-        </LoadingState>
-      </Container>
-    );
+    return <FullPageLoading messageKey="workspaceShell.loadingWorkspace" />;
   }
 
   if (status === 'notFound') {

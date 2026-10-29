@@ -1,15 +1,6 @@
-import { Inline, Text } from '@raulrod/ui';
 import type { ReactNode } from 'react';
-import { useI18n } from '../i18n';
+import { FullPageLoading } from './full-page-loading';
 
 export function SessionLoading(): ReactNode {
-  const { t } = useI18n();
-
-  return (
-    <Inline gap="space-2" align="center" justify="center">
-      <Text role="status" color="color.text.muted">
-        {t('session.restoring')}
-      </Text>
-    </Inline>
-  );
+  return <FullPageLoading messageKey="session.restoring" />;
 }

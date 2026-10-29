@@ -291,7 +291,12 @@ describe('WorkspaceShellContainer', () => {
 
     renderContainer(getWorkspace);
 
-    expect(screen.getByRole('status')).toHaveTextContent('Loading board');
+    const status = screen.getAllByRole('status');
+    expect(status).toHaveLength(1);
+    expect(status[0]).toHaveTextContent('Loading board');
+    expect(status[0]).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByTestId('full-page-loading')).toBeInTheDocument();
+    expect(screen.getByRole('main')).toHaveAttribute('id', 'main-content');
   });
 
   it('renders the workspace shell when the workspace is found', async () => {
@@ -412,7 +417,11 @@ describe('WorkspaceShellContainer', () => {
 
     renderContainer(getWorkspace, { loadWorkspaceElements });
 
-    expect(await screen.findByText('Loading board')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByTestId('full-page-loading')).not.toBeInTheDocument();
+    });
+    expect(screen.getByRole('status')).toHaveTextContent('Loading board');
+    expect(screen.getByRole('status')).toHaveAttribute('aria-busy', 'true');
   });
 
   it('renders a board error state and allows retry', async () => {

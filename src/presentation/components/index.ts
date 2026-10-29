@@ -1,5 +1,7 @@
 export { SkipLink } from './skip-link';
 export { SessionLoading } from './session-loading';
+export { FullPageLoading } from './full-page-loading';
+export type { FullPageLoadingProps, FullPageLoadingVariant } from './full-page-loading';
 export { LoadingState } from './loading-state';
 export type { LoadingStateProps } from './loading-state';
 export { ErrorState } from './error-state';

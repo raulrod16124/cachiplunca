@@ -28,6 +28,13 @@ describe('Spinner', () => {
     expect(screen.getByRole('status')).toBeInTheDocument();
   });
 
+  it('renders a decorative spinner without a status role', () => {
+    render(<Spinner decorative />);
+
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.getByTestId('spinner')).toHaveAttribute('aria-hidden', 'true');
+  });
+
   it('disables the animation under prefers-reduced-motion: reduce', () => {
     render(<Spinner />);
     const styles = [...document.head.querySelectorAll('style')]

@@ -20,7 +20,7 @@ import type { Workspace } from '../../../../domain/workspace';
 import { NeutralIconButton } from '../../../components/neutral-controls';
 import { EmptyState } from '../../../components/empty-state';
 import { ErrorState } from '../../../components/error-state';
-import { LoadingState } from '../../../components/loading-state';
+import { FullPageLoading } from '../../../components/full-page-loading';
 import { DecorativeArrow, DecorativeSpark } from '../../../components/decorative';
 import { formatRelativeDate, formatShortDate, useI18n } from '../../../i18n';
 import { WorkspaceViewToggle, type WorkspaceViewMode } from './workspace-view-toggle';
@@ -1092,7 +1092,7 @@ export function WorkspacesList({
 
   if (status === 'loading' || status === 'idle') {
     return (
-      <LoadingState label={loadingLabel ?? t('workspaces.loading')}>
+      <FullPageLoading variant="section" message={loadingLabel ?? t('workspaces.loading')}>
         <ListGrid>
           {Array.from({ length: 6 }).map((_, index) => (
             <SkeletonCard key={`workspace-skeleton-${index}`}>
@@ -1106,7 +1106,7 @@ export function WorkspacesList({
             </SkeletonCard>
           ))}
         </ListGrid>
-      </LoadingState>
+      </FullPageLoading>
     );
   }
 

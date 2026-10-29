@@ -24,6 +24,7 @@ describe('i18n message catalog', () => {
 
   it('keeps the keys touched by the visible-text audit in sync', () => {
     const auditedKeys = [
+      'loadingScreen.default',
       'session.restoring',
       'common.emptyTitle',
       'common.dismiss',

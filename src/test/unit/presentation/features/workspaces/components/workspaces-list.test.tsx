@@ -50,8 +50,25 @@ describe('WorkspacesList', () => {
   it('exposes an accessible busy status while loading', () => {
     render(<WorkspacesList status="loading" workspaces={[]} {...baseProps} />);
 
-    expect(screen.getByRole('status')).toHaveAttribute('aria-busy', 'true');
-    expect(screen.getByRole('status')).toHaveTextContent('Loading boards');
+    const status = screen.getAllByRole('status');
+    expect(status).toHaveLength(1);
+    expect(status[0]).toHaveAttribute('aria-busy', 'true');
+    expect(status[0]).toHaveAttribute('aria-live', 'polite');
+    expect(status[0]).toHaveTextContent('Loading boards');
+    expect(screen.getByRole('img', { name: 'Cachiplunca' })).toBeInTheDocument();
+  });
+
+  it('does not render a nested main landmark while loading', () => {
+    render(<WorkspacesList status="loading" workspaces={[]} {...baseProps} />);
+
+    expect(screen.queryByRole('main')).not.toBeInTheDocument();
+  });
+
+  it('keeps the loading skeletons inside the status region', () => {
+    render(<WorkspacesList status="loading" workspaces={[]} {...baseProps} />);
+
+    const status = screen.getByRole('status');
+    expect(status).toContainElement(screen.getAllByTestId(/skeleton/i)[0]);
   });
 
   it('renders error state with retry', async () => {

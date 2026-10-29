@@ -97,7 +97,12 @@ describe('auth routes', () => {
     const authPort = new PendingAuthPort();
     renderApp(authPort, '/workspaces');
 
-    expect(screen.getByRole('status')).toHaveTextContent('Restoring your session…');
+    const status = screen.getAllByRole('status');
+    expect(status).toHaveLength(1);
+    expect(status[0]).toHaveTextContent('Restoring your session…');
+    expect(status[0]).toHaveAttribute('aria-busy', 'true');
+    expect(status[0]).toHaveAttribute('aria-live', 'polite');
+    expect(screen.getByRole('img', { name: 'Cachiplunca' })).toBeInTheDocument();
     expect(screen.getByTestId('location')).toHaveTextContent('/workspaces');
     expect(screen.queryByRole('heading', { name: 'Sign in' })).not.toBeInTheDocument();
 
@@ -107,6 +112,22 @@ describe('auth routes', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeInTheDocument();
     expect(screen.getByTestId('location')).toHaveTextContent('/login');
+  });
+
+  it('shows the full-page loading screen on /login while the session restores', async () => {
+    const authPort = new PendingAuthPort();
+    renderApp(authPort, '/login');
+
+    expect(screen.getByRole('status')).toHaveTextContent('Restoring your session…');
+    expect(screen.getByRole('main')).toHaveAttribute('id', 'main-content');
+    expect(screen.queryByRole('heading', { level: 1, name: 'Sign in' })).not.toBeInTheDocument();
+
+    await act(async () => {
+      authPort.emitSession(null);
+    });
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeInTheDocument();
+    expect(screen.queryByTestId('full-page-loading')).not.toBeInTheDocument();
   });
 
   it('restores a persisted session straight into /workspaces', async () => {

@@ -28,6 +28,7 @@ const en = {
   'common.tryAgain': 'Try again',
   'common.emptyTitle': 'Nothing here yet',
   'session.restoring': 'Restoring your session…',
+  'loadingScreen.default': 'Loading…',
 
   'app.copyright': '© 2026 Cachiplunca. All rights reserved.',
 
@@ -750,6 +751,7 @@ const es: Record<TranslationKey, string> = {
   'common.tryAgain': 'Intentar de nuevo',
   'common.emptyTitle': 'Todavía no hay nada aquí',
   'session.restoring': 'Restaurando tu sesión…',
+  'loadingScreen.default': 'Cargando…',
 
   'app.copyright': '© 2026 Cachiplunca. Todos los derechos reservados.',
 
