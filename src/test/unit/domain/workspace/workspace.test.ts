@@ -369,6 +369,52 @@ describe('Workspace', () => {
       description: 'Description',
       coverImageUrl: null,
       coverImageStoragePath: null,
+      type: 'general',
     });
+  });
+
+  it('defaults type to general', () => {
+    const workspace = Workspace.create({
+      createdBy: CREATED_BY,
+      id: WorkspaceId.create('ws-type-default'),
+      name: 'Test',
+    });
+
+    expect(workspace.type).toBe('general');
+  });
+
+  it('accepts a valid type on create and update', () => {
+    const workspace = Workspace.create({
+      createdBy: CREATED_BY,
+      id: WorkspaceId.create('ws-type-create'),
+      name: 'Trip',
+      type: 'travel',
+    });
+
+    expect(workspace.type).toBe('travel');
+    expect(workspace.toJSON().type).toBe('travel');
+
+    const updated = workspace.update({ type: 'ideas' });
+    expect(updated.type).toBe('ideas');
+    expect(workspace.update({}).type).toBe('travel');
+  });
+
+  it('rejects an invalid type on create and update', () => {
+    expect(() =>
+      Workspace.create({
+        createdBy: CREATED_BY,
+        id: WorkspaceId.create('ws-type-invalid'),
+        name: 'Test',
+        type: 'invalid' as never,
+      }),
+    ).toThrow('Invalid workspace type');
+
+    const workspace = Workspace.create({
+      createdBy: CREATED_BY,
+      id: WorkspaceId.create('ws-type-invalid-update'),
+      name: 'Test',
+    });
+
+    expect(() => workspace.update({ type: 'wrong' as never })).toThrow('Invalid workspace type');
   });
 });

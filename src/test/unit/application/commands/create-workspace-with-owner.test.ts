@@ -67,6 +67,26 @@ describe('createCreateWorkspaceWithOwner', () => {
     }
   });
 
+  it('propagates the workspace type to the repository and keeps it as general by default', async () => {
+    const { workspaceRepository, createWorkspaceWithOwner } = setup();
+
+    const typed = await createWorkspaceWithOwner({
+      name: 'Trip',
+      ownerId: OWNER,
+      type: 'travel',
+    });
+    expect(typed.status).toBe('ok');
+
+    const untyped = await createWorkspaceWithOwner({ name: 'Board', ownerId: OWNER });
+    if (untyped.status !== 'ok') {
+      throw new Error('expected the workspace to be created');
+    }
+
+    const stored = await workspaceRepository.list();
+    expect(stored.find((workspace) => workspace.name === 'Trip')?.type).toBe('travel');
+    expect(untyped.workspace.type).toBe('general');
+  });
+
   it('does not touch any repository when the name is invalid', async () => {
     const { workspaceRepository, membershipRepository, createWorkspaceWithOwner } = setup();
     const createWorkspace = jest.spyOn(workspaceRepository, 'create');

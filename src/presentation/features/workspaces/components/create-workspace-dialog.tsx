@@ -28,10 +28,12 @@ import type { WorkspaceTemplateId } from '../../../../application/services/works
 import { validateImageFileCandidate } from '../../../../application/services/image-upload';
 import type { UserId } from '../../../../domain/shared';
 import { WorkspaceId } from '../../../../domain/shared';
+import { WORKSPACE_TYPES, type WorkspaceType } from '../../../../domain/workspace';
 import { toAppError } from '../../../../shared/errors';
 import { readFileAsDataUrl, readFileBytes } from '../workspace-cover-file';
 import { describeCreateWorkspaceError } from '../workspace-error-messages';
 import { localizeFieldError, localizeMessage, useI18n, type TranslationKey } from '../../../i18n';
+import { isWorkspaceType, WORKSPACE_TYPE_LABEL_KEYS } from '../workspace-type-labels';
 import {
   ModalBody,
   ModalContent,
@@ -100,8 +102,10 @@ export function CreateWorkspaceDialog({
 }: CreateWorkspaceDialogProps): ReactNode {
   const { t } = useI18n();
   const templateLabelId = useId();
+  const typeLabelId = useId();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [type, setType] = useState<WorkspaceType>('general');
   const [template, setTemplate] = useState<TemplateSelection>('blank');
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
@@ -225,6 +229,7 @@ export function CreateWorkspaceDialog({
         createdBy,
         description: trimmedDescription === '' ? undefined : trimmedDescription,
         ...(template === 'blank' ? {} : { templateId: template }),
+        type,
       });
       switch (result.status) {
         case 'ok': {
@@ -279,6 +284,31 @@ export function CreateWorkspaceDialog({
                   {fieldErrors.name !== undefined && (
                     <FormFieldError>{localizeFieldError(t, fieldErrors.name)}</FormFieldError>
                   )}
+                </FormField>
+                <FormField>
+                  <FormFieldLabel id={typeLabelId}>
+                    {t('workspaces.createDialog.typeLabel')}
+                  </FormFieldLabel>
+                  <FormFieldControl>
+                    {(field) => (
+                      <RadioGroup
+                        {...field}
+                        aria-labelledby={typeLabelId}
+                        value={type}
+                        onValueChange={(value) => {
+                          if (isWorkspaceType(value)) {
+                            setType(value);
+                          }
+                        }}
+                      >
+                        {WORKSPACE_TYPES.map((workspaceType) => (
+                          <Radio key={workspaceType} value={workspaceType}>
+                            {t(WORKSPACE_TYPE_LABEL_KEYS[workspaceType])}
+                          </Radio>
+                        ))}
+                      </RadioGroup>
+                    )}
+                  </FormFieldControl>
                 </FormField>
                 <FormField>
                   <FormFieldLabel>{t('workspaces.createDialog.descriptionLabel')}</FormFieldLabel>

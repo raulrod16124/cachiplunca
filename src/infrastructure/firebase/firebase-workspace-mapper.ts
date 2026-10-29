@@ -1,5 +1,5 @@
 import { UserId, WorkspaceId } from '../../domain/shared';
-import { Workspace } from '../../domain/workspace';
+import { WORKSPACE_TYPES, Workspace, type WorkspaceType } from '../../domain/workspace';
 
 export interface WorkspaceDocument {
   readonly name: string;
@@ -10,6 +10,23 @@ export interface WorkspaceDocument {
   readonly description: string | null;
   readonly coverImageUrl: string | null;
   readonly coverImageStoragePath: string | null;
+  readonly type: WorkspaceType;
+}
+
+function readWorkspaceType(value: unknown): WorkspaceType {
+  if (value === undefined || value === null) {
+    return 'general';
+  }
+
+  if (typeof value !== 'string') {
+    throw new Error('Workspace document field "type" must be a string');
+  }
+
+  if ((WORKSPACE_TYPES as readonly string[]).includes(value)) {
+    return value as WorkspaceType;
+  }
+
+  throw new Error('Invalid workspace type');
 }
 
 export function toWorkspaceDocument(workspace: Workspace): WorkspaceDocument {
@@ -22,6 +39,7 @@ export function toWorkspaceDocument(workspace: Workspace): WorkspaceDocument {
     description: workspace.description,
     coverImageUrl: workspace.coverImageUrl,
     coverImageStoragePath: workspace.coverImageStoragePath,
+    type: workspace.type,
   };
 }
 
@@ -46,6 +64,7 @@ export function fromWorkspaceDocument(id: string, data: unknown): Workspace {
     createdAt,
     updatedAt,
     lastActivityAt: readOptionalDate(data.lastActivityAt, 'lastActivityAt') ?? updatedAt,
+    type: readWorkspaceType(data.type),
   });
 }
 

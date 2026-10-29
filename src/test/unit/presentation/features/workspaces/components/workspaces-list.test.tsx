@@ -406,6 +406,44 @@ describe('WorkspacesList', () => {
     expect(styleText()).toContain('linear-gradient');
   });
 
+  it('renders the workspace type icon when there is no cover', () => {
+    const travel = Workspace.create({
+      id: WorkspaceId.create('ws-travel'),
+      name: 'Trip',
+      createdBy: CREATED_BY,
+      type: 'travel',
+    });
+    const general = Workspace.create({
+      id: WorkspaceId.create('ws-general'),
+      name: 'General board',
+      createdBy: CREATED_BY,
+    });
+
+    render(<WorkspacesList status="success" workspaces={[travel, general]} {...baseProps} />);
+
+    const cards = screen.getAllByTestId('workspace-cover-card');
+    expect(cards[0].querySelector('.lucide-calendar-days')).not.toBeNull();
+    expect(cards[1].querySelector('.lucide-shapes')).not.toBeNull();
+  });
+
+  it('gives the cover image priority over the type icon', () => {
+    const typedWithCover = Workspace.create({
+      id: WorkspaceId.create('ws-typed-cover'),
+      name: 'Typed cover',
+      createdBy: CREATED_BY,
+      type: 'travel',
+    }).update({
+      coverImageUrl: 'https://storage.test/workspaces/ws-typed-cover/images/cover.png',
+      coverImageStoragePath: 'workspaces/ws-typed-cover/images/cover.png',
+    });
+
+    render(<WorkspacesList status="success" workspaces={[typedWithCover]} {...baseProps} />);
+
+    const card = screen.getByTestId('workspace-cover-card');
+    expect(card.querySelector('img')).not.toBeNull();
+    expect(card.querySelector('.lucide-calendar-days')).toBeNull();
+  });
+
   it('renders covers as thumbnails in list view', async () => {
     const user = userEvent.setup();
 

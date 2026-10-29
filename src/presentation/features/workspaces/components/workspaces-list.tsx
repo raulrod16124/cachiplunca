@@ -4,11 +4,9 @@ import {
   CalendarDays,
   Clock,
   Copy,
-  LayoutGrid,
   Pencil,
   Plus,
   Search,
-  Shapes,
   Star,
   Trash2,
 } from '@raulrod/icons';
@@ -17,6 +15,7 @@ import styled from 'styled-components';
 import { can } from '../../../../domain/membership';
 import type { MembershipRole } from '../../../../domain/membership';
 import type { Workspace } from '../../../../domain/workspace';
+import { WorkspaceTypeIcon } from '../../../components/workspace-type-icon';
 import { NeutralIconButton } from '../../../components/neutral-controls';
 import { EmptyState } from '../../../components/empty-state';
 import { ErrorState } from '../../../components/error-state';
@@ -53,14 +52,8 @@ function coverDot(tone: CoverTone): string {
   return `var(--stitch-cover-${tone}-dot)`;
 }
 
-function coverIcon(tone: CoverTone): ReactNode {
-  if (tone === 'green') {
-    return <CalendarDays aria-hidden="true" size={26} />;
-  }
-  if (tone === 'amber') {
-    return <Shapes aria-hidden="true" size={26} />;
-  }
-  return <LayoutGrid aria-hidden="true" size={26} />;
+function coverIcon(type: Workspace['type']): ReactNode {
+  return <WorkspaceTypeIcon type={type} size={26} aria-hidden />;
 }
 
 const ListGrid = styled.div`
@@ -1204,13 +1197,14 @@ export function WorkspacesList({
             );
             const isDuplicating = duplicatingWorkspaceId === workspace.id.value;
             const tone = coverToneFor(workspace.name);
+            const workspaceType = workspace.type;
             return (
               <BoardCard key={workspace.id.value}>
                 <div>
                   <Cover $tone={tone} $hasCover={workspace.coverImageUrl !== null}>
                     <CoverFrame data-testid="workspace-cover-card">
                       {workspace.coverImageUrl === null ? (
-                        coverIcon(tone)
+                        coverIcon(workspaceType)
                       ) : (
                         <CoverImage src={workspace.coverImageUrl} alt="" loading="lazy" />
                       )}
@@ -1227,8 +1221,8 @@ export function WorkspacesList({
                     )}
                   </Cover>
                   <BadgeRow>
-                    <IconBadge $tone={tone}>
-                      <IconBadgeInner>{coverIcon(tone)}</IconBadgeInner>
+                    <IconBadge $tone={tone} data-testid="workspace-type-badge">
+                      <IconBadgeInner>{coverIcon(workspaceType)}</IconBadgeInner>
                     </IconBadge>
                     <RoleChipLabel role={role} />
                   </BadgeRow>
@@ -1292,11 +1286,14 @@ export function WorkspacesList({
                 onDuplicate,
               );
               const isDuplicating = duplicatingWorkspaceId === workspace.id.value;
+              const workspaceType = workspace.type;
               return (
                 <ListRow key={workspace.id.value}>
                   <ListCover data-testid="workspace-cover-list">
                     {workspace.coverImageUrl === null ? (
-                      <ListCoverLetter>{workspace.name.charAt(0)}</ListCoverLetter>
+                      <ListCoverLetter>
+                        <WorkspaceTypeIcon type={workspaceType} size={18} aria-hidden />
+                      </ListCoverLetter>
                     ) : (
                       <CoverImage src={workspace.coverImageUrl} alt="" loading="lazy" />
                     )}
