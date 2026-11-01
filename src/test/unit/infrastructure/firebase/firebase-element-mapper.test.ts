@@ -100,6 +100,7 @@ describe('toElementDocument', () => {
       ...buildBase('el-task'),
       title: 'Do it',
       status: 'in_progress',
+      boardOrder: 25,
       assigneeId: UserId.create('user-2'),
       dueDate: new Date('2024-12-31T00:00:00.000Z'),
     });
@@ -109,8 +110,38 @@ describe('toElementDocument', () => {
     expect(document.type).toBe('task');
     expect(asRecord(document).title).toEqual(richTextFromPlain('Do it'));
     expect(asRecord(document).status).toBe('in_progress');
+    expect(asRecord(document).boardOrder).toBe(25);
     expect(asRecord(document).assigneeId).toBe('user-2');
     expect(asRecord(document).dueDate).toEqual(new Date('2024-12-31T00:00:00.000Z'));
+
+    const roundTrip = fromElementDocument('el-task', document);
+    expect(roundTrip.type === 'task' ? roundTrip.boardOrder : null).toBe(25);
+  });
+
+  it('falls back to createdAt when a task document has no boardOrder', () => {
+    const document = toElementDocument(
+      createTaskElement({ ...buildBase('el-task'), title: 'Legacy', status: 'todo' }),
+    );
+    const { boardOrder: _boardOrder, ...legacy } = document as typeof document & {
+      boardOrder: number;
+    };
+
+    const element = fromElementDocument('el-task', legacy);
+
+    expect(element.type === 'task' ? element.boardOrder : null).toBe(CREATED_AT.getTime());
+  });
+
+  it('rejects an invalid boardOrder on read', () => {
+    const document = toElementDocument(
+      createTaskElement({ ...buildBase('el-task'), title: 'Task', status: 'todo', boardOrder: 5 }),
+    );
+
+    expect(() => fromElementDocument('el-task', { ...document, boardOrder: '5' })).toThrow(
+      /boardOrder/,
+    );
+    expect(() => fromElementDocument('el-task', { ...document, boardOrder: null })).toThrow(
+      /boardOrder/,
+    );
   });
 
   it('omits optional fields from a TaskElement document when absent', () => {

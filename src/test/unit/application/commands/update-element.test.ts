@@ -112,6 +112,7 @@ describe('createUpdateElement', () => {
       type: 'task',
       title: 'Ship it now',
       status: 'in_progress',
+      boardOrder: 25,
       assigneeId,
       dueDate,
     });
@@ -120,9 +121,31 @@ describe('createUpdateElement', () => {
     if (element.type === 'task') {
       expect(richTextToPlain(element.title)).toBe('Ship it now');
       expect(element.status).toBe('in_progress');
+      expect(element.boardOrder).toBe(25);
       expect(element.assigneeId?.value).toBe('user-2');
       expect(element.dueDate).toBe(dueDate);
     }
+  });
+
+  it('appends the board order when the status changes without an explicit order', () => {
+    const element = expectOk({
+      element: taskElement({ boardOrder: 5 }),
+      type: 'task',
+      status: 'completed',
+    });
+
+    expect(element.type === 'task' ? element.status : null).toBe('completed');
+    expect(element.type === 'task' ? element.boardOrder : null).toBe(UPDATED_AT.getTime());
+  });
+
+  it('keeps the board order when the status does not change', () => {
+    const element = expectOk({
+      element: taskElement({ boardOrder: 5 }),
+      type: 'task',
+      status: 'todo',
+    });
+
+    expect(element.type === 'task' ? element.boardOrder : null).toBe(5);
   });
 
   it('clears task assignee and due date when null is provided', () => {

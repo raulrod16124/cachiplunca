@@ -467,8 +467,8 @@ export function WorkspaceShellLayout({
         canCreateTask={canCreateTask}
         onClose={() => setPlanOpen(false)}
         onSelectTask={(elementId) => commandRef.current?.focusElement(elementId)}
-        onChangeStatus={(task, status) => {
-          onUpdateElement?.({ type: 'task', element: task, status });
+        onChangeStatus={(task, status, boardOrder) => {
+          onUpdateElement?.({ type: 'task', element: task, status, boardOrder });
         }}
         onCreateTask={() => commandRef.current?.createElement('task')}
       />

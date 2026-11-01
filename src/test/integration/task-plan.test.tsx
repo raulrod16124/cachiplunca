@@ -1,5 +1,6 @@
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { installDragEventPolyfill } from '../fixtures/drag-event';
 import { createTaskElement, type TaskElement } from '../../domain/element';
 import { ElementId, Position, Size, UserId } from '../../domain/shared';
 import type { Workspace } from '../../domain/workspace';
@@ -29,6 +30,22 @@ async function openTaskPlan(): Promise<HTMLElement> {
   fireEvent.click(await screen.findByRole('button', { name: 'Task plan' }));
 
   return screen.findByTestId('task-plan-panel');
+}
+
+function createDataTransfer(): DataTransfer {
+  const store = new Map<string, string>();
+
+  return {
+    dropEffect: 'none',
+    effectAllowed: 'all',
+    types: [],
+    setData: (type: string, value: string) => {
+      store.set(type, value);
+    },
+    getData: (type: string) => store.get(type) ?? '',
+    clearData: () => store.clear(),
+    setDragImage: jest.fn(),
+  } as unknown as DataTransfer;
 }
 
 describe('task plan', () => {
@@ -152,6 +169,76 @@ describe('task plan', () => {
       expect(
         within(completedColumn).getByRole('button', { name: 'Select task Plan launch' }),
       ).toBeVisible();
+    });
+  });
+
+  it('persists a status change made by dragging a board card', async () => {
+    installDragEventPolyfill();
+    const harness = createAppHarness();
+    await harness.register(DEFAULT_CREDENTIALS);
+    const workspace = await harness.createOwnerWorkspace('Drag board');
+    const createdBy = UserId.create(harness.currentUser?.uid ?? 'user-1');
+    const user = userEvent.setup();
+
+    await harness.elementRepository.save(createTask(workspace, createdBy, 'task-1', 'Plan launch'));
+
+    harness.render({ initialPath: `/workspaces/${workspace.id.value}` });
+    await screen.findByRole('application', { name: 'Canvas' });
+    const panel = await openTaskPlan();
+
+    await user.click(within(panel).getByRole('tab', { name: 'Board' }));
+
+    const todoColumn = within(panel).getByRole('region', { name: 'Todo' });
+    const card = within(todoColumn)
+      .getByRole('button', { name: 'Select task Plan launch' })
+      .closest('[data-task-status]');
+    const completedColumn = within(panel).getByRole('region', { name: 'Completed' });
+    const transfer = createDataTransfer();
+
+    fireEvent.dragStart(card as HTMLElement, { dataTransfer: transfer });
+    fireEvent.dragOver(completedColumn, { dataTransfer: transfer });
+    fireEvent.drop(completedColumn, { dataTransfer: transfer });
+
+    await waitFor(async () => {
+      const stored = await harness.elementRepository.findById(ElementId.create('task-1'));
+      expect(stored?.type === 'task' ? stored.status : undefined).toBe('completed');
+      expect(stored?.type === 'task' ? stored.boardOrder : undefined).toBe(0);
+    });
+
+    await waitFor(() => {
+      expect(
+        within(completedColumn).getByRole('button', { name: 'Select task Plan launch' }),
+      ).toBeVisible();
+    });
+  });
+
+  it('appends a task after the last one when its status changes', async () => {
+    const harness = createAppHarness();
+    await harness.register(DEFAULT_CREDENTIALS);
+    const workspace = await harness.createOwnerWorkspace('Append order');
+    const createdBy = UserId.create(harness.currentUser?.uid ?? 'user-1');
+    const user = userEvent.setup();
+
+    await harness.elementRepository.save(
+      createTask(workspace, createdBy, 'task-done', 'Done task', {
+        status: 'completed',
+        boardOrder: 10,
+      }),
+    );
+    await harness.elementRepository.save(createTask(workspace, createdBy, 'task-1', 'Plan launch'));
+
+    harness.render({ initialPath: `/workspaces/${workspace.id.value}` });
+    await screen.findByRole('application', { name: 'Canvas' });
+    const panel = await openTaskPlan();
+
+    await user.click(within(panel).getByRole('tab', { name: 'Board' }));
+    await user.click(within(panel).getByRole('button', { name: 'Change status for Plan launch' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Completed' }));
+
+    await waitFor(async () => {
+      const stored = await harness.elementRepository.findById(ElementId.create('task-1'));
+      expect(stored?.type === 'task' ? stored.status : undefined).toBe('completed');
+      expect(stored?.type === 'task' ? stored.boardOrder : undefined).toBe(11);
     });
   });
 

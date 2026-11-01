@@ -2,6 +2,7 @@ import {
   createTaskElement,
   richTextToPlain,
   withTaskAssignee,
+  withTaskBoardOrder,
   withTaskDueDate,
   withTaskNotes,
   withTaskStatus,
@@ -221,6 +222,34 @@ describe('TaskElement', () => {
     const original = createSample();
     const corrupted = Object.assign(createSample(), { status: 'archived' });
     expect(() => withTaskStatus(original, corrupted.status)).toThrow(/status/);
+  });
+
+  it('defaults boardOrder to the creation time and allows explicit order', () => {
+    const createdAt = new Date('2024-01-01T00:00:00Z');
+    const defaulted = createSample({ createdAt });
+    const ordered = createSample({ createdAt, boardOrder: 42 });
+
+    expect(defaulted.boardOrder).toBe(createdAt.getTime());
+    expect(ordered.boardOrder).toBe(42);
+  });
+
+  it('updates boardOrder without mutating the original', () => {
+    const original = createSample({ boardOrder: 10 });
+    const updatedAt = new Date('2024-01-02T00:00:00Z');
+
+    const updated = withTaskBoardOrder(original, 25, updatedAt);
+
+    expect(updated).not.toBe(original);
+    expect(updated.boardOrder).toBe(25);
+    expect(updated.updatedAt).toBe(updatedAt);
+    expect(original.boardOrder).toBe(10);
+  });
+
+  it('rejects a non-finite or unsafe boardOrder', () => {
+    const original = createSample();
+
+    expect(() => withTaskBoardOrder(original, Number.NaN)).toThrow(/boardOrder/);
+    expect(() => withTaskBoardOrder(original, Number.MAX_SAFE_INTEGER + 1)).toThrow(/boardOrder/);
   });
 
   it('sets and clears notes without mutating the original', () => {

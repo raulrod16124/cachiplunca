@@ -16,6 +16,7 @@ export interface CreateTaskElementProps {
   readonly size: Size;
   readonly title: RichTextDocument | string;
   readonly status: TaskStatus;
+  readonly boardOrder?: number;
   readonly notes?: RichTextDocument | string;
   readonly assigneeId?: UserId;
   readonly dueDate?: Date;
@@ -35,6 +36,9 @@ export function createTaskElement(props: CreateTaskElementProps): TaskElement {
   const now = new Date();
   const createdAt = props.createdAt ?? now;
   const updatedAt = props.updatedAt ?? createdAt;
+  const boardOrder = props.boardOrder ?? createdAt.getTime();
+
+  assertBoardOrder(boardOrder);
 
   const element: TaskElement = {
     id: props.id,
@@ -49,6 +53,7 @@ export function createTaskElement(props: CreateTaskElementProps): TaskElement {
     updatedAt,
     title,
     status: props.status,
+    boardOrder,
     ...(notes === undefined ? {} : { notes }),
     ...(props.assigneeId === undefined ? {} : { assigneeId: props.assigneeId }),
     ...(props.dueDate === undefined ? {} : { dueDate: props.dueDate }),
@@ -75,6 +80,16 @@ export function withTaskStatus(
   assertStatus(status);
 
   return buildTaskElement(element, { status, updatedAt });
+}
+
+export function withTaskBoardOrder(
+  element: TaskElement,
+  boardOrder: number,
+  updatedAt: Date = new Date(),
+): TaskElement {
+  assertBoardOrder(boardOrder);
+
+  return buildTaskElement(element, { boardOrder, updatedAt });
 }
 
 export function withTaskNotes(
@@ -107,6 +122,7 @@ export function withTaskDueDate(
 interface TaskElementOverrides {
   readonly title?: RichTextDocument;
   readonly status?: TaskStatus;
+  readonly boardOrder?: number;
   readonly notes?: RichTextDocument;
   readonly assigneeId?: UserId;
   readonly dueDate?: Date;
@@ -131,6 +147,7 @@ function buildTaskElement(element: TaskElement, overrides: TaskElementOverrides)
     updatedAt: overrides.updatedAt,
     title: overrides.title ?? element.title,
     status: overrides.status ?? element.status,
+    boardOrder: overrides.boardOrder ?? element.boardOrder,
     ...(notes === undefined ? {} : { notes }),
     ...(assigneeId === undefined ? {} : { assigneeId }),
     ...(dueDate === undefined ? {} : { dueDate }),
@@ -186,5 +203,15 @@ function assertAssignee(assigneeId: UserId | undefined): void {
 function assertDueDate(dueDate: Date | undefined): void {
   if (dueDate !== undefined && (!(dueDate instanceof Date) || Number.isNaN(dueDate.getTime()))) {
     throw new Error('TaskElement dueDate must be a valid Date');
+  }
+}
+
+function assertBoardOrder(boardOrder: number): void {
+  if (
+    typeof boardOrder !== 'number' ||
+    !Number.isFinite(boardOrder) ||
+    Math.abs(boardOrder) > Number.MAX_SAFE_INTEGER
+  ) {
+    throw new Error('TaskElement boardOrder must be a safe finite number');
   }
 }

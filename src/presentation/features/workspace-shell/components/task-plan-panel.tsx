@@ -1,12 +1,24 @@
-import { Badge, Checkbox, DropdownMenu, Heading, Select, Tabs, Text } from '@raulrod/ui';
+import {
+  Badge,
+  Checkbox,
+  DropdownMenu,
+  Heading,
+  Select,
+  Tabs,
+  Text,
+  VisuallyHidden,
+} from '@raulrod/ui';
 import { Check, ClipboardList, Ellipsis } from '@raulrod/icons';
-import { Fragment, useMemo, useState, type ReactNode } from 'react';
+import { Fragment, useId, useMemo, useState, type DragEvent, type ReactNode } from 'react';
 import styled from 'styled-components';
 import type { Element, TaskElement, TaskStatus } from '../../../../domain/element';
 import { TASK_STATUSES, isTaskElement, richTextToPlain } from '../../../../domain/element';
-import type { TaskPlanStatusFilter } from '../../../../application/services';
+import type { TaskPlanStatusFilter, TaskBoardDropPosition } from '../../../../application/services';
 import {
+  isBoardDropNoop,
   isTaskOverdue,
+  nextBoardOrderForStatusChange,
+  resolveBoardOrderForDrop,
   selectTaskPlan,
   selectTaskPlanBoard,
 } from '../../../../application/services';
@@ -87,6 +99,21 @@ const Board = styled.div`
   grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: start;
   gap: ${({ theme }) => theme.space[3]};
+
+  [data-dragging='true'] {
+    opacity: 0.55;
+    border-style: dashed;
+  }
+
+  [data-drop-target='true'] {
+    border-color: var(--cach-border-accent);
+    box-shadow: ${({ theme }) => theme.shadow.sm};
+  }
+
+  [data-drop-before='true'],
+  [data-drop-start='true'] {
+    box-shadow: inset 0 2px 0 var(--cach-border-accent);
+  }
 
   @media (max-width: 1280px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -266,9 +293,25 @@ export interface TaskPlanPanelProps {
   readonly canCreateTask: boolean;
   readonly onClose: () => void;
   readonly onSelectTask: (elementId: string) => void;
-  readonly onChangeStatus: (task: TaskElement, status: TaskStatus) => void;
+  readonly onChangeStatus: (task: TaskElement, status: TaskStatus, boardOrder: number) => void;
   readonly onCreateTask: () => void;
 }
+
+const sameDropTarget = (
+  current: { readonly status: TaskStatus; readonly position: TaskBoardDropPosition } | null,
+  status: TaskStatus,
+  position: TaskBoardDropPosition,
+): boolean => {
+  if (current === null || current.status !== status) {
+    return false;
+  }
+
+  if (current.position.kind === 'before' && position.kind === 'before') {
+    return current.position.taskId === position.taskId;
+  }
+
+  return current.position.kind === position.kind;
+};
 
 export function TaskPlanPanel({
   open,
@@ -283,8 +326,15 @@ export function TaskPlanPanel({
   onCreateTask,
 }: TaskPlanPanelProps): ReactNode {
   const { t, locale } = useI18n();
+  const boardHintId = useId();
   const [statusFilter, setStatusFilter] = useState<TaskPlanStatusFilter>('all');
   const [onlyMine, setOnlyMine] = useState(false);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<{
+    readonly status: TaskStatus;
+    readonly position: TaskBoardDropPosition;
+  } | null>(null);
+  const [announcement, setAnnouncement] = useState('');
 
   const [view, setView] = useState<TaskPlanView>('list');
 
@@ -309,6 +359,98 @@ export function TaskPlanPanel({
   const clearFilters = (): void => {
     setStatusFilter('all');
     setOnlyMine(false);
+  };
+
+  const resetDragState = (): void => {
+    setDraggingId(null);
+    setDropTarget(null);
+  };
+
+  const changeStatus = (task: TaskElement, status: TaskStatus): void => {
+    onChangeStatus(task, status, nextBoardOrderForStatusChange(elements, status));
+    setAnnouncement(
+      t('plan.board.moved', {
+        title: richTextToPlain(task.title),
+        status: t(TASK_STATUS_LABEL_KEYS[status]),
+      }),
+    );
+  };
+
+  const handleDragStart = (event: DragEvent<HTMLElement>, task: TaskElement): void => {
+    if (!canEdit) {
+      event.preventDefault();
+      return;
+    }
+
+    event.dataTransfer.setData('text/plain', task.id.value);
+    event.dataTransfer.effectAllowed = 'move';
+    setDraggingId(task.id.value);
+  };
+
+  const handleDragEnd = (): void => {
+    resetDragState();
+  };
+
+  const handleDragOver = (
+    event: DragEvent<HTMLElement>,
+    status: TaskStatus,
+    position: TaskBoardDropPosition,
+  ): void => {
+    if (!canEdit) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = 'move';
+    setDropTarget((current) =>
+      sameDropTarget(current, status, position) ? current : { status, position },
+    );
+  };
+
+  const handleDrop = (
+    event: DragEvent<HTMLElement>,
+    status: TaskStatus,
+    position: TaskBoardDropPosition,
+  ): void => {
+    if (!canEdit) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    const taskId = event.dataTransfer.getData('text/plain') || draggingId;
+    resetDragState();
+
+    if (taskId === null || taskId === '') {
+      return;
+    }
+
+    const task = elements.find(
+      (element): element is TaskElement => isTaskElement(element) && element.id.value === taskId,
+    );
+
+    if (task === undefined) {
+      return;
+    }
+
+    if (position.kind === 'before' && position.taskId === task.id.value) {
+      return;
+    }
+
+    if (isBoardDropNoop(elements, task.id.value, status, position)) {
+      return;
+    }
+
+    const boardOrder = resolveBoardOrderForDrop(elements, status, position);
+
+    onChangeStatus(task, status, boardOrder);
+    setAnnouncement(
+      t(task.status === status ? 'plan.board.reordered' : 'plan.board.moved', {
+        title: richTextToPlain(task.title),
+        status: t(TASK_STATUS_LABEL_KEYS[status]),
+      }),
+    );
   };
 
   const describeTask = (
@@ -365,7 +507,7 @@ export function TaskPlanPanel({
                 value={task.status}
                 onValueChange={(value) => {
                   if (value !== task.status) {
-                    onChangeStatus(task, value as TaskStatus);
+                    changeStatus(task, value as TaskStatus);
                   }
                 }}
               >
@@ -395,13 +537,36 @@ export function TaskPlanPanel({
     const { title, assignee, dueDate, overdue } = describeTask(task);
 
     return (
-      <Card as="li" padding="none" data-task-status={task.status}>
+      <Card
+        as="li"
+        padding="none"
+        data-task-status={task.status}
+        data-dragging={draggingId === task.id.value ? 'true' : undefined}
+        data-drop-before={
+          draggingId !== task.id.value &&
+          dropTarget?.status === task.status &&
+          dropTarget.position.kind === 'before' &&
+          dropTarget.position.taskId === task.id.value
+            ? 'true'
+            : undefined
+        }
+        draggable={canEdit}
+        onDragStart={(event) => handleDragStart(event, task)}
+        onDragEnd={handleDragEnd}
+        onDragOver={(event) =>
+          handleDragOver(event, task.status, { kind: 'before', taskId: task.id.value })
+        }
+        onDrop={(event) =>
+          handleDrop(event, task.status, { kind: 'before', taskId: task.id.value })
+        }
+      >
         <BoardCardContent>
           <StatusAccent $status={task.status} aria-hidden="true" data-status-accent={task.status} />
           <BoardCardMain
             type="button"
             title={title}
             aria-label={t('plan.selectTask', { title })}
+            aria-describedby={canEdit ? boardHintId : undefined}
             onClick={() => onSelectTask(task.id.value)}
           >
             <BoardCardTitle>{title}</BoardCardTitle>
@@ -432,7 +597,7 @@ export function TaskPlanPanel({
                     }
                     onSelect={() => {
                       if (status !== task.status) {
-                        onChangeStatus(task, status);
+                        changeStatus(task, status);
                       }
                     }}
                   >
@@ -468,6 +633,9 @@ export function TaskPlanPanel({
             onClose={onClose}
             closeLabel={t('plan.close')}
           />
+          <VisuallyHidden role="status" aria-live="polite">
+            {announcement}
+          </VisuallyHidden>
           <Filters>
             <Select
               value={statusFilter}
@@ -551,6 +719,7 @@ export function TaskPlanPanel({
                     </Groups>
                   </Tabs.Panel>
                   <Tabs.Panel value="board">
+                    <VisuallyHidden id={boardHintId}>{t('plan.board.dragHint')}</VisuallyHidden>
                     <Board role="group" aria-label={t('plan.board.label')}>
                       {boardGroups.map((group) => (
                         <SharedPanel
@@ -559,9 +728,30 @@ export function TaskPlanPanel({
                           variant="sunken"
                           padding="sm"
                           aria-labelledby={`task-plan-board-group-${group.status}`}
+                          data-drop-target={
+                            dropTarget?.status === group.status &&
+                            dropTarget.position.kind === 'end'
+                              ? 'true'
+                              : undefined
+                          }
+                          onDragOver={(event) =>
+                            handleDragOver(event, group.status, { kind: 'end' })
+                          }
+                          onDrop={(event) => handleDrop(event, group.status, { kind: 'end' })}
                         >
                           <BoardColumnBody>
-                            <GroupHeader>
+                            <GroupHeader
+                              data-drop-start={
+                                dropTarget?.status === group.status &&
+                                dropTarget.position.kind === 'start'
+                                  ? 'true'
+                                  : undefined
+                              }
+                              onDragOver={(event) =>
+                                handleDragOver(event, group.status, { kind: 'start' })
+                              }
+                              onDrop={(event) => handleDrop(event, group.status, { kind: 'start' })}
+                            >
                               <BoardColumnHeading
                                 as="h3"
                                 id={`task-plan-board-group-${group.status}`}

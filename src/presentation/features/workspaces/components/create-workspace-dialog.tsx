@@ -73,6 +73,11 @@ const TEMPLATE_OPTIONS: readonly TemplateOption[] = [
     nameKey: 'workspaces.createDialog.templateBrainstorming',
     descriptionKey: 'workspaces.createDialog.templateBrainstormingDescription',
   },
+  {
+    id: 'kanban',
+    nameKey: 'workspaces.createDialog.templateKanban',
+    descriptionKey: 'workspaces.createDialog.templateKanbanDescription',
+  },
 ];
 
 function isTemplateSelection(value: string): value is TemplateSelection {
@@ -123,6 +128,7 @@ export function CreateWorkspaceDialog({
     if (open) {
       setName('');
       setDescription('');
+      setType('general');
       setTemplate('blank');
       setCoverFile(null);
       setCoverPreviewUrl(null);
@@ -350,6 +356,9 @@ export function CreateWorkspaceDialog({
                         onValueChange={(value) => {
                           if (isTemplateSelection(value)) {
                             setTemplate(value);
+                            if (value === 'kanban') {
+                              setType('tasks');
+                            }
                           }
                         }}
                       >
