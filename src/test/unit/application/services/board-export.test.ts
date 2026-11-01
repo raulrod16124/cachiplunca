@@ -43,6 +43,7 @@ const ELEMENTS: readonly Element[] = [
     ...base('task-1'),
     title: 'Ship export',
     status: 'in_progress',
+    boardOrder: 42,
     notes: 'Keep it simple',
     assigneeId: ASSIGNEE,
     dueDate: new Date('2026-10-30T00:00:00.000Z'),
@@ -113,6 +114,7 @@ describe('board export', () => {
     expect(exported.elements[2]).toEqual(
       expect.objectContaining({
         status: 'in_progress',
+        boardOrder: 42,
         dueDate: '2026-10-30T00:00:00.000Z',
         notes: richTextFromPlain('Keep it simple'),
       }),

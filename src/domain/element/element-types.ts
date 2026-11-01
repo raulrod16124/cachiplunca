@@ -50,6 +50,7 @@ export interface TaskElement extends BaseElement {
   readonly type: 'task';
   readonly title: RichTextDocument;
   readonly status: TaskStatus;
+  readonly boardOrder: number;
   readonly notes?: RichTextDocument;
   readonly assigneeId?: UserId;
   readonly dueDate?: Date;
@@ -193,6 +194,13 @@ export function validateTaskElement(element: TaskElement): void {
   }
   if (element.status.trim().length === 0) {
     throw new Error('TaskElement status cannot be empty');
+  }
+  if (
+    typeof element.boardOrder !== 'number' ||
+    !Number.isFinite(element.boardOrder) ||
+    Math.abs(element.boardOrder) > Number.MAX_SAFE_INTEGER
+  ) {
+    throw new Error('TaskElement boardOrder must be a safe finite number');
   }
   if (element.notes !== undefined) {
     validateRichTextDocument(element.notes);

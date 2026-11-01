@@ -11,13 +11,13 @@ La lista ya resuelve filtros (`status`, `onlyMine`), orden por vencimiento, sele
 
 ## Decisión
 
-1. **El board reutiliza el selector de PBL-009.** `selectTaskPlanBoard(elements, filters)` vive en Application junto a `selectTaskPlan`, comparte filtrado y orden, y devuelve una columna por cada `TASK_STATUSES` incluidas las vacías. `selectTaskPlan` se implementa como `selectTaskPlanBoard(...).filter(tasks.length > 0)`, de modo que la lista y el board no pueden divergir.
+1. **El board reutiliza el selector de PBL-009.** `selectTaskPlanBoard(elements, filters)` vive en Application junto a `selectTaskPlan`, comparte filtrado y devuelve una columna por cada `TASK_STATUSES` incluidas las vacías. `selectTaskPlan` se implementa sobre el mismo agrupado y conserva el orden por vencimiento; ADR-0052 cambia únicamente el orden del board a `TaskElement.boardOrder` para permitir el reordenado manual persistente. Filtros y agrupado siguen siendo una única fuente de verdad.
 
 2. **La vista Lista/Board es estado efímero de Presentation.** El panel mantiene `view: 'list' | 'board'` en estado local, igual que los filtros (ADR-0036). No se persiste ni se comparte con el canvas.
 
 3. **El toggle usa `Tabs` de `@raulrod/ui`.** Aporta tablist, roving tabindex, activación automática con flechas/Home/End y `tabpanel` asociado sin dependencias nuevas. Los paneles permanecen montados por el componente; el contenido inactivo no se renderiza para evitar duplicar nodos y consultas de test.
 
-4. **Las columnas no exigen drag & drop.** El cambio de estado se hace desde un menú accesible (`DropdownMenu`) por tarjeta, reutilizando `onChangeStatus` y `UpdateElement`; el estado actual se marca con un check. En solo lectura no se muestra el menú: la columna ya comunica el estado.
+4. **Las columnas no exigen drag & drop.** El cambio de estado se hace desde un menú accesible (`DropdownMenu`) por tarjeta, reutilizando `onChangeStatus` y `UpdateElement`; el estado actual se marca con un check. En solo lectura no se muestra el menú: la columna ya comunica el estado. El drag and drop se añadió después en ADR-0052 como vía adicional de ratón; el menú sigue siendo la alternativa accesible.
 
 5. **El panel se ensancha solo en la vista board.** Lista conserva el ancho estrecho de PBL-009 (`clamp(280px, 24vw, 360px)`); board usa `clamp(720px, 55vw, 960px)` con `max-width: calc(100vw - 280px)` para no asfixiar el canvas. El canvas sigue reduciéndose, por lo que `CanvasViewportStore.center` y `focusElement` mantienen su comportamiento.
 
@@ -30,7 +30,7 @@ La lista ya resuelve filtros (`status`, `onlyMine`), orden por vencimiento, sele
 ## Alternativas consideradas
 
 - **Nuevo selector específico de board con lógica propia:** rechazado; duplicaría filtros y orden y permitiría que lista y board divergieran.
-- **Drag & drop:** fuera de alcance por el backlog y por accesibilidad; el menú de estado cubre el caso con teclado.
+- **Drag & drop:** quedó fuera de alcance en esta fase por el backlog y por accesibilidad; el menú de estado cubría el caso con teclado. ADR-0052 lo añade después como vía adicional, manteniendo el menú.
 - **Scroll horizontal con columnas fijas:** rechazado tras validar la UI; comprimía cabeceras y metadatos y sacaba columnas fuera del panel en pantallas medianas.
 - **Ensanchar el panel también en la lista:** rechazado; la lista funciona bien en el ancho estrecho y el ensanche solo responde a la necesidad del board.
 - **Drag handle o controles grandes de estado en cada tarjeta:** rechazado; robaban ancho al título y competían con la selección de la tarjeta.
@@ -43,5 +43,5 @@ La lista ya resuelve filtros (`status`, `onlyMine`), orden por vencimiento, sele
 - No hay cambios de dominio, persistencia, reglas ni dependencias.
 - El panel cambia de ancho al alternar vista; el canvas se reajusta y el centrado del viewport sigue siendo correcto.
 - El board no tiene scroll horizontal: 4, 2 o 1 columna según el viewport, con scroll vertical en el panel.
-- El estado se cambia con un menú accesible por tarjeta; la columna ya no muestra badges de estado redundantes en solo lectura.
-- Los tests cubren el selector de board, el toggle, contadores, empty states, selección, cambio de estado por menú, solo lectura, persistencia de integración y E2E.
+- El estado se cambia con un menú accesible por tarjeta; la columna ya no muestra badges de estado redundantes en solo lectura. ADR-0052 añade además el arrastre de tarjetas como vía de ratón, manteniendo el menú.
+- Los tests cubren el selector de board, el toggle, contadores, empty states, selección, cambio de estado por menú, solo lectura, persistencia de integración y E2E. ADR-0052 amplía la cobertura con arrastre, anuncio `aria-live` y persistencia tras recarga.

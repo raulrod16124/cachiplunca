@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom';
-import { screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { installDragEventPolyfill } from '../../../../../fixtures/drag-event';
 import { render } from '../../../../../setup/render-with-theme';
 import {
   createTaskElement,
@@ -241,7 +242,7 @@ describe('TaskPlanPanel', () => {
     await user.click(screen.getByRole('combobox', { name: 'Change status for Plan launch' }));
     await user.click(screen.getByRole('option', { name: 'Completed' }));
 
-    expect(props.onChangeStatus).toHaveBeenCalledWith(element, 'completed');
+    expect(props.onChangeStatus).toHaveBeenCalledWith(element, 'completed', 0);
   });
 
   it('does not offer status changes in read-only mode', () => {
@@ -336,7 +337,21 @@ describe('TaskPlanPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Change status for Plan launch' }));
     await user.click(screen.getByRole('menuitem', { name: 'Completed' }));
 
-    expect(props.onChangeStatus).toHaveBeenCalledWith(element, 'completed');
+    expect(props.onChangeStatus).toHaveBeenCalledWith(element, 'completed', 0);
+  });
+
+  it('appends a task after the last one when its status changes', async () => {
+    const user = userEvent.setup();
+    const moving = task('moving');
+    const first = task('first', { status: 'completed', boardOrder: 10 });
+    const second = task('second', { status: 'completed', boardOrder: 20 });
+    const props = renderPanel({ elements: [first, second, moving] });
+
+    await user.click(screen.getByRole('tab', { name: 'Board' }));
+    await user.click(screen.getByRole('button', { name: 'Change status for moving' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Completed' }));
+
+    expect(props.onChangeStatus).toHaveBeenCalledWith(moving, 'completed', 21);
   });
 
   it('does not offer status changes on the board in read-only mode', async () => {
@@ -376,5 +391,222 @@ describe('TaskPlanPanel', () => {
     renderPanel({ open: false });
 
     expect(screen.queryByTestId('task-plan-panel')).not.toBeInTheDocument();
+  });
+});
+
+describe('TaskPlanPanel board drag and drop', () => {
+  beforeAll(() => {
+    installDragEventPolyfill();
+  });
+
+  function createDataTransfer(): DataTransfer {
+    const store = new Map<string, string>();
+
+    return {
+      dropEffect: 'none',
+      effectAllowed: 'all',
+      types: [],
+      setData: (type: string, value: string) => {
+        store.set(type, value);
+      },
+      getData: (type: string) => store.get(type) ?? '',
+      clearData: () => store.clear(),
+      setDragImage: jest.fn(),
+    } as unknown as DataTransfer;
+  }
+
+  async function openBoard(): Promise<HTMLElement> {
+    await userEvent.setup().click(screen.getByRole('tab', { name: 'Board' }));
+
+    return screen.getByRole('group', { name: 'Task board' });
+  }
+
+  function boardCard(element: TaskElement, label = element.id.value): HTMLElement {
+    const card = screen
+      .getByRole('button', { name: `Select task ${label}` })
+      .closest('[data-task-status]');
+
+    if (card === null) {
+      throw new Error('Expected a board card');
+    }
+
+    return card as HTMLElement;
+  }
+
+  it('moves a task to another column when dropped', async () => {
+    const element = task('task-1', { title: 'Plan launch' });
+    const props = renderPanel({ elements: [element] });
+    const board = await openBoard();
+    const transfer = createDataTransfer();
+
+    fireEvent.dragStart(boardCard(element, 'Plan launch'), { dataTransfer: transfer });
+    expect(transfer.getData('text/plain')).toBe('task-1');
+
+    const completed = within(board).getByRole('region', { name: 'Completed' });
+    fireEvent.dragOver(completed, { dataTransfer: transfer });
+    expect(props.onChangeStatus).not.toHaveBeenCalled();
+
+    fireEvent.drop(completed, { dataTransfer: transfer });
+    expect(props.onChangeStatus).toHaveBeenCalledWith(element, 'completed', 0);
+  });
+
+  it('inserts a task at the top when dropped on a column header', async () => {
+    const dragged = task('dragged');
+    const first = task('first', { status: 'completed', boardOrder: 10 });
+    const second = task('second', { status: 'completed', boardOrder: 20 });
+    const props = renderPanel({ elements: [dragged, first, second] });
+    const board = await openBoard();
+    const transfer = createDataTransfer();
+    const completed = within(board).getByRole('region', { name: 'Completed' });
+    const header = within(completed).getByRole('heading', { name: 'Completed' })
+      .parentElement as HTMLElement;
+
+    fireEvent.dragStart(boardCard(dragged), { dataTransfer: transfer });
+    fireEvent.dragOver(header, { dataTransfer: transfer });
+    expect(header).toHaveAttribute('data-drop-start', 'true');
+
+    fireEvent.drop(header, { dataTransfer: transfer });
+    expect(props.onChangeStatus).toHaveBeenCalledWith(dragged, 'completed', 9);
+  });
+
+  it('inserts a task before the card it is dropped on', async () => {
+    const dragged = task('dragged');
+    const first = task('first', { status: 'completed', boardOrder: 10 });
+    const second = task('second', { status: 'completed', boardOrder: 20 });
+    const props = renderPanel({ elements: [dragged, first, second] });
+    await openBoard();
+    const transfer = createDataTransfer();
+    const secondCard = boardCard(second);
+
+    fireEvent.dragStart(boardCard(dragged), { dataTransfer: transfer });
+    fireEvent.dragOver(secondCard, { dataTransfer: transfer });
+    expect(secondCard).toHaveAttribute('data-drop-before', 'true');
+
+    fireEvent.drop(secondCard, { dataTransfer: transfer });
+    expect(props.onChangeStatus).toHaveBeenCalledWith(dragged, 'completed', 15);
+  });
+
+  it('appends a task when dropped on the column body', async () => {
+    const dragged = task('dragged');
+    const first = task('first', { status: 'completed', boardOrder: 10 });
+    const second = task('second', { status: 'completed', boardOrder: 20 });
+    const props = renderPanel({ elements: [dragged, first, second] });
+    const board = await openBoard();
+    const transfer = createDataTransfer();
+    const completed = within(board).getByRole('region', { name: 'Completed' });
+
+    fireEvent.dragStart(boardCard(dragged), { dataTransfer: transfer });
+    fireEvent.drop(completed, { dataTransfer: transfer });
+
+    expect(props.onChangeStatus).toHaveBeenCalledWith(dragged, 'completed', 21);
+  });
+
+  it('reorders a task within the same column', async () => {
+    const first = task('first', { boardOrder: 10 });
+    const last = task('last', { boardOrder: 30 });
+    const props = renderPanel({ elements: [first, last] });
+    const board = await openBoard();
+    const transfer = createDataTransfer();
+    const todo = within(board).getByRole('region', { name: 'Todo' });
+    const header = within(todo).getByRole('heading', { name: 'Todo' }).parentElement as HTMLElement;
+
+    fireEvent.dragStart(boardCard(last), { dataTransfer: transfer });
+    fireEvent.drop(header, { dataTransfer: transfer });
+
+    expect(props.onChangeStatus).toHaveBeenCalledWith(last, 'todo', 9);
+    expect(await screen.findByText('Moved last within Todo.')).toBeInTheDocument();
+  });
+
+  it('does not change status when dropped on the current column', async () => {
+    const element = task('Plan launch');
+    const props = renderPanel({ elements: [element] });
+    const board = await openBoard();
+    const transfer = createDataTransfer();
+
+    fireEvent.dragStart(boardCard(element), { dataTransfer: transfer });
+    fireEvent.drop(within(board).getByRole('region', { name: 'Todo' }), { dataTransfer: transfer });
+
+    expect(props.onChangeStatus).not.toHaveBeenCalled();
+  });
+
+  it('ignores drops with an unknown task id', async () => {
+    const element = task('Plan launch');
+    const props = renderPanel({ elements: [element] });
+    const board = await openBoard();
+    const transfer = createDataTransfer();
+    transfer.setData('text/plain', 'missing-task');
+
+    fireEvent.drop(within(board).getByRole('region', { name: 'Completed' }), {
+      dataTransfer: transfer,
+    });
+
+    expect(props.onChangeStatus).not.toHaveBeenCalled();
+  });
+
+  it('announces the movement with a live region', async () => {
+    const element = task('Plan launch');
+    renderPanel({ elements: [element] });
+    const board = await openBoard();
+    const transfer = createDataTransfer();
+
+    fireEvent.dragStart(boardCard(element), { dataTransfer: transfer });
+    fireEvent.drop(within(board).getByRole('region', { name: 'Completed' }), {
+      dataTransfer: transfer,
+    });
+
+    expect(await screen.findByText('Moved Plan launch to Completed.')).toBeInTheDocument();
+  });
+
+  it('marks the dragging card and the active drop target', async () => {
+    const element = task('Plan launch');
+    renderPanel({ elements: [element] });
+    const board = await openBoard();
+    const transfer = createDataTransfer();
+    const card = boardCard(element);
+
+    fireEvent.dragStart(card, { dataTransfer: transfer });
+    expect(card).toHaveAttribute('data-dragging', 'true');
+
+    const completed = within(board).getByRole('region', { name: 'Completed' });
+    fireEvent.dragOver(completed, { dataTransfer: transfer });
+    expect(completed).toHaveAttribute('data-drop-target', 'true');
+
+    fireEvent.dragEnd(card, { dataTransfer: transfer });
+    expect(card).not.toHaveAttribute('data-dragging');
+  });
+
+  it('describes the drag and drop affordance on editable cards', async () => {
+    const element = task('Plan launch');
+    renderPanel({ elements: [element] });
+    await openBoard();
+
+    const select = screen.getByRole('button', { name: 'Select task Plan launch' });
+    const describedBy = select.getAttribute('aria-describedby');
+
+    expect(describedBy).not.toBeNull();
+    expect(document.getElementById(describedBy ?? '')).toHaveTextContent(
+      'Drag this card to another column, or use the status menu.',
+    );
+    expect(boardCard(element)).toHaveAttribute('draggable', 'true');
+  });
+
+  it('does not allow dragging in read-only mode', async () => {
+    const element = task('Plan launch');
+    const props = renderPanel({ elements: [element], canEdit: false });
+    const board = await openBoard();
+    const transfer = createDataTransfer();
+    const card = boardCard(element);
+
+    expect(card).toHaveAttribute('draggable', 'false');
+    expect(screen.getByRole('button', { name: 'Select task Plan launch' })).not.toHaveAttribute(
+      'aria-describedby',
+    );
+
+    fireEvent.dragStart(card, { dataTransfer: transfer });
+    fireEvent.drop(within(board).getByRole('region', { name: 'Completed' }), {
+      dataTransfer: transfer,
+    });
+
+    expect(props.onChangeStatus).not.toHaveBeenCalled();
   });
 });

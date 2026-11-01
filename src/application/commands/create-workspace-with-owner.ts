@@ -1,4 +1,4 @@
-import type { Element } from '../../domain/element';
+import { withTaskBoardOrder, type Element } from '../../domain/element';
 import type { ElementId, UserId, WorkspaceId } from '../../domain/shared';
 import type { Workspace, WorkspaceType } from '../../domain/workspace';
 import { createAppError, toAppError, type AppError } from '../../shared/errors';
@@ -123,13 +123,18 @@ function buildTemplateElements(
   });
   const createElement = createCreateElement({ generateId: deps.generateId, now: deps.now });
   const elements: Element[] = [];
+  let taskIndex = 0;
 
   for (const input of inputs) {
     const result = createElement(input);
     if (result.status === 'error') {
       return result;
     }
-    elements.push(result.element);
+    elements.push(
+      result.element.type === 'task'
+        ? withTaskBoardOrder(result.element, taskIndex++, result.element.createdAt)
+        : result.element,
+    );
   }
 
   return { status: 'ok', elements };

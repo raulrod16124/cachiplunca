@@ -69,6 +69,7 @@ const createTaskElement = (overrides: Partial<TaskElement> = {}): TaskElement =>
   type: 'task',
   title: richTextFromPlain('task title'),
   status: 'todo',
+  boardOrder: 0,
   ...overrides,
 });
 

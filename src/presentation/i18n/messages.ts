@@ -182,6 +182,9 @@ const en = {
   'workspaces.createDialog.templateBrainstorming': 'Brainstorming',
   'workspaces.createDialog.templateBrainstormingDescription':
     'Explore a problem, ideas and open questions.',
+  'workspaces.createDialog.templateKanban': 'Kanban',
+  'workspaces.createDialog.templateKanbanDescription':
+    'Plan work across Todo, In progress, Completed and Blocked columns.',
   'workspaces.createDialog.submit': 'Create',
   'workspaces.errors.nameRequired': 'Enter a board name.',
   'workspaces.errors.nameTooLong': 'Board names cannot exceed 100 characters.',
@@ -603,6 +606,9 @@ const en = {
   'plan.view.board': 'Board',
   'plan.board.label': 'Task board',
   'plan.board.empty': 'No tasks',
+  'plan.board.moved': 'Moved {title} to {status}.',
+  'plan.board.reordered': 'Moved {title} within {status}.',
+  'plan.board.dragHint': 'Drag this card to another column, or use the status menu.',
   'task.status.todo': 'Todo',
   'task.status.in_progress': 'In progress',
   'task.status.completed': 'Completed',
@@ -914,6 +920,9 @@ const es: Record<TranslationKey, string> = {
   'workspaces.createDialog.templateBrainstorming': 'Brainstorming',
   'workspaces.createDialog.templateBrainstormingDescription':
     'Explora un problema, ideas y preguntas abiertas.',
+  'workspaces.createDialog.templateKanban': 'Kanban',
+  'workspaces.createDialog.templateKanbanDescription':
+    'Planifica el trabajo en columnas Por hacer, En progreso, Completada y Bloqueada.',
   'workspaces.createDialog.submit': 'Crear',
   'workspaces.errors.nameRequired': 'Escribe un nombre para el tablero.',
   'workspaces.errors.nameTooLong': 'El nombre no puede superar los 100 caracteres.',
@@ -1348,6 +1357,9 @@ const es: Record<TranslationKey, string> = {
   'plan.view.board': 'Tablero',
   'plan.board.label': 'Tablero de tareas',
   'plan.board.empty': 'Sin tareas',
+  'plan.board.moved': 'Tarea {title} movida a {status}.',
+  'plan.board.reordered': 'Tarea {title} movida dentro de {status}.',
+  'plan.board.dragHint': 'Arrastra esta tarjeta a otra columna o usa el menú de estado.',
   'task.status.todo': 'Por hacer',
   'task.status.in_progress': 'En progreso',
   'task.status.completed': 'Completada',

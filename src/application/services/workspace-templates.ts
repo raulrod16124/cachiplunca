@@ -6,6 +6,7 @@ export const WORKSPACE_TEMPLATE_IDS = [
   'retrospective',
   'project-kickoff',
   'brainstorming',
+  'kanban',
 ] as const;
 
 export type WorkspaceTemplateId = (typeof WORKSPACE_TEMPLATE_IDS)[number];
@@ -40,10 +41,12 @@ export interface WorkspaceTemplateDefinition {
 const FRAME_SIZE = { width: 280, height: 56 } as const;
 const NOTE_SIZE = { width: 280, height: 140 } as const;
 const TASK_SIZE = { width: 280, height: 96 } as const;
-const COLUMN_X = [0, 320, 640] as const;
+const COLUMN_X = [0, 320, 640, 960] as const;
 const CONTENT_Y = [80, 240, 400] as const;
 
-function frame(title: string, column: 0 | 1 | 2): TemplateElementSpec {
+type TemplateColumn = 0 | 1 | 2 | 3;
+
+function frame(title: string, column: TemplateColumn): TemplateElementSpec {
   return {
     type: 'frame',
     title,
@@ -51,7 +54,7 @@ function frame(title: string, column: 0 | 1 | 2): TemplateElementSpec {
   };
 }
 
-function note(content: string, column: 0 | 1 | 2, row: 0 | 1 | 2): TemplateElementSpec {
+function note(content: string, column: TemplateColumn, row: 0 | 1 | 2): TemplateElementSpec {
   return {
     type: 'note',
     content,
@@ -61,7 +64,7 @@ function note(content: string, column: 0 | 1 | 2, row: 0 | 1 | 2): TemplateEleme
 
 function task(
   title: string,
-  column: 0 | 1 | 2,
+  column: TemplateColumn,
   row: 0 | 1 | 2,
   status: TaskStatus,
 ): TemplateElementSpec {
@@ -119,6 +122,19 @@ export const WORKSPACE_TEMPLATES: Readonly<
       note('Which assumptions should we test first?', 2, 0),
       task('Cluster and prioritize the ideas', 2, 1, 'todo'),
       task('Schedule a follow-up to decide', 2, 2, 'todo'),
+    ],
+  },
+  kanban: {
+    id: 'kanban',
+    elements: [
+      frame('Todo', 0),
+      frame('In progress', 1),
+      frame('Completed', 2),
+      frame('Blocked', 3),
+      task('Add your first task', 0, 0, 'todo'),
+      task('Move work forward', 1, 0, 'in_progress'),
+      task('Review what is done', 2, 0, 'completed'),
+      task('Unblock dependencies', 3, 0, 'blocked'),
     ],
   },
 };

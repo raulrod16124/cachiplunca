@@ -13,6 +13,7 @@ import {
   withNoteContent,
   withRotation,
   withTaskAssignee,
+  withTaskBoardOrder,
   withTaskDueDate,
   withTaskNotes,
   withTaskStatus,
@@ -51,6 +52,7 @@ export type UpdateElementInput =
       readonly type: 'task';
       readonly title?: RichTextDocument | string;
       readonly status?: TaskStatus;
+      readonly boardOrder?: number;
       readonly notes?: RichTextDocument | string | null;
       readonly assigneeId?: UserId | null;
       readonly dueDate?: Date | null;
@@ -167,6 +169,7 @@ function applyTask(input: TaskPatch, updatedAt: Date): Element {
   const hasField =
     input.title !== undefined ||
     input.status !== undefined ||
+    input.boardOrder !== undefined ||
     input.notes !== undefined ||
     input.assigneeId !== undefined ||
     input.dueDate !== undefined ||
@@ -180,7 +183,14 @@ function applyTask(input: TaskPatch, updatedAt: Date): Element {
     updated = withTaskTitle(updated, input.title, updatedAt);
   }
   if (input.status !== undefined) {
+    const statusChanged = updated.status !== input.status;
     updated = withTaskStatus(updated, input.status, updatedAt);
+    if (statusChanged && input.boardOrder === undefined) {
+      updated = withTaskBoardOrder(updated, updatedAt.getTime(), updatedAt);
+    }
+  }
+  if (input.boardOrder !== undefined) {
+    updated = withTaskBoardOrder(updated, input.boardOrder, updatedAt);
   }
   if (input.notes !== undefined) {
     updated = withTaskNotes(updated, input.notes ?? undefined, updatedAt);

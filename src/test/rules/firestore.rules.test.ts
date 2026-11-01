@@ -92,6 +92,28 @@ function elementData(workspaceId: string, createdBy: string, id: string) {
   };
 }
 
+function taskElementData(
+  workspaceId: string,
+  createdBy: string,
+  id: string,
+  boardOrder: unknown = 10,
+) {
+  return {
+    type: 'task',
+    id,
+    workspaceId,
+    position: { x: 0, y: 0 },
+    size: { width: 220, height: 120 },
+    rotation: 0,
+    title: { blocks: [] },
+    status: 'todo',
+    boardOrder,
+    createdBy,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
 function imageElementData(
   workspaceId: string,
   createdBy: string,
@@ -396,6 +418,59 @@ describe('firestore.rules — elements', () => {
         doc(dbOf(ROLE_UIDS.editor), 'elements', 'spoofed'),
         elementData(WS1, ROLE_UIDS.owner, 'spoofed'),
       ),
+    );
+  });
+
+  test('owner and editor can create a task with a valid boardOrder', async () => {
+    for (const uid of [ROLE_UIDS.owner, ROLE_UIDS.editor]) {
+      await assertSucceeds(
+        setDoc(
+          doc(dbOf(uid), 'elements', `task-${uid}`),
+          taskElementData(WS1, uid, `task-${uid}`, 10.5),
+        ),
+      );
+    }
+  });
+
+  test('a task with an invalid boardOrder is rejected', async () => {
+    for (const boardOrder of ['10', null, 1e20]) {
+      await assertFails(
+        setDoc(
+          doc(dbOf(ROLE_UIDS.editor), 'elements', `task-invalid-${String(boardOrder)}`),
+          taskElementData(WS1, ROLE_UIDS.editor, `task-invalid-${String(boardOrder)}`, boardOrder),
+        ),
+      );
+    }
+  });
+
+  test('a task update can set a valid boardOrder but not an invalid one', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), 'elements', 'task-update'),
+        taskElementData(WS1, ROLE_UIDS.editor, 'task-update', 10),
+      );
+    });
+
+    await assertSucceeds(
+      updateDoc(doc(dbOf(ROLE_UIDS.editor), 'elements', 'task-update'), {
+        boardOrder: 25,
+        updatedAt: now,
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(dbOf(ROLE_UIDS.editor), 'elements', 'task-update'), {
+        boardOrder: 'high',
+        updatedAt: now,
+      }),
+    );
+  });
+
+  test('a non-task element cannot store a boardOrder', async () => {
+    await assertFails(
+      setDoc(doc(dbOf(ROLE_UIDS.editor), 'elements', 'text-with-order'), {
+        ...elementData(WS1, ROLE_UIDS.editor, 'text-with-order'),
+        boardOrder: 10,
+      }),
     );
   });
 

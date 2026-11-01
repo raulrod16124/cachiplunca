@@ -43,6 +43,7 @@ export interface TaskElementDocument extends BaseElementDocument {
   readonly type: 'task';
   readonly title: RichTextDocument;
   readonly status: TaskStatus;
+  readonly boardOrder: number;
   readonly notes?: RichTextDocument;
   readonly assigneeId?: string;
   readonly dueDate?: Date;
@@ -113,6 +114,7 @@ export function toElementDocument(element: Element): ElementDocument {
         type: 'task' as const,
         title: element.title,
         status: element.status,
+        boardOrder: element.boardOrder,
         ...(element.notes === undefined ? {} : { notes: element.notes }),
         ...(element.assigneeId === undefined ? {} : { assigneeId: element.assigneeId.value }),
         ...(element.dueDate === undefined ? {} : { dueDate: element.dueDate }),
@@ -179,6 +181,10 @@ export function fromElementDocument(id: string, data: unknown): Element {
         ...base,
         title: readRichText(data.title),
         status: readTaskStatus(data.status),
+        boardOrder:
+          data.boardOrder === undefined
+            ? base.createdAt.getTime()
+            : readNumber(data.boardOrder, 'boardOrder'),
         ...(data.notes === undefined ? {} : { notes: readRichText(data.notes) }),
         ...(data.assigneeId === undefined
           ? {}

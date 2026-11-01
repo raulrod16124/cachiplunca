@@ -32,6 +32,7 @@ test.describe('Task plan', () => {
     await page.getByRole('option', { name: 'Completed' }).click();
 
     await expect(panel.getByRole('heading', { level: 3, name: 'Completed' })).toBeVisible();
+    await expect(page.getByTestId('sync-status')).toHaveText('Saved', { timeout: 30000 });
 
     await page.reload();
     await expect(page.getByRole('application', { name: 'Canvas' })).toBeVisible({
@@ -75,6 +76,87 @@ test.describe('Task plan board', () => {
       blockedColumn.getByRole('button', { name: 'Select task Board task' }),
     ).toBeVisible();
     await expect(todoColumn.getByRole('button', { name: 'Select task Board task' })).toHaveCount(0);
+  });
+});
+
+test.describe('Task plan board drag and drop', () => {
+  test('moves a card to another column and persists it after reload', async ({ page }) => {
+    await registerUser(page);
+    await createWorkspace(page, 'Drag board');
+
+    await page.getByRole('button', { name: 'Task plan' }).click();
+    const panel = page.getByTestId('task-plan-panel');
+    await panel.getByRole('tab', { name: 'Board' }).click();
+
+    await panel.getByRole('button', { name: 'Create task' }).click();
+    const dialog = page.getByTestId('task-form-dialog');
+    await dialog.getByLabel('Title').fill('Dragged task');
+    await dialog.getByRole('button', { name: 'Create task' }).click();
+    await expect(dialog).toBeHidden();
+
+    const todoColumn = panel.getByRole('region', { name: 'Todo' });
+    const completedColumn = panel.getByRole('region', { name: 'Completed' });
+    const card = todoColumn.locator('[data-task-status="todo"]').first();
+
+    await expect(card).toHaveAttribute('draggable', 'true');
+    await card.dragTo(completedColumn);
+
+    await expect(
+      completedColumn.getByRole('button', { name: 'Select task Dragged task' }),
+    ).toBeVisible();
+    await expect(todoColumn.getByRole('button', { name: 'Select task Dragged task' })).toHaveCount(
+      0,
+    );
+    await expect(panel.getByText('Moved Dragged task to Completed.')).toBeAttached();
+
+    await expect(page.getByTestId('sync-status')).toHaveText('Saved', { timeout: 30000 });
+
+    await page.reload();
+    await expect(page.getByRole('application', { name: 'Canvas' })).toBeVisible({
+      timeout: 20000,
+    });
+
+    await page.getByRole('button', { name: 'Task plan' }).click();
+    const reloadedPanel = page.getByTestId('task-plan-panel');
+    await reloadedPanel.getByRole('tab', { name: 'Board' }).click();
+    const reloadedCompleted = reloadedPanel.getByRole('region', { name: 'Completed' });
+    await expect(
+      reloadedCompleted.getByRole('button', { name: 'Select task Dragged task' }),
+    ).toBeVisible({ timeout: 20000 });
+  });
+
+  test('drops a card above another card and keeps the order', async ({ page }) => {
+    await registerUser(page);
+    await createWorkspace(page, 'Reorder board');
+
+    const dialog = page.getByTestId('task-form-dialog');
+    for (const title of ['First task', 'Second task']) {
+      await page.getByRole('button', { name: 'Add task' }).click();
+      await dialog.getByLabel('Title').fill(title);
+      await dialog.getByRole('button', { name: 'Create task' }).click();
+      await expect(dialog).toBeHidden();
+    }
+    await expect(page.getByTestId('sync-status')).toHaveText('Saved', { timeout: 30000 });
+
+    await page.getByRole('button', { name: 'Task plan' }).click();
+    const panel = page.getByTestId('task-plan-panel');
+    await panel.getByRole('tab', { name: 'Board' }).click();
+
+    await panel.getByRole('button', { name: 'Change status for First task' }).click();
+    await page.getByRole('menuitem', { name: 'Completed' }).click();
+
+    const completedColumn = panel.getByRole('region', { name: 'Completed' });
+    const todoColumn = panel.getByRole('region', { name: 'Todo' });
+    const firstCard = completedColumn.locator('[data-task-status="completed"]').first();
+    const secondCard = todoColumn.locator('[data-task-status="todo"]').first();
+
+    await secondCard.dragTo(firstCard);
+
+    const completedCards = completedColumn.locator('[data-task-status="completed"]');
+    await expect(completedCards).toHaveCount(2);
+    await expect(completedCards.nth(0)).toContainText('Second task');
+    await expect(completedCards.nth(1)).toContainText('First task');
+    await expect(panel.getByText('Moved Second task to Completed.')).toBeAttached();
   });
 });
 
@@ -126,6 +208,27 @@ test.describe('Task plan drawer layout', () => {
         clientWidth: element.clientWidth,
       }));
       expect(viewMetrics.scrollWidth).toBeLessThanOrEqual(viewMetrics.clientWidth + 1);
+    }
+  });
+
+  test('keeps the board free of horizontal scroll at 1280 and 700', async ({ page }) => {
+    await registerUser(page);
+    await createWorkspace(page, 'Board overflow');
+    await addElement(page, 'task');
+
+    await page.getByRole('button', { name: 'Task plan' }).click();
+    const panel = page.getByTestId('task-plan-panel');
+    await panel.getByRole('tab', { name: 'Board' }).click();
+
+    for (const width of [1280, 700]) {
+      await page.setViewportSize({ width, height: 720 });
+      await expect(panel.getByRole('group', { name: 'Task board' })).toBeVisible();
+
+      const metrics = await panel.evaluate((element) => ({
+        scrollWidth: element.scrollWidth,
+        clientWidth: element.clientWidth,
+      }));
+      expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.clientWidth + 1);
     }
   });
 });

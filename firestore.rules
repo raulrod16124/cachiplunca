@@ -66,6 +66,20 @@ service cloud.firestore {
         get(guestLinkPath(get(guestSessionPath()).data.tokenHash)).data.revokedAt == null;
     }
 
+    // boardOrder es opcional para compatibilidad con documentos antiguos. Si
+    // viene, debe ser un número finito y dentro del rango seguro de JS para que
+    // el mapper no rompa la carga del tablero al leerlo.
+    function hasValidBoardOrder(data) {
+      return !('boardOrder' in data) ||
+        (
+          data.type == 'task' &&
+          data.boardOrder is number &&
+          data.boardOrder == data.boardOrder &&
+          data.boardOrder >= -9007199254740991 &&
+          data.boardOrder <= 9007199254740991
+        );
+    }
+
     function isWorkspaceCreator(workspaceId) {
       return signedIn() &&
         exists(workspacePath(workspaceId)) &&
@@ -245,10 +259,12 @@ service cloud.firestore {
         isGuestViewer(resource.data.workspaceId);
       allow create: if hasRole(request.resource.data.workspaceId, ['owner', 'editor'])
         && request.resource.data.createdBy == request.auth.uid
+        && hasValidBoardOrder(request.resource.data)
         && isValidImageData(request.resource.data);
       allow update: if hasRole(request.resource.data.workspaceId, ['owner', 'editor'])
         && request.resource.data.workspaceId == resource.data.workspaceId
         && request.resource.data.createdBy == resource.data.createdBy
+        && hasValidBoardOrder(request.resource.data)
         && isValidImageData(request.resource.data);
       allow delete: if hasRole(resource.data.workspaceId, ['owner', 'editor']);
     }

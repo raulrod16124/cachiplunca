@@ -103,6 +103,7 @@ describe('CreateWorkspaceDialog', () => {
     expect(screen.getByRole('radio', { name: 'Retrospective' })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: 'Project kickoff' })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: 'Brainstorming' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Kanban' })).toBeInTheDocument();
     expect(screen.getByRole('radiogroup', { name: 'Board type' })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: 'General' })).toBeChecked();
   });
@@ -179,6 +180,45 @@ describe('CreateWorkspaceDialog', () => {
         templateId: 'retrospective',
       }),
     );
+  });
+
+  it('creates a kanban board as a tasks board', async () => {
+    const repository = new FakeWorkspaceRepository();
+    const createWorkspace = jest.fn(createCreateWorkspace(repository));
+    const { onCreated } = renderDialog(createWorkspace);
+    const user = userEvent.setup();
+
+    fillName('Sprint board');
+    await user.click(screen.getByRole('radio', { name: 'Kanban' }));
+    expect(screen.getByRole('radio', { name: 'Tasks' })).toBeChecked();
+    submit();
+
+    await waitFor(() => expect(onCreated).toHaveBeenCalledTimes(1));
+    expect(createWorkspace).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Sprint board',
+        templateId: 'kanban',
+        type: 'tasks',
+      }),
+    );
+    const [stored] = await repository.list();
+    expect(stored?.type).toBe('tasks');
+  });
+
+  it('resets the template and type when reopened', async () => {
+    const repository = new FakeWorkspaceRepository();
+    const createWorkspace = jest.fn(createCreateWorkspace(repository));
+    const { rerender, props } = renderDialog(createWorkspace);
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole('radio', { name: 'Kanban' }));
+    expect(screen.getByRole('radio', { name: 'Tasks' })).toBeChecked();
+
+    rerender(<CreateWorkspaceDialog {...props} open={false} />);
+    rerender(<CreateWorkspaceDialog {...props} open />);
+
+    expect(screen.getByRole('radio', { name: 'Blank' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'General' })).toBeChecked();
   });
 
   it('creates the board and attaches the selected cover image', async () => {

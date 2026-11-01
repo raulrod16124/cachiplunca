@@ -224,6 +224,10 @@ describe('createCreateWorkspaceWithOwner', () => {
     expect(elements.some((element) => element.type === 'frame')).toBe(true);
     expect(elements.some((element) => element.type === 'note')).toBe(true);
     expect(elements.some((element) => element.type === 'task')).toBe(true);
+    const taskOrders = elements.flatMap((element) =>
+      element.type === 'task' ? [element.boardOrder] : [],
+    );
+    expect(new Set(taskOrders).size).toBe(taskOrders.length);
     for (const element of elements) {
       expect(element.workspaceId.equals(result.workspace.id)).toBe(true);
       expect(element.createdBy.equals(OWNER)).toBe(true);

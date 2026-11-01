@@ -39,6 +39,7 @@ export interface TaskBoardExportElement extends BaseBoardExportElement {
   readonly type: 'task';
   readonly title: RichTextDocument;
   readonly status: TaskStatus;
+  readonly boardOrder: number;
   readonly notes?: RichTextDocument;
   readonly dueDate?: string;
 }
@@ -158,6 +159,7 @@ function toBoardExportElement(element: Element): BoardExportElement {
         type: 'task',
         title: element.title,
         status: element.status,
+        boardOrder: element.boardOrder,
         ...(element.notes === undefined ? {} : { notes: element.notes }),
         ...(element.dueDate === undefined ? {} : { dueDate: element.dueDate.toISOString() }),
       };

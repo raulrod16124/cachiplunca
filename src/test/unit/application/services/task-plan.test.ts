@@ -5,7 +5,13 @@ import {
   type TaskElement,
 } from '../../../../domain/element';
 import { ElementId, Position, Size, UserId, WorkspaceId } from '../../../../domain/shared';
-import { selectTaskPlan, selectTaskPlanBoard } from '../../../../application/services/task-plan';
+import {
+  isBoardDropNoop,
+  nextBoardOrderForStatusChange,
+  resolveBoardOrderForDrop,
+  selectTaskPlan,
+  selectTaskPlanBoard,
+} from '../../../../application/services/task-plan';
 
 const WORKSPACE_ID = WorkspaceId.create('ws-1');
 const USER_ID = UserId.create('user-1');
@@ -217,5 +223,92 @@ describe('selectTaskPlanBoard', () => {
     selectTaskPlanBoard(elements, ALL_FILTERS);
 
     expect(elements).toEqual([first, second]);
+  });
+});
+
+describe('board ordering', () => {
+  it('orders the board by boardOrder instead of due date', () => {
+    const columns = selectTaskPlanBoard(
+      [
+        task('late-date', {
+          boardOrder: 10,
+          dueDate: new Date('2024-12-01T00:00:00.000Z'),
+        }),
+        task('early-date', {
+          boardOrder: 20,
+          dueDate: new Date('2024-01-01T00:00:00.000Z'),
+        }),
+      ],
+      ALL_FILTERS,
+    );
+
+    expect(columns[0]?.tasks.map((entry) => entry.id.value)).toEqual(['late-date', 'early-date']);
+  });
+
+  it('keeps the list view ordered by due date', () => {
+    const groups = selectTaskPlan(
+      [
+        task('late-date', {
+          boardOrder: 10,
+          dueDate: new Date('2024-12-01T00:00:00.000Z'),
+        }),
+        task('early-date', {
+          boardOrder: 20,
+          dueDate: new Date('2024-01-01T00:00:00.000Z'),
+        }),
+      ],
+      ALL_FILTERS,
+    );
+
+    expect(groups[0]?.tasks.map((entry) => entry.id.value)).toEqual(['early-date', 'late-date']);
+  });
+
+  it('appends after the last task of the destination column', () => {
+    const elements = [
+      task('first', { status: 'completed', boardOrder: 10 }),
+      task('second', { status: 'completed', boardOrder: 20 }),
+    ];
+
+    expect(nextBoardOrderForStatusChange(elements, 'completed')).toBe(21);
+    expect(nextBoardOrderForStatusChange(elements, 'blocked')).toBe(0);
+  });
+
+  it('resolves the order for start, end and before positions', () => {
+    const elements = [
+      task('first', { status: 'completed', boardOrder: 10 }),
+      task('second', { status: 'completed', boardOrder: 20 }),
+    ];
+
+    expect(resolveBoardOrderForDrop(elements, 'completed', { kind: 'start' })).toBe(9);
+    expect(resolveBoardOrderForDrop(elements, 'completed', { kind: 'end' })).toBe(21);
+    expect(
+      resolveBoardOrderForDrop(elements, 'completed', { kind: 'before', taskId: 'second' }),
+    ).toBe(15);
+    expect(
+      resolveBoardOrderForDrop(elements, 'completed', { kind: 'before', taskId: 'first' }),
+    ).toBe(9);
+  });
+
+  it('keeps insert-before strictly before the target when neighbors tie', () => {
+    const elements = [
+      task('first', { status: 'completed', boardOrder: 10 }),
+      task('second', { status: 'completed', boardOrder: 10 }),
+    ];
+
+    expect(
+      resolveBoardOrderForDrop(elements, 'completed', { kind: 'before', taskId: 'second' }),
+    ).toBeLessThan(10);
+  });
+
+  it('detects drops that would not change the position', () => {
+    const elements = [task('first', { boardOrder: 10 }), task('second', { boardOrder: 20 })];
+
+    expect(isBoardDropNoop(elements, 'second', 'todo', { kind: 'end' })).toBe(true);
+    expect(isBoardDropNoop(elements, 'first', 'todo', { kind: 'start' })).toBe(true);
+    expect(isBoardDropNoop(elements, 'first', 'todo', { kind: 'before', taskId: 'second' })).toBe(
+      true,
+    );
+    expect(isBoardDropNoop(elements, 'second', 'todo', { kind: 'start' })).toBe(false);
+    expect(isBoardDropNoop(elements, 'first', 'completed', { kind: 'end' })).toBe(false);
   });
 });
