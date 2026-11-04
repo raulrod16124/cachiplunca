@@ -18,6 +18,14 @@ coverage
 *.local
 .local/
 
+# Admin credentials and exports — never commit
+*service-account*.json
+*service_account*.json
+*serviceAccount*.json
+*firebase-adminsdk*.json
+*credentials*.json
+auth-backup*.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
