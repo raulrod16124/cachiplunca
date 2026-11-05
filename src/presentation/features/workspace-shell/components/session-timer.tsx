@@ -40,6 +40,7 @@ const Trigger = styled(Popover.Trigger)`
   display: inline-flex;
   align-items: center;
   gap: ${({ theme }) => theme.space[1]};
+  min-height: ${({ theme }) => theme.space[8]};
   padding: ${({ theme }) => `${theme.space[1]} ${theme.space[2]}`};
   border: 1px solid transparent;
   border-radius: ${({ theme }) => theme.radius.md};

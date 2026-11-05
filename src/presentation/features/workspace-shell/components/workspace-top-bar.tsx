@@ -54,6 +54,9 @@ const ROLE_KEYS: Record<MembershipRole, TranslationKey> = {
   viewer: 'share.role.viewer',
 };
 
+const COMPACT_QUERY = '(max-width: 1200px)';
+const NARROW_QUERY = '(max-width: 900px)';
+
 const Overlay = styled.header`
   position: absolute;
   top: 0;
@@ -89,7 +92,7 @@ const Cluster = styled.div`
   align-items: center;
   gap: ${({ theme }) => theme.space[2]};
   min-width: 0;
-  max-width: max(200px, calc(50% - 200px));
+  max-width: 100%;
   padding: ${({ theme }) => `${theme.space[2]} ${theme.space[3]}`};
   border-radius: var(--stitch-radius-panel, var(--rr-radius-lg));
   background: var(--stitch-panel-bg, ${({ theme }) => theme.canvas.surface});
@@ -99,12 +102,20 @@ const Cluster = styled.div`
   pointer-events: auto;
 
   @media (max-width: 900px) {
-    max-width: 100%;
+    gap: ${({ theme }) => theme.space[1]};
     flex-wrap: nowrap;
     overflow-x: auto;
     overscroll-behavior-x: contain;
     scrollbar-width: thin;
   }
+
+  @media (max-width: 480px) {
+    padding: ${({ theme }) => `${theme.space[1]} ${theme.space[2]}`};
+  }
+`;
+
+const ActionsCluster = styled(Cluster)`
+  margin-left: auto;
 `;
 
 const Divider = styled.span`
@@ -139,6 +150,10 @@ const MetaRow = styled.div`
 
 const ShareButton = styled(Button)`
   flex: none;
+
+  && {
+    min-height: ${({ theme }) => theme.space[8]};
+  }
 `;
 
 const RolePill = styled.span`
@@ -269,7 +284,12 @@ const TopbarCover = styled.span`
 `;
 
 const TopbarButton = styled(NeutralIconButton)`
-  flex: none;
+  && {
+    flex: none;
+    width: ${({ theme }) => theme.space[8]};
+    height: ${({ theme }) => theme.space[8]};
+    padding: 0;
+  }
 `;
 
 const MenuTrigger = styled(DropdownMenu.Trigger)`
@@ -370,7 +390,8 @@ export function WorkspaceTopBar({
   exportErrorMessage = null,
 }: WorkspaceTopBarProps): ReactNode {
   const { t } = useI18n();
-  const isNarrow = useMediaQuery('(max-width: 900px)');
+  const isCompact = useMediaQuery(COMPACT_QUERY);
+  const isNarrow = useMediaQuery(NARROW_QUERY);
   const syncBadge = describeSyncStatus(syncStatus);
   const connectionBadge = describeConnectionStatus(connectionStatus);
   const localizedSyncBadge =
@@ -400,7 +421,7 @@ export function WorkspaceTopBar({
   ].filter((message): message is string => message !== null);
   const canExport = onExportJson !== undefined && onExportPdf !== undefined;
   const hasMoreActions =
-    isNarrow && (onPresent !== undefined || canExport || onShowShortcuts !== undefined);
+    isCompact && (onPresent !== undefined || canExport || onShowShortcuts !== undefined);
 
   return (
     <Overlay data-testid="workspace-topbar">
@@ -451,7 +472,7 @@ export function WorkspaceTopBar({
             )}
           </TitleBlock>
         </Cluster>
-        <Cluster>
+        <ActionsCluster data-testid="workspace-topbar-actions">
           {connectedUsers.length === 0 ? null : (
             <Inline gap="space-1" align="center">
               <Popover>
@@ -459,10 +480,20 @@ export function WorkspaceTopBar({
                   data-testid="connected-users"
                   aria-label={t('canvas.topbar.showParticipants', { count: connectedUsers.length })}
                 >
-                  <AvatarGroup items={visibleUsers} decorative />
-                  <Text color="color.text.primary" size="font.size.sm" weight="font.weight.medium">
-                    {connectedLabel}
-                  </Text>
+                  <AvatarGroup
+                    items={visibleUsers}
+                    max={isNarrow ? 2 : isCompact ? 3 : 4}
+                    decorative
+                  />
+                  {isCompact ? null : (
+                    <Text
+                      color="color.text.primary"
+                      size="font.size.sm"
+                      weight="font.weight.medium"
+                    >
+                      {connectedLabel}
+                    </Text>
+                  )}
                 </PresenceTrigger>
                 <Popover.Content placement="bottom-end">
                   <PresencePanel>
@@ -501,7 +532,7 @@ export function WorkspaceTopBar({
               </VisuallyHidden>
             </Inline>
           )}
-          <Divider aria-hidden="true" />
+          {connectedUsers.length === 0 ? null : <Divider aria-hidden="true" />}
           {onTogglePlan === undefined ? null : (
             <Tooltip content={t('plan.title')} placement="bottom">
               <TopbarButton
@@ -532,7 +563,7 @@ export function WorkspaceTopBar({
               </TopbarButton>
             </Tooltip>
           )}
-          {isNarrow ? null : onPresent === undefined ? null : (
+          {isCompact ? null : onPresent === undefined ? null : (
             <Tooltip
               content={canPresent ? t('presentation.start') : t('presentation.unavailable')}
               placement="bottom"
@@ -552,18 +583,30 @@ export function WorkspaceTopBar({
           <SessionTimer />
           {onShare === undefined ? null : (
             <Tooltip content={t('canvas.topbar.share')} placement="bottom">
-              <ShareButton
-                type="button"
-                variant="primary"
-                size="sm"
-                startIcon={<Share2 aria-hidden="true" size={16} />}
-                onClick={onShare}
-              >
-                {t('canvas.topbar.share')}
-              </ShareButton>
+              {isCompact ? (
+                <TopbarButton
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  label={t('canvas.topbar.share')}
+                  onClick={onShare}
+                >
+                  <Share2 aria-hidden="true" size={16} />
+                </TopbarButton>
+              ) : (
+                <ShareButton
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  startIcon={<Share2 aria-hidden="true" size={16} />}
+                  onClick={onShare}
+                >
+                  {t('canvas.topbar.share')}
+                </ShareButton>
+              )}
             </Tooltip>
           )}
-          {canExport && !isNarrow ? (
+          {canExport && !isCompact ? (
             <DropdownMenu>
               <Tooltip content={t('canvas.export.label')} placement="bottom">
                 <MenuTrigger aria-label={t('canvas.export.label')}>
@@ -588,7 +631,7 @@ export function WorkspaceTopBar({
               </DropdownMenu.Content>
             </DropdownMenu>
           ) : null}
-          {onShowShortcuts === undefined || isNarrow ? null : (
+          {onShowShortcuts === undefined || isCompact ? null : (
             <Tooltip content={t('shortcuts.open')} placement="bottom">
               <TopbarButton
                 type="button"
@@ -655,7 +698,7 @@ export function WorkspaceTopBar({
           ) : null}
           <Divider aria-hidden="true" />
           <AccountMenu currentUser={currentUser} logoutUser={logoutUser} />
-        </Cluster>
+        </ActionsCluster>
       </Row>
       {errorMessages.length === 0 ? null : (
         <ErrorBanner role="alert" aria-live="assertive" data-testid="workspace-errors">

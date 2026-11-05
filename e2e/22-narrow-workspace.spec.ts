@@ -42,6 +42,38 @@ test.describe('Narrow workspace surfaces', () => {
     expect(toolbarCenterY).toBeLessThan(canvasTop + canvasHeight * 0.75);
   });
 
+  test('keeps the topbar actions panel within the viewport across widths', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await registerUser(page);
+    await createWorkspace(page, 'Responsive toolbar');
+
+    for (const width of [1400, 1200, 1100, 900, 768, 390] as const) {
+      await page.setViewportSize({ width, height: 800 });
+
+      const actions = page.getByTestId('workspace-topbar-actions');
+      await expect(actions).toBeVisible();
+      await expectWithinViewport(actions, width, 800);
+
+      const overflows = await actions.evaluate(
+        (element) => element.scrollWidth > element.clientWidth + 1,
+      );
+      expect(overflows).toBe(false);
+
+      if (width > 1200) {
+        await expect(page.getByRole('button', { name: 'Present' })).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Export board' })).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Keyboard shortcuts' })).toBeVisible();
+        await expect(page.getByRole('button', { name: 'More board actions' })).toHaveCount(0);
+      } else {
+        await expect(page.getByRole('button', { name: 'Share' })).toBeVisible();
+        await expect(page.getByRole('button', { name: 'More board actions' })).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Present' })).toHaveCount(0);
+        await expect(page.getByRole('button', { name: 'Export board' })).toHaveCount(0);
+        await expect(page.getByRole('button', { name: 'Keyboard shortcuts' })).toHaveCount(0);
+      }
+    }
+  });
+
   test('keeps topbar actions, toolbar and drawers usable at narrow viewports', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await registerUser(page);
