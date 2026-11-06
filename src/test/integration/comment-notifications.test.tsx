@@ -40,8 +40,8 @@ describe('comment notifications', () => {
       workspaceId: workspace.id,
       elementId: ElementId.create('note-1'),
       authorId: ownerId,
+      authorName: owner.displayName ?? 'Owner',
       body: 'Please review the launch plan',
-      actorName: owner.displayName ?? undefined,
     });
     expect(created?.status).toBe('ok');
     await waitFor(() => {
@@ -124,8 +124,8 @@ describe('comment notifications', () => {
         workspaceId: workspace.id,
         elementId: ElementId.create('note-1'),
         authorId: ownerId,
+        authorName: 'Owner',
         body,
-        actorName: 'Owner',
       });
       expect(created?.status).toBe('ok');
     });

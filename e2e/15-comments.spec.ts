@@ -34,6 +34,7 @@ test.describe('Comments', () => {
 
     const reloadedPanel = page.getByTestId('comments-panel');
     await expect(reloadedPanel.getByText(commentBody)).toBeVisible({ timeout: 20000 });
+    await expect(reloadedPanel.getByText('Test User')).toBeVisible({ timeout: 20000 });
 
     await reloadedPanel.getByRole('button', { name: 'Resolve' }).click();
     await expect(reloadedPanel.getByText('Resolved')).toBeVisible();

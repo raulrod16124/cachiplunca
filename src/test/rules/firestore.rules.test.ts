@@ -189,6 +189,7 @@ function commentData(
     workspaceId,
     elementId,
     authorId,
+    authorName: 'Ada',
     body: 'Looks good to me',
     createdAt: now,
     ...(resolvedAt === undefined ? {} : { resolvedAt }),
@@ -1557,6 +1558,32 @@ describe('firestore.rules — comments', () => {
         ),
       );
     }
+  });
+
+  test('comment creation requires a valid author name', async () => {
+    const withoutName: Record<string, unknown> = {
+      ...commentData(WS1, 'e1', ROLE_UIDS.editor, 'c-no-author-name'),
+    };
+    delete withoutName.authorName;
+
+    await assertFails(
+      setDoc(
+        doc(dbOf(ROLE_UIDS.editor), 'workspaces', WS1, 'comments', 'c-no-author-name'),
+        withoutName,
+      ),
+    );
+    await assertFails(
+      setDoc(doc(dbOf(ROLE_UIDS.editor), 'workspaces', WS1, 'comments', 'c-empty-author-name'), {
+        ...commentData(WS1, 'e1', ROLE_UIDS.editor, 'c-empty-author-name'),
+        authorName: '',
+      }),
+    );
+    await assertFails(
+      setDoc(doc(dbOf(ROLE_UIDS.editor), 'workspaces', WS1, 'comments', 'c-long-author-name'), {
+        ...commentData(WS1, 'e1', ROLE_UIDS.editor, 'c-long-author-name'),
+        authorName: 'x'.repeat(81),
+      }),
+    );
   });
 
   test('comment creation rejects spoofing, wrong paths and outsiders', async () => {

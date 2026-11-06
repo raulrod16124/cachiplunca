@@ -15,6 +15,7 @@ function makeComment(resolvedAt?: Date): Comment {
     workspaceId: WorkspaceId.create('ws-1'),
     elementId: ElementId.create('el-1'),
     authorId: UserId.create('user-1'),
+    authorName: 'Ada',
     body: 'Looks good to me',
     createdAt: CREATED_AT,
     resolvedAt,
@@ -33,6 +34,7 @@ describe('comment Firestore mapper', () => {
     expect(document.workspaceId).toBe('ws-1');
     expect(document.elementId).toBe('el-1');
     expect(document.authorId).toBe('user-1');
+    expect(document.authorName).toBe('Ada');
     expect(document.body).toBe('Looks good to me');
     expect(document.createdAt).toEqual(CREATED_AT);
     expect('editedAt' in document).toBe(false);
@@ -65,11 +67,25 @@ describe('comment Firestore mapper', () => {
       expect(restored.workspaceId.equals(comment.workspaceId)).toBe(true);
       expect(restored.elementId.equals(comment.elementId)).toBe(true);
       expect(restored.authorId.equals(comment.authorId)).toBe(true);
+      expect(restored.authorName).toBe(comment.authorName);
       expect(restored.body).toBe(comment.body);
       expect(restored.createdAt).toEqual(comment.createdAt);
       expect(restored.editedAt).toEqual(comment.editedAt);
       expect(restored.resolvedAt).toEqual(comment.resolvedAt);
     }
+  });
+
+  it('reads legacy documents without authorName', () => {
+    const restored = fromCommentDocument({
+      id: 'comment-1',
+      workspaceId: 'ws-1',
+      elementId: 'el-1',
+      authorId: 'user-1',
+      body: 'Legacy',
+      createdAt: CREATED_AT,
+    });
+
+    expect(restored.authorName).toBeUndefined();
   });
 
   it('reads Timestamp-like date fields', () => {
@@ -122,5 +138,16 @@ describe('comment Firestore mapper', () => {
         resolvedAt: 'today',
       }),
     ).toThrow('Comment document field "resolvedAt" must be a Date or Timestamp');
+    expect(() =>
+      fromCommentDocument({
+        id: 'comment-1',
+        workspaceId: 'ws-1',
+        elementId: 'el-1',
+        authorId: 'user-1',
+        authorName: 1,
+        body: 'Body',
+        createdAt: CREATED_AT,
+      }),
+    ).toThrow('Comment document field "authorName" must be a string');
   });
 });

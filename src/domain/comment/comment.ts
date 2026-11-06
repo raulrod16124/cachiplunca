@@ -5,12 +5,14 @@ import { WorkspaceId } from '../shared/value-objects/workspace-id';
 
 export const COMMENT_BODY_MAX_LENGTH = 4000;
 export const COMMENT_EDIT_WINDOW_MS = 15 * 60 * 1000;
+export const COMMENT_AUTHOR_NAME_MAX_LENGTH = 80;
 
 export interface CommentProps {
   readonly id: CommentId;
   readonly workspaceId: WorkspaceId;
   readonly elementId: ElementId;
   readonly authorId: UserId;
+  readonly authorName: string | undefined;
   readonly body: string;
   readonly createdAt: Date;
   readonly editedAt: Date | undefined;
@@ -22,6 +24,7 @@ export class Comment {
   private readonly _workspaceId: WorkspaceId;
   private readonly _elementId: ElementId;
   private readonly _authorId: UserId;
+  private readonly _authorName: string | undefined;
   private readonly _body: string;
   private readonly _createdAt: Date;
   private readonly _editedAt: Date | undefined;
@@ -32,6 +35,7 @@ export class Comment {
     this._workspaceId = props.workspaceId;
     this._elementId = props.elementId;
     this._authorId = props.authorId;
+    this._authorName = props.authorName;
     this._body = props.body;
     this._createdAt = props.createdAt;
     this._editedAt = props.editedAt;
@@ -43,12 +47,14 @@ export class Comment {
     readonly workspaceId: WorkspaceId;
     readonly elementId: ElementId;
     readonly authorId: UserId;
+    readonly authorName?: string;
     readonly body: string;
     readonly createdAt?: Date;
     readonly editedAt?: Date;
     readonly resolvedAt?: Date;
   }): Comment {
     const body = Comment.validateBody(props.body);
+    const authorName = Comment.normalizeAuthorName(props.authorName);
     const createdAt = props.createdAt ?? new Date();
 
     Comment.validateTimestamp(createdAt, 'Created at');
@@ -64,6 +70,7 @@ export class Comment {
       workspaceId: props.workspaceId,
       elementId: props.elementId,
       authorId: props.authorId,
+      authorName,
       body,
       createdAt,
       editedAt: props.editedAt,
@@ -88,6 +95,7 @@ export class Comment {
       workspaceId: this._workspaceId,
       elementId: this._elementId,
       authorId: this._authorId,
+      authorName: this._authorName,
       body: normalized,
       createdAt: this._createdAt,
       editedAt,
@@ -116,11 +124,31 @@ export class Comment {
       workspaceId: this._workspaceId,
       elementId: this._elementId,
       authorId: this._authorId,
+      authorName: this._authorName,
       body: this._body,
       createdAt: this._createdAt,
       editedAt: this._editedAt,
       resolvedAt,
     });
+  }
+
+  private static normalizeAuthorName(value: string | undefined): string | undefined {
+    if (typeof value !== 'string') {
+      return undefined;
+    }
+
+    const normalized = value.trim();
+
+    if (normalized.length === 0) {
+      return undefined;
+    }
+    if (normalized.length > COMMENT_AUTHOR_NAME_MAX_LENGTH) {
+      throw new Error(
+        `Comment author name cannot exceed ${COMMENT_AUTHOR_NAME_MAX_LENGTH} characters`,
+      );
+    }
+
+    return normalized;
   }
 
   private static validateBody(body: string): string {
@@ -172,6 +200,10 @@ export class Comment {
 
   get authorId(): UserId {
     return this._authorId;
+  }
+
+  get authorName(): string | undefined {
+    return this._authorName;
   }
 
   get body(): string {

@@ -1,5 +1,6 @@
 import {
   Comment,
+  COMMENT_AUTHOR_NAME_MAX_LENGTH,
   COMMENT_BODY_MAX_LENGTH,
   COMMENT_EDIT_WINDOW_MS,
 } from '../../../../domain/comment';
@@ -33,6 +34,18 @@ describe('Comment', () => {
     expect(comment.isEdited()).toBe(false);
     expect(comment.resolvedAt).toBeUndefined();
     expect(comment.isResolved()).toBe(false);
+  });
+
+  it('stores a normalized author name snapshot', () => {
+    const comment = makeComment({ authorName: '  Ada Lovelace  ' });
+
+    expect(comment.authorName).toBe('Ada Lovelace');
+    expect(makeComment().authorName).toBeUndefined();
+    expect(makeComment({ authorName: '   ' }).authorName).toBeUndefined();
+    expect(makeComment({ authorName: 42 as unknown as string }).authorName).toBeUndefined();
+    expect(() =>
+      makeComment({ authorName: 'x'.repeat(COMMENT_AUTHOR_NAME_MAX_LENGTH + 1) }),
+    ).toThrow(`Comment author name cannot exceed ${COMMENT_AUTHOR_NAME_MAX_LENGTH} characters`);
   });
 
   it('preserves internal newlines and rejects an empty body', () => {
@@ -75,7 +88,7 @@ describe('Comment', () => {
   });
 
   it('edits an open comment within the window and preserves history', () => {
-    const comment = makeComment();
+    const comment = makeComment({ authorName: 'Ada' });
     const editedAt = new Date(CREATED_AT.getTime() + 10 * 60 * 1000);
     const edited = comment.editBody('  Updated  ', editedAt);
 
@@ -87,6 +100,7 @@ describe('Comment', () => {
     expect(edited.isResolved()).toBe(false);
     expect(edited.createdAt).toEqual(comment.createdAt);
     expect(edited.authorId.equals(comment.authorId)).toBe(true);
+    expect(edited.authorName).toBe('Ada');
   });
 
   it('rejects editing when resolved or outside the window', () => {
@@ -119,12 +133,13 @@ describe('Comment', () => {
     ).toBe(false);
   });
 
-  it('resolve preserves editedAt', () => {
+  it('resolve preserves editedAt and authorName', () => {
     const editedAt = new Date(CREATED_AT.getTime() + 60_000);
-    const edited = makeComment().editBody('Updated', editedAt);
+    const edited = makeComment({ authorName: 'Ada' }).editBody('Updated', editedAt);
     const resolved = edited.resolve(new Date(CREATED_AT.getTime() + 120_000));
     expect(resolved.editedAt).toEqual(editedAt);
     expect(resolved.body).toBe('Updated');
+    expect(resolved.authorName).toBe('Ada');
   });
 
   it('resolves an open comment without mutating the original', () => {

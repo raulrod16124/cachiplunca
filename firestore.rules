@@ -392,6 +392,9 @@ service cloud.firestore {
         request.resource.data.workspaceId == workspaceId &&
         request.resource.data.id == commentId &&
         request.resource.data.authorId == request.auth.uid &&
+        request.resource.data.authorName is string &&
+        request.resource.data.authorName.size() > 0 &&
+        request.resource.data.authorName.size() <= 80 &&
         request.resource.data.body is string &&
         !('resolvedAt' in request.resource.data) &&
         !('editedAt' in request.resource.data);
