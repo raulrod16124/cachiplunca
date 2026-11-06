@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createNoteElement } from '../../domain/element';
 import { ElementId, Position, Size, UserId } from '../../domain/shared';
@@ -52,6 +52,9 @@ describe('comment notifications', () => {
     harness.render({ initialPath: '/workspaces' });
 
     const trigger = await screen.findByRole('button', { name: /Notifications, 1 unread/i });
+    expect(
+      screen.queryByRole('status', { name: 'New comment notification' }),
+    ).not.toBeInTheDocument();
     await userEvent.setup().click(trigger);
 
     const dialog = await screen.findByRole('dialog', { name: 'Notifications' });
@@ -79,5 +82,92 @@ describe('comment notifications', () => {
     await waitFor(() => {
       expect(harness.notificationRepository.list()[0]?.isRead()).toBe(true);
     });
+  });
+
+  async function setupMemberScenario(): Promise<{
+    harness: ReturnType<typeof createAppHarness>;
+    workspace: Workspace;
+    ownerId: UserId;
+  }> {
+    const harness = createAppHarness();
+    const owner = await harness.register();
+    const workspace = await harness.createOwnerWorkspace('Toast board');
+    const ownerId = UserId.create(owner.uid);
+    await harness.elementRepository.save(createNote(workspace, ownerId));
+
+    const member = await harness.authPort.signUp({
+      email: 'toast-member@example.com',
+      password: 'Secret123',
+      displayName: 'Toast Member',
+    });
+    await harness.membershipRepository.create({
+      userId: UserId.create(member.uid),
+      workspaceId: workspace.id,
+      role: 'editor',
+    });
+
+    harness.authPort.setSession({ ...member, emailVerified: true });
+    harness.render({ initialPath: '/workspaces' });
+    await screen.findByText('Cachiplunca');
+
+    return { harness, workspace, ownerId };
+  }
+
+  async function addComment(
+    harness: ReturnType<typeof createAppHarness>,
+    workspace: Workspace,
+    ownerId: UserId,
+    body: string,
+  ): Promise<void> {
+    await act(async () => {
+      const created = await harness.services.comments?.createComment({
+        workspaceId: workspace.id,
+        elementId: ElementId.create('note-1'),
+        authorId: ownerId,
+        body,
+        actorName: 'Owner',
+      });
+      expect(created?.status).toBe('ok');
+    });
+  }
+
+  it('announces a new comment in a top-center toast and opens the comment', async () => {
+    const { harness, workspace, ownerId } = await setupMemberScenario();
+    const body = 'Please review the toast copy';
+
+    await addComment(harness, workspace, ownerId, body);
+
+    const toast = await screen.findByRole('status', { name: 'New comment notification' });
+    expect(toast).toHaveTextContent(/commented on Toast board/i);
+    expect(toast).toHaveTextContent(body);
+
+    await userEvent.setup().click(within(toast).getByRole('button', { name: 'Open comment' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('location')).toHaveTextContent(`/workspaces/${workspace.id.value}`);
+    });
+    expect(await screen.findByTestId('comments-panel')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(harness.notificationRepository.list()[0]?.isRead()).toBe(true);
+    });
+  });
+
+  it('dismisses the toast without marking the notification as read', async () => {
+    const { harness, workspace, ownerId } = await setupMemberScenario();
+
+    await addComment(harness, workspace, ownerId, 'Review this later');
+
+    const toast = await screen.findByRole('status', { name: 'New comment notification' });
+    await userEvent
+      .setup()
+      .click(within(toast).getByRole('button', { name: 'Dismiss notification' }));
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('status', { name: 'New comment notification' }),
+      ).not.toBeInTheDocument();
+    });
+    expect(harness.notificationRepository.list()[0]?.isRead()).toBe(false);
+    expect(screen.getByRole('button', { name: /Notifications, 1 unread/i })).toBeInTheDocument();
   });
 });

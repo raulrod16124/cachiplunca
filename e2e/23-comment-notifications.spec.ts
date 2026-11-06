@@ -50,6 +50,11 @@ test.describe('Comment notifications', () => {
     await expect(commentsPanel.getByText(commentBody)).toBeVisible();
     await waitForBoardSaved(ownerPage);
 
+    const toast = memberPage.getByRole('status', { name: 'New comment notification' });
+    await expect(toast).toBeVisible({ timeout: 20000 });
+    await expect(toast).toContainText(commentBody);
+    await expect(toast).toBeHidden({ timeout: 10000 });
+
     const commentNotifications = memberPage.getByRole('button', {
       name: /Notifications, 1 unread/i,
     });
