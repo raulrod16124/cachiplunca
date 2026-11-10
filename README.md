@@ -192,6 +192,7 @@ Read [Architecture](docs/architecture.md) for the full dependency rules and
 | [`docs/opencode-workflow.md`](docs/opencode-workflow.md) | Commands, skills, subagents and JIRA task workflow.       |
 | [`docs/adr/`](docs/adr/)                                 | Architecture Decision Records and their rationale.        |
 | [`docs/performance/`](docs/performance/)                 | Canvas performance strategy, budgets and how to run them. |
+| [`docs/admin-users.md`](docs/admin-users.md)             | Terminal tooling for Auth users, duplicates and cleanup.  |
 | [`AGENTS.md`](AGENTS.md)                                 | Engineering conventions for contributors and agents.      |
 
 ## Contributing

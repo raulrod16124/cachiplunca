@@ -5,6 +5,8 @@ import styled from 'styled-components';
 
 export const BoardsMain = styled.main`
   position: relative;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   min-height: 100dvh;
   overflow-x: hidden;
@@ -22,6 +24,7 @@ export const BoardsContainer = styled.div`
   position: relative;
   z-index: 1;
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: ${({ theme }) => theme.space[6]};
   width: 100%;
@@ -128,6 +131,7 @@ export const BoardsFooter = styled.footer`
   align-items: center;
   justify-content: flex-end;
   gap: ${({ theme }) => theme.space[3]};
+  margin-top: auto;
   padding-top: ${({ theme }) => theme.space[4]};
   color: var(--stitch-footer-text);
   font-size: 11px;

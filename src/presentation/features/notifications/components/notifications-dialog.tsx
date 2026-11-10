@@ -24,6 +24,7 @@ import {
 import { useI18n } from '../../../i18n';
 import { PendingInvitationsPanel } from '../../invitations/components/pending-invitations-panel';
 import { useNotifications } from '../notifications-provider';
+import { notificationHref } from '../notification-target';
 import { CommentNotificationsList } from './comment-notifications-list';
 
 const INVITATIONS_TAB = 'invitations';
@@ -112,12 +113,7 @@ export function NotificationsDialog({ open, onOpenChange }: NotificationsDialogP
   const selectNotification = (notification: Notification): void => {
     notifications.markRead(notification);
     onOpenChange(false);
-
-    const params = new URLSearchParams({
-      elementId: notification.elementId.value,
-      commentId: notification.commentId.value,
-    });
-    navigate(`/workspaces/${notification.workspaceId.value}?${params.toString()}`);
+    navigate(notificationHref(notification));
   };
 
   return (

@@ -288,8 +288,8 @@ export function CommentsPanel({
           workspaceId: WorkspaceId.create(workspaceId),
           elementId: ElementId.create(elementId),
           authorId: UserId.create(currentUserId),
+          authorName: currentUserName?.trim() || t('notifications.actorFallback'),
           body,
-          actorName: currentUserName,
         });
 
         if (result.status === 'ok') {
@@ -410,7 +410,9 @@ export function CommentsPanel({
   const canComment = currentUserId !== undefined && elementId !== undefined;
   const busy = submitting || resolvingId !== null || savingEdit;
   const authoredLabel = (comment: Comment): string =>
-    authorLabels?.get(comment.authorId.value) ?? shortUserId(comment.authorId.value);
+    comment.authorName ??
+    authorLabels?.get(comment.authorId.value) ??
+    shortUserId(comment.authorId.value);
 
   const renderBody = (): ReactNode => {
     if (elementId === undefined) {

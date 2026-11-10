@@ -10,6 +10,7 @@ function makeInput(overrides: Partial<Parameters<ReturnType<typeof createCreateC
     workspaceId: WorkspaceId.create('ws-1'),
     elementId: ElementId.create('el-1'),
     authorId: UserId.create('user-1'),
+    authorName: 'Ada',
     body: 'Nice work',
     ...overrides,
   };
@@ -31,6 +32,7 @@ describe('createCreateComment', () => {
       return;
     }
     expect(result.comment.id.value).toBe('comment-1');
+    expect(result.comment.authorName).toBe('Ada');
     expect(result.comment.body).toBe('Nice work');
     expect(result.comment.createdAt).toEqual(NOW);
     expect(result.comment.resolvedAt).toBeUndefined();
@@ -47,6 +49,25 @@ describe('createCreateComment', () => {
     });
 
     const result = await createComment(makeInput({ body: '   ' }));
+
+    expect(result.status).toBe('error');
+    if (result.status === 'error') {
+      expect(result.error).toMatchObject({
+        kind: 'validation',
+        code: ERROR_CODES.VALIDATION_INVALID_INPUT,
+      });
+    }
+    expect(repository.list()).toHaveLength(0);
+  });
+
+  it('returns a validation error without persisting an empty author name', async () => {
+    const repository = new FakeCommentRepository();
+    const createComment = createCreateComment({
+      repository,
+      generateId: () => CommentId.create('comment-1'),
+    });
+
+    const result = await createComment(makeInput({ authorName: '   ' }));
 
     expect(result.status).toBe('error');
     if (result.status === 'error') {
@@ -133,7 +154,7 @@ describe('createCreateComment', () => {
       now: () => NOW,
     });
 
-    const result = await createComment(makeInput({ actorName: 'Ada' }));
+    const result = await createComment(makeInput({ authorName: 'Ada' }));
 
     expect(result.status).toBe('ok');
     if (result.status !== 'ok') {

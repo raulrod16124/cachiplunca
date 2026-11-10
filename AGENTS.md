@@ -20,6 +20,8 @@
 npm run dev            # Vite dev server
 npm test               # Jest, includes the architecture boundary gate
 npm run test:jira      # Node test runner, JIRA selector logic
+npm run test:admin     # Node test runner, admin user core logic
+npm run admin:users    # Auth user listing, duplicates and cleanup
 npm run lint           # Oxlint
 npm run format:check   # Prettier check
 npx tsc -b --noEmit    # Type check
@@ -99,6 +101,7 @@ TypeScript work.
 - `npm run format:check` passes.
 - `npm test` passes.
 - `npm run test:jira` passes when the JIRA selector changes.
+- `npm run test:admin` passes when the admin user tooling changes.
 - `npm run test:rules` passes when Firestore/Storage is touched.
 - `npm run test:e2e` passes when real user flows are touched.
 - i18n ES/EN parity for visible text.

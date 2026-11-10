@@ -64,6 +64,7 @@ function renderPanel(overrides: Partial<Parameters<typeof CommentsPanel>[0]> = {
       workspaceId={WORKSPACE_ID}
       element={makeElement()}
       currentUserId={CURRENT_USER}
+      currentUserName="Ada"
       authorLabels={new Map([[CURRENT_USER, 'Ada']])}
       services={makeServices()}
       onClose={jest.fn()}
@@ -97,6 +98,21 @@ describe('CommentsPanel', () => {
     expect(screen.getByTestId('comment-card-comment-1').tagName).toBe('LI');
   });
 
+  it('renders the persisted author name even when there is no live label', async () => {
+    const comment = makeComment('comment-1', {
+      authorId: UserId.create('offline-author'),
+      authorName: 'Grace Hopper',
+    });
+    renderPanel({
+      authorLabels: new Map(),
+      services: makeServices({
+        listComments: jest.fn().mockResolvedValue({ status: 'ok', comments: [comment] }),
+      }),
+    });
+
+    expect(await screen.findByText('Grace Hopper')).toBeInTheDocument();
+  });
+
   it('creates a comment and appends it to the list', async () => {
     const created = makeComment('comment-new', { body: 'New comment' });
     const createComment = jest.fn().mockResolvedValue({ status: 'ok', comment: created });
@@ -115,6 +131,7 @@ describe('CommentsPanel', () => {
       workspaceId: expect.objectContaining({ value: WORKSPACE_ID }),
       elementId: expect.objectContaining({ value: ELEMENT_ID }),
       authorId: expect.objectContaining({ value: CURRENT_USER }),
+      authorName: 'Ada',
       body: 'New comment',
     });
     expect(onCommentSaved).toHaveBeenCalledWith(created);

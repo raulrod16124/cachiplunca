@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import type { NotificationServices } from '../../../application/notification-services';
 import type { Notification } from '../../../domain/notification';
 import { useI18n } from '../../i18n';
@@ -17,6 +17,8 @@ import {
   usePendingInvitations,
   type PendingInvitationsContextValue,
 } from '../invitations/pending-invitations-provider';
+import { NotificationToast } from './components/notification-toast';
+import { notificationHref } from './notification-target';
 
 export type CommentNotificationsLoadStatus = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -42,6 +44,7 @@ export interface NotificationsProviderProps {
 export function NotificationsProvider({ services }: NotificationsProviderProps): ReactNode {
   const session = useSession();
   const invitations = usePendingInvitations();
+  const navigate = useNavigate();
   const { t } = useI18n();
   const tRef = useRef(t);
   tRef.current = t;
@@ -51,10 +54,14 @@ export function NotificationsProvider({ services }: NotificationsProviderProps):
   const [commentNotifications, setCommentNotifications] = useState<readonly Notification[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [announcements, setAnnouncements] = useState<readonly Notification[]>([]);
   const [reloadToken, setReloadToken] = useState(0);
+  const knownNotificationIdsRef = useRef<Set<string> | null>(null);
 
   useEffect(() => {
     setActionError(null);
+    setAnnouncements([]);
+    knownNotificationIdsRef.current = null;
     if (userId === null || services === undefined) {
       setCommentNotifications([]);
       setLoadError(null);
@@ -72,6 +79,35 @@ export function NotificationsProvider({ services }: NotificationsProviderProps):
         if (!active) {
           return;
         }
+
+        const nextIds = new Set(notifications.map((notification) => notification.id.value));
+        const knownIds = knownNotificationIdsRef.current;
+
+        if (knownIds === null) {
+          knownNotificationIdsRef.current = nextIds;
+        } else {
+          const arrived = notifications
+            .filter(
+              (notification) => !knownIds.has(notification.id.value) && !notification.isRead(),
+            )
+            .sort((left, right) => left.createdAt.getTime() - right.createdAt.getTime());
+
+          for (const id of nextIds) {
+            knownIds.add(id);
+          }
+
+          if (arrived.length > 0) {
+            setAnnouncements((current) => {
+              const currentIds = new Set(current.map((notification) => notification.id.value));
+              const unique = arrived.filter(
+                (notification) => !currentIds.has(notification.id.value),
+              );
+
+              return unique.length === 0 ? current : [...current, ...unique].slice(-5);
+            });
+          }
+        }
+
         setCommentNotifications(notifications);
         setLoadError(null);
         setCommentStatus('ready');
@@ -101,6 +137,7 @@ export function NotificationsProvider({ services }: NotificationsProviderProps):
       setCommentNotifications((current) =>
         current.map((entry) => (entry.id.equals(notification.id) ? entry.markRead(readAt) : entry)),
       );
+      setAnnouncements((current) => current.filter((entry) => !entry.id.equals(notification.id)));
       setActionError(null);
 
       void (async () => {
@@ -119,6 +156,18 @@ export function NotificationsProvider({ services }: NotificationsProviderProps):
       })();
     },
     [services],
+  );
+
+  const dismissAnnouncement = useCallback((notification: Notification): void => {
+    setAnnouncements((current) => current.filter((entry) => !entry.id.equals(notification.id)));
+  }, []);
+
+  const openAnnouncement = useCallback(
+    (notification: Notification): void => {
+      markRead(notification);
+      navigate(notificationHref(notification));
+    },
+    [markRead, navigate],
   );
 
   const commentUnreadCount = useMemo(
@@ -151,9 +200,23 @@ export function NotificationsProvider({ services }: NotificationsProviderProps):
     ],
   );
 
+  const currentAnnouncement = announcements[0];
+
   return (
     <NotificationsContext.Provider value={value}>
       <Outlet />
+      {currentAnnouncement === undefined ? null : (
+        <NotificationToast
+          key={currentAnnouncement.id.value}
+          notification={currentAnnouncement}
+          onOpen={() => {
+            openAnnouncement(currentAnnouncement);
+          }}
+          onDismiss={() => {
+            dismissAnnouncement(currentAnnouncement);
+          }}
+        />
+      )}
     </NotificationsContext.Provider>
   );
 }

@@ -48,6 +48,33 @@ La campana debía convertirse en un centro de notificaciones general con invitac
 - El coste de escritura crece linealmente con el número de miembros, mitigado con un único batch y sin listeners por workspace.
 - El deep link depende de que el elemento y el comentario sigan existiendo; el caso “no encontrado” se resuelve limpiando los params.
 
+## Addendum (2026-11-05): aviso transitorio de comentarios
+
+La campana y el diálogo siguen siendo la fuente persistente de verdad. Para que
+una llegada nueva no pase desapercibida mientras el usuario está fuera del
+tablero, se añade un aviso transitorio en la parte superior central.
+
+Decisiones:
+
+1. **Solo comentarios.** Las invitaciones conservan su aviso persistente actual;
+   no se duplica ese flujo.
+2. **Detección por IDs conocidos.** El listener inicializa el conjunto de IDs en
+   la primera instantánea y solo anuncia IDs nuevos no leídos. Marcar como leída
+   o recargar no genera avisos.
+3. **Una notificación cada vez.** Cola FIFO acotada a cinco elementos. El aviso
+   se cierra solo a los seis segundos y pausa el temporizador con hover o foco.
+4. **Acción “Abrir comentario”.** Marca como leída y reutiliza el deep link de la
+   campana (`workspaceId + elementId + commentId`). Cerrar el aviso no marca como
+   leída.
+5. **Composición propia sobre `@raulrod/ui`.** Se usa `Portal`, `Button`,
+   `IconButton` y tokens, en vez del `Toast` publicado: el viewport del DS es
+   arriba-derecha, su cierre está fijado en inglés y no expone acción primaria.
+6. **Accesibilidad.** `role="status"` polite, sin robo de foco, acciones
+   alcanzables por teclado y animación de entrada desactivada con movimiento
+   reducido.
+
+Sin cambios en dominio, aplicación, infraestructura, reglas ni índices.
+
 ## Referencias
 
 - `docs/CACHIPLUNCA_NEXT_PRODUCT_JIRA.md` — `CACH-NXT-007`
@@ -56,5 +83,7 @@ La campana debía convertirse en un centro de notificaciones general con invitac
 - `src/application/commands/create-comment.ts`
 - `src/infrastructure/firebase/firebase-notification-repository.ts`
 - `src/presentation/features/notifications/`
+- `src/presentation/features/notifications/components/notification-toast.tsx`
+- `src/presentation/features/notifications/notification-target.ts`
 - `src/presentation/features/workspace-shell/components/comments-panel.tsx`
 - `firestore.rules`, `firestore.indexes.json`

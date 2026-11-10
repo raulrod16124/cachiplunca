@@ -6,6 +6,7 @@ export interface CommentDocument {
   readonly workspaceId: string;
   readonly elementId: string;
   readonly authorId: string;
+  readonly authorName?: string;
   readonly body: string;
   readonly createdAt: Date;
   readonly editedAt?: Date;
@@ -18,6 +19,7 @@ export function toCommentDocument(comment: Comment): CommentDocument {
     workspaceId: comment.workspaceId.value,
     elementId: comment.elementId.value,
     authorId: comment.authorId.value,
+    ...(comment.authorName === undefined ? {} : { authorName: comment.authorName }),
     body: comment.body,
     createdAt: comment.createdAt,
     ...(comment.editedAt === undefined ? {} : { editedAt: comment.editedAt }),
@@ -38,6 +40,7 @@ export function fromCommentDocument(data: unknown): Comment {
     workspaceId: WorkspaceId.create(readString(data.workspaceId, 'workspaceId')),
     elementId: ElementId.create(readString(data.elementId, 'elementId')),
     authorId: UserId.create(readString(data.authorId, 'authorId')),
+    authorName: readOptionalString(data.authorName, 'authorName'),
     body: readString(data.body, 'body'),
     createdAt: readDate(data.createdAt, 'createdAt'),
     ...(editedAt === undefined || editedAt === null
@@ -54,6 +57,13 @@ function readString(value: unknown, field: string): string {
     throw new Error(`Comment document field "${field}" must be a string`);
   }
   return value;
+}
+
+function readOptionalString(value: unknown, field: string): string | undefined {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+  return readString(value, field);
 }
 
 function readDate(value: unknown, field: string): Date {

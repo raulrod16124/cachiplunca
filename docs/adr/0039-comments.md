@@ -43,3 +43,15 @@ El tablero ya tiene una fuente de verdad para sus elementos, un panel lateral de
 - Presentation no importa Firebase y reutiliza los componentes y patrones de accesibilidad existentes.
 - No se añaden dependencias, índices ni persistencia local.
 - Los comentarios resueltos permanecen visibles como historial y no se pueden borrar desde la UI.
+
+## Addendum (2026-11-06): snapshot de `authorName`
+
+La decisión 7 se revisa parcialmente. Mostrar solo `authorId` obligaba a depender de etiquetas de presencia efímeras y del usuario actual, por lo que un autor offline aparecía como un ID corto. Ahora `Comment` guarda un `authorName` opcional en el momento de la creación, con la misma estrategia que `Notification.actorName`.
+
+- Domain normaliza el nombre (trim, vacío a `undefined`, máximo 80 caracteres) y lo conserva en `editBody` y `resolve`.
+- Application exige un `authorName` no vacío al crear el comentario y lo usa también como `actorName` de la notificación.
+- El mapper escribe `authorName` cuando existe y lo lee como opcional para mantener compatibilidad con documentos antiguos.
+- Las rules exigen `authorName` string, no vacío y de hasta 80 caracteres en `create`; sigue siendo inmutable porque los updates solo permiten `body`/`editedAt` o `resolvedAt`.
+- Presentation prioriza `comment.authorName` y solo cae a `authorLabels` y `shortUserId` cuando falta.
+
+Tradeoff aceptado: el nombre es un snapshot y no se reescribe si el autor cambia su perfil. No se hace backfill de comentarios existentes; los antiguos siguen usando las etiquetas disponibles o el ID corto. No se añade nombre a memberships ni una colección de perfiles.

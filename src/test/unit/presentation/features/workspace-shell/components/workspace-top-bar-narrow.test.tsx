@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { render as renderWithTheme } from '../../../../../setup/render-with-theme';
 import type { LogoutUser } from '../../../../../../application/commands';
 import type { AuthUser } from '../../../../../../application/ports';
+import { Presence } from '../../../../../../domain/collaboration';
 import { UserId, WorkspaceId } from '../../../../../../domain/shared';
 import { Workspace } from '../../../../../../domain/workspace';
 import { WorkspaceTopBar } from '../../../../../../presentation/features/workspace-shell/components/workspace-top-bar';
@@ -27,10 +28,23 @@ const CURRENT_USER: AuthUser = {
 
 const logoutUser: LogoutUser = jest.fn(async () => ({ status: 'ok' as const }));
 
-function createMediaQueryList(matches: boolean): MediaQueryList {
+function presenceOf(userId: string, displayName: string | null = null): Presence {
+  return Presence.create({
+    userId: UserId.create(userId),
+    workspaceId: WorkspaceId.create('ws-1'),
+    displayName,
+  });
+}
+
+let viewportWidth = 390;
+
+function createMediaQueryList(query: string): MediaQueryList {
+  const maxWidth = /max-width:\s*(\d+)px/.exec(query);
+  const matches = maxWidth === null ? false : viewportWidth <= Number(maxWidth[1]);
+
   return {
     matches,
-    media: '(max-width: 900px)',
+    media: query,
     onchange: null,
     addEventListener: jest.fn(),
     removeEventListener: jest.fn(),
@@ -40,18 +54,16 @@ function createMediaQueryList(matches: boolean): MediaQueryList {
   } as unknown as MediaQueryList;
 }
 
-let mediaQueryList = createMediaQueryList(true);
-
 beforeAll(() => {
   Object.defineProperty(window, 'matchMedia', {
     configurable: true,
     writable: true,
-    value: jest.fn(() => mediaQueryList),
+    value: jest.fn((query: string) => createMediaQueryList(query)),
   });
 });
 
 beforeEach(() => {
-  mediaQueryList = createMediaQueryList(true);
+  viewportWidth = 390;
   jest.clearAllMocks();
 });
 
@@ -140,6 +152,63 @@ describe('WorkspaceTopBar narrow viewport', () => {
   });
 
   it('omits the overflow menu when there are no secondary actions', () => {
+    renderTopBar();
+
+    expect(screen.queryByRole('button', { name: 'More board actions' })).not.toBeInTheDocument();
+  });
+});
+
+describe('WorkspaceTopBar responsive density', () => {
+  it('keeps labels and secondary actions inline on wide viewports', () => {
+    viewportWidth = 1400;
+
+    renderTopBar({
+      connectedUsers: [presenceOf('user-2', 'Ada Lovelace'), presenceOf('user-3', 'Grace Hopper')],
+      onShare: jest.fn(),
+      onTogglePlan: jest.fn(),
+      onToggleComments: jest.fn(),
+      onPresent: jest.fn(),
+      onShowShortcuts: jest.fn(),
+      onExportJson: jest.fn(),
+      onExportPdf: jest.fn(),
+      canPresent: true,
+    });
+
+    expect(screen.getByText('2 connected')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Share' })).toHaveClass('rr-button--primary');
+    expect(screen.getByRole('button', { name: 'Present' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Export board' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Keyboard shortcuts' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'More board actions' })).not.toBeInTheDocument();
+  });
+
+  it('collapses labels and secondary actions on compact viewports', () => {
+    viewportWidth = 1100;
+
+    renderTopBar({
+      connectedUsers: [presenceOf('user-2', 'Ada Lovelace'), presenceOf('user-3', 'Grace Hopper')],
+      onShare: jest.fn(),
+      onTogglePlan: jest.fn(),
+      onToggleComments: jest.fn(),
+      onPresent: jest.fn(),
+      onShowShortcuts: jest.fn(),
+      onExportJson: jest.fn(),
+      onExportPdf: jest.fn(),
+      canPresent: true,
+    });
+
+    expect(screen.getByTestId('connected-users')).toBeInTheDocument();
+    expect(screen.queryByText('2 connected')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Share' })).toHaveClass('rr-icon-button--primary');
+    expect(screen.getByRole('button', { name: 'More board actions' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Present' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Export board' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Keyboard shortcuts' })).not.toBeInTheDocument();
+  });
+
+  it('omits the overflow menu on compact viewports without secondary actions', () => {
+    viewportWidth = 1100;
+
     renderTopBar();
 
     expect(screen.queryByRole('button', { name: 'More board actions' })).not.toBeInTheDocument();

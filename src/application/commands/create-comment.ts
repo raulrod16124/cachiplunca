@@ -13,8 +13,8 @@ export interface CreateCommentInput {
   readonly workspaceId: WorkspaceId;
   readonly elementId: ElementId;
   readonly authorId: UserId;
+  readonly authorName: string;
   readonly body: string;
-  readonly actorName?: string;
 }
 
 export interface CreateCommentDeps {
@@ -34,17 +34,19 @@ export type CreateComment = (input: CreateCommentInput) => Promise<CreateComment
 export function createCreateComment(deps: CreateCommentDeps): CreateComment {
   return async (input: CreateCommentInput): Promise<CreateCommentResult> => {
     try {
+      const authorName = validateAuthorName(input.authorName);
       const comment = Comment.create({
         id: deps.generateId(),
         workspaceId: input.workspaceId,
         elementId: input.elementId,
         authorId: input.authorId,
+        authorName,
         body: input.body,
         createdAt: deps.now === undefined ? undefined : deps.now(),
       });
       const saved = await deps.repository.save(comment);
       await recordActivityBestEffort(deps.recordActivity, saved.workspaceId, saved.createdAt);
-      await notifyCommentBestEffort(deps.notifyComment, saved, input.actorName);
+      await notifyCommentBestEffort(deps.notifyComment, saved, authorName);
       return { status: 'ok', comment: saved };
     } catch (error) {
       return { status: 'error', error: isAppError(error) ? error : toValidationAppError(error) };
@@ -52,10 +54,20 @@ export function createCreateComment(deps: CreateCommentDeps): CreateComment {
   };
 }
 
+function validateAuthorName(value: string): string {
+  const normalized = typeof value === 'string' ? value.trim() : '';
+
+  if (normalized.length === 0) {
+    throw new Error('Comment author name cannot be empty');
+  }
+
+  return normalized;
+}
+
 async function notifyCommentBestEffort(
   notifyComment: NotifyComment | undefined,
   comment: Comment,
-  actorName: string | undefined,
+  actorName: string,
 ): Promise<void> {
   if (notifyComment === undefined) {
     return;
